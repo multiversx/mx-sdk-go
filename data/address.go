@@ -1,6 +1,6 @@
 package data
 
-import "github.com/ElrondNetwork/elrond-sdk/erdgo/core"
+import "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 
 type address struct {
 	bytes []byte
