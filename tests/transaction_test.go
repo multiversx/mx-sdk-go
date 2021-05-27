@@ -3,8 +3,8 @@ package tests
 import (
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-sdk/erdgo"
-	"github.com/ElrondNetwork/elrond-sdk/erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/stretchr/testify/assert"
 )
 
