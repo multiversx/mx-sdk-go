@@ -1,6 +1,6 @@
 package blockchain
 
-import "github.com/ElrondNetwork/elrond-sdk/erdgo/data"
+import "github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 
 type addressHandler interface {
 	AddressAsBech32String() string

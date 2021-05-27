@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-sdk/erdgo"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo"
 	"github.com/stretchr/testify/assert"
 )
 

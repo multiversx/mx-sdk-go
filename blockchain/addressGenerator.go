@@ -13,10 +13,10 @@ import (
 	"github.com/ElrondNetwork/elrond-go/process/factory"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract/builtInFunctions"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract/hooks"
-	"github.com/ElrondNetwork/elrond-sdk/erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk/erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk/erdgo/disabled"
-	"github.com/ElrondNetwork/elrond-sdk/erdgo/storage"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/storage"
 )
 
 const accountStartNonce = uint64(0)
@@ -30,7 +30,7 @@ type addressGenerator struct {
 	hasher         hashing.Hasher
 }
 
-// NewAddressGenerator
+// NewAddressGenerator creates an address generator instance
 func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, error) {
 	if check.IfNil(coordinator) {
 		return nil, ErrNilShardCoordinator
@@ -76,7 +76,7 @@ func (ag *addressGenerator) CompatibleDNSAddress(shardId byte) (addressHandler, 
 	return data.NewAddressFromBytes(newDNSAddress), err
 }
 
-// CompatibleDNSAddress will return the compatible DNS address providing the username
+// CompatibleDNSAddressFromUsername will return the compatible DNS address providing the username
 func (ag *addressGenerator) CompatibleDNSAddressFromUsername(username string) (addressHandler, error) {
 	hash := ag.hasher.Compute(username)
 	lastByte := hash[len(hash)-1]
