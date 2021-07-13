@@ -3,14 +3,17 @@ package interactors
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go/core/check"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
+
+var log = logger.GetOrCreate("interactors")
 
 // ArgCreateTransaction will hold the transaction fields
 type ArgCreateTransaction struct {
@@ -30,10 +33,9 @@ type ArgCreateTransaction struct {
 type transactionInteractor struct {
 	Proxy
 	TxSigner
-	mutTxAccumulator      sync.RWMutex
-	mutTimeBetweenBunches sync.Mutex
-	timeBetweenBunches    uint32
-	txAccumulator         []*data.Transaction
+	mutTxAccumulator           sync.RWMutex
+	millisecondsBetweenBunches uint32
+	txAccumulator              []*data.Transaction
 }
 
 // NewTransactionInteractor will create an interactor that extends the proxy functionality with some transaction-oriented functionality
@@ -51,10 +53,8 @@ func NewTransactionInteractor(proxy Proxy, txSigner TxSigner) (*transactionInter
 	}, nil
 }
 
-func (ti *transactionInteractor) SetTimeBetweenBunches(timeBetweenBunches uint32) {
-	ti.mutTimeBetweenBunches.Lock()
-	ti.timeBetweenBunches = timeBetweenBunches
-	ti.mutTimeBetweenBunches.Unlock()
+func (ti *transactionInteractor) SetMillisecondsBetweenBunches(millisecondsBetweenBunches uint32) {
+	atomic.StoreUint32(&ti.millisecondsBetweenBunches, millisecondsBetweenBunches)
 }
 
 // AddTransaction will add the provided transaction in the transaction accumulator
@@ -68,19 +68,13 @@ func (ti *transactionInteractor) AddTransaction(tx *data.Transaction) {
 	ti.mutTxAccumulator.Unlock()
 }
 
-// ClearTxAccumulator will empty the transaction accumulator
-func (ti *transactionInteractor) ClearTxAccumulator() {
+// PopAccumulatedTransactions will return the whole accumulated contents emptying the accumulator
+func (ti *transactionInteractor) PopAccumulatedTransactions() []*data.Transaction {
 	ti.mutTxAccumulator.Lock()
-	ti.txAccumulator = make([]*data.Transaction, 0)
-	ti.mutTxAccumulator.Unlock()
-}
-
-// GetAccumulatorContents will return the accumulator's content as a slice copy
-func (ti *transactionInteractor) GetAccumulatorContents() []*data.Transaction {
-	ti.mutTxAccumulator.RLock()
 	result := make([]*data.Transaction, len(ti.txAccumulator))
 	copy(result, ti.txAccumulator)
-	ti.mutTxAccumulator.RUnlock()
+	ti.txAccumulator = make([]*data.Transaction, 0)
+	ti.mutTxAccumulator.Unlock()
 
 	return result
 }
@@ -134,27 +128,37 @@ func (ti *transactionInteractor) createUnsignedMessage(arg ArgCreateTransaction)
 	return json.Marshal(tx)
 }
 
-func (ti *transactionInteractor) SendTransactionsAsBunch(numberOfBunches int) ([]string, error) {
+func (ti *transactionInteractor) SendTransactionsAsBunch(bunchSize int) ([]string, error) {
+	if bunchSize <= 0 {
+		return nil, ErrInvalidValue
+	}
 
-	bnchSize := len(ti.txAccumulator) / numberOfBunches
-	var bunch []*data.Transaction
-	var msg []string
-	var err error
-	txIndex := 0
+	millisecondsBetweenBunches := atomic.LoadUint32(&ti.millisecondsBetweenBunches)
 
-	for bnchIndex := 0; bnchIndex < numberOfBunches; bnchIndex++ {
-		fmt.Println("Bunch index: ", bnchIndex)
+	transactions := ti.PopAccumulatedTransactions()
+	allHashes := make([]string, 0)
+	for bunchIndex := 0; len(transactions) > 0; bunchIndex++ {
+		var bunch []*data.Transaction
 
-		for index := 0; index < bnchSize; index++ {
-			bunch = append(bunch, ti.txAccumulator[txIndex])
-			txIndex++
+		log.Debug("sending bunch", "index", bunchIndex)
+
+		if len(transactions) > bunchSize {
+			bunch = transactions[0:bunchSize]
+			transactions = transactions[bunchSize:]
+		} else {
+			bunch = transactions
+			transactions = make([]*data.Transaction, 0)
 		}
 
-		msg, err = ti.Proxy.SendTransactions(bunch)
+		hashes, err := ti.Proxy.SendTransactions(bunch)
 		if err != nil {
 			return nil, err
 		}
-		time.Sleep(time.Duration(ti.timeBetweenBunches) * time.Millisecond)
+
+		allHashes = append(allHashes, hashes...)
+
+		time.Sleep(time.Duration(millisecondsBetweenBunches) * time.Millisecond)
 	}
-	return msg, err
+
+	return allHashes, nil
 }

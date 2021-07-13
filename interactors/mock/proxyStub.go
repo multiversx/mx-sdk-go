@@ -13,18 +13,22 @@ type ProxyStub struct {
 	SendTransactionsCalled func(txs []*data.Transaction) ([]string, error)
 }
 
+// GetNetworkConfig -
 func (ps *ProxyStub) GetNetworkConfig() (*data.NetworkConfig, error) {
 	return ps.GetNetworkConfigCalled()
 }
 
+// GetAccount -
 func (ps *ProxyStub) GetAccount(address blockchain.AddressHandler) (*data.Account, error) {
 	return ps.GetAccountCalled(address)
 }
 
+// SendTransaction -
 func (ps *ProxyStub) SendTransaction(tx *data.Transaction) (string, error) {
 	return ps.SendTransactionCalled(tx)
 }
 
+// SendTransactions -
 func (ps *ProxyStub) SendTransactions(txs []*data.Transaction) ([]string, error) {
 	return ps.SendTransactionsCalled(txs)
 }

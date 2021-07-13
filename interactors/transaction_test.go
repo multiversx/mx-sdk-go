@@ -116,7 +116,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 	value := big.NewInt(0)
 	value.SetString("999", 10)
 	nonce := uint64(0)
-	ti.SetTimeBetweenBunches(5)
+	ti.SetMillisecondsBetweenBunches(5)
 	for nonce < 10000 {
 		args := ArgCreateTransaction{
 			nonce,
@@ -140,5 +140,62 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 	assert.Nil(t, err, "Error on sending bunches")
 	fmt.Println("Message: ", msg)
 	assert.NotNil(t, msg)
+}
 
+func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
+	t.Parallel()
+
+	sendCalled := 0
+	proxy := &mock.ProxyStub{
+		SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
+			sendCalled++
+
+			return make([]string, len(txs)), nil
+		},
+	}
+	txSigner := &mock.TxSignerStub{}
+	ti, _ := NewTransactionInteractor(proxy, txSigner)
+
+	ti.AddTransaction(&data.Transaction{})
+	hashes, err := ti.SendTransactionsAsBunch(0)
+	assert.Nil(t, hashes)
+	assert.Equal(t, ErrInvalidValue, err)
+
+	hashes, err = ti.SendTransactionsAsBunch(1)
+	assert.Equal(t, 1, len(hashes))
+	assert.Equal(t, 1, sendCalled)
+	assert.Nil(t, err)
+
+	sendCalled = 0
+	hashes, err = ti.SendTransactionsAsBunch(2)
+	assert.Equal(t, 0, len(hashes))
+	assert.Equal(t, 0, sendCalled)
+	assert.Nil(t, err)
+
+	sendCalled = 0
+	ti.AddTransaction(&data.Transaction{})
+	hashes, err = ti.SendTransactionsAsBunch(2)
+	assert.Equal(t, 1, len(hashes))
+	assert.Equal(t, 1, sendCalled)
+	assert.Nil(t, err)
+
+	sendCalled = 0
+	numTxs := 2
+	for i := 0; i < numTxs; i++ {
+		ti.AddTransaction(&data.Transaction{})
+	}
+	hashes, err = ti.SendTransactionsAsBunch(2)
+	assert.Equal(t, 2, len(hashes))
+	assert.Equal(t, 1, sendCalled)
+	assert.Nil(t, err)
+
+	sendCalled = 0
+	numTxs = 101
+	for i := 0; i < numTxs; i++ {
+		ti.AddTransaction(&data.Transaction{})
+	}
+	hashes, err = ti.SendTransactionsAsBunch(2)
+	assert.Equal(t, 101, len(hashes))
+	assert.Equal(t, 51, sendCalled)
+	assert.Nil(t, err)
 }
