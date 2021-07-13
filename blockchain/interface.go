@@ -2,7 +2,8 @@ package blockchain
 
 import "github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 
-type addressHandler interface {
+//AddressHandler will handle different implementations of an address
+type AddressHandler interface {
 	AddressAsBech32String() string
 	AddressBytes() []byte
 	IsValid() bool
@@ -14,7 +15,7 @@ type ProxyHandler interface {
 	ExecuteVMQuery(vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
 	GetNetworkConfig() (*data.NetworkConfig, error)
 	GetNetworkEconomics() (*data.NetworkEconomics, error)
-	GetAccount(address addressHandler) (*data.Account, error)
+	GetAccount(address AddressHandler) (*data.Account, error)
 	SendTransaction(tx *data.Transaction) (string, error)
 	RequestTransactionCost(tx *data.Transaction) (*data.TxCostResponseData, error)
 	GetTransactionStatus(hash string) (string, error)
