@@ -30,7 +30,7 @@ type addressGenerator struct {
 	hasher         hashing.Hasher
 }
 
-// NewAddressGenerator will creates a address generator instance
+// NewAddressGenerator will create an address generator instance
 func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, error) {
 	if check.IfNil(coordinator) {
 		return nil, ErrNilShardCoordinator
