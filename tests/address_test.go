@@ -45,7 +45,7 @@ func TestGenerateSameDNSAddress(t *testing.T) {
 	ag, err := blockchain.NewAddressGenerator(coord)
 	require.Nil(t, err)
 
-	newDNS, err := ag.CompatibleDNSAddressFromUsername("christopher.elrond")
+	newDNS, err := ag.CompatibleDNSAddressFromUsername("laura.elrond")
 	require.Nil(t, err)
 
 	fmt.Printf("Compatibile DNS address is %s\n", newDNS.AddressAsBech32String())

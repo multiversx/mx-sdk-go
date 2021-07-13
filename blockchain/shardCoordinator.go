@@ -21,7 +21,7 @@ func NewShardCoordinator(numOfShardsWithoutMeta uint32, currentShard uint32) (*s
 	}, nil
 }
 
-func (sc *shardCoordinator) ComputeShardId(address addressHandler) (uint32, error) {
+func (sc *shardCoordinator) ComputeShardId(address AddressHandler) (uint32, error) {
 	if check.IfNil(address) {
 		return 0, ErrNilAddress
 	}
