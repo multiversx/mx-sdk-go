@@ -1,17 +1,19 @@
 package main
 
 import (
-	"fmt"
-
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
 )
 
+var log = logger.GetOrCreate("examples/examplesVMQuery")
+
 func main() {
-	ep := blockchain.NewElrondProxy("http://localhost:8079", nil)
+	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
 
 	vmRequest := &data.VmValueRequest{
-		Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
+		Address:    "erd1qqqqqqqqqqqqqpgqp699jngundfqw07d8jzkepucvpzush6k3wvqyc44rx",
 		FuncName:   "version",
 		CallerAddr: "erd1rh5ws22jxm9pe7dtvhfy6j3uttuupkepferdwtmslms5fydtrh5sx3xr8r",
 		CallValue:  "",
@@ -19,10 +21,10 @@ func main() {
 	}
 	response, err := ep.ExecuteVMQuery(vmRequest)
 	if err != nil {
-		fmt.Printf("Error executing VMQuery: %s\n\r", err)
+		log.Error("error executing vm query", "error", err)
 		return
 	}
 
 	contractVersion := string(response.Data.ReturnData[0])
-	fmt.Printf("Contract version: %s\n", contractVersion)
+	log.Info("response", "contract version", contractVersion)
 }

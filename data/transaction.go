@@ -15,7 +15,7 @@ type SendTransactionResponse struct {
 type SendTransactionsResponse struct {
 	Data struct {
 		NumOfSentTxs int            `json:"numOfSentTxs"`
-		TxHashes     map[int]string `json:"txHashes"`
+		TxsHashes    map[int]string `json:"txsHashes"`
 	} `json:"data"`
 	Error string `json:"error"`
 	Code  string `json:"code"`
@@ -88,4 +88,19 @@ type ResponseTxCost struct {
 	Data  TxCostResponseData `json:"data"`
 	Error string             `json:"error"`
 	Code  string             `json:"code"`
+}
+
+// ArgCreateTransaction will hold the transaction fields
+type ArgCreateTransaction struct {
+	Nonce     uint64
+	Value     string
+	RcvAddr   string
+	SndAddr   string
+	GasPrice  uint64
+	GasLimit  uint64
+	Data      []byte
+	Signature string
+	ChainID   string
+	Version   uint32
+	Options   uint32
 }

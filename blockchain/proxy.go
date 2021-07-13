@@ -118,6 +118,38 @@ func (ep *elrondProxy) GetNetworkEconomics() (*data.NetworkEconomics, error) {
 	return response.Data.Economics, nil
 }
 
+// GetDefaultTransactionArguments will prepare the transaction creation argument by querying the account's info
+func (ep *elrondProxy) GetDefaultTransactionArguments(
+	address AddressHandler,
+	networkConfigs *data.NetworkConfig,
+) (data.ArgCreateTransaction, error) {
+	if networkConfigs == nil {
+		return data.ArgCreateTransaction{}, ErrNilNetworkConfigs
+	}
+	if check.IfNil(address) {
+		return data.ArgCreateTransaction{}, ErrNilAddress
+	}
+
+	account, err := ep.GetAccount(address)
+	if err != nil {
+		return data.ArgCreateTransaction{}, err
+	}
+
+	return data.ArgCreateTransaction{
+		Nonce:     account.Nonce,
+		Value:     "",
+		RcvAddr:   "",
+		SndAddr:   address.AddressAsBech32String(),
+		GasPrice:  networkConfigs.MinGasPrice,
+		GasLimit:  networkConfigs.MinGasLimit,
+		Data:      nil,
+		Signature: "",
+		ChainID:   networkConfigs.ChainID,
+		Version:   networkConfigs.MinTransactionVersion,
+		Options:   0,
+	}, nil
+}
+
 // GetAccount retrieves an account info from the network (nonce, balance)
 func (ep *elrondProxy) GetAccount(address AddressHandler) (*data.Account, error) {
 	if check.IfNil(address) {
@@ -191,9 +223,9 @@ func (ep *elrondProxy) SendTransactions(txs []*data.Transaction) ([]string, erro
 }
 
 func (ep *elrondProxy) postProcessSendMultipleTxsResult(response *data.SendTransactionsResponse) ([]string, error) {
-	txHashes := make([]string, 0, len(response.Data.TxHashes))
-	indexes := make([]int, 0, len(response.Data.TxHashes))
-	for index := range response.Data.TxHashes {
+	txHashes := make([]string, 0, len(response.Data.TxsHashes))
+	indexes := make([]int, 0, len(response.Data.TxsHashes))
+	for index := range response.Data.TxsHashes {
 		indexes = append(indexes, index)
 	}
 
@@ -202,7 +234,7 @@ func (ep *elrondProxy) postProcessSendMultipleTxsResult(response *data.SendTrans
 	})
 
 	for _, idx := range indexes {
-		txHashes = append(txHashes, response.Data.TxHashes[idx])
+		txHashes = append(txHashes, response.Data.TxsHashes[idx])
 	}
 
 	return txHashes, nil

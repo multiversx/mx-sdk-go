@@ -9,26 +9,15 @@ import (
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go/core/check"
+	"github.com/ElrondNetwork/elrond-go/hashing/keccak"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
 var log = logger.GetOrCreate("interactors")
 
-// ArgCreateTransaction will hold the transaction fields
-type ArgCreateTransaction struct {
-	Nonce     uint64
-	Value     string
-	RcvAddr   string
-	SndAddr   string
-	GasPrice  uint64
-	GasLimit  uint64
-	Data      []byte
-	Signature string
-	ChainID   string
-	Version   uint32
-	Options   uint32
-}
+const defaultMillisecondsBetweenBunches = 1000 //1second
+var txHasher = &keccak.Keccak{}
 
 type transactionInteractor struct {
 	Proxy
@@ -48,8 +37,9 @@ func NewTransactionInteractor(proxy Proxy, txSigner TxSigner) (*transactionInter
 	}
 
 	return &transactionInteractor{
-		Proxy:    proxy,
-		TxSigner: txSigner,
+		Proxy:                      proxy,
+		TxSigner:                   txSigner,
+		millisecondsBetweenBunches: defaultMillisecondsBetweenBunches,
 	}, nil
 }
 
@@ -79,8 +69,8 @@ func (ti *transactionInteractor) PopAccumulatedTransactions() []*data.Transactio
 	return result
 }
 
-// CreateTransaction assembles a transaction from the provided arguments
-func (ti *transactionInteractor) CreateTransaction(arg ArgCreateTransaction) *data.Transaction {
+// createTransaction assembles a transaction from the provided arguments
+func (ti *transactionInteractor) createTransaction(arg data.ArgCreateTransaction) *data.Transaction {
 	return &data.Transaction{
 		Nonce:     arg.Nonce,
 		Value:     arg.Value,
@@ -96,34 +86,44 @@ func (ti *transactionInteractor) CreateTransaction(arg ArgCreateTransaction) *da
 	}
 }
 
-// ApplySignatureAndSender will apply the corresponding sender and compute the signature field upon the provided argument
-func (ti *transactionInteractor) ApplySignatureAndSender(skBytes []byte, arg ArgCreateTransaction) (ArgCreateTransaction, error) {
+// ApplySignatureAndGenerateTransaction will apply the corresponding sender and compute the signature field and
+// generate the transaction instance
+func (ti *transactionInteractor) ApplySignatureAndGenerateTransaction(
+	skBytes []byte,
+	arg data.ArgCreateTransaction,
+) (*data.Transaction, error) {
+
 	pkBytes, err := ti.TxSigner.GeneratePkBytes(skBytes)
 	if err != nil {
-		return ArgCreateTransaction{}, err
+		return nil, err
 	}
 
-	copyArg := arg
-	copyArg.Signature = ""
-	copyArg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
+	arg.Signature = ""
+	arg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
 
-	unsignedMessaged, err := ti.createUnsignedMessage(copyArg)
+	unsignedMessaged, err := ti.createUnsignedMessage(arg)
 	if err != nil {
-		return ArgCreateTransaction{}, err
+		return nil, err
+	}
+
+	shouldSignOnTxHash := arg.Version >= 2 && arg.Options&1 > 0
+	if shouldSignOnTxHash {
+		log.Debug("signing the transaction using the hash of the message")
+		unsignedMessaged = txHasher.Compute(string(unsignedMessaged))
 	}
 
 	signature, err := ti.TxSigner.SignMessage(unsignedMessaged, skBytes)
 	if err != nil {
-		return ArgCreateTransaction{}, err
+		return nil, err
 	}
 
-	copyArg.Signature = hex.EncodeToString(signature)
+	arg.Signature = hex.EncodeToString(signature)
 
-	return copyArg, nil
+	return ti.createTransaction(arg), nil
 }
 
-func (ti *transactionInteractor) createUnsignedMessage(arg ArgCreateTransaction) ([]byte, error) {
-	tx := ti.CreateTransaction(arg)
+func (ti *transactionInteractor) createUnsignedMessage(arg data.ArgCreateTransaction) ([]byte, error) {
+	tx := ti.createTransaction(arg)
 
 	return json.Marshal(tx)
 }

@@ -2,45 +2,35 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"time"
 
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
 )
 
+var log = logger.GetOrCreate("examples/examplesBlock")
+
 func main() {
-	ep := blockchain.NewElrondProxy("http://localhost:8079", nil)
+	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
 
 	// Get latest hyperblock (metachain) nonce
 	nonce, err := ep.GetLatestHyperblockNonce()
 	if err != nil {
-		fmt.Printf("Error retrieving latest block nonce: %s\n\r", err)
+		log.Error("error retrieving latest block nonce", "error", err)
 		return
 	}
-	fmt.Printf("Latest hyperblock nonce: %v\n\r", nonce)
+	log.Info("latest hyperblock", "nonce", nonce)
 
-	go func() {
-		for {
-			// Get block info
-			block, err := ep.GetHyperblockByNonce(nonce)
-			if err != nil {
-				fmt.Printf("Error retrieving hyperblock: %s\n\r", err)
-				return
-			}
-			data, err := json.MarshalIndent(block, "", "    ")
-			if err != nil {
-				fmt.Printf("Error marshalizing block: %s\n\r", err)
-				return
-			}
-			fmt.Println(string(data))
-			nonce--
-			if nonce == 0 {
-				break
-			}
-			fmt.Println("Press enter to exit...")
-			time.Sleep(time.Second)
-		}
-	}()
-
-	_, _ = fmt.Scanln()
+	// Get block info
+	block, errGet := ep.GetHyperblockByNonce(nonce)
+	if errGet != nil {
+		log.Error("error retrieving hyperblock", "error", err)
+		return
+	}
+	data, errMarshal := json.MarshalIndent(block, "", "    ")
+	if errMarshal != nil {
+		log.Error("error serializing block", "error", errMarshal)
+		return
+	}
+	log.Info("\n" + string(data))
 }

@@ -1,86 +1,87 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"time"
-
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
-func main() {
-	ep := blockchain.NewElrondProxy("http://localhost:8079", nil)
+var log = logger.GetOrCreate("examples/examplesTransaction")
 
-	// Load a wallet .PEM file
-	privateKey, err := erdgo.LoadPrivateKeyFromPemFile("../../tests/alice.pem")
+func main() {
+	_ = logger.SetLogLevel("*:DEBUG")
+
+	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
+
+	privateKey, err := erdgo.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))
 	if err != nil {
-		fmt.Printf("Unable to load alice.pem: %s\n\r", err)
+		log.Error("unable to load alice.pem", "error", err)
 		return
 	}
 	// Generate address from private key
 	addressString, err := erdgo.GetAddressFromPrivateKey(privateKey)
 	if err != nil {
-		fmt.Printf("Error generating address: %s\n\r", err)
+		log.Error("unable to load the address from the private key", "error", err)
 		return
 	}
 
 	address, err := data.NewAddressFromBech32String(addressString)
 	if err != nil {
-		fmt.Printf("Error retrieving account info: %s\n\r", err)
+		log.Error("error converting the address string", "error", err)
 		return
 	}
 
-	// Get account info
-	account, err := ep.GetAccount(address)
+	//netConfigs can be used multiple times (eg. when sending multiple transactions) as to improve the
+	//responsiveness of the system
+	netConfigs, err := ep.GetNetworkConfig()
 	if err != nil {
-		fmt.Printf("Error retrieving account info: %s\n\r", err)
-		return
-	}
-	// Get network configuration
-	networkConfig, err := ep.GetNetworkConfig()
-	if err != nil {
-		fmt.Printf("Error retrieving network config: %s\n\r", err)
+		log.Error("unable to get the network configs", "error", err)
 		return
 	}
 
-	// Create a transaction
-	tx := &data.Transaction{
-		ChainID:  networkConfig.ChainID,
-		Version:  networkConfig.MinTransactionVersion,
-		GasLimit: networkConfig.MinGasLimit,
-		GasPrice: networkConfig.MinGasPrice,
-		Nonce:    account.Nonce,
-		SndAddr:  address.AddressAsBech32String(),
-		RcvAddr:  address.AddressAsBech32String(),
-		Value:    "0",
-	}
-	// Sign the transaction
-	err = erdgo.SignTransaction(tx, privateKey)
+	transactionArguments, err := ep.GetDefaultTransactionArguments(address, netConfigs)
 	if err != nil {
-		fmt.Printf("Error signing transaction: %s\n\r", err)
+		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return
 	}
-	// Broadcast the transaction
-	hash, err := ep.SendTransaction(tx)
+
+	transactionArguments.RcvAddr = addressString       //send to self
+	transactionArguments.Value = "1000000000000000000" //1EGLD
+
+	ti, err := interactors.NewTransactionInteractor(ep, blockchain.NewTxSigner())
 	if err != nil {
-		fmt.Printf("Error sending transaction: %s\n\r", err)
+		log.Error("error creating transaction interactor", "error", err)
 		return
 	}
-	fmt.Printf("Tx hash: %s\n\r", hash)
-	fmt.Println("Waiting 30s for the transaction to be notarized...")
-	time.Sleep(time.Second * 30)
-	// Get transaction info
-	txInfo, err := ep.GetTransactionInfo(hash)
+
+	tx, err := ti.ApplySignatureAndGenerateTransaction(privateKey, transactionArguments)
 	if err != nil {
-		fmt.Printf("Error retrieving transaction info: %s\n\r", err)
+		log.Error("error creating transaction", "error", err)
 		return
 	}
-	buff, err := json.MarshalIndent(txInfo, "", "    ")
+	ti.AddTransaction(tx)
+
+	//a new transaction with the signature done on the hash of the transaction
+	//it's ok to reuse the arguments here, they will be copied, anyway
+	transactionArguments.Version = 2
+	transactionArguments.Options = 1
+	transactionArguments.Nonce++ //do not forget to increment the nonce, otherwise you will get 2 transactions
+	// with the same nonce (only one of them will get executed)
+	txSigOnHash, err := ti.ApplySignatureAndGenerateTransaction(privateKey, transactionArguments)
 	if err != nil {
-		fmt.Printf("Error marshalizing tx info: %s\n\r", err)
+		log.Error("error creating transaction", "error", err)
 		return
 	}
-	fmt.Println(string(buff))
+	ti.AddTransaction(txSigOnHash)
+
+	hashes, err := ti.SendTransactionsAsBunch(100)
+	if err != nil {
+		log.Error("error sending transaction", "error", err)
+		return
+	}
+
+	log.Info("transactions sent", "hashes", hashes)
 }
