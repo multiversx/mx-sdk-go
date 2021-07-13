@@ -16,6 +16,7 @@ import (
 var log = logger.GetOrCreate("interactors")
 
 const defaultTimeBetweenBunches = time.Second
+
 var txHasher = &keccak.Keccak{}
 
 type transactionInteractor struct {
@@ -111,7 +112,7 @@ func (ti *transactionInteractor) ApplySignatureAndGenerateTransaction(
 	shouldSignOnTxHash := arg.Version >= 2 && arg.Options&1 > 0
 	if shouldSignOnTxHash {
 		log.Debug("signing the transaction using the hash of the message")
-		unsignedMessaged = txHasher.Compute(string(unsignedMessaged))
+		unsignedMessage = txHasher.Compute(string(unsignedMessage))
 	}
 
 	signature, err := ti.TxSigner.SignMessage(unsignedMessage, skBytes)
