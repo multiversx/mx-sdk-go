@@ -10,11 +10,12 @@ import (
 var suite = ed25519.NewEd25519()
 var singleSigner = &singlesig.Ed25519Signer{}
 
+// txSigner contains the primitives used to correctly sign a transaction
 type txSigner struct {
 	keyGen crypto.KeyGenerator
 }
 
-// NewTxSigner contains the primitives used to correctly sign a transaction
+// NewTxSigner will create a new instance of txSigner
 func NewTxSigner() *txSigner {
 	return &txSigner{
 		keyGen: signing.NewKeyGenerator(suite),
