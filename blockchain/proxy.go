@@ -202,7 +202,7 @@ func (ep *elrondProxy) postProcessSendMultipleTxsResult(response *data.SendTrans
 	})
 
 	for _, idx := range indexes {
-		txHashes = append(txHashes, txHashes[idx])
+		txHashes = append(txHashes, response.Data.TxHashes[idx])
 	}
 
 	return txHashes, nil
