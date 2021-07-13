@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
@@ -30,12 +29,15 @@ type ArgCreateTransaction struct {
 	Options   uint32
 }
 
+const defaultTimeBetweenBunches = time.Second
+
 type transactionInteractor struct {
 	Proxy
 	TxSigner
-	mutTxAccumulator           sync.RWMutex
-	millisecondsBetweenBunches uint32
-	txAccumulator              []*data.Transaction
+	mutTxAccumulator      sync.RWMutex
+	mutTimeBetweenBunches sync.RWMutex
+	timeBetweenBunches    time.Duration
+	txAccumulator         []*data.Transaction
 }
 
 // NewTransactionInteractor will create an interactor that extends the proxy functionality with some transaction-oriented functionality
@@ -48,13 +50,16 @@ func NewTransactionInteractor(proxy Proxy, txSigner TxSigner) (*transactionInter
 	}
 
 	return &transactionInteractor{
-		Proxy:    proxy,
-		TxSigner: txSigner,
+		Proxy:              proxy,
+		TxSigner:           txSigner,
+		timeBetweenBunches: defaultTimeBetweenBunches,
 	}, nil
 }
 
-func (ti *transactionInteractor) SetMillisecondsBetweenBunches(millisecondsBetweenBunches uint32) {
-	atomic.StoreUint32(&ti.millisecondsBetweenBunches, millisecondsBetweenBunches)
+func (ti *transactionInteractor) SetTimeBetweenBunches(timeBetweenBunches time.Duration) {
+	ti.mutTimeBetweenBunches.Lock()
+	ti.timeBetweenBunches = timeBetweenBunches
+	ti.mutTimeBetweenBunches.Unlock()
 }
 
 // AddTransaction will add the provided transaction in the transaction accumulator
@@ -107,12 +112,12 @@ func (ti *transactionInteractor) ApplySignatureAndSender(skBytes []byte, arg Arg
 	copyArg.Signature = ""
 	copyArg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
 
-	unsignedMessaged, err := ti.createUnsignedMessage(copyArg)
+	unsignedMessage, err := ti.createUnsignedMessage(copyArg)
 	if err != nil {
 		return ArgCreateTransaction{}, err
 	}
 
-	signature, err := ti.TxSigner.SignMessage(unsignedMessaged, skBytes)
+	signature, err := ti.TxSigner.SignMessage(unsignedMessage, skBytes)
 	if err != nil {
 		return ArgCreateTransaction{}, err
 	}
@@ -123,6 +128,7 @@ func (ti *transactionInteractor) ApplySignatureAndSender(skBytes []byte, arg Arg
 }
 
 func (ti *transactionInteractor) createUnsignedMessage(arg ArgCreateTransaction) ([]byte, error) {
+	arg.Signature = ""
 	tx := ti.CreateTransaction(arg)
 
 	return json.Marshal(tx)
@@ -133,7 +139,9 @@ func (ti *transactionInteractor) SendTransactionsAsBunch(bunchSize int) ([]strin
 		return nil, ErrInvalidValue
 	}
 
-	millisecondsBetweenBunches := atomic.LoadUint32(&ti.millisecondsBetweenBunches)
+	ti.mutTimeBetweenBunches.RLock()
+	timeBetweenBunches := ti.timeBetweenBunches
+	ti.mutTimeBetweenBunches.RUnlock()
 
 	transactions := ti.PopAccumulatedTransactions()
 	allHashes := make([]string, 0)
@@ -157,7 +165,7 @@ func (ti *transactionInteractor) SendTransactionsAsBunch(bunchSize int) ([]strin
 
 		allHashes = append(allHashes, hashes...)
 
-		time.Sleep(time.Duration(millisecondsBetweenBunches) * time.Millisecond)
+		time.Sleep(timeBetweenBunches)
 	}
 
 	return allHashes, nil

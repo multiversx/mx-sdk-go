@@ -49,5 +49,5 @@ func TestGenerateSameDNSAddress(t *testing.T) {
 	require.Nil(t, err)
 
 	fmt.Printf("Compatibile DNS address is %s\n", newDNS.AddressAsBech32String())
-	assert.Equal(t, "erd1qqqqqqqqqqqqqpgqp64e3pqxwwyy93t5wp2w2jnlf4lfx3ljqqgsh8qwvz", newDNS.AddressAsBech32String())
+	assert.Equal(t, "erd1qqqqqqqqqqqqqpgqvrsdh798pvd4x09x0argyscxc9h7lzfhqz4sttlatg", newDNS.AddressAsBech32String())
 }

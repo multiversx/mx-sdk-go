@@ -2,9 +2,9 @@ package interactors
 
 import (
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -26,21 +26,15 @@ func TestTransactionInteractor_ApplySignatureAndSenderWithRealTxSigner(t *testin
 	assert.Nil(t, err)
 	assert.NotNil(t, ti)
 
-	value := big.NewInt(0)
-	value.SetString("999", 10)
-
+	value := big.NewInt(999)
 	args := ArgCreateTransaction{
-		0,
-		value.String(),
-		"erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
-		"",
-		10,
-		100000,
-		[]byte(""),
-		"",
-		"integration test chain id",
-		uint32(1),
-		0,
+		Value:    value.String(),
+		RcvAddr:  "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
+		GasPrice: 10,
+		GasLimit: 100000,
+		Data:     []byte(""),
+		ChainID:  "integration test chain id",
+		Version:  uint32(1),
 	}
 
 	args, err = ti.ApplySignatureAndSender(sk, args)
@@ -49,7 +43,6 @@ func TestTransactionInteractor_ApplySignatureAndSenderWithRealTxSigner(t *testin
 	assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
 	assert.Equal(t, "80e1b5476c5ea9567614d9c364e1a7380b7990b53e7b6fd8431bf8536d174c8b3e73cc354b783a03e5ae0a53b128504a6bcf32c3b9bbc06f284afe1fac179e0d",
 		tx.Signature)
-
 }
 
 func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing.T) {
@@ -70,29 +63,24 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 	ti, err := NewTransactionInteractor(proxy, signer)
 	assert.Nil(t, err, "Error on transaction interactor constructor")
 
-	value := big.NewInt(0)
-	value.SetString("999", 10)
+	value := big.NewInt(999)
 	args := ArgCreateTransaction{
-		0,
-		value.String(),
-		"erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
-		"erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
-		10,
-		100000,
-		[]byte(""),
-		"394c6f1375f6511dd281465fb9dd7caf013b6512a8f8ac278bbe2151cbded89da28bd539bc1c1c7884835742712c826900c092edb24ac02de9015f0f494f6c0a",
-		"integration test chain id",
-		uint32(1),
-		0,
+		Value:     value.String(),
+		RcvAddr:   "erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
+		SndAddr:   "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
+		GasPrice:  10,
+		GasLimit:  100000,
+		Data:      []byte(""),
+		Signature: "394c6f1375f6511dd281465fb9dd7caf013b6512a8f8ac278bbe2151cbded89da28bd539bc1c1c7884835742712c826900c092edb24ac02de9015f0f494f6c0a",
+		ChainID:   "integration test chain id",
+		Version:   uint32(1),
 	}
 	tx := ti.CreateTransaction(args)
 	ti.AddTransaction(tx)
 
 	msg, err := ti.SendTransactionsAsBunch(1)
-	assert.Nil(t, err, "Error on sending bunches")
-	fmt.Println("Message: ", msg)
+	assert.Nil(t, err)
 	assert.NotNil(t, msg)
-
 }
 
 func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *testing.T) {
@@ -113,23 +101,21 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 	ti, err := NewTransactionInteractor(proxy, signer)
 	assert.Nil(t, err, "Error on transaction interactor constructor")
 
-	value := big.NewInt(0)
-	value.SetString("999", 10)
+	value := big.NewInt(999)
 	nonce := uint64(0)
-	ti.SetMillisecondsBetweenBunches(5)
+	ti.SetTimeBetweenBunches(time.Millisecond)
 	for nonce < 10000 {
 		args := ArgCreateTransaction{
-			nonce,
-			value.String(),
-			"erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
-			"erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
-			10,
-			100000,
-			[]byte(""),
-			"394c6f1375f6511dd281465fb9dd7caf013b6512a8f8ac278bbe2151cbded89da28bd539bc1c1c7884835742712c826900c092edb24ac02de9015f0f494f6c0a",
-			"integration test chain id",
-			uint32(1),
-			0,
+			Nonce:     nonce,
+			Value:     value.String(),
+			RcvAddr:   "erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
+			SndAddr:   "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
+			GasPrice:  10,
+			GasLimit:  100000,
+			Data:      []byte(""),
+			Signature: "394c6f1375f6511dd281465fb9dd7caf013b6512a8f8ac278bbe2151cbded89da28bd539bc1c1c7884835742712c826900c092edb24ac02de9015f0f494f6c0a",
+			ChainID:   "integration test chain id",
+			Version:   uint32(1),
 		}
 		tx := ti.CreateTransaction(args)
 		ti.AddTransaction(tx)
@@ -137,8 +123,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 	}
 
 	msg, err := ti.SendTransactionsAsBunch(1000)
-	assert.Nil(t, err, "Error on sending bunches")
-	fmt.Println("Message: ", msg)
+	assert.Nil(t, err)
 	assert.NotNil(t, msg)
 }
 
@@ -155,6 +140,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 	}
 	txSigner := &mock.TxSignerStub{}
 	ti, _ := NewTransactionInteractor(proxy, txSigner)
+	ti.SetTimeBetweenBunches(time.Millisecond)
 
 	ti.AddTransaction(&data.Transaction{})
 	hashes, err := ti.SendTransactionsAsBunch(0)
@@ -185,7 +171,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 		ti.AddTransaction(&data.Transaction{})
 	}
 	hashes, err = ti.SendTransactionsAsBunch(2)
-	assert.Equal(t, 2, len(hashes))
+	assert.Equal(t, numTxs, len(hashes))
 	assert.Equal(t, 1, sendCalled)
 	assert.Nil(t, err)
 
@@ -195,7 +181,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 		ti.AddTransaction(&data.Transaction{})
 	}
 	hashes, err = ti.SendTransactionsAsBunch(2)
-	assert.Equal(t, 101, len(hashes))
+	assert.Equal(t, numTxs, len(hashes))
 	assert.Equal(t, 51, sendCalled)
 	assert.Nil(t, err)
 }
