@@ -10,6 +10,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors/mock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTransactionInteractor_ApplySignatureAndSenderWithRealTxSigner(t *testing.T) {
@@ -27,7 +28,7 @@ func TestTransactionInteractor_ApplySignatureAndSenderWithRealTxSigner(t *testin
 	assert.NotNil(t, ti)
 
 	value := big.NewInt(999)
-	args := ArgCreateTransaction{
+	args := data.ArgCreateTransaction{
 		Value:    value.String(),
 		RcvAddr:  "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
 		GasPrice: 10,
@@ -37,8 +38,8 @@ func TestTransactionInteractor_ApplySignatureAndSenderWithRealTxSigner(t *testin
 		Version:  uint32(1),
 	}
 
-	args, err = ti.ApplySignatureAndSender(sk, args)
-	tx := ti.CreateTransaction(args)
+	tx, err := ti.ApplySignatureAndGenerateTransaction(sk, args)
+	require.Nil(t, err)
 
 	assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
 	assert.Equal(t, "80e1b5476c5ea9567614d9c364e1a7380b7990b53e7b6fd8431bf8536d174c8b3e73cc354b783a03e5ae0a53b128504a6bcf32c3b9bbc06f284afe1fac179e0d",
@@ -64,7 +65,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 	assert.Nil(t, err, "Error on transaction interactor constructor")
 
 	value := big.NewInt(999)
-	args := ArgCreateTransaction{
+	args := data.ArgCreateTransaction{
 		Value:     value.String(),
 		RcvAddr:   "erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
 		SndAddr:   "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
@@ -75,7 +76,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 		ChainID:   "integration test chain id",
 		Version:   uint32(1),
 	}
-	tx := ti.CreateTransaction(args)
+	tx := ti.createTransaction(args)
 	ti.AddTransaction(tx)
 
 	msg, err := ti.SendTransactionsAsBunch(1)
@@ -105,7 +106,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 	nonce := uint64(0)
 	ti.SetTimeBetweenBunches(time.Millisecond)
 	for nonce < 10000 {
-		args := ArgCreateTransaction{
+		args := data.ArgCreateTransaction{
 			Nonce:     nonce,
 			Value:     value.String(),
 			RcvAddr:   "erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
@@ -117,7 +118,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 			ChainID:   "integration test chain id",
 			Version:   uint32(1),
 		}
-		tx := ti.CreateTransaction(args)
+		tx := ti.createTransaction(args)
 		ti.AddTransaction(tx)
 		nonce++
 	}

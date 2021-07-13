@@ -3,38 +3,47 @@ package main
 import (
 	"fmt"
 
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
 )
 
+var log = logger.GetOrCreate("examples/examplesAccount")
+
 func main() {
-	ep := blockchain.NewElrondProxy("http://localhost:8079", nil)
+	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
 
 	// Retrieving network configuration parameters
 	networkConfig, err := ep.GetNetworkConfig()
 	if err != nil {
-		fmt.Printf("Error getting network config: %s\n\r", err)
+		log.Error("error getting network config", "error", err)
 		return
 	}
 
-	address, err := data.NewAddressFromBech32String("erd18yddfyzyskajjteyj90ueackpcsp9set2ma8vp54cj4zh54hjussukc6mu")
+	addressAsBech32 := "erd1adfmxhyczrl2t97yx92v5nywqyse0c7qh4xs0p4artg2utnu90pspgvqty"
+	address, err := data.NewAddressFromBech32String(addressAsBech32)
 	if err != nil {
-		fmt.Printf("Error retrieving account info: %s\n\r", err)
+		log.Error("invalid address", "error", err)
 		return
 	}
 
 	// Retrieve account info from the network (balance, nonce)
 	accountInfo, err := ep.GetAccount(address)
 	if err != nil {
-		fmt.Printf("Error retrieving account info: %s\n\r", err)
+		log.Error("error retrieving account info", "error", err)
 		return
 	}
 	floatBalance, err := accountInfo.GetBalance(networkConfig.Denomination)
 	if err != nil {
-		fmt.Printf("Unable to compute balance: %s\n\r", err)
+		log.Error("unable to compute balance", "error", err)
 		return
 	}
 
-	fmt.Printf("Address: %s\n\rBalance: %.6f eGLD\n\rNonce: %v\n\r",
-		address, floatBalance, accountInfo.Nonce)
+	log.Info("account details",
+		"address", addressAsBech32,
+		"nonce", accountInfo.Nonce,
+		"balance as float", fmt.Sprintf("%.6f", floatBalance),
+		"balance as int", accountInfo.Balance,
+	)
 }

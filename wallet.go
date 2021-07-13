@@ -123,7 +123,13 @@ func LoadPrivateKeyFromPemFile(filename string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	blk, _ := pem.Decode(data)
+
+	return LoadPrivateKeyFromPemData(data)
+}
+
+// LoadPrivateKeyFromPemData returns the private key from decoded pem data
+func LoadPrivateKeyFromPemData(buff []byte) ([]byte, error) {
+	blk, _ := pem.Decode(buff)
 	if blk == nil {
 		return nil, errInvalidPemFile
 	}
