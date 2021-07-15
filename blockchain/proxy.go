@@ -25,8 +25,8 @@ const (
 	sendMultipleTransactionsEndpoint = "transaction/send-multiple"
 	getTransactionStatusEndpoint     = "transaction/%s/status"
 	getTransactionInfoEndpoint       = "transaction/%s"
-	getHyperblockByNonceEndpoint     = "hyperblock/by-nonce/%v"
-	getHyperblockByHashEndpoint      = "hyperblock/by-hash/%s"
+	getHyperBlockByNonceEndpoint     = "hyperblock/by-nonce/%v"
+	getHyperBlockByHashEndpoint      = "hyperblock/by-hash/%s"
 	getNetworkStatusEndpoint         = "network/status/%v"
 	withResultsQueryParam            = "?withResults=true"
 	vmValuesEndpoint                 = "vm-values/query"
@@ -137,17 +137,18 @@ func (ep *elrondProxy) GetDefaultTransactionArguments(
 	}
 
 	return data.ArgCreateTransaction{
-		Nonce:     account.Nonce,
-		Value:     "",
-		RcvAddr:   "",
-		SndAddr:   address.AddressAsBech32String(),
-		GasPrice:  networkConfigs.MinGasPrice,
-		GasLimit:  networkConfigs.MinGasLimit,
-		Data:      nil,
-		Signature: "",
-		ChainID:   networkConfigs.ChainID,
-		Version:   networkConfigs.MinTransactionVersion,
-		Options:   0,
+		Nonce:            account.Nonce,
+		Value:            "",
+		RcvAddr:          "",
+		SndAddr:          address.AddressAsBech32String(),
+		GasPrice:         networkConfigs.MinGasPrice,
+		GasLimit:         networkConfigs.MinGasLimit,
+		Data:             nil,
+		Signature:        "",
+		ChainID:          networkConfigs.ChainID,
+		Version:          networkConfigs.MinTransactionVersion,
+		Options:          0,
+		AvailableBalance: account.Balance,
 	}, nil
 }
 
@@ -318,8 +319,8 @@ func (ep *elrondProxy) RequestTransactionCost(tx *data.Transaction) (*data.TxCos
 	return &response.Data, nil
 }
 
-// GetLatestHyperblockNonce retrieves the latest hyperblock (metachain) nonce from the network
-func (ep *elrondProxy) GetLatestHyperblockNonce() (uint64, error) {
+// GetLatestHyperBlockNonce retrieves the latest hyper block (metachain) nonce from the network
+func (ep *elrondProxy) GetLatestHyperBlockNonce() (uint64, error) {
 	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, core.MetachainShardId)
 	buff, err := ep.GetHTTP(endpoint)
 	if err != nil {
@@ -338,27 +339,27 @@ func (ep *elrondProxy) GetLatestHyperblockNonce() (uint64, error) {
 	return response.Data.Status.Nonce, nil
 }
 
-// GetHyperblockByNonce retrieves a hyperblock's info by nonce from the network
-func (ep *elrondProxy) GetHyperblockByNonce(nonce uint64) (*data.Hyperblock, error) {
-	endpoint := fmt.Sprintf(getHyperblockByNonceEndpoint, nonce)
+// GetHyperBlockByNonce retrieves a hyper block's info by nonce from the network
+func (ep *elrondProxy) GetHyperBlockByNonce(nonce uint64) (*data.HyperBlock, error) {
+	endpoint := fmt.Sprintf(getHyperBlockByNonceEndpoint, nonce)
 
-	return ep.getHyperblock(endpoint)
+	return ep.getHyperBlock(endpoint)
 }
 
-// GetHyperblockByHash retrieves a hyperblock's info by hash from the network
-func (ep *elrondProxy) GetHyperblockByHash(hash string) (*data.Hyperblock, error) {
-	endpoint := fmt.Sprintf(getHyperblockByHashEndpoint, hash)
+// GetHyperBlockByHash retrieves a hyper block's info by hash from the network
+func (ep *elrondProxy) GetHyperBlockByHash(hash string) (*data.HyperBlock, error) {
+	endpoint := fmt.Sprintf(getHyperBlockByHashEndpoint, hash)
 
-	return ep.getHyperblock(endpoint)
+	return ep.getHyperBlock(endpoint)
 }
 
-func (ep *elrondProxy) getHyperblock(endpoint string) (*data.Hyperblock, error) {
+func (ep *elrondProxy) getHyperBlock(endpoint string) (*data.HyperBlock, error) {
 	buff, err := ep.GetHTTP(endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	response := &data.HyperblockResponse{}
+	response := &data.HyperBlockResponse{}
 	err = json.Unmarshal(buff, response)
 	if err != nil {
 		return nil, err
@@ -367,7 +368,7 @@ func (ep *elrondProxy) getHyperblock(endpoint string) (*data.Hyperblock, error) 
 		return nil, errors.New(response.Error)
 	}
 
-	return &response.Data.Hyperblock, nil
+	return &response.Data.HyperBlock, nil
 }
 
 func (ep *elrondProxy) GetHTTP(endpoint string) ([]byte, error) {
