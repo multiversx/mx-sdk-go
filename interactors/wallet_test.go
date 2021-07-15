@@ -40,7 +40,7 @@ func TestWallet_GetAddressFromMnemonicWalletIntegration(t *testing.T) {
 	t.Parallel()
 
 	w := NewWallet()
-	mnemonic := data.Mnemonic("seven artwork since quick mandate pave burst oval awesome mask together glare slide web crime grief small learn segment correct ball oppose tank glue")
+	mnemonic := data.Mnemonic("bid involve twenty cave offer life hello three walnut travel rare bike edit canyon ice brave theme furnace cotton swing wear bread fine latin")
 	privKey := w.GetPrivateKeyFromMnemonic(mnemonic, 0, 0)
 	fmt.Println(hex.EncodeToString(privKey))
 	address, err := w.GetAddressFromPrivateKey(privKey)
