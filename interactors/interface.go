@@ -1,7 +1,7 @@
 package interactors
 
 import (
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
@@ -9,7 +9,7 @@ import (
 // dependency inversion: blockchain package is considered inner business logic, this package is considered "plugin"
 type Proxy interface {
 	GetNetworkConfig() (*data.NetworkConfig, error)
-	GetAccount(address blockchain.AddressHandler) (*data.Account, error)
+	GetAccount(address core.AddressHandler) (*data.Account, error)
 	SendTransaction(tx *data.Transaction) (string, error)
 	SendTransactions(txs []*data.Transaction) ([]string, error)
 	IsInterfaceNil() bool

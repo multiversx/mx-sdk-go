@@ -1,4 +1,4 @@
-package tests
+package blockchain
 
 import (
 	"bytes"
@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,7 +33,7 @@ func TestGetAccount(t *testing.T) {
 	t.Parallel()
 
 	httpClient := &mockHTTPClient{}
-	proxy := blockchain.NewElrondProxy("http://test.org", httpClient)
+	proxy := NewElrondProxy("http://test.org", httpClient)
 
 	address, err := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
 	if err != nil {
@@ -62,7 +61,7 @@ func TestElrondProxy_GetNetworkEconomics(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := blockchain.NewElrondProxy("http://localhost:8079", httpClient)
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
 
 	networkEconomics, err := ep.GetNetworkEconomics()
 	require.Nil(t, err)
@@ -88,7 +87,7 @@ func TestElrondProxy_RequestTransactionCost(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := blockchain.NewElrondProxy("http://localhost:8079", httpClient)
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
 
 	tx := &data.Transaction{
 		Nonce:   1,
@@ -119,7 +118,7 @@ func TestElrondProxy_GetTransactionInfoWithResults(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := blockchain.NewElrondProxy("http://localhost:8079", httpClient)
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
 
 	tx, err := ep.GetTransactionInfoWithResults("a40e5a6af4efe221608297a73459211756ab88b96896e6e331842807a138f343")
 	require.Nil(t, err)
@@ -138,7 +137,7 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 		},
 	}
 	_ = httpClient
-	ep := blockchain.NewElrondProxy("http://localhost:8079", httpClient)
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
 
 	response, err := ep.ExecuteVMQuery(&data.VmValueRequest{
 		Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
