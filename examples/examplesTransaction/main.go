@@ -2,9 +2,7 @@ package main
 
 import (
 	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
@@ -15,22 +13,17 @@ func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
 
 	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
+	w := interactors.NewWallet()
 
-	privateKey, err := erdgo.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))
+	privateKey, err := w.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))
 	if err != nil {
 		log.Error("unable to load alice.pem", "error", err)
 		return
 	}
 	// Generate address from private key
-	addressString, err := erdgo.GetAddressFromPrivateKey(privateKey)
+	address, err := w.GetAddressFromPrivateKey(privateKey)
 	if err != nil {
 		log.Error("unable to load the address from the private key", "error", err)
-		return
-	}
-
-	address, err := data.NewAddressFromBech32String(addressString)
-	if err != nil {
-		log.Error("error converting the address string", "error", err)
 		return
 	}
 
@@ -48,8 +41,8 @@ func main() {
 		return
 	}
 
-	transactionArguments.RcvAddr = addressString       //send to self
-	transactionArguments.Value = "1000000000000000000" //1EGLD
+	transactionArguments.RcvAddr = address.AddressAsBech32String() //send to self
+	transactionArguments.Value = "1000000000000000000"             //1EGLD
 
 	ti, err := interactors.NewTransactionInteractor(ep, blockchain.NewTxSigner())
 	if err != nil {

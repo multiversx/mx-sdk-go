@@ -11,6 +11,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go/core"
 	"github.com/ElrondNetwork/elrond-go/core/check"
+	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
@@ -120,7 +121,7 @@ func (ep *elrondProxy) GetNetworkEconomics() (*data.NetworkEconomics, error) {
 
 // GetDefaultTransactionArguments will prepare the transaction creation argument by querying the account's info
 func (ep *elrondProxy) GetDefaultTransactionArguments(
-	address AddressHandler,
+	address erdgoCore.AddressHandler,
 	networkConfigs *data.NetworkConfig,
 ) (data.ArgCreateTransaction, error) {
 	if networkConfigs == nil {
@@ -151,7 +152,7 @@ func (ep *elrondProxy) GetDefaultTransactionArguments(
 }
 
 // GetAccount retrieves an account info from the network (nonce, balance)
-func (ep *elrondProxy) GetAccount(address AddressHandler) (*data.Account, error) {
+func (ep *elrondProxy) GetAccount(address erdgoCore.AddressHandler) (*data.Account, error) {
 	if check.IfNil(address) {
 		return nil, ErrNilAddress
 	}

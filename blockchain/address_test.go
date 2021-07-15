@@ -1,11 +1,10 @@
-package tests
+package blockchain
 
 import (
 	"crypto/rand"
 	"fmt"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +17,7 @@ func TestAddress_GetShard(t *testing.T) {
 	_, _ = rand.Read(pubkey)
 
 	numShardsWithoutMeta := uint32(2)
-	shardCoordinator, _ := blockchain.NewShardCoordinator(numShardsWithoutMeta, 0)
+	shardCoordinator, _ := NewShardCoordinator(numShardsWithoutMeta, 0)
 
 	pubkey[31] &= 0xFE
 	addr0 := data.NewAddressFromBytes(pubkey)
@@ -39,10 +38,10 @@ func TestAddress_GetShard(t *testing.T) {
 func TestGenerateSameDNSAddress(t *testing.T) {
 	t.Parallel()
 
-	coord, err := blockchain.NewShardCoordinator(3, 0)
+	coord, err := NewShardCoordinator(3, 0)
 	require.Nil(t, err)
 
-	ag, err := blockchain.NewAddressGenerator(coord)
+	ag, err := NewAddressGenerator(coord)
 	require.Nil(t, err)
 
 	newDNS, err := ag.CompatibleDNSAddressFromUsername("laura.elrond")

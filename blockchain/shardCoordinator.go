@@ -3,6 +3,7 @@ package blockchain
 import (
 	"github.com/ElrondNetwork/elrond-go/core/check"
 	"github.com/ElrondNetwork/elrond-go/sharding"
+	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 )
 
 type shardCoordinator struct {
@@ -21,7 +22,7 @@ func NewShardCoordinator(numOfShardsWithoutMeta uint32, currentShard uint32) (*s
 	}, nil
 }
 
-func (sc *shardCoordinator) ComputeShardId(address AddressHandler) (uint32, error) {
+func (sc *shardCoordinator) ComputeShardId(address erdgoCore.AddressHandler) (uint32, error) {
 	if check.IfNil(address) {
 		return 0, ErrNilAddress
 	}

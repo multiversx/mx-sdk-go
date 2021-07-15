@@ -63,7 +63,7 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 }
 
 // CompatibleDNSAddress will return the compatible DNS address providing the shard ID
-func (ag *addressGenerator) CompatibleDNSAddress(shardId byte) (AddressHandler, error) {
+func (ag *addressGenerator) CompatibleDNSAddress(shardId byte) (core.AddressHandler, error) {
 	addressLen := len(initialDNSAddress)
 	shardInBytes := []byte{0, shardId}
 
@@ -77,7 +77,7 @@ func (ag *addressGenerator) CompatibleDNSAddress(shardId byte) (AddressHandler, 
 }
 
 // CompatibleDNSAddressFromUsername will return the compatible DNS address providing the username
-func (ag *addressGenerator) CompatibleDNSAddressFromUsername(username string) (AddressHandler, error) {
+func (ag *addressGenerator) CompatibleDNSAddressFromUsername(username string) (core.AddressHandler, error) {
 	hash := ag.hasher.Compute(username)
 	lastByte := hash[len(hash)-1]
 	return ag.CompatibleDNSAddress(lastByte)

@@ -1,14 +1,14 @@
 package mock
 
 import (
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
 // ProxyStub -
 type ProxyStub struct {
 	GetNetworkConfigCalled func() (*data.NetworkConfig, error)
-	GetAccountCalled       func(address blockchain.AddressHandler) (*data.Account, error)
+	GetAccountCalled       func(address core.AddressHandler) (*data.Account, error)
 	SendTransactionCalled  func(tx *data.Transaction) (string, error)
 	SendTransactionsCalled func(txs []*data.Transaction) ([]string, error)
 }
@@ -19,7 +19,7 @@ func (ps *ProxyStub) GetNetworkConfig() (*data.NetworkConfig, error) {
 }
 
 // GetAccount -
-func (ps *ProxyStub) GetAccount(address blockchain.AddressHandler) (*data.Account, error) {
+func (ps *ProxyStub) GetAccount(address core.AddressHandler) (*data.Account, error) {
 	return ps.GetAccountCalled(address)
 }
 
