@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"math/big"
+	"sync"
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-logger"
@@ -32,6 +33,9 @@ type walletTracker struct {
 	checkInterval              time.Duration
 	cancelFunc                 func()
 	minimumBalance             *big.Int
+
+	mutHandlers                  sync.RWMutex
+	handlerNewDepositTransaction func(transaction data.TransactionOnNetwork)
 }
 
 // NewWalletTracker will create a new walletTracker instance. It automatically start an inner
@@ -140,9 +144,31 @@ func (wt *walletTracker) processTransaction(transaction data.TransactionOnNetwor
 		return nil
 	}
 
+	wt.notifyNewDepositTransactionFound(transaction)
 	wt.accumulator.push(transaction.Receiver)
 
 	return nil
+}
+
+func (wt *walletTracker) notifyNewDepositTransactionFound(transaction data.TransactionOnNetwork) {
+	wt.mutHandlers.RLock()
+	defer wt.mutHandlers.RUnlock()
+
+	if wt.handlerNewDepositTransaction != nil {
+		wt.handlerNewDepositTransaction(transaction)
+	}
+}
+
+// SetHandlerForNewDepositTransactionFound will set the handler that will get notified each time a new deposit
+// transaction is found on a hyper block
+func (wt *walletTracker) SetHandlerForNewDepositTransactionFound(handler func(tx data.TransactionOnNetwork)) {
+	if handler == nil {
+		return
+	}
+
+	wt.mutHandlers.Lock()
+	wt.handlerNewDepositTransaction = handler
+	wt.mutHandlers.Unlock()
 }
 
 // GetLatestTrackedAddresses returns the accumulated addresses that contained changed balances

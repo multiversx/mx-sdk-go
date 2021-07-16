@@ -37,7 +37,7 @@ func main() {
 
 	log.Info("examplesFlowWalletTracker application started, press CTRL+C to stop the app...")
 
-	err := executeApp()
+	err := runApp()
 	if err != nil {
 		log.Error(err.Error())
 	} else {
@@ -45,7 +45,7 @@ func main() {
 	}
 }
 
-func executeApp() error {
+func runApp() error {
 	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
 
 	tap := mock.NewTrackableAddressProviderMock()

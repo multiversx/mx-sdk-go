@@ -64,14 +64,14 @@ func NewMoveBalanceHandler(args MoveBalanceHandlerArgs) (*moveBalanceHandler, er
 // balance transactions. Will output a log error if a transaction will be failed.
 func (mbh *moveBalanceHandler) GenerateMoveBalanceTransactions(addresses []string) {
 	for _, address := range addresses {
-		mbh.generateTransactionHandled(address)
+		mbh.generateTransactionAndHandleErrors(address)
 	}
 }
 
-func (mbh *moveBalanceHandler) generateTransactionHandled(address string) {
+func (mbh *moveBalanceHandler) generateTransactionAndHandleErrors(address string) {
 	err := mbh.generateTransaction(address)
 	if err != nil {
-		err = fmt.Errorf("%w for provided address string %s", err, address)
+		err = fmt.Errorf("%w for provided address %s", err, address)
 		log.Error(err.Error())
 	}
 }
@@ -91,6 +91,7 @@ func (mbh *moveBalanceHandler) generateTransaction(address string) error {
 	if !ok {
 		return ErrInvalidAvailableBalanceValue
 	}
+
 	if availableBalance.Cmp(mbh.minimumBalance) < 0 {
 		log.Debug("will not send move-balance transaction as it is under the set threshold",
 			"address", address,
@@ -100,9 +101,13 @@ func (mbh *moveBalanceHandler) generateTransaction(address string) error {
 		return nil
 	}
 
+	//add custom data bytes here if the move-balance transaction towards the hot wallet needs
+	// to carry some unique information
+	argsCreate.Data = nil
+	argsCreate.RcvAddr = mbh.receiverAddress
+
 	value := availableBalance.Sub(availableBalance, mbh.computeTxFee(argsCreate))
 	argsCreate.Value = value.String()
-	argsCreate.RcvAddr = mbh.receiverAddress
 
 	skBytes := mbh.trackableAddressesProvider.PrivateKeyOfBech32Address(address)
 	tx, err := mbh.txInteractor.ApplySignatureAndGenerateTransaction(skBytes, argsCreate)
@@ -118,6 +123,11 @@ func (mbh *moveBalanceHandler) generateTransaction(address string) error {
 
 func (mbh *moveBalanceHandler) computeTxFee(argsCreate data.ArgCreateTransaction) *big.Int {
 	// this implementation should change if more complex transactions should be generated
+	// if the transaction is required to do a SC call, wrap a transaction using the relay mechanism
+	// or do an ESDT/SFT/NFT operation, then we need to query the proxy's `/transaction/cost` endpoint route
+	// in order to get the correct gas limit
+
+	argsCreate.GasLimit = mbh.cachedNetConfigs.MinGasLimit + uint64(len(argsCreate.Data))*mbh.cachedNetConfigs.GasPerDataByte
 	result := big.NewInt(int64(argsCreate.GasPrice))
 	result.Mul(result, big.NewInt(int64(argsCreate.GasLimit)))
 
