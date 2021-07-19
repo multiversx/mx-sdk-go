@@ -168,3 +168,8 @@ func (ti *transactionInteractor) SendTransactionsAsBunch(bunchSize int) ([]strin
 
 	return allHashes, nil
 }
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (ti *transactionInteractor) IsInterfaceNil() bool {
+	return ti == nil
+}

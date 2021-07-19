@@ -1,7 +1,7 @@
 package data
 
-// Hyperblock holds a hyperblock's details
-type Hyperblock struct {
+// HyperBlock holds a hyper block's details
+type HyperBlock struct {
 	Nonce         uint64 `json:"nonce"`
 	Round         uint64 `json:"round"`
 	Hash          string `json:"hash"`
@@ -16,10 +16,10 @@ type Hyperblock struct {
 	Transactions []TransactionOnNetwork
 }
 
-// HyperblockResponse holds a hyperblock info response from the network
-type HyperblockResponse struct {
+// HyperBlockResponse holds a hyper block info response from the network
+type HyperBlockResponse struct {
 	Data struct {
-		Hyperblock Hyperblock `json:"hyperblock"`
+		HyperBlock HyperBlock `json:"hyperblock"`
 	}
 	Error string `json:"error"`
 	Code  string `json:"code"`

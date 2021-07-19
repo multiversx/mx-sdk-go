@@ -13,18 +13,18 @@ var log = logger.GetOrCreate("examples/examplesBlock")
 func main() {
 	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
 
-	// Get latest hyperblock (metachain) nonce
-	nonce, err := ep.GetLatestHyperblockNonce()
+	// Get latest hyper block (metachain) nonce
+	nonce, err := ep.GetLatestHyperBlockNonce()
 	if err != nil {
 		log.Error("error retrieving latest block nonce", "error", err)
 		return
 	}
-	log.Info("latest hyperblock", "nonce", nonce)
+	log.Info("latest hyper block", "nonce", nonce)
 
 	// Get block info
-	block, errGet := ep.GetHyperblockByNonce(nonce)
+	block, errGet := ep.GetHyperBlockByNonce(nonce)
 	if errGet != nil {
-		log.Error("error retrieving hyperblock", "error", err)
+		log.Error("error retrieving hyper block", "error", err)
 		return
 	}
 	data, errMarshal := json.MarshalIndent(block, "", "    ")

@@ -54,7 +54,7 @@ type TransactionInfo struct {
 	Code  string `json:"code"`
 }
 
-// TransactionOnNetwork holds a transaction's info entry in a hyperblock
+// TransactionOnNetwork holds a transaction's info entry in a hyper block
 type TransactionOnNetwork struct {
 	Type             string                                `json:"type"`
 	Hash             string                                `json:"hash"`
@@ -71,8 +71,8 @@ type TransactionOnNetwork struct {
 	MiniblockType    string                                `json:"miniblockType"`
 	MiniblockHash    string                                `json:"miniblockHash"`
 	Status           string                                `json:"status"`
-	HyperblockNonce  uint64                                `json:"hyperblockNonce"`
-	HyperblockHash   string                                `json:"hyperblockHash"`
+	HyperBlockNonce  uint64                                `json:"hyperblockNonce"`
+	HyperBlockHash   string                                `json:"hyperblockHash"`
 	Receipt          *transaction.ReceiptApi               `json:"receipt,omitempty"`
 	ScResults        []*transaction.ApiSmartContractResult `json:"smartContractResults,omitempty"`
 }
@@ -92,15 +92,16 @@ type ResponseTxCost struct {
 
 // ArgCreateTransaction will hold the transaction fields
 type ArgCreateTransaction struct {
-	Nonce     uint64
-	Value     string
-	RcvAddr   string
-	SndAddr   string
-	GasPrice  uint64
-	GasLimit  uint64
-	Data      []byte
-	Signature string
-	ChainID   string
-	Version   uint32
-	Options   uint32
+	Nonce            uint64
+	Value            string
+	RcvAddr          string
+	SndAddr          string
+	GasPrice         uint64
+	GasLimit         uint64
+	Data             []byte
+	Signature        string
+	ChainID          string
+	Version          uint32
+	Options          uint32
+	AvailableBalance string
 }
