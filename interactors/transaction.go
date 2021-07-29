@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-go/core/check"
-	"github.com/ElrondNetwork/elrond-go/hashing/keccak"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -17,7 +17,7 @@ var log = logger.GetOrCreate("interactors")
 
 const defaultTimeBetweenBunches = time.Second
 
-var txHasher = &keccak.Keccak{}
+var txHasher = *keccak.NewKeccak()
 
 type transactionInteractor struct {
 	Proxy
