@@ -18,6 +18,11 @@ type mapCacher struct {
 	addedDataHandlers    []func(key []byte, val interface{})
 }
 
+// Close does nothing and returns nil
+func (mc *mapCacher) Close() error {
+	return nil
+}
+
 // NewMapCacher creates a new map cacher implementation
 func NewMapCacher() *mapCacher {
 	return &mapCacher{

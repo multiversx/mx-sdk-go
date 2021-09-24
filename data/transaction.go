@@ -1,6 +1,6 @@
 package data
 
-import "github.com/ElrondNetwork/elrond-go/data/transaction"
+import "github.com/ElrondNetwork/elrond-go-core/data/transaction"
 
 // SendTransactionResponse holds the response received from the network when broadcasting a transaction
 type SendTransactionResponse struct {
@@ -73,7 +73,6 @@ type TransactionOnNetwork struct {
 	Status           string                                `json:"status"`
 	HyperBlockNonce  uint64                                `json:"hyperblockNonce"`
 	HyperBlockHash   string                                `json:"hyperblockHash"`
-	Receipt          *transaction.ReceiptApi               `json:"receipt,omitempty"`
 	ScResults        []*transaction.ApiSmartContractResult `json:"smartContractResults,omitempty"`
 }
 

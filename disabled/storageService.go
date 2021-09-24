@@ -9,6 +9,11 @@ import (
 type StorageService struct {
 }
 
+// GetAllStorers returns an empty map
+func (ss *StorageService) GetAllStorers() map[dataRetriever.UnitType]storage.Storer {
+	return make(map[dataRetriever.UnitType]storage.Storer)
+}
+
 // GetStorer returns nil
 func (ss *StorageService) GetStorer(_ dataRetriever.UnitType) storage.Storer {
 	return nil
