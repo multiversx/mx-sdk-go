@@ -3,15 +3,14 @@ package blockchain
 import (
 	"bytes"
 
-	elrondCore "github.com/ElrondNetwork/elrond-go/core"
-	"github.com/ElrondNetwork/elrond-go/core/check"
-	"github.com/ElrondNetwork/elrond-go/data/typeConverters/uint64ByteSlice"
-	"github.com/ElrondNetwork/elrond-go/hashing"
-	"github.com/ElrondNetwork/elrond-go/hashing/keccak"
-	"github.com/ElrondNetwork/elrond-go/marshal"
+	elrondCore "github.com/ElrondNetwork/elrond-go-core/core"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data/typeConverters/uint64ByteSlice"
+	"github.com/ElrondNetwork/elrond-go-core/hashing"
+	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
+	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
-	"github.com/ElrondNetwork/elrond-go/process/smartContract/builtInFunctions"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract/hooks"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -36,7 +35,7 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 		return nil, ErrNilShardCoordinator
 	}
 
-	builtInFuncs := builtInFunctions.NewBuiltInFunctionContainer()
+	builtInFuncs := &disabled.BuiltInFunctionContainer{}
 	var argsHook = hooks.ArgBlockChainHook{
 		Accounts:           &disabled.Accounts{},
 		PubkeyConv:         core.AddressPublicKeyConverter,
@@ -58,7 +57,7 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 	return &addressGenerator{
 		coordinator:    coordinator,
 		blockChainHook: blockchainHook,
-		hasher:         keccak.Keccak{},
+		hasher:         keccak.NewKeccak(),
 	}, nil
 }
 

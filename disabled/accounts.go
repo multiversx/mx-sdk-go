@@ -1,15 +1,28 @@
 package disabled
 
 import (
-	"context"
-
-	"github.com/ElrondNetwork/elrond-go/core"
-	"github.com/ElrondNetwork/elrond-go/data"
-	"github.com/ElrondNetwork/elrond-go/data/state"
+	"github.com/ElrondNetwork/elrond-go-core/core"
+	"github.com/ElrondNetwork/elrond-go/common"
+	"github.com/ElrondNetwork/elrond-go/state"
+	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 )
 
 // Accounts is a disabled implementation of the AccountAdapter interface
 type Accounts struct {
+}
+
+// SnapshotState does nothing
+func (a *Accounts) SnapshotState(_ []byte) {
+}
+
+// GetTrie returns nil trie and nil error
+func (a *Accounts) GetTrie(_ []byte) (common.Trie, error) {
+	return nil, nil
+}
+
+// Close does nothing and returns nil
+func (a *Accounts) Close() error {
+	return nil
 }
 
 // GetCode returns nil
@@ -18,27 +31,23 @@ func (a *Accounts) GetCode(_ []byte) []byte {
 }
 
 // RecreateAllTries return a nil map and nil error
-func (a *Accounts) RecreateAllTries(_ []byte, _ context.Context) (map[string]data.Trie, error) {
+func (a *Accounts) RecreateAllTries(_ []byte) (map[string]common.Trie, error) {
 	return nil, nil
 }
 
 // LoadAccount returns a nil account and nil error
-func (a *Accounts) LoadAccount(_ []byte) (state.AccountHandler, error) {
+func (a *Accounts) LoadAccount(_ []byte) (vmcommon.AccountHandler, error) {
 	return nil, nil
 }
 
 // SaveAccount returns nil
-func (a *Accounts) SaveAccount(_ state.AccountHandler) error {
+func (a *Accounts) SaveAccount(_ vmcommon.AccountHandler) error {
 	return nil
 }
 
 // GetAllLeaves returns a nil channel and nil error
-func (a *Accounts) GetAllLeaves(_ []byte, _ context.Context) (chan core.KeyValueHolder, error) {
+func (a *Accounts) GetAllLeaves(_ []byte) (chan core.KeyValueHolder, error) {
 	return nil, nil
-}
-
-// AddJournalEntry does nothing
-func (a *Accounts) AddJournalEntry(_ state.JournalEntry) {
 }
 
 // Commit returns nil byte slice and nil
@@ -47,7 +56,7 @@ func (a *Accounts) Commit() ([]byte, error) {
 }
 
 // GetExistingAccount returns nil  account handler and nil error
-func (a *Accounts) GetExistingAccount(_ []byte) (state.AccountHandler, error) {
+func (a *Accounts) GetExistingAccount(_ []byte) (vmcommon.AccountHandler, error) {
 	return nil, nil
 }
 
@@ -77,19 +86,15 @@ func (a *Accounts) RecreateTrie(_ []byte) error {
 }
 
 // PruneTrie does nothing
-func (a *Accounts) PruneTrie(_ []byte, _ data.TriePruningIdentifier) {
+func (a *Accounts) PruneTrie(_ []byte, _ state.TriePruningIdentifier) {
 }
 
 // CancelPrune does nothing
-func (a *Accounts) CancelPrune(_ []byte, _ data.TriePruningIdentifier) {
-}
-
-// SnapshotState does nothing
-func (a *Accounts) SnapshotState(_ []byte, _ context.Context) {
+func (a *Accounts) CancelPrune(_ []byte, _ state.TriePruningIdentifier) {
 }
 
 // SetStateCheckpoint does nothing
-func (a *Accounts) SetStateCheckpoint(_ []byte, _ context.Context) {
+func (a *Accounts) SetStateCheckpoint(_ []byte) {
 }
 
 // IsPruningEnabled returns false

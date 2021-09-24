@@ -9,6 +9,11 @@ import (
 type DataPool struct {
 }
 
+// TrieNodesChunks returns nil
+func (dp *DataPool) TrieNodesChunks() storage.Cacher {
+	return nil
+}
+
 // Transactions returns nil
 func (dp *DataPool) Transactions() dataRetriever.ShardedDataCacherNotifier {
 	return nil
