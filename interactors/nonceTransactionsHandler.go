@@ -1,0 +1,135 @@
+package interactors
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+)
+
+// nonceTransactionsHandler is the handler used for an unlimited number of addresses.
+// It basically contains a map of addressNonceHandler, creating new entries on the first
+// access of a provided address. This struct delegates all the operations on the right
+// instance of addressNonceHandler. It also starts a go routine that will periodically
+// try to resend "stuck transactions" and to clean the inner state. The recommended resend
+// interval is 1 minute. The Close method should be called whenever the current instance of
+// nonceTransactionsHandler should be terminated an collected by the GC.
+// This struct is concurrent safe.
+type nonceTransactionsHandler struct {
+	proxy       Proxy
+	mutHandlers sync.Mutex
+	handlers    map[string]*addressNonceHandler
+	cancelFunc  func()
+}
+
+func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration) (*nonceTransactionsHandler, error) {
+	if check.IfNil(proxy) {
+		return nil, ErrNilProxy
+	}
+
+	nth := &nonceTransactionsHandler{
+		proxy:    proxy,
+		handlers: make(map[string]*addressNonceHandler),
+	}
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	nth.cancelFunc = cancelFunc
+	go nth.resendTransactionsLoop(ctx, intervalToResend)
+
+	return nth, nil
+}
+
+// GetNonce will return the nonce for the provided address
+func (nth *nonceTransactionsHandler) GetNonce(address core.AddressHandler) (uint64, error) {
+	if check.IfNil(address) {
+		return 0, ErrNilAddress
+	}
+
+	anh := nth.getOrCreateAddressNonceHandler(address)
+
+	return anh.getNonce()
+}
+
+func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core.AddressHandler) *addressNonceHandler {
+	nth.mutHandlers.Lock()
+	addressAsString := string(address.AddressBytes())
+	anh, found := nth.handlers[addressAsString]
+	if !found {
+		anh = newAddressNonceHandler(nth.proxy, address)
+		nth.handlers[addressAsString] = anh
+	}
+	nth.mutHandlers.Unlock()
+
+	return anh
+}
+
+// SendTransactions will split the received transactions by address
+func (nth *nonceTransactionsHandler) SendTransactions(mixedTransactions []*data.Transaction) ([]string, error) {
+	txsOnSender := make(map[string][]*data.Transaction)
+	for index, tx := range mixedTransactions {
+		if tx == nil {
+			return nil, fmt.Errorf("%w at index %d", ErrNilTransaction, index)
+		}
+
+		txsOnSender[tx.SndAddr] = append(txsOnSender[tx.SndAddr], tx)
+	}
+
+	hashes := make([]string, 0, len(mixedTransactions))
+	for addrAsBech32, txs := range txsOnSender {
+		addressHandler, err := data.NewAddressFromBech32String(addrAsBech32)
+		if err != nil {
+			return nil, fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)
+		}
+
+		anh := nth.getOrCreateAddressNonceHandler(addressHandler)
+
+		sentHashes, err := anh.sendTransactions(txs)
+		if err != nil {
+			return nil, fmt.Errorf("%w while sending transactions for address %s", err, addrAsBech32)
+		}
+
+		hashes = append(hashes, sentHashes...)
+	}
+
+	return hashes, nil
+}
+
+func (nth *nonceTransactionsHandler) resendTransactionsLoop(ctx context.Context, intervalToResend time.Duration) {
+	for {
+		select {
+		case <-ctx.Done():
+			log.Debug("finishing nonceTransactionsHandler.resendTransactionsLoop...")
+			return
+		case <-time.After(intervalToResend):
+			nth.resendTransactions(ctx)
+		}
+	}
+}
+
+func (nth *nonceTransactionsHandler) resendTransactions(ctx context.Context) {
+	nth.mutHandlers.Lock()
+	defer nth.mutHandlers.Unlock()
+
+	for _, anh := range nth.handlers {
+		select {
+		case <-ctx.Done():
+			log.Debug("finishing nonceTransactionsHandler.resendTransactions...")
+			return
+		default:
+		}
+
+		err := anh.reSendTransactionsIfRequired()
+		log.LogIfError(err)
+	}
+}
+
+// Close finishes the transactions resend go routine
+func (nth *nonceTransactionsHandler) Close() error {
+	nth.cancelFunc()
+
+	return nil
+}
