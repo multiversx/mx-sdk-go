@@ -107,3 +107,10 @@ func (anh *addressNonceHandler) sendTransactions(txs []*data.Transaction) ([]str
 
 	return hashes, nil
 }
+
+func (anh *addressNonceHandler) markReFetchNonce() {
+	anh.mut.Lock()
+	defer anh.mut.Unlock()
+
+	anh.computedNonceWasSet = false
+}

@@ -26,6 +26,8 @@ type nonceTransactionsHandler struct {
 	cancelFunc  func()
 }
 
+// NewNonceTransactionHandler will create a new instance of the nonceTransactionsHandler. It requires a Proxy implementation
+// and an interval at which the transactions sent are rechecked and eventually, resent.
 func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration) (*nonceTransactionsHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
@@ -125,6 +127,19 @@ func (nth *nonceTransactionsHandler) resendTransactions(ctx context.Context) {
 		err := anh.reSendTransactionsIfRequired()
 		log.LogIfError(err)
 	}
+}
+
+// ForceNonceReFetch will mark the addressNonceHandler to re-fetch its nonce from the blockchain account.
+// This should be only used in a fallback plan, when some transactions are completely lost (or due to a bug, not even sent in first time)
+func (nth *nonceTransactionsHandler) ForceNonceReFetch(address core.AddressHandler) error {
+	if check.IfNil(address) {
+		return ErrNilAddress
+	}
+
+	anh := nth.getOrCreateAddressNonceHandler(address)
+	anh.markReFetchNonce()
+
+	return nil
 }
 
 // Close finishes the transactions resend go routine

@@ -272,3 +272,39 @@ func createMockTransactionsWithGetNonce(
 
 	return txs
 }
+
+func TestNonceTransactionsHandler_ForceNonceReFetch(t *testing.T) {
+	t.Parallel()
+
+	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
+	currentNonce := uint64(664)
+
+	proxy := &mock.ProxyStub{
+		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
+			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
+				return nil, errors.New("unexpected address")
+			}
+
+			return &data.Account{
+				Nonce: atomic.LoadUint64(&currentNonce),
+			}, nil
+		},
+	}
+
+	nth, _ := NewNonceTransactionHandler(proxy, time.Minute)
+	_, _ = nth.GetNonce(testAddress)
+	_, _ = nth.GetNonce(testAddress)
+	newNonce, err := nth.GetNonce(testAddress)
+	require.Nil(t, err)
+	assert.Equal(t, atomic.LoadUint64(&currentNonce)+2, newNonce)
+
+	err = nth.ForceNonceReFetch(nil)
+	assert.Equal(t, ErrNilAddress, err)
+
+	err = nth.ForceNonceReFetch(testAddress)
+	assert.Nil(t, err)
+
+	newNonce, err = nth.GetNonce(testAddress)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, atomic.LoadUint64(&currentNonce), newNonce)
+}
