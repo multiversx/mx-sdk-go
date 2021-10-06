@@ -53,7 +53,7 @@ func (nth *nonceTransactionsHandler) GetNonce(address core.AddressHandler) (uint
 
 	anh := nth.getOrCreateAddressNonceHandler(address)
 
-	return anh.getNonce()
+	return anh.getNonceUpdatingCurrent()
 }
 
 func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core.AddressHandler) *addressNonceHandler {

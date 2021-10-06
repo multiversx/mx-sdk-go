@@ -32,7 +32,7 @@ func newAddressNonceHandler(proxy Proxy, address erdgoCore.AddressHandler) *addr
 	}
 }
 
-func (anh *addressNonceHandler) getNonce() (uint64, error) {
+func (anh *addressNonceHandler) getNonceUpdatingCurrent() (uint64, error) {
 	account, err := anh.proxy.GetAccount(anh.address)
 	if err != nil {
 		return 0, err
