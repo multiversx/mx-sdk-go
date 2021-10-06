@@ -74,7 +74,8 @@ func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core
 	return anh
 }
 
-// SendTransactions will split the received transactions by address
+// SendTransactions will split the received transactions by address, send the transactions in batches and store them
+// to be resent, if required
 func (nth *nonceTransactionsHandler) SendTransactions(mixedTransactions []*data.Transaction) ([]string, error) {
 	txsOnSender := make(map[string][]*data.Transaction)
 	for index, tx := range mixedTransactions {
@@ -103,6 +104,30 @@ func (nth *nonceTransactionsHandler) SendTransactions(mixedTransactions []*data.
 	}
 
 	return hashes, nil
+}
+
+// SendTransaction will send and store the transaction
+func (nth *nonceTransactionsHandler) SendTransaction(tx *data.Transaction) (string, error) {
+	if tx == nil {
+		return "", ErrNilTransaction
+	}
+
+	addrAsBech32 := tx.SndAddr
+	addressHandler, err := data.NewAddressFromBech32String(addrAsBech32)
+	if err != nil {
+		return "", fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)
+	}
+
+	anh := nth.getOrCreateAddressNonceHandler(addressHandler)
+	sentHashes, err := anh.sendTransactions([]*data.Transaction{tx})
+	if err != nil {
+		return "", fmt.Errorf("%w while sending transactions for address %s", err, addrAsBech32)
+	}
+	if len(sentHashes) == 0 {
+		return "", fmt.Errorf("%w while sending transaction for address %s", ErrMissingHashWhenSendingTransaction, addrAsBech32)
+	}
+
+	return sentHashes[0], nil
 }
 
 func (nth *nonceTransactionsHandler) resendTransactionsLoop(ctx context.Context, intervalToResend time.Duration) {
