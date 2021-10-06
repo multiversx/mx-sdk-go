@@ -2,6 +2,7 @@ package interactors
 
 import (
 	"errors"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -20,6 +21,11 @@ func TestNewNonceTransactionHandler(t *testing.T) {
 	nth, err := NewNonceTransactionHandler(nil, time.Minute)
 	require.Nil(t, nth)
 	assert.Equal(t, ErrNilProxy, err)
+
+	nth, err = NewNonceTransactionHandler(&mock.ProxyStub{}, time.Second-time.Nanosecond)
+	require.Nil(t, nth)
+	assert.True(t, errors.Is(err, ErrInvalidValue))
+	assert.True(t, strings.Contains(err.Error(), "for intervalToResend in NewNonceTransactionHandler"))
 
 	nth, err = NewNonceTransactionHandler(&mock.ProxyStub{}, time.Minute)
 	require.NotNil(t, nth)

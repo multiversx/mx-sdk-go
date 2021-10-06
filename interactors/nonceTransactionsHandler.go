@@ -11,6 +11,8 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
+const minimumIntervalToResend = time.Second
+
 // nonceTransactionsHandler is the handler used for an unlimited number of addresses.
 // It basically contains a map of addressNonceHandler, creating new entries on the first
 // access of a provided address. This struct delegates all the operations on the right
@@ -31,6 +33,9 @@ type nonceTransactionsHandler struct {
 func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration) (*nonceTransactionsHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
+	}
+	if intervalToResend < minimumIntervalToResend {
+		return nil, fmt.Errorf("%w for intervalToResend in NewNonceTransactionHandler", ErrInvalidValue)
 	}
 
 	nth := &nonceTransactionsHandler{
