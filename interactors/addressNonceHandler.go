@@ -93,16 +93,11 @@ func (anh *addressNonceHandler) reSendTransactionsIfRequired() error {
 }
 
 func (anh *addressNonceHandler) sendTransaction(tx *data.Transaction) (string, error) {
-	hash, err := anh.proxy.SendTransaction(tx)
-	if err != nil {
-		return hash, err
-	}
-
 	anh.mut.Lock()
 	anh.transactions[tx.Nonce] = tx
 	anh.mut.Unlock()
 
-	return hash, nil
+	return anh.proxy.SendTransaction(tx)
 }
 
 func (anh *addressNonceHandler) markReFetchNonce() {
