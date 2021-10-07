@@ -74,39 +74,7 @@ func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core
 	return anh
 }
 
-// SendTransactions will split the received transactions by address, send the transactions in batches and store them
-// to be resent, if required
-func (nth *nonceTransactionsHandler) SendTransactions(mixedTransactions []*data.Transaction) ([]string, error) {
-	txsOnSender := make(map[string][]*data.Transaction)
-	for index, tx := range mixedTransactions {
-		if tx == nil {
-			return nil, fmt.Errorf("%w at index %d", ErrNilTransaction, index)
-		}
-
-		txsOnSender[tx.SndAddr] = append(txsOnSender[tx.SndAddr], tx)
-	}
-
-	hashes := make([]string, 0, len(mixedTransactions))
-	for addrAsBech32, txs := range txsOnSender {
-		addressHandler, err := data.NewAddressFromBech32String(addrAsBech32)
-		if err != nil {
-			return nil, fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)
-		}
-
-		anh := nth.getOrCreateAddressNonceHandler(addressHandler)
-
-		sentHashes, err := anh.sendTransactions(txs)
-		if err != nil {
-			return nil, fmt.Errorf("%w while sending transactions for address %s", err, addrAsBech32)
-		}
-
-		hashes = append(hashes, sentHashes...)
-	}
-
-	return hashes, nil
-}
-
-// SendTransaction will send and store the transaction
+// SendTransaction will send and store the provided transaction
 func (nth *nonceTransactionsHandler) SendTransaction(tx *data.Transaction) (string, error) {
 	if tx == nil {
 		return "", ErrNilTransaction
@@ -119,15 +87,12 @@ func (nth *nonceTransactionsHandler) SendTransaction(tx *data.Transaction) (stri
 	}
 
 	anh := nth.getOrCreateAddressNonceHandler(addressHandler)
-	sentHashes, err := anh.sendTransactions([]*data.Transaction{tx})
+	sentHash, err := anh.sendTransaction(tx)
 	if err != nil {
 		return "", fmt.Errorf("%w while sending transactions for address %s", err, addrAsBech32)
 	}
-	if len(sentHashes) == 0 {
-		return "", fmt.Errorf("%w while sending transaction for address %s", ErrMissingHashWhenSendingTransaction, addrAsBech32)
-	}
 
-	return sentHashes[0], nil
+	return sentHash, nil
 }
 
 func (nth *nonceTransactionsHandler) resendTransactionsLoop(ctx context.Context, intervalToResend time.Duration) {

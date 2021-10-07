@@ -73,7 +73,7 @@ func TestNonceTransactionsHandler_GetNonce(t *testing.T) {
 	require.Nil(t, nth.Close())
 }
 
-func TestNonceTransactionsHandler_SendTransactionsResendingEliminatingOne(t *testing.T) {
+func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingOne(t *testing.T) {
 	t.Parallel()
 
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
@@ -97,20 +97,29 @@ func TestNonceTransactionsHandler_SendTransactionsResendingEliminatingOne(t *tes
 			defer mutSentTransactions.Unlock()
 
 			sentTransactions[numCalls] = txs
-
 			numCalls++
 			hashes := make([]string, len(txs))
 
 			return hashes, nil
+		},
+		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+			mutSentTransactions.Lock()
+			defer mutSentTransactions.Unlock()
+
+			sentTransactions[numCalls] = []*data.Transaction{tx}
+			numCalls++
+
+			return "", nil
 		},
 	}
 
 	numTxs := 5
 	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2)
 	txs := createMockTransactions(testAddress, numTxs, atomic.LoadUint64(&currentNonce))
-	hashes, err := nth.SendTransactions(txs)
-	require.Nil(t, err)
-	require.Equal(t, numTxs, len(hashes))
+	for i := 0; i < numTxs; i++ {
+		_, err := nth.SendTransaction(txs[i])
+		require.Nil(t, err)
+	}
 
 	time.Sleep(time.Second * 3)
 	_ = nth.Close()
@@ -118,13 +127,16 @@ func TestNonceTransactionsHandler_SendTransactionsResendingEliminatingOne(t *tes
 	mutSentTransactions.Lock()
 	defer mutSentTransactions.Unlock()
 
-	assert.Equal(t, 2, len(sentTransactions)) //a resend operation was made
-	assert.Equal(t, numTxs, len(sentTransactions[0]))
-	assert.Equal(t, numTxs-1, len(sentTransactions[1]))
-
+	numSentTransaction := 5
+	numSentTransactions := 1
+	assert.Equal(t, numSentTransaction+numSentTransactions, len(sentTransactions))
+	for i := 0; i < numSentTransaction; i++ {
+		assert.Equal(t, 1, len(sentTransactions[i]))
+	}
+	assert.Equal(t, numTxs-1, len(sentTransactions[numSentTransaction])) // resend
 }
 
-func TestNonceTransactionsHandler_SendTransactionsResendingEliminatingAll(t *testing.T) {
+func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingAll(t *testing.T) {
 	t.Parallel()
 
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
@@ -143,25 +155,24 @@ func TestNonceTransactionsHandler_SendTransactionsResendingEliminatingAll(t *tes
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
+		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = txs
-
+			sentTransactions[numCalls] = []*data.Transaction{tx}
 			numCalls++
-			hashes := make([]string, len(txs))
 
-			return hashes, nil
+			return "", nil
 		},
 	}
 
 	numTxs := 5
 	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2)
 	txs := createMockTransactions(testAddress, numTxs, atomic.LoadUint64(&currentNonce))
-	hashes, err := nth.SendTransactions(txs)
-	require.Nil(t, err)
-	require.Equal(t, numTxs, len(hashes))
+	for i := 0; i < numTxs; i++ {
+		_, err := nth.SendTransaction(txs[i])
+		require.Nil(t, err)
+	}
 
 	atomic.AddUint64(&currentNonce, uint64(numTxs))
 	time.Sleep(time.Second * 3)
@@ -171,8 +182,8 @@ func TestNonceTransactionsHandler_SendTransactionsResendingEliminatingAll(t *tes
 	defer mutSentTransactions.Unlock()
 
 	//no resend operation was made because all transactions were executed (nonce was incremented)
-	assert.Equal(t, 1, len(sentTransactions))
-	assert.Equal(t, numTxs, len(sentTransactions[0]))
+	assert.Equal(t, 5, len(sentTransactions))
+	assert.Equal(t, 1, len(sentTransactions[0]))
 }
 
 func TestNonceTransactionsHandler_SendTransactionResendingEliminatingAll(t *testing.T) {
@@ -194,16 +205,14 @@ func TestNonceTransactionsHandler_SendTransactionResendingEliminatingAll(t *test
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
+		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = txs
-
+			sentTransactions[numCalls] = []*data.Transaction{tx}
 			numCalls++
-			hashes := make([]string, len(txs))
 
-			return hashes, nil
+			return "", nil
 		},
 	}
 
@@ -233,7 +242,6 @@ func TestNonceTransactionsHandler_SendTransactionErrors(t *testing.T) {
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 
-	hashes := make([]string, 0)
 	var errSent error
 	proxy := &mock.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
@@ -245,8 +253,8 @@ func TestNonceTransactionsHandler_SendTransactionErrors(t *testing.T) {
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
-			return hashes, errSent
+		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+			return "", errSent
 		},
 	}
 
@@ -262,13 +270,6 @@ func TestNonceTransactionsHandler_SendTransactionErrors(t *testing.T) {
 
 	hash, err = nth.SendTransaction(txs[0])
 	require.True(t, errors.Is(err, errSent))
-	require.Equal(t, "", hash)
-
-	errSent = nil
-	hashes = make([]string, 0)
-
-	hash, err = nth.SendTransaction(txs[0])
-	require.True(t, errors.Is(err, ErrMissingHashWhenSendingTransaction))
 	require.Equal(t, "", hash)
 }
 
@@ -314,25 +315,24 @@ func TestNonceTransactionsHandler_SendTransactionsWithGetNonce(t *testing.T) {
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
+		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = txs
-
+			sentTransactions[numCalls] = []*data.Transaction{tx}
 			numCalls++
-			hashes := make([]string, len(txs))
 
-			return hashes, nil
+			return "", nil
 		},
 	}
 
 	numTxs := 5
 	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2)
 	txs := createMockTransactionsWithGetNonce(t, testAddress, 5, nth)
-	hashes, err := nth.SendTransactions(txs)
-	require.Nil(t, err)
-	require.Equal(t, numTxs, len(hashes))
+	for i := 0; i < numTxs; i++ {
+		_, err := nth.SendTransaction(txs[i])
+		require.Nil(t, err)
+	}
 
 	atomic.AddUint64(&currentNonce, uint64(numTxs))
 	time.Sleep(time.Second * 3)
@@ -342,8 +342,8 @@ func TestNonceTransactionsHandler_SendTransactionsWithGetNonce(t *testing.T) {
 	defer mutSentTransactions.Unlock()
 
 	//no resend operation was made because all transactions were executed (nonce was incremented)
-	assert.Equal(t, 1, len(sentTransactions))
-	assert.Equal(t, numTxs, len(sentTransactions[0]))
+	assert.Equal(t, numTxs, len(sentTransactions))
+	assert.Equal(t, 1, len(sentTransactions[0]))
 }
 
 func createMockTransactionsWithGetNonce(
