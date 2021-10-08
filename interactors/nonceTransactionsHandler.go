@@ -11,6 +11,8 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
+const minimumIntervalToResend = time.Second
+
 // nonceTransactionsHandler is the handler used for an unlimited number of addresses.
 // It basically contains a map of addressNonceHandler, creating new entries on the first
 // access of a provided address. This struct delegates all the operations on the right
@@ -31,6 +33,9 @@ type nonceTransactionsHandler struct {
 func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration) (*nonceTransactionsHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
+	}
+	if intervalToResend < minimumIntervalToResend {
+		return nil, fmt.Errorf("%w for intervalToResend in NewNonceTransactionHandler", ErrInvalidValue)
 	}
 
 	nth := &nonceTransactionsHandler{
@@ -69,35 +74,25 @@ func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core
 	return anh
 }
 
-// SendTransactions will split the received transactions by address
-func (nth *nonceTransactionsHandler) SendTransactions(mixedTransactions []*data.Transaction) ([]string, error) {
-	txsOnSender := make(map[string][]*data.Transaction)
-	for index, tx := range mixedTransactions {
-		if tx == nil {
-			return nil, fmt.Errorf("%w at index %d", ErrNilTransaction, index)
-		}
-
-		txsOnSender[tx.SndAddr] = append(txsOnSender[tx.SndAddr], tx)
+// SendTransaction will store and send the provided transaction
+func (nth *nonceTransactionsHandler) SendTransaction(tx *data.Transaction) (string, error) {
+	if tx == nil {
+		return "", ErrNilTransaction
 	}
 
-	hashes := make([]string, 0, len(mixedTransactions))
-	for addrAsBech32, txs := range txsOnSender {
-		addressHandler, err := data.NewAddressFromBech32String(addrAsBech32)
-		if err != nil {
-			return nil, fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)
-		}
-
-		anh := nth.getOrCreateAddressNonceHandler(addressHandler)
-
-		sentHashes, err := anh.sendTransactions(txs)
-		if err != nil {
-			return nil, fmt.Errorf("%w while sending transactions for address %s", err, addrAsBech32)
-		}
-
-		hashes = append(hashes, sentHashes...)
+	addrAsBech32 := tx.SndAddr
+	addressHandler, err := data.NewAddressFromBech32String(addrAsBech32)
+	if err != nil {
+		return "", fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)
 	}
 
-	return hashes, nil
+	anh := nth.getOrCreateAddressNonceHandler(addressHandler)
+	sentHash, err := anh.sendTransaction(tx)
+	if err != nil {
+		return "", fmt.Errorf("%w while sending transaction for address %s", err, addrAsBech32)
+	}
+
+	return sentHash, nil
 }
 
 func (nth *nonceTransactionsHandler) resendTransactionsLoop(ctx context.Context, intervalToResend time.Duration) {
