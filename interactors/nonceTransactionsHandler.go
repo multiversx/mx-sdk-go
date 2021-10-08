@@ -74,7 +74,7 @@ func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core
 	return anh
 }
 
-// SendTransaction will send and store the provided transaction
+// SendTransaction will store and send the provided transaction
 func (nth *nonceTransactionsHandler) SendTransaction(tx *data.Transaction) (string, error) {
 	if tx == nil {
 		return "", ErrNilTransaction
@@ -89,7 +89,7 @@ func (nth *nonceTransactionsHandler) SendTransaction(tx *data.Transaction) (stri
 	anh := nth.getOrCreateAddressNonceHandler(addressHandler)
 	sentHash, err := anh.sendTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("%w while sending transactions for address %s", err, addrAsBech32)
+		return "", fmt.Errorf("%w while sending transaction for address %s", err, addrAsBech32)
 	}
 
 	return sentHash, nil
