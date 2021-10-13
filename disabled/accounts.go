@@ -60,6 +60,11 @@ func (a *Accounts) GetExistingAccount(_ []byte) (vmcommon.AccountHandler, error)
 	return nil, nil
 }
 
+// GetAccountFromBytes returns nil  account handler and nil error
+func (a *Accounts) GetAccountFromBytes(_ []byte, _ []byte) (vmcommon.AccountHandler, error) {
+	return nil, nil
+}
+
 // JournalLen returns 0
 func (a *Accounts) JournalLen() int {
 	return 0

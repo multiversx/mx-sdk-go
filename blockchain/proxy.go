@@ -30,6 +30,7 @@ const (
 	getNetworkStatusEndpoint         = "network/status/%v"
 	withResultsQueryParam            = "?withResults=true"
 	vmValuesEndpoint                 = "vm-values/query"
+	getProofEndpoint                 = "proof/address/%s"
 )
 
 // HTTPClient is the interface we expect to call in order to do the HTTP requests
@@ -369,6 +370,25 @@ func (ep *elrondProxy) getHyperBlock(endpoint string) (*data.HyperBlock, error) 
 	}
 
 	return &response.Data.HyperBlock, nil
+}
+
+func (ep *elrondProxy) GetMerkleProof(address string) (*data.ProofResponse, error) {
+	endpoint := fmt.Sprintf(getProofEndpoint, address)
+	buff, err := ep.GetHTTP(endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &data.ProofResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response, nil
 }
 
 func (ep *elrondProxy) GetHTTP(endpoint string) ([]byte, error) {

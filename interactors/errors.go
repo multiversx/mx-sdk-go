@@ -19,3 +19,9 @@ var ErrDifferentAccountRecovered = errors.New("different account recovered")
 
 // ErrInvalidPemFile signals that an invalid pem file was provided
 var ErrInvalidPemFile = errors.New("invalid .PEM file")
+
+// ErrNilMarshalizer signals that the given marshalizer is nil
+var ErrNilMarshalizer = errors.New("the given marshalizer is nil")
+
+// ErrNilHasher signals that the given hasher is nil
+var ErrNilHasher = errors.New("the given hasher is nil")

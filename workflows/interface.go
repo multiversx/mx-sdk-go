@@ -26,6 +26,7 @@ type ProxyHandler interface {
 	GetHyperBlockByNonce(nonce uint64) (*data.HyperBlock, error)
 	GetDefaultTransactionArguments(address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (data.ArgCreateTransaction, error)
 	GetNetworkConfig() (*data.NetworkConfig, error)
+	GetMerkleProof(address string) (*data.ProofResponse, error)
 	IsInterfaceNil() bool
 }
 
