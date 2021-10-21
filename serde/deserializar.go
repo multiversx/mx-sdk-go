@@ -1,8 +1,8 @@
 package serde
 
 import (
+	"encoding/binary"
 	"errors"
-	"fmt"
 	"math/big"
 	"reflect"
 )
@@ -12,6 +12,29 @@ type deserializer struct{}
 //NewDeserializer will create a new instance of the deserializer.
 func NewDeserializer() *deserializer {
 	return &deserializer{}
+}
+
+//CreatePrimitiveDataType deserialize the buffer and populate the received object
+func (des *deserializer) CreatePrimitiveDataType(obj interface{}, buff []byte) error {
+	reflectedValue, err := des.getReflectedValue(obj)
+	if err != nil {
+		return err
+	}
+
+	if reflectedValue.Kind() == reflect.String || reflectedValue.Type() == reflect.ValueOf(big.Int{}).Type() {
+		var length [4]byte
+		binary.BigEndian.PutUint32(length[:], uint32(len(buff)))
+		buff = append(length[:], buff...)
+	}
+	buffer := NewSourceBuffer(buff)
+
+	valueFromBuffer, _ := des.getNextValueFromBuffer(buffer, reflectedValue)
+	err = des.setValue(reflectedValue, valueFromBuffer)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 //CreateStruct deserialize the buffer and populate the fields of the received object
@@ -63,22 +86,10 @@ func (des *deserializer) setFields(reflectedValue reflect.Value, buffer *SourceB
 func (des *deserializer) setField(structValue reflect.Value, name string, value interface{}) error {
 	structFieldValue := structValue.FieldByName(name)
 
-	if !structFieldValue.IsValid() {
-		return errors.New(fmt.Sprintf("No such field: %s in obj", name))
+	err := des.setValue(structFieldValue, value)
+	if err != nil {
+		return err
 	}
-
-	if !structFieldValue.CanSet() {
-		return errors.New(fmt.Sprintf("Cannot set %s field value", name))
-	}
-
-	structFieldType := structFieldValue.Type()
-	val := reflect.ValueOf(value)
-	valType := val.Type()
-	if structFieldType != valType {
-		return errors.New("provided value type didn't match obj field type")
-	}
-
-	structFieldValue.Set(val)
 	return nil
 }
 
@@ -143,4 +154,24 @@ func (des *deserializer) getNextValueFromBuffer(buffer *SourceBuffer, v reflect.
 	default:
 		return nil, true
 	}
+}
+
+func (des *deserializer) setValue(obj reflect.Value, value interface{}) error {
+	if !obj.IsValid() {
+		return errors.New("invalid object")
+	}
+	if !obj.CanSet() {
+		return errors.New("cannot set field value")
+	}
+
+	structFieldType := obj.Type()
+	val := reflect.ValueOf(value)
+	valType := val.Type()
+	if structFieldType != valType {
+		return errors.New("provided value type didn't match obj field type")
+	}
+
+	obj.Set(val)
+
+	return nil
 }
