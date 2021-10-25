@@ -11,6 +11,11 @@ import (
 type Accounts struct {
 }
 
+// GetStackDebugFirstEntry return nil
+func (a *Accounts) GetStackDebugFirstEntry() []byte {
+	return nil
+}
+
 // SnapshotState does nothing
 func (a *Accounts) SnapshotState(_ []byte) {
 }
@@ -105,6 +110,11 @@ func (a *Accounts) IsPruningEnabled() bool {
 // GetNumCheckpoints returns 0
 func (a *Accounts) GetNumCheckpoints() uint32 {
 	return 0
+}
+
+// GetAccountFromBytes returns a nil account and nil error
+func (a *Accounts) GetAccountFromBytes(_ []byte, _ []byte) (vmcommon.AccountHandler, error) {
+	return nil, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
