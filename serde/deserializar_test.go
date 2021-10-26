@@ -27,3 +27,19 @@ func TestDeserializer_CreateStruct_BasicTypes(t *testing.T) {
 
 	assert.Nil(t, err)
 }
+
+func TestDeserializer_CreateStruct_NestedStructures(t *testing.T) {
+	t.Parallel()
+
+	data, err := ioutil.ReadFile(SRC_NESTED_STRUCTURES)
+	assert.Nil(t, err)
+	assert.NotNil(t, data)
+
+	ds := NewDeserializer()
+
+	bt := &testingMocks.NestedStructure{}
+
+	_, err = ds.CreateStruct(bt, data)
+
+	assert.Nil(t, err)
+}

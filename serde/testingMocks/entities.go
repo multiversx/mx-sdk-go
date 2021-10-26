@@ -20,3 +20,18 @@ type DataBasics struct {
 	BigInt          big.Int
 	BigUint         big.Int
 }
+
+type OtherStruct struct {
+	String string
+	Bool   bool
+}
+
+type NestedStructure struct {
+	String        string
+	Ticker        string
+	Bool          bool
+	Int64         int64
+	BigInt        big.Int
+	OtherStruct   OtherStruct
+	AnotherBigInt big.Int
+}
