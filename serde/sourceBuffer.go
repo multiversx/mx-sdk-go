@@ -6,21 +6,27 @@ import (
 )
 
 const (
-	UINT16_SIZE  = 2
-	UINT32_SIZE  = 4
-	UINT64_SIZE  = 8
-	UINT256_SIZE = 32
+	uint16Size  = 2
+	uint32Size  = 4
+	uint64Size  = 8
+	uint256Size = 32
 )
 
-type Uint256 [UINT256_SIZE]byte
+//Uint256 is an alias for [32]byte
+type Uint256 [uint256Size]byte
 
-var UINT256_EMPTY = Uint256{}
-
+//SourceBuffer encapsulates a bytes array
 type SourceBuffer struct {
 	s   []byte
 	off uint64 // current reading index
 }
 
+// NewSourceBuffer returns a new SourceBuffer reading from b.
+func NewSourceBuffer(b []byte) *SourceBuffer {
+	return &SourceBuffer{b, 0}
+}
+
+//Len returns the number of unused bytes
 func (sb *SourceBuffer) Len() uint64 {
 	length := uint64(len(sb.s))
 	if sb.off >= length {
@@ -29,63 +35,74 @@ func (sb *SourceBuffer) Len() uint64 {
 	return length - sb.off
 }
 
+//Bytes returns the entire array of bytes
 func (sb *SourceBuffer) Bytes() []byte {
 	return sb.s
 }
 
+//OffBytes returns unused bytes
 func (sb *SourceBuffer) OffBytes() []byte {
 	return sb.s[sb.off:]
 }
 
+//Pos returns offset position
 func (sb *SourceBuffer) Pos() uint64 {
 	return sb.off
 }
 
+//Size returns the length of the byte array
 func (sb *SourceBuffer) Size() uint64 { return uint64(len(sb.s)) }
 
-func (sb *SourceBuffer) NextBytes(n uint32) (data []byte, eof bool) {
+//NextBytes returns the next n bytes after offset and increase offset position
+func (sb *SourceBuffer) NextBytes(n uint32) ([]byte, bool) {
+	eof := false
 	m := uint64(len(sb.s))
-	end, overflow := SafeAdd(sb.off, uint64(n))
+	end, overflow := safeAdd(sb.off, uint64(n))
 	if overflow || end > m {
 		end = m
 		eof = true
 	}
-	data = sb.s[sb.off:end]
+	data := sb.s[sb.off:end]
 	sb.off = end
 
-	return
+	return data, eof
 }
 
-func (sb *SourceBuffer) Skip(n uint64) (eof bool) {
+//Skip increase offset position with n bytes
+func (sb *SourceBuffer) Skip(n uint64) bool {
+	eof := false
 	m := uint64(len(sb.s))
-	end, overflow := SafeAdd(sb.off, n)
+	end, overflow := safeAdd(sb.off, n)
 	if overflow || end > m {
 		end = m
 		eof = true
 	}
 	sb.off = end
 
-	return
+	return eof
 }
 
-func (sb *SourceBuffer) NextByte() (data byte, eof bool) {
+//NextByte returns the next byte after offset and increase offset position
+func (sb *SourceBuffer) NextByte() (byte, bool) {
 	if sb.off >= uint64(len(sb.s)) {
 		return 0, true
 	}
 
-	b := sb.s[sb.off]
+	data := sb.s[sb.off]
 	sb.off++
-	return b, false
+	return data, false
 }
 
-func (sb *SourceBuffer) NextUint8() (data uint8, eof bool) {
-	var val byte
-	val, eof = sb.NextByte()
+//NextUint8 returns the next byte after offset as uint8 and increase offset position
+func (sb *SourceBuffer) NextUint8() (uint8, bool) {
+	val, eof := sb.NextByte()
 	return uint8(val), eof
 }
 
-func (sb *SourceBuffer) NextBool() (data bool, eof bool) {
+//NextBool returns the next byte after offset as bool and increase offset position
+func (sb *SourceBuffer) NextBool() (bool, bool) {
 	val, eof := sb.NextByte()
+	data := false
 	if val == 0 {
 		data = false
 	} else if val == 1 {
@@ -93,132 +110,93 @@ func (sb *SourceBuffer) NextBool() (data bool, eof bool) {
 	} else {
 		eof = true
 	}
-	return
+	return data, eof
 }
 
+//BackUp decrease offset position with n bytes
 func (sb *SourceBuffer) BackUp(n uint64) {
 	sb.off -= n
 }
 
-func (sb *SourceBuffer) NextUint16() (data uint16, eof bool) {
-	var buf []byte
-	buf, eof = sb.NextBytes(UINT16_SIZE)
+//NextUint16 returns the next 2 bytes after offset as uint16 and increase offset position
+func (sb *SourceBuffer) NextUint16() (uint16, bool) {
+	buf, eof := sb.NextBytes(uint16Size)
 	if eof {
-		return
+		return 0, eof
 	}
 
 	return binary.BigEndian.Uint16(buf), eof
 }
 
-func (sb *SourceBuffer) NextUint32() (data uint32, eof bool) {
-	var buf []byte
-	buf, eof = sb.NextBytes(UINT32_SIZE)
+//NextUint32 returns the next 4 bytes after offset as uint32 and increase offset position
+func (sb *SourceBuffer) NextUint32() (uint32, bool) {
+	buf, eof := sb.NextBytes(uint32Size)
 	if eof {
-		return
+		return 0, eof
 	}
 
 	return binary.BigEndian.Uint32(buf), eof
 }
 
-func (sb *SourceBuffer) NextUint64() (data uint64, eof bool) {
-	var buf []byte
-	buf, eof = sb.NextBytes(UINT64_SIZE)
+//NextUint64 returns the next 8 bytes after offset as uint64 and increase offset position
+func (sb *SourceBuffer) NextUint64() (uint64, bool) {
+	buf, eof := sb.NextBytes(uint64Size)
 	if eof {
-		return
+		return 0, eof
 	}
 
 	return binary.BigEndian.Uint64(buf), eof
 }
 
-func (sb *SourceBuffer) NextInt32() (data int32, eof bool) {
-	var val uint32
-	val, eof = sb.NextUint32()
+//NextInt32 returns the next 4 bytes after offset as int32 and increase offset position
+func (sb *SourceBuffer) NextInt32() (int32, bool) {
+	val, eof := sb.NextUint32()
 	return int32(val), eof
 }
 
-func (sb *SourceBuffer) NextInt64() (data int64, eof bool) {
-	var val uint64
-	val, eof = sb.NextUint64()
+//NextInt64 returns the next 8 bytes after offset as int64 and increase offset position
+func (sb *SourceBuffer) NextInt64() (int64, bool) {
+	val, eof := sb.NextUint64()
 	return int64(val), eof
 }
 
-func (sb *SourceBuffer) NextInt16() (data int16, eof bool) {
-	var val uint16
-	val, eof = sb.NextUint16()
+//NextInt16 returns the next 2 bytes after offset as int16 and increase offset position
+func (sb *SourceBuffer) NextInt16() (int16, bool) {
+	val, eof := sb.NextUint16()
 	return int16(val), eof
 }
 
-func (sb *SourceBuffer) NextVarBytes() (data []byte, eof bool) {
+//NextVarBytes uses the next 4 bytes to determine the number of bytes after the offset to be returned and returns them
+//and increase offset position
+func (sb *SourceBuffer) NextVarBytes() ([]byte, bool) {
 	count, eof := sb.NextUint32()
 	if eof {
-		return
+		return []byte{}, eof
 	}
-	data, eof = sb.NextBytes(count)
-	return
+	data, eof := sb.NextBytes(count)
+	return data, eof
 }
 
-func (sb *SourceBuffer) NextHash() (data Uint256, eof bool) {
-	var buf []byte
-	buf, eof = sb.NextBytes(UINT256_SIZE)
+//NextHash returns the next 32 bytes after offset as Uint256 and increase offset position
+func (sb *SourceBuffer) NextHash() (Uint256, bool) {
+	buf, eof := sb.NextBytes(uint256Size)
 	if eof {
-		return
+		return Uint256{}, eof
 	}
+	var data Uint256
 	copy(data[:], buf)
 
-	return
+	return data, eof
 }
 
-func (sb *SourceBuffer) NextString() (data string, eof bool) {
-	var val []byte
-	val, eof = sb.NextVarBytes()
-	data = string(val)
-	return
+//NextString uses the next 4 bytes to determine the number of bytes after the offset to be returned and returns them
+//as string and increase offset position
+func (sb *SourceBuffer) NextString() (string, bool) {
+	val, eof := sb.NextVarBytes()
+	data := string(val)
+	return data, eof
 }
 
-func (sb *SourceBuffer) NextVarUint() (data uint64, eof bool) {
-	var fb byte
-	fb, eof = sb.NextByte()
-	if eof {
-		return
-	}
-
-	switch fb {
-	case 0xFD:
-		val, e := sb.NextUint16()
-		if e {
-			eof = e
-			return
-		}
-		data = uint64(val)
-	case 0xFE:
-		val, e := sb.NextUint32()
-		if e {
-			eof = e
-			return
-		}
-		data = uint64(val)
-	case 0xFF:
-		val, e := sb.NextUint64()
-		if e {
-			eof = e
-			return
-		}
-		data = uint64(val)
-	default:
-		data = uint64(fb)
-	}
-	return
-}
-
-// NewReader returns a new SourceBuffer reading from b.
-func NewSourceBuffer(b []byte) *SourceBuffer {
-	return &SourceBuffer{b, 0}
-}
-
-const (
-	MAX_UINT64 = math.MaxUint64
-)
-
-func SafeAdd(x, y uint64) (uint64, bool) {
-	return x + y, y > MAX_UINT64-x
+func safeAdd(x, y uint64) (uint64, bool) {
+	return x + y, y > math.MaxUint64-x
 }
