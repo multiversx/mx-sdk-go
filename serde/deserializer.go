@@ -14,7 +14,7 @@ func NewDeserializer() *deserializer {
 	return &deserializer{}
 }
 
-//CreatePrimitiveDataType deserialize the buffer and populate the received object
+//CreatePrimitiveDataType deserializes the buffer and populates the received object
 func (des *deserializer) CreatePrimitiveDataType(obj interface{}, buff []byte) error {
 	reflectedValue, err := des.getReflectedValue(obj)
 	if err != nil {
@@ -22,13 +22,16 @@ func (des *deserializer) CreatePrimitiveDataType(obj interface{}, buff []byte) e
 	}
 
 	if reflectedValue.Kind() == reflect.String || reflectedValue.Type() == reflect.ValueOf(big.Int{}).Type() {
-		var length [4]byte
+		length := make([]byte, 4)
 		binary.BigEndian.PutUint32(length[:], uint32(len(buff)))
 		buff = append(length[:], buff...)
 	}
 	buffer := NewSourceBuffer(buff)
 
-	valueFromBuffer, _ := des.getNextValueFromBuffer(buffer, reflectedValue)
+	valueFromBuffer, eof := des.getNextValueFromBuffer(buffer, reflectedValue)
+	if eof {
+		return errors.New("empty buffer")
+	}
 	err = des.setValue(reflectedValue, valueFromBuffer)
 	if err != nil {
 		return err
@@ -63,7 +66,10 @@ func (des *deserializer) setFields(reflectedValue reflect.Value, buffer *SourceB
 		reflectedValueField := reflectedValue.Field(fieldIndex)
 		reflectedValueFieldName := reflectedValue.Type().Field(fieldIndex).Name
 
-		valueFromBuffer, _ := des.getNextValueFromBuffer(buffer, reflectedValueField)
+		valueFromBuffer, eof := des.getNextValueFromBuffer(buffer, reflectedValueField)
+		if eof {
+			return buffer.Pos(), errors.New("empty buffer")
+		}
 
 		if (reflectedValueField.Kind() == reflect.Struct || reflectedValueField.Kind() == reflect.Ptr) &&
 			reflect.TypeOf(valueFromBuffer) == reflect.TypeOf([]byte{}) {
@@ -111,8 +117,7 @@ func (des *deserializer) getReflectedValue(obj interface{}) (value reflect.Value
 }
 
 func (des *deserializer) getNextValueFromBuffer(buffer *SourceBuffer, v reflect.Value) (interface{}, bool) {
-	t := v.Kind()
-	switch t {
+	switch v.Kind() {
 	case reflect.Int8:
 		value, eof := buffer.NextUint8()
 		return int8(value), eof
@@ -148,9 +153,9 @@ func (des *deserializer) getNextValueFromBuffer(buffer *SourceBuffer, v reflect.
 			buff, eof := buffer.NextVarBytes()
 			return *big.NewInt(0).SetBytes(buff), eof
 		}
-		return buffer.OffBytes(), true
+		return buffer.OffBytes(), false
 	case reflect.Ptr:
-		return buffer.OffBytes(), true
+		return buffer.OffBytes(), false
 	default:
 		return nil, true
 	}
