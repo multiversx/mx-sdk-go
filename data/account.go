@@ -18,12 +18,16 @@ type AccountResponse struct {
 
 // Account holds an Account's information
 type Account struct {
-	Address  string `json:"address"`
-	Nonce    uint64 `json:"nonce"`
-	Balance  string `json:"balance"`
-	Code     string `json:"code"`
-	CodeHash []byte `json:"codeHash"`
-	RootHash []byte `json:"rootHash"`
+	Address         string `json:"address"`
+	Nonce           uint64 `json:"nonce"`
+	Balance         string `json:"balance"`
+	Code            string `json:"code"`
+	CodeHash        []byte `json:"codeHash"`
+	RootHash        []byte `json:"rootHash"`
+	CodeMetadata    []byte `json:"codeMetadata"`
+	Username        string `json:"username"`
+	DeveloperReward string `json:"developerReward"`
+	OwnerAddress    string `json:"ownerAddress"`
 }
 
 // GetBalance computes the float representation of the balance,
