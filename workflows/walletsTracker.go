@@ -24,7 +24,7 @@ type WalletTrackerArgs struct {
 }
 
 // walletTracker is able to track a set of addresses by storing those that received a greater-than-specified
-//amount of EGLD. It does this by parsing hyper block by hyper block and checking each transaction
+// amount of EGLD. It does this by parsing hyper block by hyper block and checking each transaction
 type walletTracker struct {
 	accumulator                *addressesAccumulator
 	trackableAddressesProvider TrackableAddressesProvider
@@ -73,14 +73,19 @@ func NewWalletTracker(args WalletTrackerArgs) (*walletTracker, error) {
 func (wt *walletTracker) processLoop(ctx context.Context) {
 	log.Debug("walletTracker.processLoop started")
 
+	timer := time.NewTimer(wt.checkInterval)
+	defer timer.Stop()
+
 	for {
+		timer.Reset(wt.checkInterval)
+
 		select {
+		case <-timer.C:
+			err := wt.fetchAndProcessHyperBlocks()
+			log.LogIfError(err)
 		case <-ctx.Done():
 			log.Debug("terminating walletTracker.processLoop...")
 			return
-		case <-time.After(wt.checkInterval):
-			err := wt.fetchAndProcessHyperBlocks()
-			log.LogIfError(err)
 		}
 	}
 }
@@ -140,7 +145,7 @@ func (wt *walletTracker) processTransaction(transaction data.TransactionOnNetwor
 
 	if value.Cmp(wt.minimumBalance) < 0 {
 		// transaction has a very small value transfer (possible attack vector as someone
-		//can trigger millions of these transactions as to consume the owner's balance through fees)
+		// can trigger millions of these transactions as to consume the owner's balance through fees)
 		return nil
 	}
 

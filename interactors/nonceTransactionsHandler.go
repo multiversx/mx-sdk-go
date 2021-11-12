@@ -96,13 +96,18 @@ func (nth *nonceTransactionsHandler) SendTransaction(tx *data.Transaction) (stri
 }
 
 func (nth *nonceTransactionsHandler) resendTransactionsLoop(ctx context.Context, intervalToResend time.Duration) {
+	timer := time.NewTimer(intervalToResend)
+	defer timer.Stop()
+
 	for {
+		timer.Reset(intervalToResend)
+
 		select {
+		case <-timer.C:
+			nth.resendTransactions(ctx)
 		case <-ctx.Done():
 			log.Debug("finishing nonceTransactionsHandler.resendTransactionsLoop...")
 			return
-		case <-time.After(intervalToResend):
-			nth.resendTransactions(ctx)
 		}
 	}
 }

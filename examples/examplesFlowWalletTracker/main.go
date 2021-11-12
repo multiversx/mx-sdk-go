@@ -55,7 +55,7 @@ func runApp() error {
 		return err
 	}
 
-	minimumBalance := big.NewInt(1000000000000000) //0.001 EGLD
+	minimumBalance := big.NewInt(1000000000000000) // 0.001 EGLD
 
 	argsWalletsTracker := workflows.WalletTrackerArgs{
 		TrackableAddressesProvider: tap,
@@ -85,16 +85,22 @@ func runApp() error {
 	mbh, err := workflows.NewMoveBalanceHandler(argsMoveBalanceHandler)
 
 	ctxDone, cancel := context.WithCancel(context.Background())
-	//generateMoveBalanceTransactionsAndSendThem function can be either periodically triggered or manually triggered (we choose automatically)
+	// generateMoveBalanceTransactionsAndSendThem function can be either periodically triggered or manually triggered (we choose automatically)
+	interval := time.Second * 20
 	go func() {
+		timer := time.NewTimer(interval)
+		defer timer.Stop()
+
 		for {
+			timer.Reset(interval)
+
 			select {
+			case <-timer.C:
+				// send transaction batches each 20 seconds
+				generateMoveBalanceTransactionsAndSendThem(wt, txInteractor, mbh)
 			case <-ctxDone.Done():
 				log.Debug("closing automatically send move-balance transactions go routine...")
 				return
-			case <-time.After(time.Second * 20):
-				//send transaction batches each 20 seconds
-				generateMoveBalanceTransactionsAndSendThem(wt, txInteractor, mbh)
 			}
 		}
 	}()
