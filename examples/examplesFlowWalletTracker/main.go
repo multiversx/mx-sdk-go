@@ -17,7 +17,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
 )
 
-var log = logger.GetOrCreate("examples/examplesFlowWalletTracker")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesFlowWalletTracker")
 
 type moveBalanceHandler interface {
 	GenerateMoveBalanceTransactions(addresses []string)

@@ -12,7 +12,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
-var log = logger.GetOrCreate("workflows")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/workflows")
 
 // WalletTrackerArgs is the argument DTO for the NewWalletTracker constructor function
 type WalletTrackerArgs struct {
