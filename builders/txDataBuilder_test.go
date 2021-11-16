@@ -16,45 +16,45 @@ import (
 
 var log = logger.GetOrCreate("test")
 
-func TestNewGeneralTxDataBuilder(t *testing.T) {
+func TestNewTxDataBuilder(t *testing.T) {
 	t.Parallel()
 
 	t.Run("without logger should contain error", func(t *testing.T) {
-		builder := NewGeneralTxDataBuilder(nil)
+		builder := NewTxDataBuilder(nil)
 		assert.False(t, check.IfNil(builder))
 		_, err := builder.ToDataString()
 		assert.Equal(t, ErrNilLogger, err)
 	})
 	t.Run("with logger should not contain error", func(t *testing.T) {
-		builder := NewGeneralTxDataBuilder(log)
+		builder := NewTxDataBuilder(log)
 		assert.False(t, check.IfNil(builder))
 		_, err := builder.ToDataString()
 		assert.Nil(t, err)
 	})
 }
 
-func TestGeneralTxDataBuilder_Address(t *testing.T) {
+func TestTxDataBuilder_Address(t *testing.T) {
 	t.Parallel()
 
 	address, errBech32 := data.NewAddressFromBech32String("erd1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq6mjse8")
 	require.Nil(t, errBech32)
 
 	t.Run("nil address should contain error", func(t *testing.T) {
-		builder := NewGeneralTxDataBuilder(log)
+		builder := NewTxDataBuilder(log)
 		builder.Address(nil)
 		valueRequest, err := builder.ToVmValueRequest()
 		assert.True(t, errors.Is(err, ErrNilAddress))
 		assert.Nil(t, valueRequest)
 	})
 	t.Run("invalid address should contain error", func(t *testing.T) {
-		builder := NewGeneralTxDataBuilder(log)
+		builder := NewTxDataBuilder(log)
 		builder.Address(data.NewAddressFromBytes(make([]byte, 0)))
 		valueRequest, err := builder.ToVmValueRequest()
 		assert.True(t, errors.Is(err, ErrInvalidAddress))
 		assert.Nil(t, valueRequest)
 	})
 	t.Run("should work", func(t *testing.T) {
-		builder := NewGeneralTxDataBuilder(log)
+		builder := NewTxDataBuilder(log)
 		builder.Address(address)
 		valueRequest, err := builder.ToVmValueRequest()
 		assert.Nil(t, err)
@@ -62,28 +62,28 @@ func TestGeneralTxDataBuilder_Address(t *testing.T) {
 	})
 }
 
-func TestGeneralTxDataBuilder_CallerAddress(t *testing.T) {
+func TestTxDataBuilder_CallerAddress(t *testing.T) {
 	t.Parallel()
 
 	address, errBech32 := data.NewAddressFromBech32String("erd1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq6mjse8")
 	require.Nil(t, errBech32)
 
 	t.Run("nil address should contain error", func(t *testing.T) {
-		builder := NewGeneralTxDataBuilder(log)
+		builder := NewTxDataBuilder(log)
 		builder.CallerAddress(nil)
 		valueRequest, err := builder.ToVmValueRequest()
 		assert.True(t, errors.Is(err, ErrNilAddress))
 		assert.Nil(t, valueRequest)
 	})
 	t.Run("invalid address should contain error", func(t *testing.T) {
-		builder := NewGeneralTxDataBuilder(log)
+		builder := NewTxDataBuilder(log)
 		builder.CallerAddress(data.NewAddressFromBytes(make([]byte, 0)))
 		valueRequest, err := builder.ToVmValueRequest()
 		assert.True(t, errors.Is(err, ErrInvalidAddress))
 		assert.Nil(t, valueRequest)
 	})
 	t.Run("should work", func(t *testing.T) {
-		builder := NewGeneralTxDataBuilder(log)
+		builder := NewTxDataBuilder(log)
 		builder.CallerAddress(address)
 		valueRequest, err := builder.ToVmValueRequest()
 		assert.Nil(t, err)
@@ -91,11 +91,11 @@ func TestGeneralTxDataBuilder_CallerAddress(t *testing.T) {
 	})
 }
 
-func TestGeneralTxDataBuilder_Function(t *testing.T) {
+func TestTxDataBuilder_Function(t *testing.T) {
 	t.Parallel()
 
 	function := "sc call function"
-	builder := NewGeneralTxDataBuilder(log)
+	builder := NewTxDataBuilder(log)
 	builder.Function(function)
 
 	valueRequest, err := builder.ToVmValueRequest()
@@ -107,13 +107,13 @@ func TestGeneralTxDataBuilder_Function(t *testing.T) {
 	assert.Equal(t, function, txData)
 }
 
-func TestGeneralTxDataBuilder_AllGoodArguments(t *testing.T) {
+func TestTxDataBuilder_AllGoodArguments(t *testing.T) {
 	t.Parallel()
 
 	address, errBech32 := data.NewAddressFromBech32String("erd1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq6mjse8")
 	require.Nil(t, errBech32)
 
-	builder := NewGeneralTxDataBuilder(log).
+	builder := NewTxDataBuilder(log).
 		Function("function").
 		ArgBigInt(big.NewInt(15)).
 		ArgInt64(14).
@@ -137,10 +137,10 @@ func TestGeneralTxDataBuilder_AllGoodArguments(t *testing.T) {
 	require.Equal(t, []byte(expectedTxData), txDataBytes)
 }
 
-func TestGeneralTxDataBuilder_InvalidArguments(t *testing.T) {
+func TestTxDataBuilder_InvalidArguments(t *testing.T) {
 	t.Parallel()
 
-	builder := NewGeneralTxDataBuilder(log).
+	builder := NewTxDataBuilder(log).
 		Function("function").
 		ArgInt64(4)
 

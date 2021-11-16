@@ -14,9 +14,9 @@ import (
 
 const dataSeparator = "@"
 
-// generalTxDataBuilder can be used to easy construct a transaction's data field for a smart contract call
+// txDataBuilder can be used to easy construct a transaction's data field for a smart contract call
 // can also be used to construct a VmValueRequest instance ready to be used on a VM query
-type generalTxDataBuilder struct {
+type txDataBuilder struct {
 	address    string
 	function   string
 	callerAddr string
@@ -25,9 +25,9 @@ type generalTxDataBuilder struct {
 	err        error
 }
 
-// NewGeneralTxDataBuilder creates a new general transaction data builder
-func NewGeneralTxDataBuilder(log logger.Logger) *generalTxDataBuilder {
-	builder := &generalTxDataBuilder{
+// NewTxDataBuilder creates a new transaction data builder
+func NewTxDataBuilder(log logger.Logger) *txDataBuilder {
+	builder := &txDataBuilder{
 		log: log,
 	}
 	if check.IfNil(log) {
@@ -38,14 +38,14 @@ func NewGeneralTxDataBuilder(log logger.Logger) *generalTxDataBuilder {
 }
 
 // Function sets the function to be called
-func (builder *generalTxDataBuilder) Function(function string) TxDataBuilder {
+func (builder *txDataBuilder) Function(function string) TxDataBuilder {
 	builder.function = function
 
 	return builder
 }
 
 // CallerAddress sets the caller address
-func (builder *generalTxDataBuilder) CallerAddress(address core.AddressHandler) TxDataBuilder {
+func (builder *txDataBuilder) CallerAddress(address core.AddressHandler) TxDataBuilder {
 	err := builder.checkAddress(address)
 	if err != nil {
 		builder.err = err
@@ -58,7 +58,7 @@ func (builder *generalTxDataBuilder) CallerAddress(address core.AddressHandler) 
 }
 
 // Address sets the destination address
-func (builder *generalTxDataBuilder) Address(address core.AddressHandler) TxDataBuilder {
+func (builder *txDataBuilder) Address(address core.AddressHandler) TxDataBuilder {
 	err := builder.checkAddress(address)
 	if err != nil {
 		builder.err = err
@@ -71,7 +71,7 @@ func (builder *generalTxDataBuilder) Address(address core.AddressHandler) TxData
 }
 
 // ArgHexString adds the provided hex string to the arguments list
-func (builder *generalTxDataBuilder) ArgHexString(hexed string) TxDataBuilder {
+func (builder *txDataBuilder) ArgHexString(hexed string) TxDataBuilder {
 	_, err := hex.DecodeString(hexed)
 	if err != nil {
 		builder.err = fmt.Errorf("%w in builder.ArgHexString for string %s", err, hexed)
@@ -84,7 +84,7 @@ func (builder *generalTxDataBuilder) ArgHexString(hexed string) TxDataBuilder {
 }
 
 // ArgAddress adds the provided address to the arguments list
-func (builder *generalTxDataBuilder) ArgAddress(address core.AddressHandler) TxDataBuilder {
+func (builder *txDataBuilder) ArgAddress(address core.AddressHandler) TxDataBuilder {
 	err := builder.checkAddress(address)
 	if err != nil {
 		builder.err = err
@@ -94,7 +94,7 @@ func (builder *generalTxDataBuilder) ArgAddress(address core.AddressHandler) TxD
 	return builder.addBytes(address.AddressBytes())
 }
 
-func (builder *generalTxDataBuilder) checkAddress(address core.AddressHandler) error {
+func (builder *txDataBuilder) checkAddress(address core.AddressHandler) error {
 	if check.IfNil(address) {
 		return fmt.Errorf("%w in builder.checkAddress", ErrNilAddress)
 	}
@@ -106,7 +106,7 @@ func (builder *generalTxDataBuilder) checkAddress(address core.AddressHandler) e
 }
 
 // ArgBigInt adds the provided value to the arguments list
-func (builder *generalTxDataBuilder) ArgBigInt(value *big.Int) TxDataBuilder {
+func (builder *txDataBuilder) ArgBigInt(value *big.Int) TxDataBuilder {
 	if value == nil {
 		builder.err = fmt.Errorf("%w in builder.ArgBigInt", ErrNilValue)
 		return builder
@@ -116,14 +116,14 @@ func (builder *generalTxDataBuilder) ArgBigInt(value *big.Int) TxDataBuilder {
 }
 
 // ArgInt64 adds the provided value to the arguments list
-func (builder *generalTxDataBuilder) ArgInt64(value int64) TxDataBuilder {
+func (builder *txDataBuilder) ArgInt64(value int64) TxDataBuilder {
 	b := big.NewInt(value)
 
 	return builder.addBytes(b.Bytes())
 }
 
 // ArgBytes adds the provided bytes to the arguments list. The parameter should contain at least one byte
-func (builder *generalTxDataBuilder) ArgBytes(bytes []byte) TxDataBuilder {
+func (builder *txDataBuilder) ArgBytes(bytes []byte) TxDataBuilder {
 	if len(bytes) == 0 {
 		builder.err = fmt.Errorf("%w in builder.ArgBytes", ErrInvalidValue)
 	}
@@ -133,7 +133,7 @@ func (builder *generalTxDataBuilder) ArgBytes(bytes []byte) TxDataBuilder {
 	return builder
 }
 
-func (builder *generalTxDataBuilder) addBytes(bytes []byte) TxDataBuilder {
+func (builder *txDataBuilder) addBytes(bytes []byte) TxDataBuilder {
 	if len(bytes) == 0 {
 		bytes = []byte{0}
 	}
@@ -144,7 +144,7 @@ func (builder *generalTxDataBuilder) addBytes(bytes []byte) TxDataBuilder {
 }
 
 // ToDataString returns the formatted data string ready to be used in a transaction call
-func (builder *generalTxDataBuilder) ToDataString() (string, error) {
+func (builder *txDataBuilder) ToDataString() (string, error) {
 	if builder.err != nil {
 		return "", builder.err
 	}
@@ -155,7 +155,7 @@ func (builder *generalTxDataBuilder) ToDataString() (string, error) {
 }
 
 // ToDataBytes returns the formatted data string ready to be used in a transaction call as bytes
-func (builder *generalTxDataBuilder) ToDataBytes() ([]byte, error) {
+func (builder *txDataBuilder) ToDataBytes() ([]byte, error) {
 	dataField, err := builder.ToDataString()
 	if err != nil {
 		return nil, err
@@ -165,7 +165,7 @@ func (builder *generalTxDataBuilder) ToDataBytes() ([]byte, error) {
 }
 
 // ToVmValueRequest returns the VmValueRequest structure to be used in a VM call
-func (builder *generalTxDataBuilder) ToVmValueRequest() (*data.VmValueRequest, error) {
+func (builder *txDataBuilder) ToVmValueRequest() (*data.VmValueRequest, error) {
 	if builder.err != nil {
 		return nil, builder.err
 	}
@@ -179,6 +179,6 @@ func (builder *generalTxDataBuilder) ToVmValueRequest() (*data.VmValueRequest, e
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (builder *generalTxDataBuilder) IsInterfaceNil() bool {
+func (builder *txDataBuilder) IsInterfaceNil() bool {
 	return builder == nil
 }
