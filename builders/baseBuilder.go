@@ -63,6 +63,10 @@ func (builder *baseBuilder) addArgAddress(address core.AddressHandler) {
 }
 
 func (builder *baseBuilder) addArgBigInt(value *big.Int) {
+	if builder.err != nil {
+		return
+	}
+
 	if value == nil {
 		builder.err = fmt.Errorf("%w in builder.ArgBigInt", ErrNilValue)
 		return
@@ -72,12 +76,20 @@ func (builder *baseBuilder) addArgBigInt(value *big.Int) {
 }
 
 func (builder *baseBuilder) addArgInt64(value int64) {
+	if builder.err != nil {
+		return
+	}
+
 	b := big.NewInt(value)
 
 	builder.addBytes(b.Bytes())
 }
 
 func (builder *baseBuilder) addArgBytes(bytes []byte) {
+	if builder.err != nil {
+		return
+	}
+
 	if len(bytes) == 0 {
 		builder.err = fmt.Errorf("%w in builder.ArgBytes", ErrInvalidValue)
 	}
