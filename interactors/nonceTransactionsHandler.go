@@ -22,10 +22,11 @@ const minimumIntervalToResend = time.Second
 // nonceTransactionsHandler should be terminated an collected by the GC.
 // This struct is concurrent safe.
 type nonceTransactionsHandler struct {
-	proxy       Proxy
-	mutHandlers sync.Mutex
-	handlers    map[string]*addressNonceHandler
-	cancelFunc  func()
+	proxy            Proxy
+	mutHandlers      sync.Mutex
+	handlers         map[string]*addressNonceHandler
+	cancelFunc       func()
+	intervalToResend time.Duration
 }
 
 // NewNonceTransactionHandler will create a new instance of the nonceTransactionsHandler. It requires a Proxy implementation
@@ -39,8 +40,9 @@ func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration) (*n
 	}
 
 	nth := &nonceTransactionsHandler{
-		proxy:    proxy,
-		handlers: make(map[string]*addressNonceHandler),
+		proxy:            proxy,
+		handlers:         make(map[string]*addressNonceHandler),
+		intervalToResend: intervalToResend,
 	}
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -51,14 +53,14 @@ func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration) (*n
 }
 
 // GetNonce will return the nonce for the provided address
-func (nth *nonceTransactionsHandler) GetNonce(address core.AddressHandler) (uint64, error) {
+func (nth *nonceTransactionsHandler) GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error) {
 	if check.IfNil(address) {
 		return 0, ErrNilAddress
 	}
 
 	anh := nth.getOrCreateAddressNonceHandler(address)
 
-	return anh.getNonceUpdatingCurrent()
+	return anh.getNonceUpdatingCurrent(ctx)
 }
 
 func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core.AddressHandler) *addressNonceHandler {
@@ -75,7 +77,7 @@ func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core
 }
 
 // SendTransaction will store and send the provided transaction
-func (nth *nonceTransactionsHandler) SendTransaction(tx *data.Transaction) (string, error) {
+func (nth *nonceTransactionsHandler) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
 	if tx == nil {
 		return "", ErrNilTransaction
 	}
@@ -87,7 +89,7 @@ func (nth *nonceTransactionsHandler) SendTransaction(tx *data.Transaction) (stri
 	}
 
 	anh := nth.getOrCreateAddressNonceHandler(addressHandler)
-	sentHash, err := anh.sendTransaction(tx)
+	sentHash, err := anh.sendTransaction(ctx, tx)
 	if err != nil {
 		return "", fmt.Errorf("%w while sending transaction for address %s", err, addrAsBech32)
 	}
@@ -124,8 +126,10 @@ func (nth *nonceTransactionsHandler) resendTransactions(ctx context.Context) {
 		default:
 		}
 
-		err := anh.reSendTransactionsIfRequired()
+		resendCtx, cancel := context.WithTimeout(ctx, nth.intervalToResend)
+		err := anh.reSendTransactionsIfRequired(resendCtx)
 		log.LogIfError(err)
+		cancel()
 	}
 }
 

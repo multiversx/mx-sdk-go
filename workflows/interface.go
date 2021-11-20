@@ -1,6 +1,8 @@
 package workflows
 
 import (
+	"context"
+
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -22,10 +24,10 @@ type LastProcessedNonceHandler interface {
 
 // ProxyHandler defines the behavior of a proxy handler that can process requests
 type ProxyHandler interface {
-	GetLatestHyperBlockNonce() (uint64, error)
-	GetHyperBlockByNonce(nonce uint64) (*data.HyperBlock, error)
-	GetDefaultTransactionArguments(address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (data.ArgCreateTransaction, error)
-	GetNetworkConfig() (*data.NetworkConfig, error)
+	GetLatestHyperBlockNonce(ctx context.Context) (uint64, error)
+	GetHyperBlockByNonce(ctx context.Context, nonce uint64) (*data.HyperBlock, error)
+	GetDefaultTransactionArguments(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (data.ArgCreateTransaction, error)
+	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
 	IsInterfaceNil() bool
 }
 

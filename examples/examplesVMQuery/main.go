@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -19,7 +21,7 @@ func main() {
 		CallValue:  "",
 		Args:       nil,
 	}
-	response, err := ep.ExecuteVMQuery(vmRequest)
+	response, err := ep.ExecuteVMQuery(context.Background(), vmRequest)
 	if err != nil {
 		log.Error("error executing vm query", "error", err)
 		return

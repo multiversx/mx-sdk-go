@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
@@ -15,7 +16,7 @@ func main() {
 	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
 
 	// Retrieving network configuration parameters
-	networkConfig, err := ep.GetNetworkConfig()
+	networkConfig, err := ep.GetNetworkConfig(context.Background())
 	if err != nil {
 		log.Error("error getting network config", "error", err)
 		return
@@ -29,7 +30,7 @@ func main() {
 	}
 
 	// Retrieve account info from the network (balance, nonce)
-	accountInfo, err := ep.GetAccount(address)
+	accountInfo, err := ep.GetAccount(context.Background(), address)
 	if err != nil {
 		log.Error("error retrieving account info", "error", err)
 		return

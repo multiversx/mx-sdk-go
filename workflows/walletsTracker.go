@@ -81,7 +81,7 @@ func (wt *walletTracker) processLoop(ctx context.Context) {
 
 		select {
 		case <-timer.C:
-			err := wt.fetchAndProcessHyperBlocks()
+			err := wt.fetchAndProcessHyperBlocks(ctx)
 			log.LogIfError(err)
 		case <-ctx.Done():
 			log.Debug("terminating walletTracker.processLoop...")
@@ -90,15 +90,15 @@ func (wt *walletTracker) processLoop(ctx context.Context) {
 	}
 }
 
-func (wt *walletTracker) fetchAndProcessHyperBlocks() error {
+func (wt *walletTracker) fetchAndProcessHyperBlocks(ctx context.Context) error {
 	lastProcessedNonce := wt.nonceHandler.GetLastProcessedNonce()
-	networkNonce, err := wt.proxy.GetLatestHyperBlockNonce()
+	networkNonce, err := wt.proxy.GetLatestHyperBlockNonce(ctx)
 	if err != nil {
 		return err
 	}
 
 	for nonce := lastProcessedNonce + 1; nonce <= networkNonce; nonce++ {
-		err = wt.fetchAndProcessHyperBlock(nonce)
+		err = wt.fetchAndProcessHyperBlock(ctx, nonce)
 		if err != nil {
 			return err
 		}
@@ -109,8 +109,8 @@ func (wt *walletTracker) fetchAndProcessHyperBlocks() error {
 	return nil
 }
 
-func (wt *walletTracker) fetchAndProcessHyperBlock(nonce uint64) error {
-	block, err := wt.proxy.GetHyperBlockByNonce(nonce)
+func (wt *walletTracker) fetchAndProcessHyperBlock(ctx context.Context, nonce uint64) error {
+	block, err := wt.proxy.GetHyperBlockByNonce(ctx, nonce)
 	if err != nil {
 		return err
 	}

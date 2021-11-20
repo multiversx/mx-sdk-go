@@ -1,6 +1,7 @@
 package interactors
 
 import (
+	"context"
 	"sync"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
@@ -32,8 +33,8 @@ func newAddressNonceHandler(proxy Proxy, address erdgoCore.AddressHandler) *addr
 	}
 }
 
-func (anh *addressNonceHandler) getNonceUpdatingCurrent() (uint64, error) {
-	account, err := anh.proxy.GetAccount(anh.address)
+func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (uint64, error) {
+	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
 		return 0, err
 	}
@@ -53,8 +54,8 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent() (uint64, error) {
 	return core.MaxUint64(anh.computedNonce, account.Nonce), nil
 }
 
-func (anh *addressNonceHandler) reSendTransactionsIfRequired() error {
-	account, err := anh.proxy.GetAccount(anh.address)
+func (anh *addressNonceHandler) reSendTransactionsIfRequired(ctx context.Context) error {
+	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
 		return err
 	}
@@ -82,7 +83,7 @@ func (anh *addressNonceHandler) reSendTransactionsIfRequired() error {
 		return nil
 	}
 
-	hashes, err := anh.proxy.SendTransactions(resendableTxs)
+	hashes, err := anh.proxy.SendTransactions(ctx, resendableTxs)
 	if err != nil {
 		return err
 	}
@@ -92,12 +93,12 @@ func (anh *addressNonceHandler) reSendTransactionsIfRequired() error {
 	return nil
 }
 
-func (anh *addressNonceHandler) sendTransaction(tx *data.Transaction) (string, error) {
+func (anh *addressNonceHandler) sendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
 	anh.mut.Lock()
 	anh.transactions[tx.Nonce] = tx
 	anh.mut.Unlock()
 
-	return anh.proxy.SendTransaction(tx)
+	return anh.proxy.SendTransaction(ctx, tx)
 }
 
 func (anh *addressNonceHandler) markReFetchNonce() {

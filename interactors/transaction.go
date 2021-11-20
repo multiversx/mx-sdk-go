@@ -1,6 +1,7 @@
 package interactors
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"sync"
@@ -132,7 +133,7 @@ func (ti *transactionInteractor) createUnsignedMessage(arg data.ArgCreateTransac
 	return json.Marshal(tx)
 }
 
-func (ti *transactionInteractor) SendTransactionsAsBunch(bunchSize int) ([]string, error) {
+func (ti *transactionInteractor) SendTransactionsAsBunch(ctx context.Context, bunchSize int) ([]string, error) {
 	if bunchSize <= 0 {
 		return nil, ErrInvalidValue
 	}
@@ -156,7 +157,7 @@ func (ti *transactionInteractor) SendTransactionsAsBunch(bunchSize int) ([]strin
 			transactions = make([]*data.Transaction, 0)
 		}
 
-		hashes, err := ti.Proxy.SendTransactions(bunch)
+		hashes, err := ti.Proxy.SendTransactions(ctx, bunch)
 		if err != nil {
 			return nil, err
 		}

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
@@ -29,13 +31,13 @@ func main() {
 
 	//netConfigs can be used multiple times (eg. when sending multiple transactions) as to improve the
 	//responsiveness of the system
-	netConfigs, err := ep.GetNetworkConfig()
+	netConfigs, err := ep.GetNetworkConfig(context.Background())
 	if err != nil {
 		log.Error("unable to get the network configs", "error", err)
 		return
 	}
 
-	transactionArguments, err := ep.GetDefaultTransactionArguments(address, netConfigs)
+	transactionArguments, err := ep.GetDefaultTransactionArguments(context.Background(), address, netConfigs)
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return
@@ -70,7 +72,7 @@ func main() {
 	}
 	ti.AddTransaction(txSigOnHash)
 
-	hashes, err := ti.SendTransactionsAsBunch(100)
+	hashes, err := ti.SendTransactionsAsBunch(context.Background(), 100)
 	if err != nil {
 		log.Error("error sending transaction", "error", err)
 		return

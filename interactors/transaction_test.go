@@ -1,6 +1,7 @@
 package interactors
 
 import (
+	"context"
 	"encoding/hex"
 	"math/big"
 	"testing"
@@ -79,7 +80,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 	tx := ti.createTransaction(args)
 	ti.AddTransaction(tx)
 
-	msg, err := ti.SendTransactionsAsBunch(1)
+	msg, err := ti.SendTransactionsAsBunch(context.Background(), 1)
 	assert.Nil(t, err)
 	assert.NotNil(t, msg)
 }
@@ -123,7 +124,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 		nonce++
 	}
 
-	msg, err := ti.SendTransactionsAsBunch(1000)
+	msg, err := ti.SendTransactionsAsBunch(context.Background(), 1000)
 	assert.Nil(t, err)
 	assert.NotNil(t, msg)
 }
@@ -144,24 +145,24 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 	ti.SetTimeBetweenBunches(time.Millisecond)
 
 	ti.AddTransaction(&data.Transaction{})
-	hashes, err := ti.SendTransactionsAsBunch(0)
+	hashes, err := ti.SendTransactionsAsBunch(context.Background(), 0)
 	assert.Nil(t, hashes)
 	assert.Equal(t, ErrInvalidValue, err)
 
-	hashes, err = ti.SendTransactionsAsBunch(1)
+	hashes, err = ti.SendTransactionsAsBunch(context.Background(), 1)
 	assert.Equal(t, 1, len(hashes))
 	assert.Equal(t, 1, sendCalled)
 	assert.Nil(t, err)
 
 	sendCalled = 0
-	hashes, err = ti.SendTransactionsAsBunch(2)
+	hashes, err = ti.SendTransactionsAsBunch(context.Background(), 2)
 	assert.Equal(t, 0, len(hashes))
 	assert.Equal(t, 0, sendCalled)
 	assert.Nil(t, err)
 
 	sendCalled = 0
 	ti.AddTransaction(&data.Transaction{})
-	hashes, err = ti.SendTransactionsAsBunch(2)
+	hashes, err = ti.SendTransactionsAsBunch(context.Background(), 2)
 	assert.Equal(t, 1, len(hashes))
 	assert.Equal(t, 1, sendCalled)
 	assert.Nil(t, err)
@@ -171,7 +172,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 	for i := 0; i < numTxs; i++ {
 		ti.AddTransaction(&data.Transaction{})
 	}
-	hashes, err = ti.SendTransactionsAsBunch(2)
+	hashes, err = ti.SendTransactionsAsBunch(context.Background(), 2)
 	assert.Equal(t, numTxs, len(hashes))
 	assert.Equal(t, 1, sendCalled)
 	assert.Nil(t, err)
@@ -181,7 +182,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 	for i := 0; i < numTxs; i++ {
 		ti.AddTransaction(&data.Transaction{})
 	}
-	hashes, err = ti.SendTransactionsAsBunch(2)
+	hashes, err = ti.SendTransactionsAsBunch(context.Background(), 2)
 	assert.Equal(t, numTxs, len(hashes))
 	assert.Equal(t, 51, sendCalled)
 	assert.Nil(t, err)
