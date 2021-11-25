@@ -5,7 +5,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
-var log = logger.GetOrCreate("examples/examplesWallet")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesWallet")
 
 func main() {
 	w := interactors.NewWallet()

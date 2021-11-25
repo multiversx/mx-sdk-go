@@ -19,7 +19,7 @@ import (
 
 const timeToExecuteRequest = time.Second
 
-var log = logger.GetOrCreate("examples/examplesFlowWalletTracker")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesFlowWalletTracker")
 
 type moveBalanceHandler interface {
 	GenerateMoveBalanceTransactions(ctx context.Context, addresses []string)

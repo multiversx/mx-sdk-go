@@ -14,7 +14,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
-var log = logger.GetOrCreate("interactors")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/interactors")
 
 const defaultTimeBetweenBunches = time.Second
 

@@ -9,7 +9,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
 )
 
-var log = logger.GetOrCreate("examples/examplesBlock")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesBlock")
 
 func main() {
 	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
