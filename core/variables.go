@@ -8,4 +8,4 @@ import (
 var log = logger.GetOrCreate("elrond-sdk-erdgo/elrond-sdk-erdgo/core")
 
 // AddressPublicKeyConverter represents the default address public key converter
-var AddressPublicKeyConverter, _ = pubkeyConverter.NewBech32PubkeyConverter(AddressLen, log)
+var AddressPublicKeyConverter, _ = pubkeyConverter.NewBech32PubkeyConverter(AddressBytesLen, log)

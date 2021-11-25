@@ -1,4 +1,4 @@
 package core
 
-// AddressLen is the bytes length of an address
-const AddressLen = 32
+// AddressBytesLen represents the number of bytes of an address
+const AddressBytesLen = 32

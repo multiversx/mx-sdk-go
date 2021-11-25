@@ -1,8 +1,11 @@
 package workflows
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -21,6 +24,7 @@ type MoveBalanceHandlerArgs struct {
 //of the existing accounts
 type moveBalanceHandler struct {
 	proxy                      ProxyHandler
+	mutCachedNetworkConfigs    sync.RWMutex
 	cachedNetConfigs           *data.NetworkConfig
 	txInteractor               TransactionInteractor
 	trackableAddressesProvider TrackableAddressesProvider
@@ -51,38 +55,54 @@ func NewMoveBalanceHandler(args MoveBalanceHandlerArgs) (*moveBalanceHandler, er
 		minimumBalance:             args.MinimumBalance,
 	}
 
-	var err error
-	mbh.cachedNetConfigs, err = args.Proxy.GetNetworkConfig()
+	return mbh, nil
+}
+
+// CacheNetworkConfigs will try to cache the network configs
+func (mbh *moveBalanceHandler) CacheNetworkConfigs(ctx context.Context) error {
+	cachedNetConfigs, err := mbh.proxy.GetNetworkConfig(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return mbh, nil
+	mbh.mutCachedNetworkConfigs.Lock()
+	mbh.cachedNetConfigs = cachedNetConfigs
+	mbh.mutCachedNetworkConfigs.Unlock()
+
+	return nil
 }
 
 // GenerateMoveBalanceTransactions wil generate and add to the transaction interactor the move
 // balance transactions. Will output a log error if a transaction will be failed.
-func (mbh *moveBalanceHandler) GenerateMoveBalanceTransactions(addresses []string) {
+func (mbh *moveBalanceHandler) GenerateMoveBalanceTransactions(ctx context.Context, addresses []string) {
 	for _, address := range addresses {
-		mbh.generateTransactionAndHandleErrors(address)
+		mbh.generateTransactionAndHandleErrors(ctx, address)
 	}
 }
 
-func (mbh *moveBalanceHandler) generateTransactionAndHandleErrors(address string) {
-	err := mbh.generateTransaction(address)
+func (mbh *moveBalanceHandler) generateTransactionAndHandleErrors(ctx context.Context, address string) {
+	err := mbh.generateTransaction(ctx, address)
 	if err != nil {
 		err = fmt.Errorf("%w for provided address %s", err, address)
 		log.Error(err.Error())
 	}
 }
 
-func (mbh *moveBalanceHandler) generateTransaction(address string) error {
+func (mbh *moveBalanceHandler) generateTransaction(ctx context.Context, address string) error {
 	addressHandler, err := data.NewAddressFromBech32String(address)
 	if err != nil {
 		return err
 	}
 
-	argsCreate, err := mbh.proxy.GetDefaultTransactionArguments(addressHandler, mbh.cachedNetConfigs)
+	mbh.mutCachedNetworkConfigs.RLock()
+	networkConfigs := mbh.cachedNetConfigs
+	mbh.mutCachedNetworkConfigs.RUnlock()
+
+	if networkConfigs == nil {
+		return errors.New("nil cached configs")
+	}
+
+	argsCreate, err := mbh.proxy.GetDefaultTransactionArguments(ctx, addressHandler, networkConfigs)
 	if err != nil {
 		return err
 	}
@@ -106,7 +126,7 @@ func (mbh *moveBalanceHandler) generateTransaction(address string) error {
 	argsCreate.Data = nil
 	argsCreate.RcvAddr = mbh.receiverAddress
 
-	value := availableBalance.Sub(availableBalance, mbh.computeTxFee(argsCreate))
+	value := availableBalance.Sub(availableBalance, mbh.computeTxFee(networkConfigs, argsCreate))
 	argsCreate.Value = value.String()
 
 	skBytes := mbh.trackableAddressesProvider.PrivateKeyOfBech32Address(address)
@@ -121,13 +141,13 @@ func (mbh *moveBalanceHandler) generateTransaction(address string) error {
 	return nil
 }
 
-func (mbh *moveBalanceHandler) computeTxFee(argsCreate data.ArgCreateTransaction) *big.Int {
+func (mbh *moveBalanceHandler) computeTxFee(networkConfigs *data.NetworkConfig, argsCreate data.ArgCreateTransaction) *big.Int {
 	// this implementation should change if more complex transactions should be generated
-	// if the transaction is required to do a SC call, wrap a transaction using the relay mechanism
+	// if the transaction is required to do a smart contract call, wrap a transaction using the relay mechanism
 	// or do an ESDT/SFT/NFT operation, then we need to query the proxy's `/transaction/cost` endpoint route
 	// in order to get the correct gas limit
 
-	argsCreate.GasLimit = mbh.cachedNetConfigs.MinGasLimit + uint64(len(argsCreate.Data))*mbh.cachedNetConfigs.GasPerDataByte
+	argsCreate.GasLimit = networkConfigs.MinGasLimit + uint64(len(argsCreate.Data))*networkConfigs.GasPerDataByte
 	result := big.NewInt(int64(argsCreate.GasPrice))
 	result.Mul(result, big.NewInt(int64(argsCreate.GasLimit)))
 

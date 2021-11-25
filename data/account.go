@@ -41,8 +41,8 @@ func (a *Account) GetBalance(decimals int) (float64, error) {
 	denomination := big.NewInt(int64(decimals))
 	denominationMultiplier := big.NewInt(10)
 	denominationMultiplier.Exp(denominationMultiplier, denomination, nil)
-	floatDenom, _ := big.NewFloat(0).SetString(denominationMultiplier.String())
-	balance.Quo(balance, floatDenom)
+	floatDenomination, _ := big.NewFloat(0).SetString(denominationMultiplier.String())
+	balance.Quo(balance, floatDenomination)
 	floatBalance, _ := balance.Float64()
 
 	return floatBalance, nil

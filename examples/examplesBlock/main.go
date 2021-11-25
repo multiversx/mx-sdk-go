@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
@@ -14,7 +15,7 @@ func main() {
 	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
 
 	// Get latest hyper block (metachain) nonce
-	nonce, err := ep.GetLatestHyperBlockNonce()
+	nonce, err := ep.GetLatestHyperBlockNonce(context.Background())
 	if err != nil {
 		log.Error("error retrieving latest block nonce", "error", err)
 		return
@@ -22,7 +23,7 @@ func main() {
 	log.Info("latest hyper block", "nonce", nonce)
 
 	// Get block info
-	block, errGet := ep.GetHyperBlockByNonce(nonce)
+	block, errGet := ep.GetHyperBlockByNonce(context.Background(), nonce)
 	if errGet != nil {
 		log.Error("error retrieving hyper block", "error", err)
 		return

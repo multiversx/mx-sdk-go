@@ -40,7 +40,7 @@ func (a *address) AddressBytes() []byte {
 
 // IsValid returns true if the contained address is valid
 func (a *address) IsValid() bool {
-	return len(a.bytes) == core.AddressLen
+	return len(a.bytes) == core.AddressBytesLen
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

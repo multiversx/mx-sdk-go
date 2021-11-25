@@ -1,6 +1,8 @@
 package mock
 
 import (
+	"context"
+
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -14,22 +16,22 @@ type ProxyStub struct {
 }
 
 // GetNetworkConfig -
-func (ps *ProxyStub) GetNetworkConfig() (*data.NetworkConfig, error) {
+func (ps *ProxyStub) GetNetworkConfig(_ context.Context) (*data.NetworkConfig, error) {
 	return ps.GetNetworkConfigCalled()
 }
 
 // GetAccount -
-func (ps *ProxyStub) GetAccount(address core.AddressHandler) (*data.Account, error) {
+func (ps *ProxyStub) GetAccount(_ context.Context, address core.AddressHandler) (*data.Account, error) {
 	return ps.GetAccountCalled(address)
 }
 
 // SendTransaction -
-func (ps *ProxyStub) SendTransaction(tx *data.Transaction) (string, error) {
+func (ps *ProxyStub) SendTransaction(_ context.Context, tx *data.Transaction) (string, error) {
 	return ps.SendTransactionCalled(tx)
 }
 
 // SendTransactions -
-func (ps *ProxyStub) SendTransactions(txs []*data.Transaction) ([]string, error) {
+func (ps *ProxyStub) SendTransactions(_ context.Context, txs []*data.Transaction) ([]string, error) {
 	return ps.SendTransactionsCalled(txs)
 }
 

@@ -96,7 +96,7 @@ func (sb *SourceBuffer) NextByte() (byte, bool) {
 //NextUint8 returns the next byte after offset as uint8 and increase offset position
 func (sb *SourceBuffer) NextUint8() (uint8, bool) {
 	val, eof := sb.NextByte()
-	return uint8(val), eof
+	return val, eof
 }
 
 //NextBool returns the next byte after offset as bool and increase offset position

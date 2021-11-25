@@ -2,16 +2,22 @@ package blockchain
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+const testHttpURL = "https://test.org"
 
 type mockHTTPClient struct {
 	lastRequest *http.Request
@@ -29,23 +35,69 @@ func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	}, nil
 }
 
+func TestElrondProxy_GetHTTPContextDone(t *testing.T) {
+	t.Parallel()
+
+	testHttpServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// simulating that the operation takes a lot of time
+
+		time.Sleep(time.Second * 2)
+
+		rw.WriteHeader(http.StatusOK)
+		_, _ = rw.Write(nil)
+	}))
+	proxy := NewElrondProxy(testHttpServer.URL, &http.Client{})
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+	defer cancel()
+
+	resp, err := proxy.GetHTTP(ctx, "endpoint")
+	assert.Nil(t, resp)
+	require.NotNil(t, err)
+	assert.Equal(t, "*url.Error", fmt.Sprintf("%T", err))
+	assert.True(t, strings.Contains(err.Error(), "context deadline exceeded"))
+}
+
+func TestElrondProxy_PostHTTPContextDone(t *testing.T) {
+	t.Parallel()
+
+	testHttpServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// simulating that the operation takes a lot of time
+
+		time.Sleep(time.Second * 2)
+
+		rw.WriteHeader(http.StatusOK)
+		_, _ = rw.Write(nil)
+	}))
+	proxy := NewElrondProxy(testHttpServer.URL, &http.Client{})
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+	defer cancel()
+
+	resp, err := proxy.PostHTTP(ctx, "endpoint", nil)
+	assert.Nil(t, resp)
+	require.NotNil(t, err)
+	assert.Equal(t, "*url.Error", fmt.Sprintf("%T", err))
+	assert.True(t, strings.Contains(err.Error(), "context deadline exceeded"))
+}
+
 func TestGetAccount(t *testing.T) {
 	t.Parallel()
 
 	httpClient := &mockHTTPClient{}
-	proxy := NewElrondProxy("http://test.org", httpClient)
+	proxy := NewElrondProxy(testHttpURL, httpClient)
 
 	address, err := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
 	if err != nil {
 		assert.Error(t, err)
 	}
 
-	_, err = proxy.GetAccount(address)
+	_, err = proxy.GetAccount(context.Background(), address)
 	if err != nil {
 		assert.Error(t, err)
 	}
 
-	expected := "http://test.org/address/erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts"
+	expected := testHttpURL + "/address/erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts"
 
 	assert.Equal(t, expected, httpClient.lastRequest.URL.String())
 }
@@ -63,7 +115,7 @@ func TestElrondProxy_GetNetworkEconomics(t *testing.T) {
 	}
 	ep := NewElrondProxy("http://localhost:8079", httpClient)
 
-	networkEconomics, err := ep.GetNetworkEconomics()
+	networkEconomics, err := ep.GetNetworkEconomics(context.Background())
 	require.Nil(t, err)
 	require.Equal(t, &data.NetworkEconomics{
 		DevRewards:            "0",
@@ -99,7 +151,7 @@ func TestElrondProxy_RequestTransactionCost(t *testing.T) {
 		Version: 1,
 		Options: 0,
 	}
-	txCost, err := ep.RequestTransactionCost(tx)
+	txCost, err := ep.RequestTransactionCost(context.Background(), tx)
 	require.Nil(t, err)
 	require.Equal(t, &data.TxCostResponseData{
 		TxCost:     24273810,
@@ -120,7 +172,7 @@ func TestElrondProxy_GetTransactionInfoWithResults(t *testing.T) {
 	}
 	ep := NewElrondProxy("http://localhost:8079", httpClient)
 
-	tx, err := ep.GetTransactionInfoWithResults("a40e5a6af4efe221608297a73459211756ab88b96896e6e331842807a138f343")
+	tx, err := ep.GetTransactionInfoWithResults(context.Background(), "a40e5a6af4efe221608297a73459211756ab88b96896e6e331842807a138f343")
 	require.Nil(t, err)
 
 	txBytes, _ := json.MarshalIndent(tx, "", " ")
@@ -139,7 +191,7 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 	_ = httpClient
 	ep := NewElrondProxy("http://localhost:8079", httpClient)
 
-	response, err := ep.ExecuteVMQuery(&data.VmValueRequest{
+	response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
 		Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
 		FuncName:   "version",
 		CallerAddr: "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",

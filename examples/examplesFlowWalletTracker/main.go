@@ -17,15 +17,17 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
 )
 
+const timeToExecuteRequest = time.Second
+
 var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesFlowWalletTracker")
 
 type moveBalanceHandler interface {
-	GenerateMoveBalanceTransactions(addresses []string)
+	GenerateMoveBalanceTransactions(ctx context.Context, addresses []string)
 }
 
 type transactionInteractor interface {
 	workflows.TransactionInteractor
-	SendTransactionsAsBunch(bunchSize int) ([]string, error)
+	SendTransactionsAsBunch(ctx context.Context, bunchSize int) ([]string, error)
 }
 
 type walletTracker interface {
@@ -83,6 +85,17 @@ func runApp() error {
 	}
 
 	mbh, err := workflows.NewMoveBalanceHandler(argsMoveBalanceHandler)
+	if err != nil {
+		return err
+	}
+
+	ctxNetworkConfigs, cancel := context.WithTimeout(context.Background(), timeToExecuteRequest)
+	// TODO: call this periodically as to avoid network config changes that can impact the transaction creation and sending
+	err = mbh.CacheNetworkConfigs(ctxNetworkConfigs)
+	cancel()
+	if err != nil {
+		return err
+	}
 
 	ctxDone, cancel := context.WithCancel(context.Background())
 	// generateMoveBalanceTransactionsAndSendThem function can be either periodically triggered or manually triggered (we choose automatically)
@@ -97,7 +110,7 @@ func runApp() error {
 			select {
 			case <-timer.C:
 				// send transaction batches each 20 seconds
-				generateMoveBalanceTransactionsAndSendThem(wt, txInteractor, mbh)
+				generateMoveBalanceTransactionsAndSendThem(ctxDone, wt, txInteractor, mbh)
 			case <-ctxDone.Done():
 				log.Debug("closing automatically send move-balance transactions go routine...")
 				return
@@ -120,15 +133,24 @@ func runApp() error {
 }
 
 func generateMoveBalanceTransactionsAndSendThem(
+	ctx context.Context,
 	wt walletTracker,
 	txInteractor transactionInteractor,
 	mbh moveBalanceHandler,
 ) {
+	ctxSendTransactions, cancelSendTransactions := context.WithTimeout(ctx, timeToExecuteRequest)
 
 	addresses := wt.GetLatestTrackedAddresses()
 	log.Debug("trying to send move balance transactions...", "num", len(addresses))
-	mbh.GenerateMoveBalanceTransactions(addresses)
-	hashes, errSend := txInteractor.SendTransactionsAsBunch(100)
+	timeToGenerateTransactions := timeToExecuteRequest * time.Duration(len(addresses))
+	ctxGenerateMoveBalanceTransactions, cancelGenerateTransactions := context.WithTimeout(ctx, timeToGenerateTransactions)
+	defer func() {
+		cancelSendTransactions()
+		cancelGenerateTransactions()
+	}()
+
+	mbh.GenerateMoveBalanceTransactions(ctxGenerateMoveBalanceTransactions, addresses)
+	hashes, errSend := txInteractor.SendTransactionsAsBunch(ctxSendTransactions, 100)
 	if errSend != nil {
 		log.Error(errSend.Error())
 	}
@@ -143,12 +165,12 @@ func setTestParams(
 	tracker *mock.MemoryNonceTracker,
 ) error {
 
-	nonce, err := ep.GetLatestHyperBlockNonce()
+	nonce, err := ep.GetLatestHyperBlockNonce(context.Background())
 	if err != nil {
 		return err
 	}
 
-	// since this is an example and we are using a memory tracker, we need this to be executed each time as to not request extremely old blocks
+	// since this is an example, and we are using a memory tracker, we need this to be executed each time as to not request ancient blocks
 	tracker.ProcessedNonce(nonce)
 
 	// add 2 trackable addresses for demo purposes

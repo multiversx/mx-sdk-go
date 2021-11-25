@@ -1,6 +1,7 @@
 package interactors
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"sync"
@@ -56,15 +57,15 @@ func TestNonceTransactionsHandler_GetNonce(t *testing.T) {
 	}
 
 	nth, _ := NewNonceTransactionHandler(proxy, time.Minute)
-	nonce, err := nth.GetNonce(nil)
+	nonce, err := nth.GetNonce(context.Background(), nil)
 	assert.Equal(t, ErrNilAddress, err)
 	assert.Equal(t, uint64(0), nonce)
 
-	nonce, err = nth.GetNonce(testAddress)
+	nonce, err = nth.GetNonce(context.Background(), testAddress)
 	assert.Nil(t, err)
 	assert.Equal(t, currentNonce, nonce)
 
-	nonce, err = nth.GetNonce(testAddress)
+	nonce, err = nth.GetNonce(context.Background(), testAddress)
 	assert.Nil(t, err)
 	assert.Equal(t, currentNonce+1, nonce)
 
@@ -117,7 +118,7 @@ func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingOn
 	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2)
 	txs := createMockTransactions(testAddress, numTxs, atomic.LoadUint64(&currentNonce))
 	for i := 0; i < numTxs; i++ {
-		_, err := nth.SendTransaction(txs[i])
+		_, err := nth.SendTransaction(context.TODO(), txs[i])
 		require.Nil(t, err)
 	}
 
@@ -170,7 +171,7 @@ func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingAl
 	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2)
 	txs := createMockTransactions(testAddress, numTxs, atomic.LoadUint64(&currentNonce))
 	for i := 0; i < numTxs; i++ {
-		_, err := nth.SendTransaction(txs[i])
+		_, err := nth.SendTransaction(context.Background(), txs[i])
 		require.Nil(t, err)
 	}
 
@@ -220,7 +221,7 @@ func TestNonceTransactionsHandler_SendTransactionResendingEliminatingAll(t *test
 	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2)
 	txs := createMockTransactions(testAddress, numTxs, atomic.LoadUint64(&currentNonce))
 
-	hash, err := nth.SendTransaction(txs[0])
+	hash, err := nth.SendTransaction(context.Background(), txs[0])
 	require.Nil(t, err)
 	require.Equal(t, "", hash)
 
@@ -262,13 +263,13 @@ func TestNonceTransactionsHandler_SendTransactionErrors(t *testing.T) {
 	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2)
 	txs := createMockTransactions(testAddress, numTxs, atomic.LoadUint64(&currentNonce))
 
-	hash, err := nth.SendTransaction(nil)
+	hash, err := nth.SendTransaction(context.Background(), nil)
 	require.Equal(t, ErrNilTransaction, err)
 	require.Equal(t, "", hash)
 
 	errSent = errors.New("expected error")
 
-	hash, err = nth.SendTransaction(txs[0])
+	hash, err = nth.SendTransaction(context.Background(), txs[0])
 	require.True(t, errors.Is(err, errSent))
 	require.Equal(t, "", hash)
 }
@@ -330,7 +331,7 @@ func TestNonceTransactionsHandler_SendTransactionsWithGetNonce(t *testing.T) {
 	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2)
 	txs := createMockTransactionsWithGetNonce(t, testAddress, 5, nth)
 	for i := 0; i < numTxs; i++ {
-		_, err := nth.SendTransaction(txs[i])
+		_, err := nth.SendTransaction(context.Background(), txs[i])
 		require.Nil(t, err)
 	}
 
@@ -354,7 +355,7 @@ func createMockTransactionsWithGetNonce(
 ) []*data.Transaction {
 	txs := make([]*data.Transaction, 0, numTxs)
 	for i := 0; i < numTxs; i++ {
-		nonce, err := nth.GetNonce(addr)
+		nonce, err := nth.GetNonce(context.Background(), addr)
 		require.Nil(tb, err)
 
 		tx := &data.Transaction{
@@ -395,9 +396,9 @@ func TestNonceTransactionsHandler_ForceNonceReFetch(t *testing.T) {
 	}
 
 	nth, _ := NewNonceTransactionHandler(proxy, time.Minute)
-	_, _ = nth.GetNonce(testAddress)
-	_, _ = nth.GetNonce(testAddress)
-	newNonce, err := nth.GetNonce(testAddress)
+	_, _ = nth.GetNonce(context.Background(), testAddress)
+	_, _ = nth.GetNonce(context.Background(), testAddress)
+	newNonce, err := nth.GetNonce(context.Background(), testAddress)
 	require.Nil(t, err)
 	assert.Equal(t, atomic.LoadUint64(&currentNonce)+2, newNonce)
 
@@ -407,7 +408,7 @@ func TestNonceTransactionsHandler_ForceNonceReFetch(t *testing.T) {
 	err = nth.ForceNonceReFetch(testAddress)
 	assert.Nil(t, err)
 
-	newNonce, err = nth.GetNonce(testAddress)
+	newNonce, err = nth.GetNonce(context.Background(), testAddress)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, atomic.LoadUint64(&currentNonce), newNonce)
 }
