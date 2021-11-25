@@ -7,7 +7,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
-var log = logger.GetOrCreate("examples/examplesTransaction")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesTransaction")
 
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")

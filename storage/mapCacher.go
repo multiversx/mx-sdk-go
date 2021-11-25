@@ -8,7 +8,7 @@ import (
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 )
 
-var log = logger.GetOrCreate("mapCacher")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/storage")
 
 // mapCacher is the cacher implementation based on a map
 type mapCacher struct {
