@@ -373,6 +373,7 @@ func (ep *elrondProxy) getHyperBlock(ctx context.Context, endpoint string) (*dat
 	return &response.Data.HyperBlock, nil
 }
 
+// GetHTTP does a GET method operation on the specified endpoint
 func (ep *elrondProxy) GetHTTP(ctx context.Context, endpoint string) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", ep.proxyURL, endpoint)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -396,6 +397,7 @@ func (ep *elrondProxy) GetHTTP(ctx context.Context, endpoint string) ([]byte, er
 	return body, nil
 }
 
+// PostHTTP does a POST method operation on the specified endpoint with the provided raw data bytes
 func (ep *elrondProxy) PostHTTP(ctx context.Context, endpoint string, data []byte) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", ep.proxyURL, endpoint)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(data))

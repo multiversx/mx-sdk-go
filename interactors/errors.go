@@ -25,6 +25,3 @@ var ErrNilAddress = errors.New("nil address")
 
 // ErrNilTransaction signals that provided transaction is nil
 var ErrNilTransaction = errors.New("nil transaction")
-
-// ErrMissingHashWhenSendingTransaction signals that a hash was not received when sending a transaction
-var ErrMissingHashWhenSendingTransaction = errors.New("missing hash when sending transaction")

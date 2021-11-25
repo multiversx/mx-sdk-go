@@ -143,7 +143,7 @@ func (mbh *moveBalanceHandler) generateTransaction(ctx context.Context, address 
 
 func (mbh *moveBalanceHandler) computeTxFee(networkConfigs *data.NetworkConfig, argsCreate data.ArgCreateTransaction) *big.Int {
 	// this implementation should change if more complex transactions should be generated
-	// if the transaction is required to do a SC call, wrap a transaction using the relay mechanism
+	// if the transaction is required to do a smart contract call, wrap a transaction using the relay mechanism
 	// or do an ESDT/SFT/NFT operation, then we need to query the proxy's `/transaction/cost` endpoint route
 	// in order to get the correct gas limit
 

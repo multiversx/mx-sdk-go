@@ -38,7 +38,7 @@ type walletTracker struct {
 	handlerNewDepositTransaction func(transaction data.TransactionOnNetwork)
 }
 
-// NewWalletTracker will create a new walletTracker instance. It automatically start an inner
+// NewWalletTracker will create a new walletTracker instance. It automatically starts an inner
 // processLoop go routine that can be stopped by calling the Close method
 func NewWalletTracker(args WalletTrackerArgs) (*walletTracker, error) {
 	if check.IfNil(args.TrackableAddressesProvider) {

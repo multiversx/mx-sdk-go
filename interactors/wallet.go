@@ -81,6 +81,7 @@ type encryptedKeyJSONV4 struct {
 type wallet struct {
 }
 
+// NewWallet creates a new wallet instance
 func NewWallet() *wallet {
 	return &wallet{}
 }

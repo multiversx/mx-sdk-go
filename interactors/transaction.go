@@ -45,6 +45,7 @@ func NewTransactionInteractor(proxy Proxy, txSigner TxSigner) (*transactionInter
 	}, nil
 }
 
+// SetTimeBetweenBunches sets the time between bunch sends
 func (ti *transactionInteractor) SetTimeBetweenBunches(timeBetweenBunches time.Duration) {
 	ti.mutTimeBetweenBunches.Lock()
 	ti.timeBetweenBunches = timeBetweenBunches
@@ -133,6 +134,7 @@ func (ti *transactionInteractor) createUnsignedMessage(arg data.ArgCreateTransac
 	return json.Marshal(tx)
 }
 
+// SendTransactionsAsBunch will send all stored transactions as bunches
 func (ti *transactionInteractor) SendTransactionsAsBunch(ctx context.Context, bunchSize int) ([]string, error) {
 	if bunchSize <= 0 {
 		return nil, ErrInvalidValue

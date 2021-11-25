@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const testHttpURL = "https://test.org"
+
 type mockHTTPClient struct {
 	lastRequest *http.Request
 	doCalled    func(req *http.Request) (*http.Response, error)
@@ -39,14 +41,14 @@ func TestElrondProxy_GetHTTPContextDone(t *testing.T) {
 	testHttpServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		// simulating that the operation takes a lot of time
 
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 2)
 
 		rw.WriteHeader(http.StatusOK)
 		_, _ = rw.Write(nil)
 	}))
 	proxy := NewElrondProxy(testHttpServer.URL, &http.Client{})
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
 	resp, err := proxy.GetHTTP(ctx, "endpoint")
@@ -62,14 +64,14 @@ func TestElrondProxy_PostHTTPContextDone(t *testing.T) {
 	testHttpServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		// simulating that the operation takes a lot of time
 
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 2)
 
 		rw.WriteHeader(http.StatusOK)
 		_, _ = rw.Write(nil)
 	}))
 	proxy := NewElrondProxy(testHttpServer.URL, &http.Client{})
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
 	resp, err := proxy.PostHTTP(ctx, "endpoint", nil)
@@ -83,7 +85,7 @@ func TestGetAccount(t *testing.T) {
 	t.Parallel()
 
 	httpClient := &mockHTTPClient{}
-	proxy := NewElrondProxy("http://test.org", httpClient)
+	proxy := NewElrondProxy(testHttpURL, httpClient)
 
 	address, err := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
 	if err != nil {
@@ -95,7 +97,7 @@ func TestGetAccount(t *testing.T) {
 		assert.Error(t, err)
 	}
 
-	expected := "http://test.org/address/erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts"
+	expected := testHttpURL + "/address/erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts"
 
 	assert.Equal(t, expected, httpClient.lastRequest.URL.String())
 }

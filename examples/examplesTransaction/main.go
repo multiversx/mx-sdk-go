@@ -29,7 +29,7 @@ func main() {
 		return
 	}
 
-	//netConfigs can be used multiple times (eg. when sending multiple transactions) as to improve the
+	//netConfigs can be used multiple times (for example when sending multiple transactions) as to improve the
 	//responsiveness of the system
 	netConfigs, err := ep.GetNetworkConfig(context.Background())
 	if err != nil {

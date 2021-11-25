@@ -19,7 +19,7 @@ const minimumIntervalToResend = time.Second
 // instance of addressNonceHandler. It also starts a go routine that will periodically
 // try to resend "stuck transactions" and to clean the inner state. The recommended resend
 // interval is 1 minute. The Close method should be called whenever the current instance of
-// nonceTransactionsHandler should be terminated an collected by the GC.
+// nonceTransactionsHandler should be terminated and collected by the GC.
 // This struct is concurrent safe.
 type nonceTransactionsHandler struct {
 	proxy            Proxy

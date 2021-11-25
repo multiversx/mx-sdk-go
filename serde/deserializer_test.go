@@ -61,15 +61,15 @@ func TestDeserializer_CreateStruct_NestedStructures(t *testing.T) {
 
 	ds := NewDeserializer()
 
-	bt := &testingMocks.NestedStructure{}
+	nesting := &testingMocks.NestingStructure{}
 
-	usedBytes, err := ds.CreateStruct(bt, data)
+	usedBytes, err := ds.CreateStruct(nesting, data)
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(len(data)), usedBytes)
 
 	bigInt := big.Int{}
 	bigInt.SetBytes([]byte{23, 0, 0, 0})
-	expectedStruct := &testingMocks.NestedStructure{
+	expectedStruct := &testingMocks.NestingStructure{
 		String: "BoxedBytes",
 		Ticker: "ALC-6258d2",
 		Bool:   false,
@@ -82,7 +82,7 @@ func TestDeserializer_CreateStruct_NestedStructures(t *testing.T) {
 		AnotherBigInt: bigInt,
 	}
 
-	assert.EqualValues(t, expectedStruct, bt)
+	assert.EqualValues(t, expectedStruct, nesting)
 }
 
 func Test_deserializer_CreatePrimitiveDataType(t *testing.T) {

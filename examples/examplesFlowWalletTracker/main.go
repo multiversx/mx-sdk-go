@@ -90,6 +90,7 @@ func runApp() error {
 	}
 
 	ctxNetworkConfigs, cancel := context.WithTimeout(context.Background(), timeToExecuteRequest)
+	// TODO: call this periodically as to avoid network config changes that can impact the transaction creation and sending
 	err = mbh.CacheNetworkConfigs(ctxNetworkConfigs)
 	cancel()
 	if err != nil {
@@ -169,7 +170,7 @@ func setTestParams(
 		return err
 	}
 
-	// since this is an example and we are using a memory tracker, we need this to be executed each time as to not request extremely old blocks
+	// since this is an example, and we are using a memory tracker, we need this to be executed each time as to not request ancient blocks
 	tracker.ProcessedNonce(nonce)
 
 	// add 2 trackable addresses for demo purposes

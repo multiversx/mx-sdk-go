@@ -22,6 +22,7 @@ func NewShardCoordinator(numOfShardsWithoutMeta uint32, currentShard uint32) (*s
 	}, nil
 }
 
+// ComputeShardId computes the shard ID of a provided address
 func (sc *shardCoordinator) ComputeShardId(address erdgoCore.AddressHandler) (uint32, error) {
 	if check.IfNil(address) {
 		return 0, ErrNilAddress
