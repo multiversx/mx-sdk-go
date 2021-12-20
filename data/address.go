@@ -38,6 +38,14 @@ func (a *address) AddressBytes() []byte {
 	return a.bytes
 }
 
+// ConvertFromByteSliceToArray will convert the provided buffer to its [32]byte representation
+func (a *address) ConvertFromByteSliceToArray(buff []byte) [32]byte {
+	var result [32]byte
+	copy(result[:], buff)
+
+	return result
+}
+
 // IsValid returns true if the contained address is valid
 func (a *address) IsValid() bool {
 	return len(a.bytes) == core.AddressBytesLen
