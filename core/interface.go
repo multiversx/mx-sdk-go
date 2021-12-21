@@ -4,7 +4,7 @@ package core
 type AddressHandler interface {
 	AddressAsBech32String() string
 	AddressBytes() []byte
-	ConvertFromByteSliceToArray([]byte) [32]byte
+	AddressSlice() [32]byte
 	IsValid() bool
 	IsInterfaceNil() bool
 }
