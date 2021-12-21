@@ -38,10 +38,10 @@ func (a *address) AddressBytes() []byte {
 	return a.bytes
 }
 
-// ConvertFromByteSliceToArray will convert the provided buffer to its [32]byte representation
-func (a *address) ConvertFromByteSliceToArray(buff []byte) [32]byte {
+// AddressSlice will convert the provided buffer to its [32]byte representation
+func (a *address) AddressSlice() [32]byte {
 	var result [32]byte
-	copy(result[:], buff)
+	copy(result[:], a.bytes)
 
 	return result
 }
