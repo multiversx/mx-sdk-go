@@ -3,36 +3,67 @@ package blockchain
 import (
 	"context"
 	"sync"
+	"time"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
 type elrondProxyWithCache struct {
-	mut   sync.RWMutex
-	proxy elrondProxy
+	Proxy
+	mut                 sync.RWMutex
+	fetchedConfigs      *data.NetworkConfig
+	lastFetchedTime     time.Time
+	cacheExpiryDuration time.Duration
+	sinceTimeHandler    func(t time.Time) time.Duration
 }
 
-func (cacher *elrondProxyWithCache) GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error) {
-	return proxy.GetNetworkConfig(ctx)
+func (proxy *elrondProxyWithCache) GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error) {
+	proxy.mut.RLock()
+	cachedConfigs := proxy.getCachedConfigs()
+	proxy.mut.RUnlock()
+
+	if cachedConfigs != nil {
+		return cachedConfigs, nil
+	}
+
+	return proxy.cacheConfigs(ctx)
 }
 
-func (cacher *elrondProxyWithCache) GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error) {
-	// TODO implement me
-	panic("implement me")
+func (proxy *elrondProxyWithCache) getCachedConfigs() *data.NetworkConfig {
+	if proxy.sinceTimeHandler(proxy.lastFetchedTime) > proxy.cacheExpiryDuration {
+		return nil
+	}
+
+	return proxy.fetchedConfigs
 }
 
-func (cacher *elrondProxyWithCache) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
-	// TODO implement me
-	panic("implement me")
+func (proxy *elrondProxyWithCache) cacheConfigs(ctx context.Context) (*data.NetworkConfig, error) {
+	proxy.mut.Lock()
+	defer proxy.mut.Unlock()
+
+	// maybe another parallel running go routine already did the fetching
+	cachedConfig := proxy.getCachedConfigs()
+	if cachedConfig != nil {
+		return cachedConfig, nil
+	}
+
+	//TODO log debug here
+	configs, err := proxy.Proxy.GetNetworkConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	proxy.lastFetchedTime = time.Now()
+	proxy.fetchedConfigs = configs
+
+	return configs, nil
 }
 
-func (cacher *elrondProxyWithCache) SendTransactions(ctx context.Context, txs []*data.Transaction) ([]string, error) {
-	// TODO implement me
-	panic("implement me")
+func since(t time.Time) time.Duration {
+	return time.Since(t)
 }
 
-func (cacher *elrondProxyWithCache) IsInterfaceNil() bool {
+func (proxy *elrondProxyWithCache) IsInterfaceNil() bool {
 	// TODO implement me
 	panic("implement me")
 }
