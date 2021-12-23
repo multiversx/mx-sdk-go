@@ -14,11 +14,6 @@ var log = logger.GetOrCreate("elrond-sdk-erdgo/proxyWithCacher")
 
 const minimumCachingInterval = time.Second
 
-type ArgsElrondProxyWithCache struct {
-	Proxy
-	CacheExpiryDuration time.Duration
-}
-
 type elrondProxyWithCache struct {
 	Proxy
 	mut                 sync.RWMutex

@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"context"
+
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
