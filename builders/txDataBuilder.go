@@ -13,6 +13,7 @@ const dataSeparator = "@"
 // can also be used to construct a VmValueRequest instance ready to be used on a VM query
 type txDataBuilder struct {
 	*baseBuilder
+	function string
 }
 
 // NewTxDataBuilder creates a new transaction data builder
