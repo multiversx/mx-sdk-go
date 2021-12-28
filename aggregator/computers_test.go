@@ -27,4 +27,10 @@ func TestComputeMedian(t *testing.T) {
 		prices := []float64{1.0045, 1.0047, 1.0049}
 		assert.Equal(t, 1.0047, computeMedian(prices))
 	})
+	t.Run("extreme values should be eliminated", func(t *testing.T) {
+		t.Parallel()
+
+		prices := []float64{0.0001, 1.0045, 1.0047, 892789.0}
+		assert.Equal(t, 1.0046, computeMedian(prices))
+	})
 }
