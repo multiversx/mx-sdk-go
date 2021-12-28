@@ -1,6 +1,7 @@
 package aggregator
 
 import (
+	"context"
 	"fmt"
 	"strings"
 )
@@ -19,13 +20,13 @@ type binance struct {
 }
 
 // FetchPrice will fetch the price using the http client
-func (b *binance) FetchPrice(base, quote string) (float64, error) {
+func (b *binance) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
 	if strings.Contains(strings.ToUpper(quote), QuoteUSDFiat) {
 		quote = QuoteUSDT
 	}
 
 	var bpr binancePriceRequest
-	err := b.ResponseGetter.Get(fmt.Sprintf(binancePriceUrl, base, quote), &bpr)
+	err := b.ResponseGetter.Get(ctx, fmt.Sprintf(binancePriceUrl, base, quote), &bpr)
 	if err != nil {
 		return 0, err
 	}
@@ -39,4 +40,9 @@ func (b *binance) FetchPrice(base, quote string) (float64, error) {
 // Name returns the name
 func (b *binance) Name() string {
 	return "Binance"
+}
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (b *binance) IsInterfaceNil() bool {
+	return b == nil
 }

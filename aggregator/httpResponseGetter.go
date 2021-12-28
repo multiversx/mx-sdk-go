@@ -1,6 +1,7 @@
 package aggregator
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -16,10 +17,10 @@ type HttpResponseGetter struct {
 
 // Get does a get operation on the specified url and tries to cast the response bytes over the response object through
 // the json serializer
-func (getter *HttpResponseGetter) Get(url string, response interface{}) error {
+func (getter *HttpResponseGetter) Get(ctx context.Context, url string, response interface{}) error {
 	client := &http.Client{}
 
-	req, err := http.NewRequest(httpGetVerb, url, nil)
+	req, err := http.NewRequestWithContext(ctx, httpGetVerb, url, nil)
 	if err != nil {
 		return err
 	}
