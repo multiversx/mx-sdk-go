@@ -86,6 +86,9 @@ func (ph *pollingHandler) StartProcessingLoop() error {
 func (ph *pollingHandler) processLoop(ctx context.Context) {
 	defer ph.cleanup()
 
+	timer := time.NewTimer(ph.pollingInterval)
+	defer timer.Stop()
+
 	for {
 		interval := ph.pollingInterval
 
@@ -96,9 +99,7 @@ func (ph *pollingHandler) processLoop(ctx context.Context) {
 				"retrying after", ph.pollingWhenError)
 			interval = ph.pollingWhenError
 		}
-
-		timer := time.NewTimer(interval)
-		defer timer.Stop()
+		timer.Reset(interval)
 
 		select {
 		case <-timer.C:
