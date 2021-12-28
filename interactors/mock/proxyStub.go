@@ -13,6 +13,11 @@ type ProxyStub struct {
 	GetAccountCalled       func(address core.AddressHandler) (*data.Account, error)
 	SendTransactionCalled  func(tx *data.Transaction) (string, error)
 	SendTransactionsCalled func(txs []*data.Transaction) ([]string, error)
+	ExecuteVMQueryCalled   func(vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
+}
+
+func (ps *ProxyStub) ExecuteVMQuery(_ context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
+	return ps.ExecuteVMQueryCalled(vmRequest)
 }
 
 // GetNetworkConfig -
