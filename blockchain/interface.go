@@ -13,5 +13,6 @@ type Proxy interface {
 	GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error)
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	SendTransactions(ctx context.Context, txs []*data.Transaction) ([]string, error)
+	ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
 	IsInterfaceNil() bool
 }
