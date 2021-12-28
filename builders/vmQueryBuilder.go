@@ -11,6 +11,7 @@ type vmQueryBuilder struct {
 	*baseBuilder
 	address    string
 	callerAddr string
+	function   string
 }
 
 // NewVMQueryBuilder creates a new vm query data builder
