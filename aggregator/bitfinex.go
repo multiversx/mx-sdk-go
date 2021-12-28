@@ -29,9 +29,6 @@ func (b *bitfinex) FetchPrice(ctx context.Context, base, quote string) (float64,
 	if err != nil {
 		return 0, err
 	}
-	if err != nil {
-		return 0, nil
-	}
 	if bit.Price == "" {
 		return 0, InvalidResponseDataErr
 	}
