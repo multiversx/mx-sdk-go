@@ -13,3 +13,9 @@ var ErrNilShardCoordinator = errors.New("nil shard coordinator")
 
 // ErrNilNetworkConfigs signals that the provided network configs is nil
 var ErrNilNetworkConfigs = errors.New("nil network configs")
+
+// ErrNilProxy signals that a nil proxy was provided
+var ErrNilProxy = errors.New("nil proxy")
+
+// ErrInvalidCacherDuration signals that the provided caching duration is invalid
+var ErrInvalidCacherDuration = errors.New("invalid caching duration")
