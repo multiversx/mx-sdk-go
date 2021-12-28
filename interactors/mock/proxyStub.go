@@ -16,6 +16,7 @@ type ProxyStub struct {
 	ExecuteVMQueryCalled   func(vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
 }
 
+// ExecuteVMQuery -
 func (ps *ProxyStub) ExecuteVMQuery(_ context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
 	return ps.ExecuteVMQueryCalled(vmRequest)
 }
