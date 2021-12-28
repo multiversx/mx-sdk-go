@@ -45,13 +45,6 @@ type bip32 struct {
 	ChainCode []byte
 }
 
-var egldPath = bip32Path{
-	44 | hardened,
-	egldCoinType | hardened,
-	hardened, // account
-	hardened,
-	hardened, // addressIndex
-}
 var suite = ed25519.NewEd25519()
 var keyGenerator = signing.NewKeyGenerator(suite)
 
@@ -103,6 +96,14 @@ func (w *wallet) GenerateMnemonic() (data.Mnemonic, error) {
 
 // GetPrivateKeyFromMnemonic generates a private key based on mnemonic, account and address index
 func (w *wallet) GetPrivateKeyFromMnemonic(mnemonic data.Mnemonic, account, addressIndex uint32) []byte {
+	var egldPath = bip32Path{
+		44 | hardened,
+		egldCoinType | hardened,
+		hardened, // account
+		hardened,
+		hardened, // addressIndex
+	}
+
 	seed := bip39.NewSeed(string(mnemonic), "")
 	egldPath[2] = account | hardened
 	egldPath[4] = addressIndex | hardened

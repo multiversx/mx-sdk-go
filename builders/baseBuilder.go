@@ -10,9 +10,8 @@ import (
 )
 
 type baseBuilder struct {
-	function string
-	args     []string
-	err      error
+	args []string
+	err  error
 }
 
 func (builder *baseBuilder) addBytes(bytes []byte) {
