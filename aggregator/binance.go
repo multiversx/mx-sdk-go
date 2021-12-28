@@ -31,7 +31,7 @@ func (b *binance) FetchPrice(ctx context.Context, base string, quote string) (fl
 		return 0, err
 	}
 	if bpr.Price == "" {
-		return 0, InvalidResponseDataErr
+		return 0, ErrInvalidResponseData
 	}
 
 	return StrToFloat64(bpr.Price)
