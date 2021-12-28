@@ -27,13 +27,13 @@ type cryptocomPair struct {
 }
 
 // FetchPrice will fetch the price using the http client
-func (b *cryptocom) FetchPrice(ctx context.Context, base, quote string) (float64, error) {
+func (c *cryptocom) FetchPrice(ctx context.Context, base, quote string) (float64, error) {
 	if strings.Contains(quote, QuoteUSDFiat) {
 		quote = QuoteUSDT
 	}
 
 	var cpr cryptocomPriceRequest
-	err := b.ResponseGetter.Get(ctx, fmt.Sprintf(cryptocomPriceUrl, base, quote), &cpr)
+	err := c.ResponseGetter.Get(ctx, fmt.Sprintf(cryptocomPriceUrl, base, quote), &cpr)
 	if err != nil {
 		return 0, err
 	}
@@ -44,11 +44,11 @@ func (b *cryptocom) FetchPrice(ctx context.Context, base, quote string) (float64
 }
 
 // Name returns the name
-func (b *cryptocom) Name() string {
+func (c *cryptocom) Name() string {
 	return "Crypto.com"
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (b *cryptocom) IsInterfaceNil() bool {
-	return b == nil
+func (c *cryptocom) IsInterfaceNil() bool {
+	return c == nil
 }
