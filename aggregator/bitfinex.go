@@ -30,7 +30,7 @@ func (b *bitfinex) FetchPrice(ctx context.Context, base, quote string) (float64,
 		return 0, err
 	}
 	if bit.Price == "" {
-		return 0, InvalidResponseDataErr
+		return 0, ErrInvalidResponseData
 	}
 	return StrToFloat64(bit.Price)
 }
