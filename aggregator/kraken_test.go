@@ -165,7 +165,7 @@ func TestKraken_FetchPriceErrors(t *testing.T) {
 		t.Parallel()
 
 		ethTicker := "ETH"
-		pair := ethTicker + QuoteUSDFiat
+		pair := ethTicker + "BTC"
 		kra := &kraken{
 			ResponseGetter: &mock.HttpResponseGetterStub{
 				GetCalled: func(ctx context.Context, url string, response interface{}) error {
@@ -184,11 +184,11 @@ func TestKraken_FetchPriceErrors(t *testing.T) {
 		require.Equal(t, 4714.05, price)
 		assert.Equal(t, "Kraken", kra.Name())
 	})
-	t.Run("should work btc-btc", func(t *testing.T) {
+	t.Run("should work btc-usd", func(t *testing.T) {
 		t.Parallel()
 
-		ethTicker := "BTC"
-		pair := ethTicker + QuoteUSDFiat
+		btcTicker := "BTC"
+		pair := btcTicker + QuoteUSDFiat
 		kra := &kraken{
 			ResponseGetter: &mock.HttpResponseGetterStub{
 				GetCalled: func(ctx context.Context, url string, response interface{}) error {
@@ -202,7 +202,7 @@ func TestKraken_FetchPriceErrors(t *testing.T) {
 		}
 		assert.False(t, check.IfNil(kra))
 
-		price, err := kra.FetchPrice(context.Background(), ethTicker, QuoteUSDFiat)
+		price, err := kra.FetchPrice(context.Background(), btcTicker, QuoteUSDFiat)
 		require.Nil(t, err)
 		require.Equal(t, 4714.05, price)
 		assert.Equal(t, "Kraken", kra.Name())
