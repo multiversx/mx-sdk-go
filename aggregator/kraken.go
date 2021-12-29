@@ -34,11 +34,11 @@ func (k *kraken) FetchPrice(ctx context.Context, base string, quote string) (flo
 		return 0, err
 	}
 	if len(hpr.Result) == 0 {
-		return 0, InvalidResponseDataErr
+		return 0, ErrInvalidResponseData
 	}
 	for k, v := range hpr.Result {
 		if k == "" || v.Price[0] == "" {
-			return 0, InvalidResponseDataErr
+			return 0, ErrInvalidResponseData
 		}
 
 		if strings.Contains(k, base) || strings.Contains(k, quote) {
@@ -46,7 +46,7 @@ func (k *kraken) FetchPrice(ctx context.Context, base string, quote string) (flo
 		}
 	}
 
-	return 0, InvalidResponseDataErr
+	return 0, ErrInvalidResponseData
 }
 
 // Name returns the name

@@ -34,7 +34,7 @@ func (h *huobi) FetchPrice(ctx context.Context, base string, quote string) (floa
 		return 0, err
 	}
 	if hpr.Ticker.Price <= 0 {
-		return 0, InvalidResponseDataErr
+		return 0, ErrInvalidResponseData
 	}
 
 	return hpr.Ticker.Price, nil

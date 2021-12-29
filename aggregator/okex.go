@@ -34,10 +34,10 @@ func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float
 		return 0, err
 	}
 	if len(opr.Data) == 0 {
-		return 0, InvalidResponseDataErr
+		return 0, ErrInvalidResponseData
 	}
 	if opr.Data[0].Price == "" {
-		return 0, InvalidResponseDataErr
+		return 0, ErrInvalidResponseData
 	}
 
 	return StrToFloat64(opr.Data[0].Price)

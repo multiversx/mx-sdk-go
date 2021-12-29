@@ -65,7 +65,7 @@ func TestOkex_FetchPriceErrors(t *testing.T) {
 
 		ethTicker := "ETH"
 		price, err := okx.FetchPrice(context.Background(), ethTicker, QuoteUSDFiat)
-		require.Equal(t, InvalidResponseDataErr, err)
+		require.Equal(t, ErrInvalidResponseData, err)
 		require.Equal(t, float64(0), price)
 	})
 	t.Run("invalid string for price should error", func(t *testing.T) {

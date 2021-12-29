@@ -64,7 +64,7 @@ func TestHuobi_FetchPriceErrors(t *testing.T) {
 
 		ethTicker := "ETH"
 		price, err := huo.FetchPrice(context.Background(), ethTicker, QuoteUSDFiat)
-		require.Equal(t, InvalidResponseDataErr, err)
+		require.Equal(t, ErrInvalidResponseData, err)
 		require.Equal(t, float64(0), price)
 	})
 	t.Run("should work", func(t *testing.T) {

@@ -68,7 +68,7 @@ func TestKraken_FetchPriceErrors(t *testing.T) {
 		assert.False(t, check.IfNil(kra))
 
 		price, err := kra.FetchPrice(context.Background(), ethTicker, QuoteUSDFiat)
-		require.Equal(t, InvalidResponseDataErr, err)
+		require.Equal(t, ErrInvalidResponseData, err)
 		require.Equal(t, float64(0), price)
 	})
 	t.Run("empty string for key should error", func(t *testing.T) {
@@ -89,7 +89,7 @@ func TestKraken_FetchPriceErrors(t *testing.T) {
 
 		ethTicker := "ETH"
 		price, err := kra.FetchPrice(context.Background(), ethTicker, QuoteUSDFiat)
-		require.Equal(t, InvalidResponseDataErr, err)
+		require.Equal(t, ErrInvalidResponseData, err)
 		require.Equal(t, float64(0), price)
 	})
 	t.Run("invalid string for price should error", func(t *testing.T) {
