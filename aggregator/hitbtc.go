@@ -30,7 +30,7 @@ func (b *hitbtc) FetchPrice(ctx context.Context, base, quote string) (float64, e
 		return 0, err
 	}
 	if hpr.Price == "" {
-		return 0, InvalidResponseDataErr
+		return 0, ErrInvalidResponseData
 	}
 	return StrToFloat64(hpr.Price)
 }
