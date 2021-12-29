@@ -13,3 +13,9 @@ type PriceFetcher interface {
 	FetchPrice(ctx context.Context, base string, quote string) (float64, error)
 	IsInterfaceNil() bool
 }
+
+// PriceNotifee defines the behavior of a component able to be notified over a price change
+type PriceNotifee interface {
+	PriceChanged(ctx context.Context, base string, quote string, price float64) error
+	IsInterfaceNil() bool
+}
