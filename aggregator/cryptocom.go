@@ -38,7 +38,7 @@ func (c *cryptocom) FetchPrice(ctx context.Context, base, quote string) (float64
 		return 0, err
 	}
 	if cpr.Result.Data.Price <= 0 {
-		return 0, InvalidResponseDataErr
+		return 0, ErrInvalidResponseData
 	}
 	return cpr.Result.Data.Price, nil
 }
