@@ -10,7 +10,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/proxyWithCacher")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/blockchain")
 
 const minimumCachingInterval = time.Second
 
