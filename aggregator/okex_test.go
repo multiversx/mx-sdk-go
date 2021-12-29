@@ -14,7 +14,7 @@ import (
 )
 
 func TestOkex_FunctionalTesting(t *testing.T) {
-	// t.Skip("this test should be run only when doing debugging work on the component")
+	t.Skip("this test should be run only when doing debugging work on the component")
 
 	t.Parallel()
 
