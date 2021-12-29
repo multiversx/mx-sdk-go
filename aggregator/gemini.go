@@ -30,7 +30,7 @@ func (g *gemini) FetchPrice(ctx context.Context, base, quote string) (float64, e
 		return 0, err
 	}
 	if gpr.Price == "" {
-		return 0, InvalidResponseDataErr
+		return 0, ErrInvalidResponseData
 	}
 
 	return StrToFloat64(gpr.Price)
