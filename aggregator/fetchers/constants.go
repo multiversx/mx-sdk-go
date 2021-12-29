@@ -1,11 +1,8 @@
 package fetchers
 
 const (
-	// QuoteUSDFiat is the USD string
-	QuoteUSDFiat = "USD"
-
-	// QuoteUSDT is the USDT string
-	QuoteUSDT = "USDT"
+	quoteUSDFiat = "USD"
+	quoteUSDT    = "USDT"
 
 	// Fetchers names
 	binanceName   = "Binance"

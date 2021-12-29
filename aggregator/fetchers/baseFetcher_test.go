@@ -15,7 +15,7 @@ func Test_updateQuoteIfNeeded(t *testing.T) {
 		base := baseFetcher{}
 		quote := "AAA USD AAA"
 		base.updateQuoteIfNeeded(&quote, binanceName)
-		assert.Equal(t, QuoteUSDT, quote)
+		assert.Equal(t, quoteUSDT, quote)
 	})
 	t.Run("updating to usd", func(t *testing.T) {
 		t.Parallel()
@@ -23,7 +23,7 @@ func Test_updateQuoteIfNeeded(t *testing.T) {
 		base := baseFetcher{}
 		quote := "AAA USD AAA"
 		base.updateQuoteIfNeeded(&quote, "other fetcher name")
-		assert.Equal(t, QuoteUSDFiat, quote)
+		assert.Equal(t, quoteUSDFiat, quote)
 	})
 	t.Run("update not needed", func(t *testing.T) {
 		t.Parallel()
