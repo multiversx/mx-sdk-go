@@ -1,4 +1,4 @@
-package aggregator
+package fetchers
 
 import (
 	"strconv"
@@ -11,7 +11,7 @@ func StrToPositiveFloat64(v string) (float64, error) {
 		return 0, err
 	}
 	if vFloat <= 0 {
-		return 0, ErrInvalidResponseData
+		return 0, errInvalidResponseData
 	}
 
 	return vFloat, nil

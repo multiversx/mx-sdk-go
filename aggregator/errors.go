@@ -8,7 +8,4 @@ var (
 	errInvalidNumberOfPriceFetchers        = errors.New("invalid number of price fetchers")
 	errNilPriceFetcher                     = errors.New("nil price fetcher")
 	errInvalidNumOfElementsToComputeMedian = errors.New("invalid number of elements to compute the median")
-
-	// ErrInvalidResponseData signals that an invalid response has been provided
-	ErrInvalidResponseData = errors.New("invalid response data")
 )

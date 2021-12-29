@@ -1,9 +1,11 @@
-package aggregator
+package fetchers
 
 import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 )
 
 const (
@@ -19,14 +21,13 @@ type huobiPriceTicker struct {
 }
 
 type huobi struct {
-	ResponseGetter
+	aggregator.ResponseGetter
+	baseFetcher
 }
 
 // FetchPrice will fetch the price using the http client
 func (h *huobi) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
-	if strings.Contains(strings.ToUpper(quote), QuoteUSDFiat) {
-		quote = QuoteUSDT
-	}
+	h.updateQuoteIfNeeded(&quote, huobiName)
 
 	var hpr huobiPriceRequest
 	err := h.ResponseGetter.Get(ctx, fmt.Sprintf(huobiPriceUrl, strings.ToLower(base), strings.ToLower(quote)), &hpr)
@@ -34,7 +35,7 @@ func (h *huobi) FetchPrice(ctx context.Context, base string, quote string) (floa
 		return 0, err
 	}
 	if hpr.Ticker.Price <= 0 {
-		return 0, ErrInvalidResponseData
+		return 0, errInvalidResponseData
 	}
 
 	return hpr.Ticker.Price, nil
@@ -42,7 +43,7 @@ func (h *huobi) FetchPrice(ctx context.Context, base string, quote string) (floa
 
 // Name returns the name
 func (h *huobi) Name() string {
-	return "Huobi"
+	return huobiName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

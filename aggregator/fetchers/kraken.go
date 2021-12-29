@@ -1,9 +1,11 @@
-package aggregator
+package fetchers
 
 import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 )
 
 const (
@@ -19,14 +21,13 @@ type krakenPricePair struct {
 }
 
 type kraken struct {
-	ResponseGetter
+	aggregator.ResponseGetter
+	baseFetcher
 }
 
 // FetchPrice will fetch the price using the http client
 func (k *kraken) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
-	if strings.Contains(strings.ToUpper(quote), QuoteUSDFiat) {
-		quote = QuoteUSDFiat
-	}
+	k.updateQuoteIfNeeded(&quote, krakenName)
 
 	var hpr krakenPriceRequest
 	err := k.ResponseGetter.Get(ctx, fmt.Sprintf(krakenPriceUrl, base, quote), &hpr)
@@ -34,11 +35,11 @@ func (k *kraken) FetchPrice(ctx context.Context, base string, quote string) (flo
 		return 0, err
 	}
 	if len(hpr.Result) == 0 {
-		return 0, ErrInvalidResponseData
+		return 0, errInvalidResponseData
 	}
 	for k, v := range hpr.Result {
 		if k == "" || v.Price[0] == "" {
-			return 0, ErrInvalidResponseData
+			return 0, errInvalidResponseData
 		}
 
 		if strings.Contains(k, base) || strings.Contains(k, quote) {
@@ -46,12 +47,12 @@ func (k *kraken) FetchPrice(ctx context.Context, base string, quote string) (flo
 		}
 	}
 
-	return 0, ErrInvalidResponseData
+	return 0, errInvalidResponseData
 }
 
 // Name returns the name
 func (k *kraken) Name() string {
-	return "Kraken"
+	return krakenName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
