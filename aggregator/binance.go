@@ -34,7 +34,7 @@ func (b *binance) FetchPrice(ctx context.Context, base string, quote string) (fl
 		return 0, ErrInvalidResponseData
 	}
 
-	return StrToFloat64(bpr.Price)
+	return StrToPositiveFloat64(bpr.Price)
 }
 
 // Name returns the name

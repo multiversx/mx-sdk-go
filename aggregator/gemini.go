@@ -33,7 +33,7 @@ func (g *gemini) FetchPrice(ctx context.Context, base, quote string) (float64, e
 		return 0, ErrInvalidResponseData
 	}
 
-	return StrToFloat64(gpr.Price)
+	return StrToPositiveFloat64(gpr.Price)
 }
 
 // Name returns the name

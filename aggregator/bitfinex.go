@@ -32,7 +32,7 @@ func (b *bitfinex) FetchPrice(ctx context.Context, base, quote string) (float64,
 	if bit.Price == "" {
 		return 0, ErrInvalidResponseData
 	}
-	return StrToFloat64(bit.Price)
+	return StrToPositiveFloat64(bit.Price)
 }
 
 // Name returns the name
