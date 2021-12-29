@@ -42,7 +42,7 @@ func (k *kraken) FetchPrice(ctx context.Context, base string, quote string) (flo
 		}
 
 		if strings.Contains(k, base) || strings.Contains(k, quote) {
-			return StrToFloat64(v.Price[0])
+			return StrToPositiveFloat64(v.Price[0])
 		}
 	}
 

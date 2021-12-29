@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	okexPriceUrl = "https://www.okex.com/api/v5/market/ticker?instId=%s%s%s"
+	okexPriceUrl = "https://www.okex.com/api/v5/market/ticker?instId=%s-%s"
 )
 
 type okexPriceRequest struct {
@@ -30,7 +30,7 @@ func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float
 	}
 
 	var opr okexPriceRequest
-	err := o.ResponseGetter.Get(ctx, fmt.Sprintf(okexPriceUrl, base, "-", quote), &opr)
+	err := o.ResponseGetter.Get(ctx, fmt.Sprintf(okexPriceUrl, base, quote), &opr)
 	if err != nil {
 		return 0, err
 	}
@@ -41,7 +41,7 @@ func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float
 		return 0, ErrInvalidResponseData
 	}
 
-	return StrToFloat64(opr.Data[0].Price)
+	return StrToPositiveFloat64(opr.Data[0].Price)
 }
 
 // Name returns the name

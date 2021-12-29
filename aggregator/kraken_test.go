@@ -115,10 +115,79 @@ func TestKraken_FetchPriceErrors(t *testing.T) {
 		require.Equal(t, float64(0), price)
 		require.IsType(t, err, &strconv.NumError{})
 	})
-	t.Run("should work", func(t *testing.T) {
+	t.Run("negative price should error", func(t *testing.T) {
 		t.Parallel()
 
 		ethTicker := "ETH"
+		pair := ethTicker + QuoteUSDFiat
+
+		kra := &kraken{
+			ResponseGetter: &mock.HttpResponseGetterStub{
+				GetCalled: func(ctx context.Context, url string, response interface{}) error {
+					cast, _ := response.(*krakenPriceRequest)
+					cast.Result = map[string]krakenPricePair{
+						pair: {[]string{"-1", ""}},
+					}
+					return nil
+				},
+			},
+		}
+		assert.False(t, check.IfNil(kra))
+
+		price, err := kra.FetchPrice(context.Background(), ethTicker, QuoteUSDFiat)
+		require.Equal(t, ErrInvalidResponseData, err)
+		require.Equal(t, float64(0), price)
+	})
+	t.Run("should work eth-usd", func(t *testing.T) {
+		t.Parallel()
+
+		ethTicker := "ETH"
+		pair := ethTicker + QuoteUSDFiat
+		kra := &kraken{
+			ResponseGetter: &mock.HttpResponseGetterStub{
+				GetCalled: func(ctx context.Context, url string, response interface{}) error {
+					cast, _ := response.(*krakenPriceRequest)
+					cast.Result = map[string]krakenPricePair{
+						pair: {[]string{"4714.05000000"}},
+					}
+					return nil
+				},
+			},
+		}
+		assert.False(t, check.IfNil(kra))
+
+		price, err := kra.FetchPrice(context.Background(), ethTicker, QuoteUSDFiat)
+		require.Nil(t, err)
+		require.Equal(t, 4714.05, price)
+		assert.Equal(t, "Kraken", kra.Name())
+	})
+	t.Run("should work eth-btc", func(t *testing.T) {
+		t.Parallel()
+
+		ethTicker := "ETH"
+		pair := ethTicker + QuoteUSDFiat
+		kra := &kraken{
+			ResponseGetter: &mock.HttpResponseGetterStub{
+				GetCalled: func(ctx context.Context, url string, response interface{}) error {
+					cast, _ := response.(*krakenPriceRequest)
+					cast.Result = map[string]krakenPricePair{
+						pair: {[]string{"4714.05000000"}},
+					}
+					return nil
+				},
+			},
+		}
+		assert.False(t, check.IfNil(kra))
+
+		price, err := kra.FetchPrice(context.Background(), ethTicker, "BTC")
+		require.Nil(t, err)
+		require.Equal(t, 4714.05, price)
+		assert.Equal(t, "Kraken", kra.Name())
+	})
+	t.Run("should work btc-btc", func(t *testing.T) {
+		t.Parallel()
+
+		ethTicker := "BTC"
 		pair := ethTicker + QuoteUSDFiat
 		kra := &kraken{
 			ResponseGetter: &mock.HttpResponseGetterStub{

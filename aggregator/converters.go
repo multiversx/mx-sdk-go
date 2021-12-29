@@ -4,11 +4,14 @@ import (
 	"strconv"
 )
 
-// StrToFloat64 converts the provided string to its float64 representation
-func StrToFloat64(v string) (float64, error) {
+// StrToPositiveFloat64 converts the provided string to its float64 representation
+func StrToPositiveFloat64(v string) (float64, error) {
 	vFloat, err := strconv.ParseFloat(v, 64)
 	if err != nil {
 		return 0, err
+	}
+	if vFloat <= 0 {
+		return 0, ErrInvalidResponseData
 	}
 
 	return vFloat, nil

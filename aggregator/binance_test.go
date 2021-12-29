@@ -88,6 +88,25 @@ func TestBinance_FetchPriceErrors(t *testing.T) {
 		require.Equal(t, float64(0), price)
 		require.IsType(t, err, &strconv.NumError{})
 	})
+	t.Run("negative price should error", func(t *testing.T) {
+		t.Parallel()
+
+		bin := &binance{
+			ResponseGetter: &mock.HttpResponseGetterStub{
+				GetCalled: func(ctx context.Context, url string, response interface{}) error {
+					cast, _ := response.(*binancePriceRequest)
+					cast.Price = "-1"
+					return nil
+				},
+			},
+		}
+		assert.False(t, check.IfNil(bin))
+
+		ethTicker := "ETH"
+		price, err := bin.FetchPrice(context.Background(), ethTicker, QuoteUSDFiat)
+		require.Equal(t, ErrInvalidResponseData, err)
+		require.Equal(t, float64(0), price)
+	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
