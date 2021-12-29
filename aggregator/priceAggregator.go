@@ -91,9 +91,7 @@ func (pa *priceAggregator) FetchPrice(ctx context.Context, base string, quote st
 		return 0, errNotEnoughResponses
 	}
 
-	medianPrice := computeMedian(prices)
-
-	return medianPrice, nil
+	return computeMedian(prices)
 }
 
 // Name returns the name
