@@ -19,7 +19,7 @@ var errShouldSkipTest = errors.New("should skip test")
 func Test_FunctionalTesting(t *testing.T) {
 	t.Parallel()
 
-	for _, f := range knownFetchers {
+	for _, f := range ImplementedFetchers {
 		fetcherName := f
 		t.Run("Test_FunctionalTesting_"+fetcherName, func(t *testing.T) {
 			t.Skip("this test should be run only when doing debugging work on the component")
@@ -42,7 +42,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 	ethTicker := "ETH"
 	pair := ethTicker + quoteUSDFiat
 
-	for _, f := range knownFetchers {
+	for _, f := range ImplementedFetchers {
 		fetcherName := f
 
 		t.Run("response getter errors should error"+fetcherName, func(t *testing.T) {
@@ -147,19 +147,19 @@ func Test_FetchPriceErrors(t *testing.T) {
 
 func getFuncGetCalled(name, returnPrice, pair string, returnErr error) func(ctx context.Context, url string, response interface{}) error {
 	switch name {
-	case binanceName:
+	case BinanceName:
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*binancePriceRequest)
 			cast.Price = returnPrice
 			return returnErr
 		}
-	case bitfinexName:
+	case BitfinexName:
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*bitfinexPriceRequest)
 			cast.Price = returnPrice
 			return returnErr
 		}
-	case cryptocomName:
+	case CryptocomName:
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*cryptocomPriceRequest)
 			var err error
@@ -169,19 +169,19 @@ func getFuncGetCalled(name, returnPrice, pair string, returnErr error) func(ctx 
 			}
 			return returnErr
 		}
-	case geminiName:
+	case GeminiName:
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*geminiPriceRequest)
 			cast.Price = returnPrice
 			return returnErr
 		}
-	case hitbtcName:
+	case HitbtcName:
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*hitbtcPriceRequest)
 			cast.Price = returnPrice
 			return returnErr
 		}
-	case huobiName:
+	case HuobiName:
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*huobiPriceRequest)
 			var err error
@@ -191,7 +191,7 @@ func getFuncGetCalled(name, returnPrice, pair string, returnErr error) func(ctx 
 			}
 			return returnErr
 		}
-	case krakenName:
+	case KrakenName:
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*krakenPriceRequest)
 			cast.Result = map[string]krakenPricePair{
@@ -199,7 +199,7 @@ func getFuncGetCalled(name, returnPrice, pair string, returnErr error) func(ctx 
 			}
 			return returnErr
 		}
-	case okexName:
+	case OkexName:
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*okexPriceRequest)
 			cast.Data = []okexTicker{{returnPrice}}

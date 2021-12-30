@@ -65,10 +65,6 @@ func checkArgsPriceNotifier(args ArgsPriceNotifier) error {
 		if argsPair == nil {
 			return fmt.Errorf("%w, index %d", errNilArgsPair, idx)
 		}
-		if argsPair.PercentDifferenceToNotify == 0 {
-			return fmt.Errorf("%w, got %d for pair %s-%s", errInvalidPercentDifference,
-				argsPair.PercentDifferenceToNotify, argsPair.Base, argsPair.Quote)
-		}
 		if argsPair.TrimPrecision < epsilon {
 			return fmt.Errorf("%w, got %f for pair %s-%s", errInvalidTrimPrecision,
 				argsPair.TrimPrecision, argsPair.Base, argsPair.Quote)
@@ -133,7 +129,9 @@ func (pn *priceNotifier) computeNotifyArgsSlice(fetchedPrices []float64) []*noti
 }
 
 func shouldNotify(notifyArgsValue *notifyArgs) bool {
-	if notifyArgsValue.lastNotifiedPrice < epsilon {
+	percentValue := float64(notifyArgsValue.PercentDifferenceToNotify) / 100
+	shouldBypassPercentCheck := notifyArgsValue.lastNotifiedPrice < epsilon || percentValue < epsilon
+	if shouldBypassPercentCheck {
 		return true
 	}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/mock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func createMockArgsPriceNotifier() ArgsPriceNotifier {
@@ -51,16 +52,6 @@ func TestNewPriceNotifier(t *testing.T) {
 		assert.True(t, errors.Is(err, errNilArgsPair))
 		assert.True(t, strings.Contains(err.Error(), "index 1"))
 	})
-	t.Run("0 percent difference to notify", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsPriceNotifier()
-		args.Pairs[0].PercentDifferenceToNotify = 0
-
-		pn, err := NewPriceNotifier(args)
-		assert.True(t, check.IfNil(pn))
-		assert.True(t, errors.Is(err, errInvalidPercentDifference))
-	})
 	t.Run("0 trim precision", func(t *testing.T) {
 		t.Parallel()
 
@@ -95,6 +86,16 @@ func TestNewPriceNotifier(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsPriceNotifier()
+
+		pn, err := NewPriceNotifier(args)
+		assert.False(t, check.IfNil(pn))
+		assert.Nil(t, err)
+	})
+	t.Run("should work with 0 percentage to notify", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsPriceNotifier()
+		args.Pairs[0].PercentDifferenceToNotify = 0
 
 		pn, err := NewPriceNotifier(args)
 		assert.False(t, check.IfNil(pn))
@@ -181,6 +182,39 @@ func TestPriceNotifier_Execute(t *testing.T) {
 		assert.Nil(t, err)
 
 		assert.Equal(t, 1, numCalled)
+	})
+	t.Run("double call should notify twice if the percentage value is 0", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsPriceNotifier()
+		args.Pairs[0].PercentDifferenceToNotify = 0
+		args.Fetcher = &mock.PriceFetcherStub{
+			FetchPriceCalled: func(ctx context.Context, base string, quote string) (float64, error) {
+				return 1.987654321, nil
+			},
+		}
+		numCalled := 0
+		args.Notifee = &mock.PriceNotifeeStub{
+			PriceChangedCalled: func(ctx context.Context, base string, quote string, price float64) error {
+				assert.Equal(t, base, "BASE")
+				assert.Equal(t, quote, "QUOTE")
+				assert.Equal(t, 1.99, price)
+				numCalled++
+
+				return nil
+			},
+		}
+
+		pn, err := NewPriceNotifier(args)
+		require.Nil(t, err)
+
+		err = pn.Execute(context.Background())
+		assert.Nil(t, err)
+
+		err = pn.Execute(context.Background())
+		assert.Nil(t, err)
+
+		assert.Equal(t, 2, numCalled)
 	})
 	t.Run("one notify fails should try to notify all", func(t *testing.T) {
 		t.Parallel()

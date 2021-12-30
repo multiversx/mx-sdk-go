@@ -14,7 +14,7 @@ func Test_normalizeQuoteName(t *testing.T) {
 
 		base := baseFetcher{}
 		quote := "AAA USD AAA"
-		quote = base.normalizeQuoteName(quote, binanceName)
+		quote = base.normalizeQuoteName(quote, BinanceName)
 		assert.Equal(t, quoteUSDT, quote)
 	})
 	t.Run("updating to usd", func(t *testing.T) {

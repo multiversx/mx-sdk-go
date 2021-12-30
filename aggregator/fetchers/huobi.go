@@ -27,7 +27,7 @@ type huobi struct {
 
 // FetchPrice will fetch the price using the http client
 func (h *huobi) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
-	quote = h.normalizeQuoteName(quote, huobiName)
+	quote = h.normalizeQuoteName(quote, HuobiName)
 
 	var hpr huobiPriceRequest
 	err := h.ResponseGetter.Get(ctx, fmt.Sprintf(huobiPriceUrl, strings.ToLower(base), strings.ToLower(quote)), &hpr)
@@ -43,7 +43,7 @@ func (h *huobi) FetchPrice(ctx context.Context, base string, quote string) (floa
 
 // Name returns the name
 func (h *huobi) Name() string {
-	return huobiName
+	return HuobiName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

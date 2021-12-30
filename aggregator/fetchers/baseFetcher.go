@@ -7,7 +7,7 @@ type baseFetcher struct{}
 func (b *baseFetcher) normalizeQuoteName(quote string, fetcherName string) string {
 	if strings.Contains(quote, quoteUSDFiat) {
 		switch fetcherName {
-		case binanceName, cryptocomName, hitbtcName, huobiName, okexName:
+		case BinanceName, CryptocomName, HitbtcName, HuobiName, OkexName:
 			return quoteUSDT
 		default:
 			return quoteUSDFiat
