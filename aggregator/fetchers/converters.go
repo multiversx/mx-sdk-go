@@ -1,7 +1,6 @@
 package fetchers
 
 import (
-	"math"
 	"strconv"
 )
 
@@ -16,8 +15,4 @@ func StrToPositiveFloat64(v string) (float64, error) {
 	}
 
 	return vFloat, nil
-}
-
-func trim(v float64, precision float64) float64 {
-	return math.Round(v/precision) * precision
 }
