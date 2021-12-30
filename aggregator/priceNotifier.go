@@ -144,16 +144,17 @@ func shouldNotify(notifyArgsValue *notifyArgs) bool {
 func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyArgs) error {
 	var lastErr error
 	for _, notify := range notifyArgsSlice {
-		err := pn.notifee.PriceChanged(ctx, notify.Base, notify.Quote, notify.newPrice)
+		priceTrimmed := trim(notify.newPrice, notify.TrimPrecision)
+		err := pn.notifee.PriceChanged(ctx, notify.Base, notify.Quote, priceTrimmed)
 		if err != nil {
 			log.Error("error notifying", "base", notify.Base, "quote", notify.Quote,
-				"new price", notify.newPrice, "error", err)
+				"new price", priceTrimmed, "error", err)
 			lastErr = err
 			continue
 		}
 
 		pn.mutLastNotifiedPrices.Lock()
-		pn.lastNotifiedPrices[notify.index] = notify.newPrice
+		pn.lastNotifiedPrices[notify.index] = priceTrimmed
 		pn.mutLastNotifiedPrices.Unlock()
 	}
 

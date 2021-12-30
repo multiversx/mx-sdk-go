@@ -56,11 +56,9 @@ func runApp() error {
 
 	printNotifee := &mock.PriceNotifeeStub{
 		PriceChangedCalled: func(ctx context.Context, base string, quote string, price float64) error {
-			trimedValue := fmt.Sprintf("%.2f", price)
-
 			log.Info("Notified about the price changed",
 				"pair", fmt.Sprintf("%s-%s", base, quote),
-				"price", trimedValue)
+				"price", fmt.Sprintf("%.2f", price))
 
 			return nil
 		},
