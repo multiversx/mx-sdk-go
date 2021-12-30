@@ -26,7 +26,7 @@ func Test_FunctionalTesting(t *testing.T) {
 
 			t.Parallel()
 
-			fetcher := createFetcher(fetcherName, &aggregator.HttpResponseGetter{})
+			fetcher, _ := NewPriceFetcher(fetcherName, &aggregator.HttpResponseGetter{})
 			ethTicker := "ETH"
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
 			require.Nil(t, err)

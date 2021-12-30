@@ -22,7 +22,7 @@ type hitbtc struct {
 
 // FetchPrice will fetch the price using the http client
 func (h *hitbtc) FetchPrice(ctx context.Context, base, quote string) (float64, error) {
-	h.updateQuoteIfNeeded(&quote, hitbtcName)
+	quote = h.normalizeQuoteName(quote, hitbtcName)
 
 	var hpr hitbtcPriceRequest
 	err := h.ResponseGetter.Get(ctx, fmt.Sprintf(hitbtcPriceUrl, base, quote), &hpr)

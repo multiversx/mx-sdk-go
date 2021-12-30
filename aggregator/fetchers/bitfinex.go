@@ -22,7 +22,7 @@ type bitfinex struct {
 
 // FetchPrice will fetch the price using the http client
 func (b *bitfinex) FetchPrice(ctx context.Context, base, quote string) (float64, error) {
-	b.updateQuoteIfNeeded(&quote, bitfinexName)
+	quote = b.normalizeQuoteName(quote, bitfinexName)
 
 	var bit bitfinexPriceRequest
 	err := b.ResponseGetter.Get(ctx, fmt.Sprintf(bitfinexPriceUrl, base, quote), &bit)

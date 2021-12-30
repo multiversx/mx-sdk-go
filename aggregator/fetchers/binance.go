@@ -23,7 +23,7 @@ type binance struct {
 
 // FetchPrice will fetch the price using the http client
 func (b *binance) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
-	b.updateQuoteIfNeeded(&quote, binanceName)
+	quote = b.normalizeQuoteName(quote, binanceName)
 
 	var bpr binancePriceRequest
 	err := b.ResponseGetter.Get(ctx, fmt.Sprintf(binancePriceUrl, base, quote), &bpr)

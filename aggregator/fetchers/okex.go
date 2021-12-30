@@ -26,7 +26,7 @@ type okex struct {
 
 // FetchPrice will fetch the price using the http client
 func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
-	o.updateQuoteIfNeeded(&quote, okexName)
+	quote = o.normalizeQuoteName(quote, okexName)
 
 	var opr okexPriceRequest
 	err := o.ResponseGetter.Get(ctx, fmt.Sprintf(okexPriceUrl, base, quote), &opr)

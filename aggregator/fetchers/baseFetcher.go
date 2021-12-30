@@ -4,13 +4,14 @@ import "strings"
 
 type baseFetcher struct{}
 
-func (b *baseFetcher) updateQuoteIfNeeded(quote *string, fetcherName string) {
-	if strings.Contains(*quote, quoteUSDFiat) {
+func (b *baseFetcher) normalizeQuoteName(quote string, fetcherName string) string {
+	if strings.Contains(quote, quoteUSDFiat) {
 		switch fetcherName {
 		case binanceName, cryptocomName, hitbtcName, huobiName, okexName:
-			*quote = quoteUSDT
+			return quoteUSDT
 		default:
-			*quote = quoteUSDFiat
+			return quoteUSDFiat
 		}
 	}
+	return quote
 }
