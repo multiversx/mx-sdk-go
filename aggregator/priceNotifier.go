@@ -70,8 +70,8 @@ func checkArgsPriceNotifier(args ArgsPriceNotifier) error {
 				argsPair.PercentDifferenceToNotify, argsPair.Base, argsPair.Quote)
 		}
 		if argsPair.TrimPrecision < epsilon {
-			return fmt.Errorf("%w, got %d for pair %s-%s", errInvalidTrimPrecision,
-				argsPair.PercentDifferenceToNotify, argsPair.Base, argsPair.Quote)
+			return fmt.Errorf("%w, got %f for pair %s-%s", errInvalidTrimPrecision,
+				argsPair.TrimPrecision, argsPair.Base, argsPair.Quote)
 		}
 	}
 
