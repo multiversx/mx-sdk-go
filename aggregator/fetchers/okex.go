@@ -1,9 +1,10 @@
-package aggregator
+package fetchers
 
 import (
 	"context"
 	"fmt"
-	"strings"
+
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 )
 
 const (
@@ -19,15 +20,13 @@ type okexTicker struct {
 }
 
 type okex struct {
-	ResponseGetter
+	aggregator.ResponseGetter
+	baseFetcher
 }
 
 // FetchPrice will fetch the price using the http client
 func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
-	// TODO: (next PR) extract this to a base fetcher
-	if strings.Contains(strings.ToUpper(quote), QuoteUSDFiat) {
-		quote = QuoteUSDT
-	}
+	quote = o.normalizeQuoteName(quote, okexName)
 
 	var opr okexPriceRequest
 	err := o.ResponseGetter.Get(ctx, fmt.Sprintf(okexPriceUrl, base, quote), &opr)
@@ -35,10 +34,10 @@ func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float
 		return 0, err
 	}
 	if len(opr.Data) == 0 {
-		return 0, ErrInvalidResponseData
+		return 0, errInvalidResponseData
 	}
 	if opr.Data[0].Price == "" {
-		return 0, ErrInvalidResponseData
+		return 0, errInvalidResponseData
 	}
 
 	return StrToPositiveFloat64(opr.Data[0].Price)
@@ -46,7 +45,7 @@ func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float
 
 // Name returns the name
 func (o *okex) Name() string {
-	return "Okex"
+	return okexName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

@@ -1,28 +1,28 @@
-package aggregator
+package fetchers
 
 import (
 	"context"
 	"fmt"
-	"strings"
+
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 )
 
 const (
 	bitfinexPriceUrl = "https://api.bitfinex.com/v1/pubticker/%s%s"
 )
 
-type bitfinex struct {
-	ResponseGetter
-}
-
 type bitfinexPriceRequest struct {
 	Price string `json:"last_price"`
 }
 
+type bitfinex struct {
+	aggregator.ResponseGetter
+	baseFetcher
+}
+
 // FetchPrice will fetch the price using the http client
 func (b *bitfinex) FetchPrice(ctx context.Context, base, quote string) (float64, error) {
-	if strings.Contains(quote, QuoteUSDFiat) {
-		quote = QuoteUSDFiat
-	}
+	quote = b.normalizeQuoteName(quote, bitfinexName)
 
 	var bit bitfinexPriceRequest
 	err := b.ResponseGetter.Get(ctx, fmt.Sprintf(bitfinexPriceUrl, base, quote), &bit)
@@ -30,14 +30,14 @@ func (b *bitfinex) FetchPrice(ctx context.Context, base, quote string) (float64,
 		return 0, err
 	}
 	if bit.Price == "" {
-		return 0, ErrInvalidResponseData
+		return 0, errInvalidResponseData
 	}
 	return StrToPositiveFloat64(bit.Price)
 }
 
 // Name returns the name
 func (b *bitfinex) Name() string {
-	return "Bitfinex"
+	return bitfinexName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

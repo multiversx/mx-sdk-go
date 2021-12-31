@@ -13,7 +13,4 @@ var (
 	errInvalidTrimPrecision                = errors.New("invalid trim precision")
 	errNilPriceNotifee                     = errors.New("nil price notifee")
 	errInvalidNumOfElementsToComputeMedian = errors.New("invalid number of elements to compute the median")
-
-	// ErrInvalidResponseData signals that an invalid response has been provided
-	ErrInvalidResponseData = errors.New("invalid response data")
 )
