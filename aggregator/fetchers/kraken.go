@@ -27,7 +27,7 @@ type kraken struct {
 
 // FetchPrice will fetch the price using the http client
 func (k *kraken) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
-	quote = k.normalizeQuoteName(quote, krakenName)
+	quote = k.normalizeQuoteName(quote, KrakenName)
 
 	var hpr krakenPriceRequest
 	err := k.ResponseGetter.Get(ctx, fmt.Sprintf(krakenPriceUrl, base, quote), &hpr)
@@ -52,7 +52,7 @@ func (k *kraken) FetchPrice(ctx context.Context, base string, quote string) (flo
 
 // Name returns the name
 func (k *kraken) Name() string {
-	return krakenName
+	return KrakenName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

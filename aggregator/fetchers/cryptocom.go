@@ -30,7 +30,7 @@ type cryptocom struct {
 
 // FetchPrice will fetch the price using the http client
 func (c *cryptocom) FetchPrice(ctx context.Context, base, quote string) (float64, error) {
-	quote = c.normalizeQuoteName(quote, cryptocomName)
+	quote = c.normalizeQuoteName(quote, CryptocomName)
 
 	var cpr cryptocomPriceRequest
 	err := c.ResponseGetter.Get(ctx, fmt.Sprintf(cryptocomPriceUrl, base, quote), &cpr)
@@ -45,7 +45,7 @@ func (c *cryptocom) FetchPrice(ctx context.Context, base, quote string) (float64
 
 // Name returns the name
 func (c *cryptocom) Name() string {
-	return cryptocomName
+	return CryptocomName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

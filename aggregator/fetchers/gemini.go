@@ -22,7 +22,7 @@ type gemini struct {
 
 // FetchPrice will fetch the price using the http client
 func (g *gemini) FetchPrice(ctx context.Context, base, quote string) (float64, error) {
-	quote = g.normalizeQuoteName(quote, geminiName)
+	quote = g.normalizeQuoteName(quote, GeminiName)
 
 	var gpr geminiPriceRequest
 	err := g.ResponseGetter.Get(ctx, fmt.Sprintf(geminiPriceUrl, base, quote), &gpr)
@@ -38,7 +38,7 @@ func (g *gemini) FetchPrice(ctx context.Context, base, quote string) (float64, e
 
 // Name returns the name
 func (g *gemini) Name() string {
-	return geminiName
+	return GeminiName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

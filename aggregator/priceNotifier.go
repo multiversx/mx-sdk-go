@@ -65,10 +65,6 @@ func checkArgsPriceNotifier(args ArgsPriceNotifier) error {
 		if argsPair == nil {
 			return fmt.Errorf("%w, index %d", errNilArgsPair, idx)
 		}
-		if argsPair.PercentDifferenceToNotify == 0 {
-			return fmt.Errorf("%w, got %d for pair %s-%s", errInvalidPercentDifference,
-				argsPair.PercentDifferenceToNotify, argsPair.Base, argsPair.Quote)
-		}
 		if argsPair.TrimPrecision < epsilon {
 			return fmt.Errorf("%w, got %f for pair %s-%s", errInvalidTrimPrecision,
 				argsPair.TrimPrecision, argsPair.Base, argsPair.Quote)
@@ -133,7 +129,9 @@ func (pn *priceNotifier) computeNotifyArgsSlice(fetchedPrices []float64) []*noti
 }
 
 func shouldNotify(notifyArgsValue *notifyArgs) bool {
-	if notifyArgsValue.lastNotifiedPrice < epsilon {
+	percentValue := float64(notifyArgsValue.PercentDifferenceToNotify) / 100
+	shouldBypassPercentCheck := notifyArgsValue.lastNotifiedPrice < epsilon || percentValue < epsilon
+	if shouldBypassPercentCheck {
 		return true
 	}
 
@@ -146,16 +144,17 @@ func shouldNotify(notifyArgsValue *notifyArgs) bool {
 func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyArgs) error {
 	var lastErr error
 	for _, notify := range notifyArgsSlice {
-		err := pn.notifee.PriceChanged(ctx, notify.Base, notify.Quote, notify.newPrice)
+		priceTrimmed := trim(notify.newPrice, notify.TrimPrecision)
+		err := pn.notifee.PriceChanged(ctx, notify.Base, notify.Quote, priceTrimmed)
 		if err != nil {
 			log.Error("error notifying", "base", notify.Base, "quote", notify.Quote,
-				"new price", notify.newPrice, "error", err)
+				"new price", priceTrimmed, "error", err)
 			lastErr = err
 			continue
 		}
 
 		pn.mutLastNotifiedPrices.Lock()
-		pn.lastNotifiedPrices[notify.index] = notify.newPrice
+		pn.lastNotifiedPrices[notify.index] = priceTrimmed
 		pn.mutLastNotifiedPrices.Unlock()
 	}
 

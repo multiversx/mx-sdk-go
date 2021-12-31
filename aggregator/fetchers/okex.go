@@ -26,7 +26,7 @@ type okex struct {
 
 // FetchPrice will fetch the price using the http client
 func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
-	quote = o.normalizeQuoteName(quote, okexName)
+	quote = o.normalizeQuoteName(quote, OkexName)
 
 	var opr okexPriceRequest
 	err := o.ResponseGetter.Get(ctx, fmt.Sprintf(okexPriceUrl, base, quote), &opr)
@@ -45,7 +45,7 @@ func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float
 
 // Name returns the name
 func (o *okex) Name() string {
-	return okexName
+	return OkexName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

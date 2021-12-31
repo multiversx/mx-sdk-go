@@ -22,7 +22,7 @@ type hitbtc struct {
 
 // FetchPrice will fetch the price using the http client
 func (h *hitbtc) FetchPrice(ctx context.Context, base, quote string) (float64, error) {
-	quote = h.normalizeQuoteName(quote, hitbtcName)
+	quote = h.normalizeQuoteName(quote, HitbtcName)
 
 	var hpr hitbtcPriceRequest
 	err := h.ResponseGetter.Get(ctx, fmt.Sprintf(hitbtcPriceUrl, base, quote), &hpr)
@@ -37,7 +37,7 @@ func (h *hitbtc) FetchPrice(ctx context.Context, base, quote string) (float64, e
 
 // Name returns the name
 func (h *hitbtc) Name() string {
-	return hitbtcName
+	return HitbtcName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

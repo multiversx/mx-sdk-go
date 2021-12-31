@@ -1,6 +1,10 @@
 package fetchers
 
-import "github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
+import (
+	"fmt"
+
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
+)
 
 // NewPriceFetcher returns a new price fetcher of the type provided
 func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGetter) (aggregator.PriceFetcher, error) {
@@ -13,46 +17,46 @@ func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGette
 
 func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter) (aggregator.PriceFetcher, error) {
 	switch fetcherName {
-	case binanceName:
+	case BinanceName:
 		return &binance{
 			responseGetter,
 			baseFetcher{},
 		}, nil
-	case bitfinexName:
+	case BitfinexName:
 		return &bitfinex{
 			responseGetter,
 			baseFetcher{},
 		}, nil
-	case cryptocomName:
+	case CryptocomName:
 		return &cryptocom{
 			responseGetter,
 			baseFetcher{},
 		}, nil
-	case geminiName:
+	case GeminiName:
 		return &gemini{
 			responseGetter,
 			baseFetcher{},
 		}, nil
-	case hitbtcName:
+	case HitbtcName:
 		return &hitbtc{
 			responseGetter,
 			baseFetcher{},
 		}, nil
-	case huobiName:
+	case HuobiName:
 		return &huobi{
 			responseGetter,
 			baseFetcher{},
 		}, nil
-	case krakenName:
+	case KrakenName:
 		return &kraken{
 			responseGetter,
 			baseFetcher{},
 		}, nil
-	case okexName:
+	case OkexName:
 		return &okex{
 			responseGetter,
 			baseFetcher{},
 		}, nil
 	}
-	return nil, errInvalidFetcherName
+	return nil, fmt.Errorf("%w, fetcherName %s", errInvalidFetcherName, fetcherName)
 }
