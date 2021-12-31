@@ -9,7 +9,6 @@ var (
 	errNilPriceFetcher                     = errors.New("nil price fetcher")
 	errEmptyArgsPairsSlice                 = errors.New("empty pair arguments slice")
 	errNilArgsPair                         = errors.New("nil pair argument")
-	errInvalidPercentDifference            = errors.New("invalid percentage difference")
 	errInvalidTrimPrecision                = errors.New("invalid trim precision")
 	errNilPriceNotifee                     = errors.New("nil price notifee")
 	errInvalidNumOfElementsToComputeMedian = errors.New("invalid number of elements to compute the median")
