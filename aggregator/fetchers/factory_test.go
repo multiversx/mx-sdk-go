@@ -29,13 +29,6 @@ func TestNewPriceFetcher(t *testing.T) {
 		assert.Nil(t, pf)
 		assert.Equal(t, errNilResponseGetter, err)
 	})
-	t.Run("nil responseGetter should error", func(t *testing.T) {
-		t.Parallel()
-
-		pf, err := NewPriceFetcher(BinanceName, nil)
-		assert.Nil(t, pf)
-		assert.Equal(t, errNilResponseGetter, err)
-	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
