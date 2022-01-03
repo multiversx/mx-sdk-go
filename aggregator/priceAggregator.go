@@ -40,15 +40,15 @@ func NewPriceAggregator(args ArgsPriceAggregator) (*priceAggregator, error) {
 
 func checkArgs(args ArgsPriceAggregator) error {
 	if args.MinResultsNum < minResultsNum {
-		return fmt.Errorf("%w, provided: %d, minimum accepted: %d", errInvalidMinNumberOfResults, args.MinResultsNum, minResultsNum)
+		return fmt.Errorf("%w, provided: %d, minimum accepted: %d", ErrInvalidMinNumberOfResults, args.MinResultsNum, minResultsNum)
 	}
 	if len(args.PriceFetchers) < args.MinResultsNum {
-		return fmt.Errorf("%w, len(args.PriceFetchers): %d, MinResultsNum: %d", errInvalidNumberOfPriceFetchers,
+		return fmt.Errorf("%w, len(args.PriceFetchers): %d, MinResultsNum: %d", ErrInvalidNumberOfPriceFetchers,
 			len(args.PriceFetchers), args.MinResultsNum)
 	}
 	for idx, pf := range args.PriceFetchers {
 		if check.IfNil(pf) {
-			return fmt.Errorf("%w, index: %d", errNilPriceFetcher, idx)
+			return fmt.Errorf("%w, index: %d", ErrNilPriceFetcher, idx)
 		}
 	}
 
@@ -88,7 +88,7 @@ func (pa *priceAggregator) FetchPrice(ctx context.Context, base string, quote st
 	wg.Wait()
 
 	if len(prices) < pa.minResultsNum {
-		return 0, errNotEnoughResponses
+		return 0, ErrNotEnoughResponses
 	}
 
 	return computeMedian(prices)

@@ -18,11 +18,13 @@ var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesPriceAggregator"
 
 const base = "ETH"
 const quote = "USD"
-const percentDifferenceToNotify = 0 // will notify on each fetch
+const percentDifferenceToNotify = 1 // 0 will notify on each fetch
 const trimPrecision = 0.01          // will round the price to the hundredth
+const denominationFactor = 100
 
 const minResultsNum = 3
 const pollInterval = time.Second * 2
+const autoSendInterval = time.Second * 10
 
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
@@ -55,10 +57,13 @@ func runApp() error {
 	}
 
 	printNotifee := &mock.PriceNotifeeStub{
-		PriceChangedCalled: func(ctx context.Context, base string, quote string, price float64) error {
-			log.Info("Notified about the price changed",
-				"pair", fmt.Sprintf("%s-%s", base, quote),
-				"price", fmt.Sprintf("%.2f", price))
+		PriceChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+			for _, arg := range args {
+				log.Info("Notified about the price changed",
+					"pair", fmt.Sprintf("%s-%s", arg.Base, arg.Quote),
+					"denominated price", arg.DenominatedPrice,
+					"denomination factor", arg.DenominationFactor)
+			}
 
 			return nil
 		},
@@ -71,10 +76,12 @@ func runApp() error {
 				Quote:                     quote,
 				PercentDifferenceToNotify: percentDifferenceToNotify,
 				TrimPrecision:             trimPrecision,
+				DenominationFactor:        denominationFactor,
 			},
 		},
-		Fetcher: aggregatorInstance,
-		Notifee: printNotifee,
+		Fetcher:          aggregatorInstance,
+		Notifee:          printNotifee,
+		AutoSendInterval: autoSendInterval,
 	}
 
 	priceNotifier, err := aggregator.NewPriceNotifier(argsPriceNotifier)
