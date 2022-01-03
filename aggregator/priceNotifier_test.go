@@ -167,8 +167,8 @@ func TestPriceNotifier_Execute(t *testing.T) {
 				for _, arg := range args {
 					assert.Equal(t, arg.Base, "BASE")
 					assert.Equal(t, arg.Quote, "QUOTE")
-					assert.Equal(t, uint64(100), arg.DenominationFactor)
 					assert.Equal(t, uint64(199), arg.DenominatedPrice)
+					assert.Equal(t, uint64(100), arg.DenominationFactor)
 				}
 				wasCalled = true
 
@@ -197,8 +197,8 @@ func TestPriceNotifier_Execute(t *testing.T) {
 				for _, arg := range args {
 					assert.Equal(t, arg.Base, "BASE")
 					assert.Equal(t, arg.Quote, "QUOTE")
-					assert.Equal(t, uint64(100), arg.DenominationFactor)
 					assert.Equal(t, uint64(199), arg.DenominatedPrice)
+					assert.Equal(t, uint64(100), arg.DenominationFactor)
 				}
 				numCalled++
 
@@ -232,8 +232,8 @@ func TestPriceNotifier_Execute(t *testing.T) {
 				for _, arg := range args {
 					assert.Equal(t, arg.Base, "BASE")
 					assert.Equal(t, arg.Quote, "QUOTE")
-					assert.Equal(t, uint64(100), arg.DenominationFactor)
 					assert.Equal(t, uint64(199), arg.DenominatedPrice)
+					assert.Equal(t, uint64(100), arg.DenominationFactor)
 				}
 				numCalled++
 

@@ -176,8 +176,8 @@ func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyAr
 		argPriceChanged := &ArgsPriceChanged{
 			Base:               notify.Base,
 			Quote:              notify.Quote,
-			DenominationFactor: notify.DenominationFactor,
 			DenominatedPrice:   denominatedPrice,
+			DenominationFactor: notify.DenominationFactor,
 		}
 
 		args = append(args, argPriceChanged)
