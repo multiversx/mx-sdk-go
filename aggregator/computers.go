@@ -6,7 +6,7 @@ const minNumberOfElementsToComputeMedian = 1
 
 func computeMedian(nums []float64) (float64, error) {
 	if len(nums) < minNumberOfElementsToComputeMedian {
-		return 0, errInvalidNumOfElementsToComputeMedian
+		return 0, ErrInvalidNumOfElementsToComputeMedian
 	}
 
 	sort.Float64s(nums)

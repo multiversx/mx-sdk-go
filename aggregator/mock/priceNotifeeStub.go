@@ -1,16 +1,20 @@
 package mock
 
-import "context"
+import (
+	"context"
+
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
+)
 
 // PriceNotifeeStub -
 type PriceNotifeeStub struct {
-	PriceChangedCalled func(ctx context.Context, base string, quote string, price float64) error
+	PricesChangedCalled func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error
 }
 
-// PriceChanged -
-func (stub *PriceNotifeeStub) PriceChanged(ctx context.Context, base string, quote string, price float64) error {
-	if stub.PriceChangedCalled != nil {
-		return stub.PriceChangedCalled(ctx, base, quote, price)
+// PricesChanged -
+func (stub *PriceNotifeeStub) PricesChanged(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+	if stub.PricesChangedCalled != nil {
+		return stub.PricesChangedCalled(ctx, args)
 	}
 
 	return nil

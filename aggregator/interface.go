@@ -14,8 +14,16 @@ type PriceFetcher interface {
 	IsInterfaceNil() bool
 }
 
+// ArgsPriceChanged is the argument used when notifying the notifee instance
+type ArgsPriceChanged struct {
+	Base             string
+	Quote            string
+	Price            float64
+	DenominatedPrice uint64
+}
+
 // PriceNotifee defines the behavior of a component able to be notified over a price change
 type PriceNotifee interface {
-	PriceChanged(ctx context.Context, base string, quote string, price float64) error
+	PricesChanged(ctx context.Context, priceChanges []*ArgsPriceChanged) error
 	IsInterfaceNil() bool
 }

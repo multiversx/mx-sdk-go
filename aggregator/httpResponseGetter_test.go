@@ -1,4 +1,4 @@
-package aggregator
+package aggregator_test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +20,7 @@ type testStruct struct {
 func TestHttpResponseGetter_InvalidURLShouldError(t *testing.T) {
 	t.Parallel()
 
-	responseGetter := &HttpResponseGetter{}
+	responseGetter := &aggregator.HttpResponseGetter{}
 	responseStruct := &testStruct{}
 
 	err := responseGetter.Get(context.Background(), "invalid URL", responseStruct)
@@ -36,7 +37,7 @@ func TestHttpResponseGetter_NilResponseObjectShouldError(t *testing.T) {
 	}))
 	defer httpServer.Close()
 
-	responseGetter := &HttpResponseGetter{}
+	responseGetter := &aggregator.HttpResponseGetter{}
 
 	err := responseGetter.Get(context.Background(), httpServer.URL, nil)
 	require.NotNil(t, err)
@@ -52,7 +53,7 @@ func TestHttpResponseGetter_InvalidResponseShouldError(t *testing.T) {
 	}))
 	defer httpServer.Close()
 
-	responseGetter := &HttpResponseGetter{}
+	responseGetter := &aggregator.HttpResponseGetter{}
 	err := responseGetter.Get(context.Background(), httpServer.URL, responseGetter)
 	require.NotNil(t, err)
 	require.IsType(t, err, &json.SyntaxError{})
@@ -75,7 +76,7 @@ func TestHttpResponseGetter_GetShouldWork(t *testing.T) {
 	}))
 	defer httpServer.Close()
 
-	responseGetter := &HttpResponseGetter{}
+	responseGetter := &aggregator.HttpResponseGetter{}
 	responseStruct := &testStruct{}
 
 	err := responseGetter.Get(context.Background(), httpServer.URL, responseStruct)
