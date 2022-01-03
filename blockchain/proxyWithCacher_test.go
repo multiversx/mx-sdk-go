@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors/mock"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ func TestNewElrondProxyWithCache(t *testing.T) {
 	t.Run("invalid caching duration", func(t *testing.T) {
 		t.Parallel()
 
-		mockProxy := &mock.ProxyStub{}
+		mockProxy := &testsCommon.ProxyStub{}
 		nth, err := NewElrondProxyWithCache(mockProxy, time.Millisecond)
 		require.Nil(t, nth)
 		assert.Equal(t, ErrInvalidCacherDuration, err)
@@ -33,7 +33,7 @@ func TestNewElrondProxyWithCache(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		mockProxy := &mock.ProxyStub{}
+		mockProxy := &testsCommon.ProxyStub{}
 		nth, err := NewElrondProxyWithCache(mockProxy, minimumCachingInterval*2)
 
 		require.NotNil(t, nth)
@@ -63,7 +63,7 @@ func TestGetNetworkConfig(t *testing.T) {
 		t.Parallel()
 		t.Run("cache time expired", func(t *testing.T) {
 			t.Parallel()
-			mockProxy := &mock.ProxyStub{}
+			mockProxy := &testsCommon.ProxyStub{}
 			wasCalled := false
 			mockProxy.GetNetworkConfigCalled = func() (*data.NetworkConfig, error) {
 				wasCalled = true
@@ -85,7 +85,7 @@ func TestGetNetworkConfig(t *testing.T) {
 		})
 		t.Run("fetchedConfigs is nil", func(t *testing.T) {
 			t.Parallel()
-			mockProxy := &mock.ProxyStub{}
+			mockProxy := &testsCommon.ProxyStub{}
 			wasCalled := false
 			mockProxy.GetNetworkConfigCalled = func() (*data.NetworkConfig, error) {
 				wasCalled = true
@@ -109,7 +109,7 @@ func TestGetNetworkConfig(t *testing.T) {
 		t.Run("and Proxy.GetNetworkConfig returns error", func(t *testing.T) {
 			t.Parallel()
 			expectedError := errors.New("expected error")
-			mockProxy := &mock.ProxyStub{}
+			mockProxy := &testsCommon.ProxyStub{}
 			wasCalled := false
 			mockProxy.GetNetworkConfigCalled = func() (*data.NetworkConfig, error) {
 				wasCalled = true
@@ -133,7 +133,7 @@ func TestGetNetworkConfig(t *testing.T) {
 	})
 	t.Run("getCachedConfigs returns valid fetchedConfigs", func(t *testing.T) {
 		t.Parallel()
-		mockProxy := &mock.ProxyStub{}
+		mockProxy := &testsCommon.ProxyStub{}
 		wasCalled := false
 		mockProxy.GetNetworkConfigCalled = func() (*data.NetworkConfig, error) {
 			wasCalled = true

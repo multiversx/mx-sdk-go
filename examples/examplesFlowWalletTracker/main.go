@@ -11,6 +11,7 @@ import (
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples/examplesFlowWalletTracker/mock"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
@@ -71,8 +72,13 @@ func runApp() error {
 		return err
 	}
 
+	txBuilder, err := builders.NewTxBuilder(blockchain.NewTxSigner())
+	if err != nil {
+		return err
+	}
+
 	receiverAddress := "erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht" // /elrond-sdk-erdgo/interactors/testdata/test.pem
-	txInteractor, err := interactors.NewTransactionInteractor(ep, blockchain.NewTxSigner())
+	txInteractor, err := interactors.NewTransactionInteractor(ep, txBuilder)
 	if err != nil {
 		return err
 	}

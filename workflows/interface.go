@@ -34,6 +34,6 @@ type ProxyHandler interface {
 // TransactionInteractor defines the transaction interactor behavior used in workflows
 type TransactionInteractor interface {
 	AddTransaction(tx *data.Transaction)
-	ApplySignatureAndGenerateTransaction(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
 	IsInterfaceNil() bool
 }
