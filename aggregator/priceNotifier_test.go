@@ -141,8 +141,8 @@ func TestPriceNotifier_Execute(t *testing.T) {
 			},
 		}
 		args.Notifee = &mock.PriceNotifeeStub{
-			PricesChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
-				assert.Fail(t, "should have not called notifee.PricesChanged")
+			PriceChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+				assert.Fail(t, "should have not called notifee.PriceChanged")
 				return nil
 			},
 		}
@@ -162,12 +162,12 @@ func TestPriceNotifier_Execute(t *testing.T) {
 		}
 		wasCalled := false
 		args.Notifee = &mock.PriceNotifeeStub{
-			PricesChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+			PriceChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
 				require.Equal(t, 1, len(args))
 				for _, arg := range args {
 					assert.Equal(t, arg.Base, "BASE")
 					assert.Equal(t, arg.Quote, "QUOTE")
-					assert.Equal(t, 1.99, arg.Price)
+					assert.Equal(t, uint64(100), arg.DenominationFactor)
 					assert.Equal(t, uint64(199), arg.DenominatedPrice)
 				}
 				wasCalled = true
@@ -192,12 +192,12 @@ func TestPriceNotifier_Execute(t *testing.T) {
 		}
 		numCalled := 0
 		args.Notifee = &mock.PriceNotifeeStub{
-			PricesChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+			PriceChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
 				require.Equal(t, 1, len(args))
 				for _, arg := range args {
 					assert.Equal(t, arg.Base, "BASE")
 					assert.Equal(t, arg.Quote, "QUOTE")
-					assert.Equal(t, 1.99, arg.Price)
+					assert.Equal(t, uint64(100), arg.DenominationFactor)
 					assert.Equal(t, uint64(199), arg.DenominatedPrice)
 				}
 				numCalled++
@@ -227,12 +227,12 @@ func TestPriceNotifier_Execute(t *testing.T) {
 		}
 		numCalled := 0
 		args.Notifee = &mock.PriceNotifeeStub{
-			PricesChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+			PriceChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
 				require.Equal(t, 1, len(args))
 				for _, arg := range args {
 					assert.Equal(t, arg.Base, "BASE")
 					assert.Equal(t, arg.Quote, "QUOTE")
-					assert.Equal(t, 1.99, arg.Price)
+					assert.Equal(t, uint64(100), arg.DenominationFactor)
 					assert.Equal(t, uint64(199), arg.DenominatedPrice)
 				}
 				numCalled++
@@ -263,7 +263,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 			},
 		}
 		args.Notifee = &mock.PriceNotifeeStub{
-			PricesChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+			PriceChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
 				require.Fail(t, "should have not called pricesChanged")
 
 				return nil
@@ -291,7 +291,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 		}
 		numCalled := 0
 		args.Notifee = &mock.PriceNotifeeStub{
-			PricesChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+			PriceChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
 				numCalled++
 				return nil
 			},
@@ -334,7 +334,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 		}
 		numCalled := 0
 		args.Notifee = &mock.PriceNotifeeStub{
-			PricesChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+			PriceChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
 				require.Equal(t, 1, len(args))
 				for _, arg := range args {
 					assert.Equal(t, arg.Base, "BASE")

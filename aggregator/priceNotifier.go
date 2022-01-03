@@ -174,10 +174,10 @@ func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyAr
 		denominatedPrice := uint64(priceTrimmed * float64(notify.DenominationFactor))
 
 		argPriceChanged := &ArgsPriceChanged{
-			Base:             notify.Base,
-			Quote:            notify.Quote,
-			Price:            priceTrimmed,
-			DenominatedPrice: denominatedPrice,
+			Base:               notify.Base,
+			Quote:              notify.Quote,
+			DenominationFactor: notify.DenominationFactor,
+			DenominatedPrice:   denominatedPrice,
 		}
 
 		args = append(args, argPriceChanged)
@@ -187,7 +187,7 @@ func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyAr
 		pn.mut.Unlock()
 	}
 
-	return pn.notifee.PricesChanged(ctx, args)
+	return pn.notifee.PriceChanged(ctx, args)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

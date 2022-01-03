@@ -8,13 +8,13 @@ import (
 
 // PriceNotifeeStub -
 type PriceNotifeeStub struct {
-	PricesChangedCalled func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error
+	PriceChangedCalled func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error
 }
 
-// PricesChanged -
-func (stub *PriceNotifeeStub) PricesChanged(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
-	if stub.PricesChangedCalled != nil {
-		return stub.PricesChangedCalled(ctx, args)
+// PriceChanged -
+func (stub *PriceNotifeeStub) PriceChanged(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+	if stub.PriceChangedCalled != nil {
+		return stub.PriceChangedCalled(ctx, args)
 	}
 
 	return nil

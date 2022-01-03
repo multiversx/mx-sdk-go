@@ -57,12 +57,12 @@ func runApp() error {
 	}
 
 	printNotifee := &mock.PriceNotifeeStub{
-		PricesChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
+		PriceChangedCalled: func(ctx context.Context, args []*aggregator.ArgsPriceChanged) error {
 			for _, arg := range args {
 				log.Info("Notified about the price changed",
 					"pair", fmt.Sprintf("%s-%s", arg.Base, arg.Quote),
-					"price", fmt.Sprintf("%.2f", arg.Price),
-					"denominated price", arg.DenominatedPrice)
+					"denominated price", arg.DenominatedPrice,
+					"denomination factor", arg.DenominationFactor)
 			}
 
 			return nil
