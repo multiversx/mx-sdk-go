@@ -1,0 +1,22 @@
+package testsCommon
+
+import "github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+
+// TxBuilderStub -
+type TxBuilderStub struct {
+	ApplySignatureAndGenerateTxCalled func(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
+}
+
+// ApplySignatureAndGenerateTx -
+func (stub *TxBuilderStub) ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error) {
+	if stub.ApplySignatureAndGenerateTxCalled != nil {
+		return stub.ApplySignatureAndGenerateTxCalled(skBytes, arg)
+	}
+
+	return nil, errNotImplemented
+}
+
+// IsInterfaceNil -
+func (stub *TxBuilderStub) IsInterfaceNil() bool {
+	return stub == nil
+}
