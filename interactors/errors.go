@@ -5,8 +5,8 @@ import "errors"
 // ErrNilProxy signals that a nil proxy was provided
 var ErrNilProxy = errors.New("nil proxy")
 
-// ErrNilTxSigner signals that a nil transaction signer was provided
-var ErrNilTxSigner = errors.New("nil transaction signer")
+// ErrNilTxBuilder signals that a nil transaction builder was provided
+var ErrNilTxBuilder = errors.New("nil tx builder")
 
 // ErrInvalidValue signals that an invalid value was provided
 var ErrInvalidValue = errors.New("invalid value")

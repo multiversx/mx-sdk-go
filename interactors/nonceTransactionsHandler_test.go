@@ -11,7 +11,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors/mock"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,12 +23,12 @@ func TestNewNonceTransactionHandler(t *testing.T) {
 	require.Nil(t, nth)
 	assert.Equal(t, ErrNilProxy, err)
 
-	nth, err = NewNonceTransactionHandler(&mock.ProxyStub{}, time.Second-time.Nanosecond)
+	nth, err = NewNonceTransactionHandler(&testsCommon.ProxyStub{}, time.Second-time.Nanosecond)
 	require.Nil(t, nth)
 	assert.True(t, errors.Is(err, ErrInvalidValue))
 	assert.True(t, strings.Contains(err.Error(), "for intervalToResend in NewNonceTransactionHandler"))
 
-	nth, err = NewNonceTransactionHandler(&mock.ProxyStub{}, time.Minute)
+	nth, err = NewNonceTransactionHandler(&testsCommon.ProxyStub{}, time.Minute)
 	require.NotNil(t, nth)
 	require.Nil(t, err)
 
@@ -42,7 +42,7 @@ func TestNonceTransactionsHandler_GetNonce(t *testing.T) {
 	currentNonce := uint64(664)
 
 	numCalls := 0
-	proxy := &mock.ProxyStub{
+	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
 				return nil, errors.New("unexpected address")
@@ -83,7 +83,7 @@ func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingOn
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
 	sentTransactions := make(map[int][]*data.Transaction)
-	proxy := &mock.ProxyStub{
+	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
 				return nil, errors.New("unexpected address")
@@ -146,7 +146,7 @@ func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingAl
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
 	sentTransactions := make(map[int][]*data.Transaction)
-	proxy := &mock.ProxyStub{
+	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
 				return nil, errors.New("unexpected address")
@@ -196,7 +196,7 @@ func TestNonceTransactionsHandler_SendTransactionResendingEliminatingAll(t *test
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
 	sentTransactions := make(map[int][]*data.Transaction)
-	proxy := &mock.ProxyStub{
+	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
 				return nil, errors.New("unexpected address")
@@ -244,7 +244,7 @@ func TestNonceTransactionsHandler_SendTransactionErrors(t *testing.T) {
 	currentNonce := uint64(664)
 
 	var errSent error
-	proxy := &mock.ProxyStub{
+	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
 				return nil, errors.New("unexpected address")
@@ -306,7 +306,7 @@ func TestNonceTransactionsHandler_SendTransactionsWithGetNonce(t *testing.T) {
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
 	sentTransactions := make(map[int][]*data.Transaction)
-	proxy := &mock.ProxyStub{
+	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
 				return nil, errors.New("unexpected address")
@@ -383,7 +383,7 @@ func TestNonceTransactionsHandler_ForceNonceReFetch(t *testing.T) {
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 
-	proxy := &mock.ProxyStub{
+	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
 				return nil, errors.New("unexpected address")

@@ -17,9 +17,8 @@ type Proxy interface {
 	IsInterfaceNil() bool
 }
 
-// TxSigner defines the method used by a struct used to create valid signatures
-type TxSigner interface {
-	SignMessage(msg []byte, skBytes []byte) ([]byte, error)
-	GeneratePkBytes(skBytes []byte) ([]byte, error)
+// TxBuilder defines the component able to build & sign a transaction
+type TxBuilder interface {
+	ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
 	IsInterfaceNil() bool
 }
