@@ -58,9 +58,7 @@ func (builder *txBuilder) ApplySignatureAndGenerateTx(
 		return nil, err
 	}
 
-	arg.Signature = ""
 	arg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
-
 	unsignedMessage, err := builder.createUnsignedMessage(arg)
 	if err != nil {
 		return nil, err
