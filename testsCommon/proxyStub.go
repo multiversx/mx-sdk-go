@@ -2,13 +2,10 @@ package testsCommon
 
 import (
 	"context"
-	"errors"
 
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
-
-var errNotImplemented = errors.New("not implemented")
 
 // ProxyStub -
 type ProxyStub struct {
@@ -25,7 +22,7 @@ func (stub *ProxyStub) ExecuteVMQuery(_ context.Context, vmRequest *data.VmValue
 		return stub.ExecuteVMQueryCalled(vmRequest)
 	}
 
-	return nil, errNotImplemented
+	return &data.VmValuesResponseData{}, nil
 }
 
 // GetNetworkConfig -
@@ -34,7 +31,7 @@ func (stub *ProxyStub) GetNetworkConfig(_ context.Context) (*data.NetworkConfig,
 		return stub.GetNetworkConfigCalled()
 	}
 
-	return nil, errNotImplemented
+	return &data.NetworkConfig{}, nil
 }
 
 // GetAccount -
@@ -43,7 +40,7 @@ func (stub *ProxyStub) GetAccount(_ context.Context, address core.AddressHandler
 		return stub.GetAccountCalled(address)
 	}
 
-	return nil, errNotImplemented
+	return &data.Account{}, nil
 }
 
 // SendTransaction -
