@@ -13,7 +13,7 @@ func (stub *TxBuilderStub) ApplySignatureAndGenerateTx(skBytes []byte, arg data.
 		return stub.ApplySignatureAndGenerateTxCalled(skBytes, arg)
 	}
 
-	return nil, errNotImplemented
+	return &data.Transaction{}, nil
 }
 
 // IsInterfaceNil -
