@@ -207,7 +207,7 @@ func TestNewElrondNotifee(t *testing.T) {
 	})
 }
 
-func TestElrondNotifee_PricesChanged(t *testing.T) {
+func TestElrondNotifee_PriceChanged(t *testing.T) {
 	t.Parallel()
 
 	t.Run("get nonce errors", func(t *testing.T) {
@@ -229,7 +229,7 @@ func TestElrondNotifee_PricesChanged(t *testing.T) {
 		require.Nil(t, err)
 
 		priceChanges := createMockPriceChanges()
-		err = en.PricesChanged(context.Background(), priceChanges)
+		err = en.PriceChanged(context.Background(), priceChanges)
 		assert.Equal(t, expectedErr, err)
 	})
 	t.Run("invalid price arguments", func(t *testing.T) {
@@ -251,7 +251,7 @@ func TestElrondNotifee_PricesChanged(t *testing.T) {
 
 		priceChanges := createMockPriceChanges()
 		priceChanges[0].Base = ""
-		err = en.PricesChanged(context.Background(), priceChanges)
+		err = en.PriceChanged(context.Background(), priceChanges)
 		assert.True(t, errors.Is(err, builders.ErrInvalidValue))
 	})
 	t.Run("get network config errors", func(t *testing.T) {
@@ -278,7 +278,7 @@ func TestElrondNotifee_PricesChanged(t *testing.T) {
 		require.Nil(t, err)
 
 		priceChanges := createMockPriceChanges()
-		err = en.PricesChanged(context.Background(), priceChanges)
+		err = en.PriceChanged(context.Background(), priceChanges)
 		assert.Equal(t, expectedErr, err)
 	})
 	t.Run("apply signature and generate transaction errors", func(t *testing.T) {
@@ -305,7 +305,7 @@ func TestElrondNotifee_PricesChanged(t *testing.T) {
 		require.Nil(t, err)
 
 		priceChanges := createMockPriceChanges()
-		err = en.PricesChanged(context.Background(), priceChanges)
+		err = en.PriceChanged(context.Background(), priceChanges)
 		assert.Equal(t, expectedErr, err)
 	})
 	t.Run("send transaction errors", func(t *testing.T) {
@@ -326,7 +326,7 @@ func TestElrondNotifee_PricesChanged(t *testing.T) {
 		require.Nil(t, err)
 
 		priceChanges := createMockPriceChanges()
-		err = en.PricesChanged(context.Background(), priceChanges)
+		err = en.PriceChanged(context.Background(), priceChanges)
 		assert.Equal(t, expectedErr, err)
 	})
 	t.Run("should work", func(t *testing.T) {
@@ -371,7 +371,7 @@ func TestElrondNotifee_PricesChanged(t *testing.T) {
 		require.Nil(t, err)
 
 		priceChanges := createMockPriceChanges()
-		err = en.PricesChanged(context.Background(), priceChanges)
+		err = en.PriceChanged(context.Background(), priceChanges)
 		assert.Nil(t, err)
 		assert.True(t, sentWasCalled)
 	})

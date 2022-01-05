@@ -102,8 +102,9 @@ func checkArgsElrondNotifee(args ArgsElrondNotifee) error {
 	return nil
 }
 
-// PricesChanged -
-func (en *elrondNotifee) PricesChanged(ctx context.Context, priceChanges []*aggregator.ArgsPriceChanged) error {
+// PriceChanged is the function that gets called by a price notifier. This function will assemble an Elrond
+// transaction, having the transaction's data field containing all the price changes information
+func (en *elrondNotifee) PriceChanged(ctx context.Context, priceChanges []*aggregator.ArgsPriceChanged) error {
 	nonce, err := en.txNonceHandler.GetNonce(ctx, en.selfAddress)
 	if err != nil {
 		return err
