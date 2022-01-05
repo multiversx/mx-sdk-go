@@ -2,55 +2,21 @@ package interactors
 
 import (
 	"context"
-	"encoding/hex"
 	"math/big"
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors/mock"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestTransactionInteractor_ApplySignatureAndSenderWithRealTxSigner(t *testing.T) {
-	t.Parallel()
-
-	txSigner := blockchain.NewTxSigner()
-	proxy := &mock.ProxyStub{}
-
-	sk, err := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c40d248169f4dd7c90537f05be1c49772ddbf8f7948b507ed17fb23284cf218b7d")
-
-	assert.Nil(t, err)
-
-	ti, err := NewTransactionInteractor(proxy, txSigner)
-	assert.Nil(t, err)
-	assert.NotNil(t, ti)
-
-	value := big.NewInt(999)
-	args := data.ArgCreateTransaction{
-		Value:    value.String(),
-		RcvAddr:  "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
-		GasPrice: 10,
-		GasLimit: 100000,
-		Data:     []byte(""),
-		ChainID:  "integration test chain id",
-		Version:  uint32(1),
-	}
-
-	tx, err := ti.ApplySignatureAndGenerateTransaction(sk, args)
-	require.Nil(t, err)
-
-	assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
-	assert.Equal(t, "80e1b5476c5ea9567614d9c364e1a7380b7990b53e7b6fd8431bf8536d174c8b3e73cc354b783a03e5ae0a53b128504a6bcf32c3b9bbc06f284afe1fac179e0d",
-		tx.Signature)
-}
-
 func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing.T) {
 	t.Parallel()
 
-	proxy := &mock.ProxyStub{
+	proxy := &testsCommon.ProxyStub{
 		SendTransactionsCalled: func(tx []*data.Transaction) ([]string, error) {
 			var msgs []string
 			for i := 0; i < len(tx); i++ {
@@ -60,9 +26,9 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 		},
 	}
 
-	var signer TxSigner = &mock.TxSignerStub{}
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
 
-	ti, err := NewTransactionInteractor(proxy, signer)
+	ti, err := NewTransactionInteractor(proxy, txBuilder)
 	assert.Nil(t, err, "Error on transaction interactor constructor")
 
 	value := big.NewInt(999)
@@ -77,7 +43,8 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 		ChainID:   "integration test chain id",
 		Version:   uint32(1),
 	}
-	tx := ti.createTransaction(args)
+	tx, err := ti.ApplySignatureAndGenerateTx(make([]byte, 0), args)
+	require.Nil(t, err)
 	ti.AddTransaction(tx)
 
 	msg, err := ti.SendTransactionsAsBunch(context.Background(), 1)
@@ -88,7 +55,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *testing.T) {
 	t.Parallel()
 
-	proxy := &mock.ProxyStub{
+	proxy := &testsCommon.ProxyStub{
 		SendTransactionsCalled: func(tx []*data.Transaction) ([]string, error) {
 			var msgs []string
 			for i := 0; i < len(tx); i++ {
@@ -98,9 +65,9 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 		},
 	}
 
-	var signer TxSigner = &mock.TxSignerStub{}
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
 
-	ti, err := NewTransactionInteractor(proxy, signer)
+	ti, err := NewTransactionInteractor(proxy, txBuilder)
 	assert.Nil(t, err, "Error on transaction interactor constructor")
 
 	value := big.NewInt(999)
@@ -119,7 +86,8 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 			ChainID:   "integration test chain id",
 			Version:   uint32(1),
 		}
-		tx := ti.createTransaction(args)
+		tx, errGenerate := ti.ApplySignatureAndGenerateTx(make([]byte, 0), args)
+		require.Nil(t, errGenerate)
 		ti.AddTransaction(tx)
 		nonce++
 	}
@@ -133,15 +101,15 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 	t.Parallel()
 
 	sendCalled := 0
-	proxy := &mock.ProxyStub{
+	proxy := &testsCommon.ProxyStub{
 		SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
 			sendCalled++
 
 			return make([]string, len(txs)), nil
 		},
 	}
-	txSigner := &mock.TxSignerStub{}
-	ti, _ := NewTransactionInteractor(proxy, txSigner)
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
+	ti, _ := NewTransactionInteractor(proxy, txBuilder)
 	ti.SetTimeBetweenBunches(time.Millisecond)
 
 	ti.AddTransaction(&data.Transaction{})

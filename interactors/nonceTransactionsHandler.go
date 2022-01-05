@@ -152,3 +152,8 @@ func (nth *nonceTransactionsHandler) Close() error {
 
 	return nil
 }
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (nth *nonceTransactionsHandler) IsInterfaceNil() bool {
+	return nth == nil
+}

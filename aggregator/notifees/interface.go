@@ -1,4 +1,4 @@
-package interactors
+package notifees
 
 import (
 	"context"
@@ -6,6 +6,12 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
+
+// TxBuilder defines the component able to build & sign a transaction
+type TxBuilder interface {
+	ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	IsInterfaceNil() bool
+}
 
 // Proxy holds the primitive functions that the elrond proxy engine supports & implements
 // dependency inversion: blockchain package is considered inner business logic, this package is considered "plugin"
@@ -17,8 +23,9 @@ type Proxy interface {
 	IsInterfaceNil() bool
 }
 
-// TxBuilder defines the component able to build & sign a transaction
-type TxBuilder interface {
-	ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
+// TransactionNonceHandler is able to handle the
+type TransactionNonceHandler interface {
+	GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error)
+	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	IsInterfaceNil() bool
 }
