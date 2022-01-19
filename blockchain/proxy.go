@@ -456,8 +456,8 @@ func (ep *elrondProxy) GetRoundAtEpochStart(ctx context.Context) (uint64, error)
 }
 
 // GetNonceAtEpochStart retrieves the start of epoch nonce from hyper block (metachain)
-func (ep *elrondProxy) GetNonceAtEpochStart(ctx context.Context) (uint64, error) {
-	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, core.MetachainShardId)
+func (ep *elrondProxy) GetNonceAtEpochStart(ctx context.Context, shardId uint32) (uint64, error) {
+	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, shardId)
 	buff, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil {
 		return 0, err

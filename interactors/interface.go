@@ -11,9 +11,16 @@ import (
 // dependency inversion: blockchain package is considered inner business logic, this package is considered "plugin"
 type Proxy interface {
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
+	GetRatingsConfig(ctx context.Context) (*data.RatingsConfig, error)
 	GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error)
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	SendTransactions(ctx context.Context, txs []*data.Transaction) ([]string, error)
+
+	GetNonceAtEpochStart(ctx context.Context, shardId uint32) (uint64, error)
+	GetRawMiniBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
+	GetRawBlockByNonce(ctx context.Context, shardId uint32, nonce uint64) ([]byte, error)
+	GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
+
 	IsInterfaceNil() bool
 }
 

@@ -15,7 +15,7 @@ type NetworkConfig struct {
 	Denomination             int    `json:"erd_denomination"`
 	GasPerDataByte           uint64 `json:"erd_gas_per_data_byte"`
 	LatestTagSoftwareVersion string `json:"erd_latest_tag_software_version"`
-	MetaConsensusGroup       uint64 `json:"erd_meta_consensus_group"`
+	MetaConsensusGroup       uint64 `json:"erd_meta_consensus_group_size"`
 	MinGasLimit              uint64 `json:"erd_min_gas_limit"`
 	MinGasPrice              uint64 `json:"erd_min_gas_price"`
 	MinTransactionVersion    uint32 `json:"erd_min_transaction_version"`
