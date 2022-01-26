@@ -4,7 +4,6 @@ import (
 	coreData "github.com/ElrondNetwork/elrond-go-core/data"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
-	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
 	"github.com/ElrondNetwork/elrond-go/state"
 	"github.com/ElrondNetwork/elrond-go/testscommon"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -66,29 +65,49 @@ func NewHeaderSignatureVerifier(
 	return hsv, nil
 }
 
+// func (hsv *HeaderSignatureVerifier) SetNodesConfigPerEpoch(
+// 	validatorsInfoPerEpoch map[uint32][]*state.ShardValidatorInfo,
+// ) error {
+
+// 	previousEpochConfig := &nodesCoordinator.EpochNodesConfig{}
+
+// 	for epoch, validatorsInfo := range validatorsInfoPerEpoch {
+// 		epochNodesConfig, err := hsv.ndLite.ComputeNodesConfigFromList(previousEpochConfig, validatorsInfo)
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		for shard, list := range epochNodesConfig.EligibleMap {
+// 			for j, validators := range list {
+// 				fmt.Println(
+// 					"epoch", epoch,
+// 					"shard:", shard, "eligible", j, ": ", hex.EncodeToString(validators.PubKey()[:10]),
+// 					"bytes", validators.PubKey()[:10])
+// 			}
+// 		}
+
+// 		for shard, list := range epochNodesConfig.WaitingMap {
+// 			for j, validators := range list {
+// 				fmt.Println(
+// 					"epoch", epoch,
+// 					"shard:", shard, "waiting", j, ": ", hex.EncodeToString(validators.PubKey())[:10],
+// 					"bytes", validators.PubKey()[:10])
+// 			}
+// 		}
+
+// 		hsv.ndLite.SetEpochNodesConfig(epoch, epochNodesConfig)
+// 	}
+
+// 	return nil
+// }
+
 func (hsv *HeaderSignatureVerifier) SetNodesConfigPerEpoch(
-	validatorsInfoPerEpoch map[uint32][]*state.ShardValidatorInfo,
-) error {
-
-	previousEpochConfig := &nodesCoordinator.EpochNodesConfig{}
-
-	for epoch, validatorsInfo := range validatorsInfoPerEpoch {
-		epochNodesConfig, err := hsv.ndLite.ComputeNodesConfigFromList(previousEpochConfig, validatorsInfo)
-		if err != nil {
-			return err
-		}
-
-		// for shard, list := range epochNodesConfig.EligibleMap {
-		// 	for j, validators := range list {
-		// 		fmt.Println("shard:", shard, "validator", j, ": ", hex.EncodeToString(validators.PubKey()))
-		// 		fmt.Println("shard:", shard, "validator", j, ": ", validators.PubKey())
-		// 	}
-		// }
-
-		hsv.ndLite.SetEpochNodesConfig(epoch, epochNodesConfig)
-	}
-
-	return nil
+	validatorsInfo []*state.ShardValidatorInfo,
+	epoch uint32,
+	randomness []byte,
+) {
+	hsv.ndLite.SetNodesConfigOnNewEpochStart(epoch, randomness, validatorsInfo)
+	return
 }
 
 func (hsv *HeaderSignatureVerifier) VerifyHeader(header coreData.HeaderHandler) bool {

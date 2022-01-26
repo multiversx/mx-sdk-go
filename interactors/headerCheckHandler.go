@@ -70,20 +70,31 @@ func (hch *headerCheckHandler) VerifyHeaderByHash(ctx context.Context, shardId u
 		}
 	}
 
+	//metaBlock, err := hch.getMetaBlockFromStorage(136, 27367)
 	metaBlock, err := hch.getLastStartOfEpochMetaBlock(ctx)
 	if err != nil {
 		return false, err
 	}
 
-	validatorsInfoPerEpoch, err := hch.getValidatorsInfoPerEpoch(ctx, metaBlock)
+	// validatorsInfoPerEpoch, err := hch.getValidatorsInfoPerEpoch(ctx, metaBlock)
+	// if err != nil {
+	// 	return false, err
+	// }
+
+	// err = hch.headerVerifier.SetNodesConfigPerEpoch(validatorsInfoPerEpoch)
+	// if err != nil {
+	// 	return false, err
+	// }
+
+	validatorInfo, err := hch.getValidatorsInfoPerCurrentEpoch(ctx, metaBlock)
 	if err != nil {
 		return false, err
 	}
 
-	err = hch.headerVerifier.SetNodesConfigPerEpoch(validatorsInfoPerEpoch)
-	if err != nil {
-		return false, err
-	}
+	epoch := metaBlock.GetEpoch()
+	randomness := metaBlock.GetPrevRandSeed()
+
+	hch.headerVerifier.SetNodesConfigPerEpoch(validatorInfo, epoch, randomness)
 
 	return hch.headerVerifier.VerifyHeader(header), nil
 }
@@ -113,15 +124,23 @@ func (hch *headerCheckHandler) getValidatorsInfoPerEpoch(ctx context.Context, me
 	validatorsInfoPerEpoch := make(map[uint32][]*state.ShardValidatorInfo)
 
 	epoch := metaBlock.GetEpoch()
+	log.Info("real initial", "epoch", epoch)
+
+	round := metaBlock.GetRound()
+	log.Info("real initial", "round", round)
+
 	for i := 0; i < 3; i++ {
 		if epoch == 0 {
 			break
 		}
 
-		validatorsInfoPerEpoch[epoch-1], err = hch.getValidatorsInfo(ctx, metaBlock)
+		validatorsInfoPerEpoch[epoch], err = hch.getValidatorsInfo(ctx, metaBlock)
 		if err != nil {
 			return nil, err
 		}
+		printShardValidatorInfo(validatorsInfoPerEpoch[epoch], epoch)
+
+		log.Info("settings validators info per", "epoch", epoch)
 
 		newHash := hex.EncodeToString(metaBlock.EpochStart.Economics.PrevEpochStartHash)
 		metaBlock, err = hch.getMetaBlockByHash(ctx, newHash)
@@ -138,8 +157,32 @@ func (hch *headerCheckHandler) getValidatorsInfoPerEpoch(ctx context.Context, me
 	return validatorsInfoPerEpoch, nil
 }
 
+func (hch *headerCheckHandler) getValidatorsInfoPerCurrentEpoch(ctx context.Context, metaBlock *block.MetaBlock) ([]*state.ShardValidatorInfo, error) {
+	epoch := metaBlock.GetEpoch()
+	log.Info("real initial", "epoch", epoch)
+
+	round := metaBlock.GetRound()
+	log.Info("real initial", "round", round)
+
+	validatorsInfoPerEpoch, err := hch.getValidatorsInfo(ctx, metaBlock)
+	if err != nil {
+		return nil, err
+	}
+
+	return validatorsInfoPerEpoch, nil
+}
+
+func printShardValidatorInfo(info []*state.ShardValidatorInfo, epoch uint32) {
+	for _, v := range info {
+		log.Info("shardValidatorInfo", "epoch", epoch,
+			"index", v.GetIndex(),
+			"shard", v.GetShardId(),
+			"pubkey", v.GetPublicKey()[:20])
+	}
+}
+
 func (hch *headerCheckHandler) getValidatorsInfo(ctx context.Context, metaBlock *block.MetaBlock) ([]*state.ShardValidatorInfo, error) {
-	miniBlocks := make([]*block.MiniBlock, 0)
+	allValidatorInfo := make([]*state.ShardValidatorInfo, 0)
 	for _, miniBlockHeader := range metaBlock.MiniBlockHeaders {
 		hash := hex.EncodeToString(miniBlockHeader.Hash)
 
@@ -154,16 +197,50 @@ func (hch *headerCheckHandler) getValidatorsInfo(ctx context.Context, metaBlock 
 			return nil, err
 		}
 
-		miniBlocks = append(miniBlocks, miniBlock)
+		if miniBlock.Type != block.PeerBlock {
+			continue
+		}
+
+		for _, txHash := range miniBlock.TxHashes {
+			log.Info("miniblock",
+				"epoch", metaBlock.GetEpoch(),
+				"txHash", txHash)
+
+			vid := &state.ShardValidatorInfo{}
+			err := hch.marshaller.Unmarshal(vid, txHash)
+			if err != nil {
+				return nil, err
+			}
+
+			allValidatorInfo = append(allValidatorInfo, vid)
+		}
 	}
 
-	validatorsInfo, err := hch.parseMiniBlocks(miniBlocks)
-	if err != nil {
-		return nil, err
-	}
-
-	return validatorsInfo, nil
+	return allValidatorInfo, nil
 }
+
+// func (hch *headerCheckHandler) parseMiniBlock(miniBlockByes []byte) (*state.ShardValidatorInfo, error) {
+// 	miniBlock := &block.MiniBlock{}
+// 	err := hch.marshaller.Unmarshal(miniBlock, miniBlockBytes)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	if miniBlock.Type != block.PeerBlock {
+// 		continue
+// 	}
+
+// 	for _, txHash := range miniBlock.TxHashes {
+// 		vid := &state.ShardValidatorInfo{}
+// 		err := hch.marshaller.Unmarshal(vid, txHash)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+
+// 	}
+
+// 	return allValidatorInfo, nil
+// }
 
 func (hch *headerCheckHandler) parseMiniBlocks(miniblocks []*block.MiniBlock) ([]*state.ShardValidatorInfo, error) {
 	allValidatorInfo := make([]*state.ShardValidatorInfo, 0)

@@ -9,6 +9,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	hasherFactory "github.com/ElrondNetwork/elrond-go-core/hashing/factory"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/sha256"
+	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/sharding"
 	"github.com/ElrondNetwork/elrond-go/sharding/mock"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
@@ -150,6 +151,33 @@ func CreateNodesCoordinatorLite(
 		return nil, err
 	}
 
+	maxNodesChangeConfigs := make([]config.MaxNodesChangeConfig, 0)
+	maxNodesChangeConfig1 := config.MaxNodesChangeConfig{
+		EpochEnable:            0,
+		MaxNumNodes:            36,
+		NodesToShufflePerShard: 4,
+	}
+	maxNodesChangeConfigs = append(maxNodesChangeConfigs, maxNodesChangeConfig1)
+	maxNodesChangeConfig2 := config.MaxNodesChangeConfig{
+		EpochEnable:            1,
+		MaxNumNodes:            56,
+		NodesToShufflePerShard: 2,
+	}
+	maxNodesChangeConfigs = append(maxNodesChangeConfigs, maxNodesChangeConfig2)
+
+	argsNodesShuffler := &nodesCoordinator.NodesShufflerArgs{
+		NodesShard:                     3,
+		NodesMeta:                      3,
+		Hysteresis:                     0,
+		Adaptivity:                     false,
+		ShuffleBetweenShards:           true,
+		MaxNodesEnableConfig:           maxNodesChangeConfigs,
+		BalanceWaitingListsEnableEpoch: 1,
+		WaitingListFixEnableEpoch:      1000000,
+	}
+
+	nodeShuffler, err := nodesCoordinator.NewHashValidatorsShuffler(argsNodesShuffler)
+
 	arguments := nodesCoordinator.ArgNodesCoordinatorLite{
 		Epoch:                      uint32(0),
 		ShardConsensusGroupSize:    shardConsensusGroupSize,
@@ -163,6 +191,7 @@ func CreateNodesCoordinatorLite(
 		WaitingListFixEnabledEpoch: 1000000,
 		ChanStopNode:               make(chan endProcess.ArgEndProcess),
 		NodeTypeProvider:           &nodeTypeProviderMock.NodeTypeProviderStub{},
+		Shuffler:                   nodeShuffler,
 	}
 
 	nd, err := nodesCoordinator.NewIndexHashedNodesCoordinatorLite(arguments)
