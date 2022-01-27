@@ -69,32 +69,20 @@ func (hch *headerCheckHandler) VerifyHeaderByHash(ctx context.Context, shardId u
 			return false, err
 		}
 	}
+	headerEpoch := header.GetEpoch()
+	log.Info("fetched header in", "epoch", headerEpoch)
 
-	//metaBlock, err := hch.getMetaBlockFromStorage(136, 27367)
-	metaBlock, err := hch.getLastStartOfEpochMetaBlock(ctx)
-	if err != nil {
-		return false, err
+	if !hch.headerVerifier.ConfigCache.IsInCache(headerEpoch) {
+		log.Info("epoch", headerEpoch, "not in cache")
+
+		validatorInfo, randomness, err := hch.getValidatorsInfoPerEpochV2(ctx, headerEpoch)
+		if err != nil {
+			return false, err
+		}
+
+		hch.headerVerifier.ConfigCache.Add(headerEpoch, validatorInfo)
+		hch.headerVerifier.SetNodesConfigPerEpoch(validatorInfo, headerEpoch, randomness)
 	}
-
-	// validatorsInfoPerEpoch, err := hch.getValidatorsInfoPerEpoch(ctx, metaBlock)
-	// if err != nil {
-	// 	return false, err
-	// }
-
-	// err = hch.headerVerifier.SetNodesConfigPerEpoch(validatorsInfoPerEpoch)
-	// if err != nil {
-	// 	return false, err
-	// }
-
-	validatorInfo, err := hch.getValidatorsInfoPerCurrentEpoch(ctx, metaBlock)
-	if err != nil {
-		return false, err
-	}
-
-	epoch := metaBlock.GetEpoch()
-	randomness := metaBlock.GetPrevRandSeed()
-
-	hch.headerVerifier.SetNodesConfigPerEpoch(validatorInfo, epoch, randomness)
 
 	return hch.headerVerifier.VerifyHeader(header), nil
 }
@@ -119,66 +107,43 @@ func (hch *headerCheckHandler) getLastStartOfEpochMetaBlock(ctx context.Context)
 	return blockHeader, nil
 }
 
-func (hch *headerCheckHandler) getValidatorsInfoPerEpoch(ctx context.Context, metaBlock *block.MetaBlock) (map[uint32][]*state.ShardValidatorInfo, error) {
-	var err error
-	validatorsInfoPerEpoch := make(map[uint32][]*state.ShardValidatorInfo)
+func (hch *headerCheckHandler) getValidatorsInfoPerEpochV2(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, []byte, error) {
+	metaBlock, err := hch.getLastStartOfEpochMetaBlock(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	randomness := metaBlock.GetPrevRandSeed()
 
-	epoch := metaBlock.GetEpoch()
-	log.Info("real initial", "epoch", epoch)
-
-	round := metaBlock.GetRound()
-	log.Info("real initial", "round", round)
-
-	for i := 0; i < 3; i++ {
+	currEpoch := metaBlock.GetEpoch()
+	for epoch <= currEpoch {
 		if epoch == 0 {
 			break
 		}
 
-		validatorsInfoPerEpoch[epoch], err = hch.getValidatorsInfo(ctx, metaBlock)
-		if err != nil {
-			return nil, err
+		if epoch == currEpoch {
+			break
 		}
-		printShardValidatorInfo(validatorsInfoPerEpoch[epoch], epoch)
-
-		log.Info("settings validators info per", "epoch", epoch)
 
 		newHash := hex.EncodeToString(metaBlock.EpochStart.Economics.PrevEpochStartHash)
 		metaBlock, err = hch.getMetaBlockByHash(ctx, newHash)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if metaBlock == nil {
 			break
 		}
+		log.Info("fetched previous epoch")
+		randomness = metaBlock.GetPrevRandSeed()
 
-		epoch--
+		currEpoch = metaBlock.GetEpoch()
 	}
-
-	return validatorsInfoPerEpoch, nil
-}
-
-func (hch *headerCheckHandler) getValidatorsInfoPerCurrentEpoch(ctx context.Context, metaBlock *block.MetaBlock) ([]*state.ShardValidatorInfo, error) {
-	epoch := metaBlock.GetEpoch()
-	log.Info("real initial", "epoch", epoch)
-
-	round := metaBlock.GetRound()
-	log.Info("real initial", "round", round)
 
 	validatorsInfoPerEpoch, err := hch.getValidatorsInfo(ctx, metaBlock)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return validatorsInfoPerEpoch, nil
-}
-
-func printShardValidatorInfo(info []*state.ShardValidatorInfo, epoch uint32) {
-	for _, v := range info {
-		log.Info("shardValidatorInfo", "epoch", epoch,
-			"index", v.GetIndex(),
-			"shard", v.GetShardId(),
-			"pubkey", v.GetPublicKey()[:20])
-	}
+	return validatorsInfoPerEpoch, randomness, nil
 }
 
 func (hch *headerCheckHandler) getValidatorsInfo(ctx context.Context, metaBlock *block.MetaBlock) ([]*state.ShardValidatorInfo, error) {
@@ -218,29 +183,6 @@ func (hch *headerCheckHandler) getValidatorsInfo(ctx context.Context, metaBlock 
 
 	return allValidatorInfo, nil
 }
-
-// func (hch *headerCheckHandler) parseMiniBlock(miniBlockByes []byte) (*state.ShardValidatorInfo, error) {
-// 	miniBlock := &block.MiniBlock{}
-// 	err := hch.marshaller.Unmarshal(miniBlock, miniBlockBytes)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if miniBlock.Type != block.PeerBlock {
-// 		continue
-// 	}
-
-// 	for _, txHash := range miniBlock.TxHashes {
-// 		vid := &state.ShardValidatorInfo{}
-// 		err := hch.marshaller.Unmarshal(vid, txHash)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 	}
-
-// 	return allValidatorInfo, nil
-// }
 
 func (hch *headerCheckHandler) parseMiniBlocks(miniblocks []*block.MiniBlock) ([]*state.ShardValidatorInfo, error) {
 	allValidatorInfo := make([]*state.ShardValidatorInfo, 0)

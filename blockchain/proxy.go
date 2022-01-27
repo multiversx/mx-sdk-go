@@ -475,6 +475,26 @@ func (ep *elrondProxy) GetNonceAtEpochStart(ctx context.Context, shardId uint32)
 	return response.Data.Status.NonceAtEpochStart, nil
 }
 
+// GetCurrentEpoch retrieves the current epoch
+func (ep *elrondProxy) GetCurrentEpoch(ctx context.Context, shardId uint32) (uint64, error) {
+	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, shardId)
+	buff, err := ep.GetHTTP(ctx, endpoint)
+	if err != nil {
+		return 0, err
+	}
+
+	response := &data.NetworkStatusResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return 0, err
+	}
+	if response.Error != "" {
+		return 0, errors.New(response.Error)
+	}
+
+	return response.Data.Status.EpochNumber, nil
+}
+
 // GetHTTP does a GET method operation on the specified endpoint
 func (ep *elrondProxy) GetHTTP(ctx context.Context, endpoint string) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", ep.proxyURL, endpoint)

@@ -166,8 +166,8 @@ func CreateNodesCoordinatorLite(
 	maxNodesChangeConfigs = append(maxNodesChangeConfigs, maxNodesChangeConfig2)
 
 	argsNodesShuffler := &nodesCoordinator.NodesShufflerArgs{
-		NodesShard:                     3,
-		NodesMeta:                      3,
+		NodesShard:                     4,
+		NodesMeta:                      4,
 		Hysteresis:                     0,
 		Adaptivity:                     false,
 		ShuffleBetweenShards:           true,

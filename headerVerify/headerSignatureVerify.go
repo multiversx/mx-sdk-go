@@ -12,9 +12,12 @@ import (
 
 var log = logger.GetOrCreate("elrond-sdk-erdgo/headerVerify")
 
+const maxEpochs = 3
+
 type HeaderSignatureVerifier struct {
-	headerVerifier *headerCheck.HeaderSigVerifier
-	ndLite         *NodesCoordinatorLiteWithRater
+	HeaderVerifier *headerCheck.HeaderSigVerifier
+	NdLite         *NodesCoordinatorLiteWithRater
+	ConfigCache    EpochsConfigCacheHandler
 }
 
 func NewHeaderSignatureVerifier(
@@ -57,61 +60,28 @@ func NewHeaderSignatureVerifier(
 		return nil, err
 	}
 
+	cache := NewEpochsConfigCache(maxEpochs)
+
 	hsv := &HeaderSignatureVerifier{
-		headerVerifier: headerVerifier,
-		ndLite:         ndLite,
+		HeaderVerifier: headerVerifier,
+		NdLite:         ndLite,
+		ConfigCache:    cache,
 	}
 
 	return hsv, nil
 }
-
-// func (hsv *HeaderSignatureVerifier) SetNodesConfigPerEpoch(
-// 	validatorsInfoPerEpoch map[uint32][]*state.ShardValidatorInfo,
-// ) error {
-
-// 	previousEpochConfig := &nodesCoordinator.EpochNodesConfig{}
-
-// 	for epoch, validatorsInfo := range validatorsInfoPerEpoch {
-// 		epochNodesConfig, err := hsv.ndLite.ComputeNodesConfigFromList(previousEpochConfig, validatorsInfo)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		for shard, list := range epochNodesConfig.EligibleMap {
-// 			for j, validators := range list {
-// 				fmt.Println(
-// 					"epoch", epoch,
-// 					"shard:", shard, "eligible", j, ": ", hex.EncodeToString(validators.PubKey()[:10]),
-// 					"bytes", validators.PubKey()[:10])
-// 			}
-// 		}
-
-// 		for shard, list := range epochNodesConfig.WaitingMap {
-// 			for j, validators := range list {
-// 				fmt.Println(
-// 					"epoch", epoch,
-// 					"shard:", shard, "waiting", j, ": ", hex.EncodeToString(validators.PubKey())[:10],
-// 					"bytes", validators.PubKey()[:10])
-// 			}
-// 		}
-
-// 		hsv.ndLite.SetEpochNodesConfig(epoch, epochNodesConfig)
-// 	}
-
-// 	return nil
-// }
 
 func (hsv *HeaderSignatureVerifier) SetNodesConfigPerEpoch(
 	validatorsInfo []*state.ShardValidatorInfo,
 	epoch uint32,
 	randomness []byte,
 ) {
-	hsv.ndLite.SetNodesConfigOnNewEpochStart(epoch, randomness, validatorsInfo)
+	hsv.NdLite.SetNodesConfigOnNewEpochStart(epoch, randomness, validatorsInfo)
 	return
 }
 
 func (hsv *HeaderSignatureVerifier) VerifyHeader(header coreData.HeaderHandler) bool {
-	err := hsv.headerVerifier.VerifySignature(header)
+	err := hsv.HeaderVerifier.VerifySignature(header)
 	if err != nil {
 		log.Error(err.Error())
 		return false
