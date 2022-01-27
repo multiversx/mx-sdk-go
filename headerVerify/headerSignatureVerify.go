@@ -2,6 +2,7 @@ package headerVerify
 
 import (
 	coreData "github.com/ElrondNetwork/elrond-go-core/data"
+	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
 	"github.com/ElrondNetwork/elrond-go/state"
@@ -13,8 +14,9 @@ import (
 var log = logger.GetOrCreate("elrond-sdk-erdgo/headerVerify")
 
 type HeaderSignatureVerifier struct {
-	HeaderVerifier *headerCheck.HeaderSigVerifier
-	NdLite         *NodesCoordinatorLiteWithRater
+	headerVerifier *headerCheck.HeaderSigVerifier
+	ndLite         *NodesCoordinatorLiteWithRater
+	marshaller     marshal.Marshalizer
 }
 
 func NewHeaderSignatureVerifier(
@@ -58,16 +60,16 @@ func NewHeaderSignatureVerifier(
 	}
 
 	hsv := &HeaderSignatureVerifier{
-		HeaderVerifier: headerVerifier,
-		NdLite:         ndLite,
+		headerVerifier: headerVerifier,
+		ndLite:         ndLite,
+		marshaller:     coreComp.Marshalizer,
 	}
 
 	return hsv, nil
 }
 
 func (hsv *HeaderSignatureVerifier) IsInCache(epoch uint32) bool {
-	status := hsv.NdLite.IsEpochInConfig(epoch)
-
+	status := hsv.ndLite.IsEpochInConfig(epoch)
 	return status
 }
 
@@ -76,16 +78,20 @@ func (hsv *HeaderSignatureVerifier) SetNodesConfigPerEpoch(
 	epoch uint32,
 	randomness []byte,
 ) error {
-	err := hsv.NdLite.SetNodesConfigFromValidatorsInfo(epoch, randomness, validatorsInfo)
+	err := hsv.ndLite.SetNodesConfigFromValidatorsInfo(epoch, randomness, validatorsInfo)
 	return err
 }
 
 func (hsv *HeaderSignatureVerifier) VerifyHeader(header coreData.HeaderHandler) bool {
-	err := hsv.HeaderVerifier.VerifySignature(header)
+	err := hsv.headerVerifier.VerifySignature(header)
 	if err != nil {
 		log.Error(err.Error())
 		return false
 	}
 
 	return true
+}
+
+func (hsv *HeaderSignatureVerifier) Marshaller() marshal.Marshalizer {
+	return hsv.marshaller
 }

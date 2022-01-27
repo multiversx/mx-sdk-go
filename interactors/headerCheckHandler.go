@@ -9,7 +9,6 @@ import (
 	coreData "github.com/ElrondNetwork/elrond-go-core/data"
 	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
-	marshalizerFactory "github.com/ElrondNetwork/elrond-go-core/marshal/factory"
 	"github.com/ElrondNetwork/elrond-go/state"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerVerify"
@@ -25,11 +24,6 @@ type headerCheckHandler struct {
 func NewHeaderCheckHandler(proxy Proxy) (*headerCheckHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
-	}
-
-	marshaller, err := marshalizerFactory.NewMarshalizer("gogo protobuf")
-	if err != nil {
-		return nil, err
 	}
 
 	networkConfig, err := proxy.GetNetworkConfig(context.Background())
@@ -50,7 +44,7 @@ func NewHeaderCheckHandler(proxy Proxy) (*headerCheckHandler, error) {
 	return &headerCheckHandler{
 		proxy:          proxy,
 		headerVerifier: headerVerifier,
-		marshaller:     marshaller,
+		marshaller:     headerVerifier.Marshaller(),
 	}, nil
 }
 
@@ -75,7 +69,7 @@ func (hch *headerCheckHandler) VerifyHeaderByHash(ctx context.Context, shardId u
 	if !hch.headerVerifier.IsInCache(headerEpoch) {
 		log.Info("epoch", headerEpoch, "not in cache")
 
-		validatorInfo, randomness, err := hch.getValidatorsInfoPerEpochV2(ctx, headerEpoch)
+		validatorInfo, randomness, err := hch.getValidatorsInfoPerEpoch(ctx, headerEpoch)
 		if err != nil {
 			return false, err
 		}
@@ -109,7 +103,7 @@ func (hch *headerCheckHandler) getLastStartOfEpochMetaBlock(ctx context.Context)
 	return blockHeader, nil
 }
 
-func (hch *headerCheckHandler) getValidatorsInfoPerEpochV2(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, []byte, error) {
+func (hch *headerCheckHandler) getValidatorsInfoPerEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, []byte, error) {
 	metaBlock, err := hch.getLastStartOfEpochMetaBlock(ctx)
 	if err != nil {
 		return nil, nil, err
