@@ -72,7 +72,7 @@ func (hch *headerCheckHandler) VerifyHeaderByHash(ctx context.Context, shardId u
 	headerEpoch := header.GetEpoch()
 	log.Info("fetched header in", "epoch", headerEpoch)
 
-	if !hch.headerVerifier.ConfigCache.IsInCache(headerEpoch) {
+	if !hch.headerVerifier.IsInCache(headerEpoch) {
 		log.Info("epoch", headerEpoch, "not in cache")
 
 		validatorInfo, randomness, err := hch.getValidatorsInfoPerEpochV2(ctx, headerEpoch)
@@ -80,8 +80,10 @@ func (hch *headerCheckHandler) VerifyHeaderByHash(ctx context.Context, shardId u
 			return false, err
 		}
 
-		hch.headerVerifier.ConfigCache.Add(headerEpoch, validatorInfo)
-		hch.headerVerifier.SetNodesConfigPerEpoch(validatorInfo, headerEpoch, randomness)
+		err = hch.headerVerifier.SetNodesConfigPerEpoch(validatorInfo, headerEpoch, randomness)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	return hch.headerVerifier.VerifyHeader(header), nil

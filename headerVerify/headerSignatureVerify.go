@@ -12,12 +12,9 @@ import (
 
 var log = logger.GetOrCreate("elrond-sdk-erdgo/headerVerify")
 
-const maxEpochs = 3
-
 type HeaderSignatureVerifier struct {
 	HeaderVerifier *headerCheck.HeaderSigVerifier
 	NdLite         *NodesCoordinatorLiteWithRater
-	ConfigCache    EpochsConfigCacheHandler
 }
 
 func NewHeaderSignatureVerifier(
@@ -37,8 +34,8 @@ func NewHeaderSignatureVerifier(
 	ndLite, err := CreateNodesCoordinatorLite(
 		coreComp.Hasher,
 		coreComp.Rater,
-		int(networkConfig.ShardConsensusGroupSize),
-		int(networkConfig.MetaConsensusGroup),
+		networkConfig.ShardConsensusGroupSize,
+		networkConfig.MetaConsensusGroup,
 		networkConfig.NumShardsWithoutMeta,
 	)
 	if err != nil {
@@ -60,24 +57,27 @@ func NewHeaderSignatureVerifier(
 		return nil, err
 	}
 
-	cache := NewEpochsConfigCache(maxEpochs)
-
 	hsv := &HeaderSignatureVerifier{
 		HeaderVerifier: headerVerifier,
 		NdLite:         ndLite,
-		ConfigCache:    cache,
 	}
 
 	return hsv, nil
+}
+
+func (hsv *HeaderSignatureVerifier) IsInCache(epoch uint32) bool {
+	status := hsv.NdLite.IsEpochInConfig(epoch)
+
+	return status
 }
 
 func (hsv *HeaderSignatureVerifier) SetNodesConfigPerEpoch(
 	validatorsInfo []*state.ShardValidatorInfo,
 	epoch uint32,
 	randomness []byte,
-) {
-	hsv.NdLite.SetNodesConfigOnNewEpochStart(epoch, randomness, validatorsInfo)
-	return
+) error {
+	err := hsv.NdLite.SetNodesConfigFromValidatorsInfo(epoch, randomness, validatorsInfo)
+	return err
 }
 
 func (hsv *HeaderSignatureVerifier) VerifyHeader(header coreData.HeaderHandler) bool {

@@ -1,13 +1,11 @@
 package headerVerify
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/data/endProcess"
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
-	hasherFactory "github.com/ElrondNetwork/elrond-go-core/hashing/factory"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/sha256"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/sharding"
@@ -17,22 +15,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go/testscommon/nodeTypeProviderMock"
 )
 
-type validatorList []nodesCoordinator.Validator
-
-// Len will return the length of the validatorList
-func (v validatorList) Len() int { return len(v) }
-
-// Swap will interchange the objects on input indexes
-func (v validatorList) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
-
-// Less will return true if object on index i should appear before object in index j
-// Sorting of validators should be by index and public key
-func (v validatorList) Less(i, j int) bool {
-	if v[i].Index() == v[j].Index() {
-		return bytes.Compare(v[i].PubKey(), v[j].PubKey()) < 0
-	}
-	return v[i].Index() < v[j].Index()
-}
+type validator = nodesCoordinator.Validator
 
 type NodesCoordinatorLiteWithRater struct {
 	*nodesCoordinator.IndexHashedNodesCoordinatorLite
@@ -51,20 +34,7 @@ func NewNodesCoordinatorLiteWithRater(
 
 	ndL.SetNodesCoordinatorHelper(ndL)
 
-	// currentEpoch := ndL.GetCurrentEpoch()
-
-	// nodesConfig := nodesConfigPerShard[currentEpoch]
-	// nodesConfig.Selectors, _ = nodesCoordinatorLite.CreateSelectors(nodesConfig)
-
-	// ndL.SetNodesConfigPerEpoch(currentEpoch, nodesConfig)
-
 	return ndL, nil
-}
-
-func (ndwr *NodesCoordinatorLiteWithRater) SetEpochNodesConfig(epoch uint32, epochNodesConfig *nodesCoordinator.EpochNodesConfig) {
-	epochNodesConfig.Selectors, _ = ndwr.CreateSelectors(epochNodesConfig)
-
-	ndwr.SetNodesConfigPerEpoch(epoch, epochNodesConfig)
 }
 
 // GetChance returns the chance from an actual rating
@@ -73,7 +43,7 @@ func (ndwr *NodesCoordinatorLiteWithRater) GetChance(rating uint32) uint32 {
 }
 
 // ValidatorsWeights returns the weights/chances for each given validator
-func (ndwr *NodesCoordinatorLiteWithRater) ValidatorsWeights(validators []Validator) ([]uint32, error) {
+func (ndwr *NodesCoordinatorLiteWithRater) ValidatorsWeights(validators []validator) ([]uint32, error) {
 	minChance := ndwr.GetChance(0)
 	weights := make([]uint32, len(validators))
 
@@ -88,17 +58,17 @@ func (ndwr *NodesCoordinatorLiteWithRater) ValidatorsWeights(validators []Valida
 	return weights, nil
 }
 
-func (ndwr *NodesCoordinatorLiteWithRater) ComputeNodesConfigFromList(
-	previousEpochConfig *nodesCoordinator.EpochNodesConfig,
-	validatorInfos []*state.ShardValidatorInfo,
-) (*nodesCoordinator.EpochNodesConfig, error) {
-	return ndwr.IndexHashedNodesCoordinatorLite.ComputeNodesConfigFromList(previousEpochConfig, validatorInfos)
+func (ndwr *NodesCoordinatorLiteWithRater) SetNodesConfigPerEpoch(
+	validatorsInfo []*state.ShardValidatorInfo,
+	epoch uint32,
+	randomness []byte,
+) error {
+	err := ndwr.SetNodesConfigFromValidatorsInfo(epoch, randomness, validatorsInfo)
+	return err
 }
 
-type Validator = nodesCoordinator.Validator
-
-func createDummyNodesList(nbNodes uint32, suffix string) []Validator {
-	list := make([]Validator, 0)
+func createDummyNodesList(nbNodes uint32, suffix string) []validator {
+	list := make([]validator, 0)
 	hasher := sha256.NewSha256()
 
 	for j := uint32(0); j < nbNodes; j++ {
@@ -109,8 +79,8 @@ func createDummyNodesList(nbNodes uint32, suffix string) []Validator {
 	return list
 }
 
-func createDummyNodesMap(nodesPerShard uint32, nbShards uint32, suffix string) map[uint32][]Validator {
-	nodesMap := make(map[uint32][]Validator)
+func createDummyNodesMap(nodesPerShard uint32, nbShards uint32, suffix string) map[uint32][]validator {
+	nodesMap := make(map[uint32][]validator)
 
 	var shard uint32
 
@@ -126,31 +96,7 @@ func createDummyNodesMap(nodesPerShard uint32, nbShards uint32, suffix string) m
 	return nodesMap
 }
 
-func CreateNodesCoordinatorLite(
-	hasher hashing.Hasher,
-	rater sharding.ChanceComputer,
-	shardConsensusGroupSize int,
-	metaConsensusGroupSize int,
-	nShards uint32,
-) (*NodesCoordinatorLiteWithRater, error) {
-
-	cache := &mock.NodesCoordinatorCacheMock{
-		GetCalled: func(key []byte) (value interface{}, ok bool) {
-			return nil, false
-		},
-		PutCalled: func(key []byte, value interface{}, sizeInBytes int) (evicted bool) {
-			return false
-		},
-	}
-
-	waitingMap := make(map[uint32][]nodesCoordinator.Validator)
-	eligibleMap := createDummyNodesMap(6, 2, "eligible")
-
-	hasher, err := hasherFactory.NewHasher("blake2b")
-	if err != nil {
-		return nil, err
-	}
-
+func createArgsNodesShuffler() *nodesCoordinator.NodesShufflerArgs {
 	maxNodesChangeConfigs := make([]config.MaxNodesChangeConfig, 0)
 	maxNodesChangeConfig1 := config.MaxNodesChangeConfig{
 		EpochEnable:            0,
@@ -166,8 +112,8 @@ func CreateNodesCoordinatorLite(
 	maxNodesChangeConfigs = append(maxNodesChangeConfigs, maxNodesChangeConfig2)
 
 	argsNodesShuffler := &nodesCoordinator.NodesShufflerArgs{
-		NodesShard:                     4,
-		NodesMeta:                      4,
+		NodesShard:                     3,
+		NodesMeta:                      3,
 		Hysteresis:                     0,
 		Adaptivity:                     false,
 		ShuffleBetweenShards:           true,
@@ -176,18 +122,33 @@ func CreateNodesCoordinatorLite(
 		WaitingListFixEnableEpoch:      1000000,
 	}
 
+	return argsNodesShuffler
+}
+
+func CreateNodesCoordinatorLite(
+	hasher hashing.Hasher,
+	rater sharding.ChanceComputer,
+	shardConsensusGroupSize uint64,
+	metaConsensusGroupSize uint64,
+	nShards uint32,
+) (*NodesCoordinatorLiteWithRater, error) {
+
+	waitingMap := make(map[uint32][]validator)
+	eligibleMap := createDummyNodesMap(uint32(metaConsensusGroupSize), nShards, "eligible")
+
+	argsNodesShuffler := createArgsNodesShuffler()
 	nodeShuffler, err := nodesCoordinator.NewHashValidatorsShuffler(argsNodesShuffler)
 
 	arguments := nodesCoordinator.ArgNodesCoordinatorLite{
 		Epoch:                      uint32(0),
-		ShardConsensusGroupSize:    shardConsensusGroupSize,
-		MetaConsensusGroupSize:     metaConsensusGroupSize,
+		ShardConsensusGroupSize:    int(shardConsensusGroupSize),
+		MetaConsensusGroupSize:     int(metaConsensusGroupSize),
 		Hasher:                     hasher,
 		NbShards:                   nShards,
 		EligibleNodes:              eligibleMap,
 		WaitingNodes:               waitingMap,
 		SelfPublicKey:              []byte("key"),
-		ConsensusGroupCache:        cache,
+		ConsensusGroupCache:        &mock.NodesCoordinatorCacheMock{},
 		WaitingListFixEnabledEpoch: 1000000,
 		ChanStopNode:               make(chan endProcess.ArgEndProcess),
 		NodeTypeProvider:           &nodeTypeProviderMock.NodeTypeProviderStub{},

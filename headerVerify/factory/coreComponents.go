@@ -2,7 +2,7 @@ package factory
 
 import (
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
-	"github.com/ElrondNetwork/elrond-go-core/hashing/blake2b"
+	hasherFactory "github.com/ElrondNetwork/elrond-go-core/hashing/factory"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	marshalizerFactory "github.com/ElrondNetwork/elrond-go-core/marshal/factory"
 	"github.com/ElrondNetwork/elrond-go/config"
@@ -11,6 +11,9 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
+const marshalizerType = "gogo protobuf"
+const hasherType = "blake2b"
+
 type coreComponents struct {
 	Marshalizer marshal.Marshalizer
 	Hasher      hashing.Hasher
@@ -18,13 +21,15 @@ type coreComponents struct {
 }
 
 func CreateCoreComponents(ratingsConfig *data.RatingsConfig, networkConfig *data.NetworkConfig) (*coreComponents, error) {
-	marshalizer, err := marshalizerFactory.NewMarshalizer("gogo protobuf")
+	marshalizer, err := marshalizerFactory.NewMarshalizer(marshalizerType)
 	if err != nil {
 		return nil, err
 	}
 
-	//hasher, err := hasherFactory.NewHasher("blake2b")
-	hasher := blake2b.NewBlake2b()
+	hasher, err := hasherFactory.NewHasher(hasherType)
+	if err != nil {
+		return nil, err
+	}
 
 	rater, err := createRater(ratingsConfig, networkConfig)
 	if err != nil {
@@ -99,12 +104,7 @@ func createRater(rc *data.RatingsConfig, nc *data.NetworkConfig) (sharding.Chanc
 	ratingsConfig := createRatingsConfig(rc)
 
 	ratingDataArgs := rating.RatingsDataArg{
-		Config: ratingsConfig,
-		// ShardConsensusSize:       63,
-		// MetaConsensusSize:        400,
-		// ShardMinNodes:            400,
-		// MetaMinNodes:             400,
-		// RoundDurationMiliseconds: 6000,
+		Config:                   ratingsConfig,
 		ShardConsensusSize:       uint32(nc.ShardConsensusGroupSize),
 		MetaConsensusSize:        uint32(nc.MetaConsensusGroup),
 		ShardMinNodes:            uint32(nc.NumNodesInShard),
