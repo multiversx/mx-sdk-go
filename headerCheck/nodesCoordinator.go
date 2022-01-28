@@ -1,4 +1,4 @@
-package headerVerify
+package headerCheck
 
 import (
 	"fmt"

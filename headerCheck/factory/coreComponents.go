@@ -20,7 +20,10 @@ type coreComponents struct {
 	Rater       sharding.ChanceComputer
 }
 
-func CreateCoreComponents(ratingsConfig *data.RatingsConfig, networkConfig *data.NetworkConfig) (*coreComponents, error) {
+func CreateCoreComponents(
+	ratingsConfig *data.RatingsConfig,
+	networkConfig *data.NetworkConfig,
+) (*coreComponents, error) {
 	marshalizer, err := marshalizerFactory.NewMarshalizer(marshalizerType)
 	if err != nil {
 		return nil, err
@@ -41,6 +44,31 @@ func CreateCoreComponents(ratingsConfig *data.RatingsConfig, networkConfig *data
 		Hasher:      hasher,
 		Rater:       rater,
 	}, nil
+}
+
+func createRater(rc *data.RatingsConfig, nc *data.NetworkConfig) (sharding.ChanceComputer, error) {
+	ratingsConfig := createRatingsConfig(rc)
+
+	ratingDataArgs := rating.RatingsDataArg{
+		Config:                   ratingsConfig,
+		ShardConsensusSize:       uint32(nc.ShardConsensusGroupSize),
+		MetaConsensusSize:        uint32(nc.MetaConsensusGroup),
+		ShardMinNodes:            uint32(nc.NumNodesInShard),
+		MetaMinNodes:             uint32(nc.NumMetachainNodes),
+		RoundDurationMiliseconds: uint64(nc.RoundDuration),
+	}
+
+	ratingsData, err := rating.NewRatingsData(ratingDataArgs)
+	if err != nil {
+		return nil, err
+	}
+
+	rater, err := rating.NewBlockSigningRater(ratingsData)
+	if err != nil {
+		return nil, err
+	}
+
+	return rater, nil
 }
 
 func createRatingsConfig(rd *data.RatingsConfig) config.RatingsConfig {
@@ -98,29 +126,4 @@ func createRatingsConfig(rd *data.RatingsConfig) config.RatingsConfig {
 	}
 
 	return ratingsConfig
-}
-
-func createRater(rc *data.RatingsConfig, nc *data.NetworkConfig) (sharding.ChanceComputer, error) {
-	ratingsConfig := createRatingsConfig(rc)
-
-	ratingDataArgs := rating.RatingsDataArg{
-		Config:                   ratingsConfig,
-		ShardConsensusSize:       uint32(nc.ShardConsensusGroupSize),
-		MetaConsensusSize:        uint32(nc.MetaConsensusGroup),
-		ShardMinNodes:            uint32(nc.NumNodesInShard),
-		MetaMinNodes:             uint32(nc.NumMetachainNodes),
-		RoundDurationMiliseconds: uint64(nc.RoundDuration),
-	}
-
-	ratingsData, err := rating.NewRatingsData(ratingDataArgs)
-	if err != nil {
-		return nil, err
-	}
-
-	rater, err := rating.NewBlockSigningRater(ratingsData)
-	if err != nil {
-		return nil, err
-	}
-
-	return rater, nil
 }

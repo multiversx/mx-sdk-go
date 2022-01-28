@@ -10,7 +10,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	"github.com/ElrondNetwork/elrond-go/state"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerVerify"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck"
 )
 
 type headerCheckHandler struct {
@@ -39,13 +39,13 @@ func NewHeaderCheckHandler(proxy Proxy) (*headerCheckHandler, error) {
 		return nil, err
 	}
 
-	headerVerifyArgs := headerVerify.ArgHeaderVerifier{
+	headerVerifyArgs := headerCheck.ArgHeaderVerifier{
 		RatingsConfig:      ratingsConfig,
 		NetworkConfig:      networkConfig,
 		EnableEpochsConfig: enableEpochsConfig,
 	}
 
-	headerVerifier, err := headerVerify.NewHeaderVerifier(headerVerifyArgs)
+	headerVerifier, err := headerCheck.NewHeaderVerifier(headerVerifyArgs)
 	if err != nil {
 		return nil, err
 	}

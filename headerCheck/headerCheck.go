@@ -1,4 +1,4 @@
-package headerVerify
+package headerCheck
 
 import (
 	coreData "github.com/ElrondNetwork/elrond-go-core/data"
@@ -8,10 +8,10 @@ import (
 	"github.com/ElrondNetwork/elrond-go/state"
 	"github.com/ElrondNetwork/elrond-go/testscommon"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerVerify/factory"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/factory"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/headerVerify")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/headerCheck")
 
 type ArgHeaderVerifier struct {
 	RatingsConfig      *data.RatingsConfig

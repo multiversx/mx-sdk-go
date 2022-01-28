@@ -26,6 +26,7 @@ func CreateCryptoComponents() (*cryptoComponents, error) {
 		return nil, err
 	}
 
+	// dummy key
 	privateKey, publicKey := blockSignKeyGen.GeneratePair()
 
 	publicKeyBytes, err := publicKey.ToByteArray()
