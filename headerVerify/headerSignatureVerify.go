@@ -22,6 +22,7 @@ type HeaderSignatureVerifier struct {
 func NewHeaderSignatureVerifier(
 	ratingsConfig *data.RatingsConfig,
 	networkConfig *data.NetworkConfig,
+	enableEpochsConfig *data.EnableEpochsConfig,
 ) (*HeaderSignatureVerifier, error) {
 	coreComp, err := factory.CreateCoreComponents(ratingsConfig, networkConfig)
 	if err != nil {
@@ -36,9 +37,8 @@ func NewHeaderSignatureVerifier(
 	ndLite, err := CreateNodesCoordinatorLite(
 		coreComp.Hasher,
 		coreComp.Rater,
-		networkConfig.ShardConsensusGroupSize,
-		networkConfig.MetaConsensusGroup,
-		networkConfig.NumShardsWithoutMeta,
+		networkConfig,
+		enableEpochsConfig,
 	)
 	if err != nil {
 		return nil, err

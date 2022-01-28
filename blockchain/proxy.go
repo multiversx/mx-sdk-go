@@ -21,6 +21,7 @@ const (
 	networkConfigEndpoint            = "network/config"
 	networkEconomicsEndpoint         = "network/economics"
 	ratingsConfigEndpoint            = "network/ratings"
+	enableEpochsConfigEndpoint       = "network/enable-epochs"
 	accountEndpoint                  = "address/%s"
 	costTransactionEndpoint          = "transaction/cost"
 	sendTransactionEndpoint          = "transaction/send"
@@ -548,6 +549,25 @@ func (ep *elrondProxy) GetRatingsConfig(ctx context.Context) (*data.RatingsConfi
 	}
 
 	response := &data.RatingsConfigResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.Config, nil
+}
+
+// GetEnableEpochsConfig retrieves the ratings configuration from the proxy
+func (ep *elrondProxy) GetEnableEpochsConfig(ctx context.Context) (*data.EnableEpochsConfig, error) {
+	buff, err := ep.GetHTTP(ctx, enableEpochsConfigEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &data.EnableEpochsConfigResponse{}
 	err = json.Unmarshal(buff, response)
 	if err != nil {
 		return nil, err

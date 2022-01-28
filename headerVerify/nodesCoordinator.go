@@ -13,6 +13,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
 	"github.com/ElrondNetwork/elrond-go/state"
 	"github.com/ElrondNetwork/elrond-go/testscommon/nodeTypeProviderMock"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
 type validator = nodesCoordinator.Validator
@@ -72,14 +73,14 @@ func createDummyNodesList(nbNodes uint32, suffix string) []validator {
 	hasher := sha256.NewSha256()
 
 	for j := uint32(0); j < nbNodes; j++ {
-		pk := hasher.Compute(fmt.Sprintf("pk%s_%d", suffix, j))
+		pk := hasher.Compute(fmt.Sprintf("pkeligible_%d", j))
 		list = append(list, mock.NewValidatorMock(pk, 1, nodesCoordinator.DefaultSelectionChances))
 	}
 
 	return list
 }
 
-func createDummyNodesMap(nodesPerShard uint32, nbShards uint32, suffix string) map[uint32][]validator {
+func createDummyNodesMap(nodesPerShard uint32, nbShards uint32) map[uint32][]validator {
 	nodesMap := make(map[uint32][]validator)
 
 	var shard uint32
@@ -89,37 +90,38 @@ func createDummyNodesMap(nodesPerShard uint32, nbShards uint32, suffix string) m
 		if i == nbShards {
 			shard = core.MetachainShardId
 		}
-		list := createDummyNodesList(nodesPerShard, suffix+"_i")
+		list := createDummyNodesList(nodesPerShard, "_i")
+		//list := make([]validator, nodesPerShard)
 		nodesMap[shard] = list
 	}
 
 	return nodesMap
 }
 
-func createArgsNodesShuffler() *nodesCoordinator.NodesShufflerArgs {
+func createArgsNodesShuffler(
+	eec *data.EnableEpochsConfig,
+	networkConfig *data.NetworkConfig,
+) *nodesCoordinator.NodesShufflerArgs {
 	maxNodesChangeConfigs := make([]config.MaxNodesChangeConfig, 0)
-	maxNodesChangeConfig1 := config.MaxNodesChangeConfig{
-		EpochEnable:            0,
-		MaxNumNodes:            36,
-		NodesToShufflePerShard: 4,
+	for _, conf := range eec.MaxNodesChangeEnableEpoch {
+		maxNodesChangeConfig := config.MaxNodesChangeConfig{
+			EpochEnable:            conf.EpochEnable,
+			MaxNumNodes:            conf.MaxNumNodes,
+			NodesToShufflePerShard: conf.NodesToShufflePerShard,
+		}
+
+		maxNodesChangeConfigs = append(maxNodesChangeConfigs, maxNodesChangeConfig)
 	}
-	maxNodesChangeConfigs = append(maxNodesChangeConfigs, maxNodesChangeConfig1)
-	maxNodesChangeConfig2 := config.MaxNodesChangeConfig{
-		EpochEnable:            1,
-		MaxNumNodes:            56,
-		NodesToShufflePerShard: 2,
-	}
-	maxNodesChangeConfigs = append(maxNodesChangeConfigs, maxNodesChangeConfig2)
 
 	argsNodesShuffler := &nodesCoordinator.NodesShufflerArgs{
-		NodesShard:                     3,
-		NodesMeta:                      3,
-		Hysteresis:                     0,
-		Adaptivity:                     false,
+		NodesShard:                     networkConfig.NumNodesInShard,
+		NodesMeta:                      networkConfig.NumMetachainNodes,
+		Hysteresis:                     networkConfig.GetHysteresis(),
+		Adaptivity:                     networkConfig.GetAdaptivity(),
 		ShuffleBetweenShards:           true,
 		MaxNodesEnableConfig:           maxNodesChangeConfigs,
-		BalanceWaitingListsEnableEpoch: 1,
-		WaitingListFixEnableEpoch:      1000000,
+		BalanceWaitingListsEnableEpoch: eec.BalanceWaitingListsEnableEpoch,
+		WaitingListFixEnableEpoch:      eec.WaitingListFixEnableEpoch,
 	}
 
 	return argsNodesShuffler
@@ -128,28 +130,28 @@ func createArgsNodesShuffler() *nodesCoordinator.NodesShufflerArgs {
 func CreateNodesCoordinatorLite(
 	hasher hashing.Hasher,
 	rater sharding.ChanceComputer,
-	shardConsensusGroupSize uint64,
-	metaConsensusGroupSize uint64,
-	nShards uint32,
+	networkConfig *data.NetworkConfig,
+	enableEpochsConfig *data.EnableEpochsConfig,
 ) (*NodesCoordinatorLiteWithRater, error) {
 
 	waitingMap := make(map[uint32][]validator)
-	eligibleMap := createDummyNodesMap(uint32(metaConsensusGroupSize), nShards, "eligible")
+	eligibleMap := createDummyNodesMap(networkConfig.MetaConsensusGroup, networkConfig.NumShardsWithoutMeta)
 
-	argsNodesShuffler := createArgsNodesShuffler()
+	argsNodesShuffler := createArgsNodesShuffler(enableEpochsConfig, networkConfig)
 	nodeShuffler, err := nodesCoordinator.NewHashValidatorsShuffler(argsNodesShuffler)
+	initialEpoch := uint32(0)
 
 	arguments := nodesCoordinator.ArgNodesCoordinatorLite{
-		Epoch:                      uint32(0),
-		ShardConsensusGroupSize:    int(shardConsensusGroupSize),
-		MetaConsensusGroupSize:     int(metaConsensusGroupSize),
+		Epoch:                      initialEpoch,
+		ShardConsensusGroupSize:    int(networkConfig.ShardConsensusGroupSize),
+		MetaConsensusGroupSize:     int(networkConfig.MetaConsensusGroup),
 		Hasher:                     hasher,
-		NbShards:                   nShards,
+		NbShards:                   networkConfig.NumShardsWithoutMeta,
 		EligibleNodes:              eligibleMap,
 		WaitingNodes:               waitingMap,
-		SelfPublicKey:              []byte("key"),
+		SelfPublicKey:              []byte("dummy"),
 		ConsensusGroupCache:        &mock.NodesCoordinatorCacheMock{},
-		WaitingListFixEnabledEpoch: 1000000,
+		WaitingListFixEnabledEpoch: enableEpochsConfig.WaitingListFixEnableEpoch,
 		ChanStopNode:               make(chan endProcess.ArgEndProcess),
 		NodeTypeProvider:           &nodeTypeProviderMock.NodeTypeProviderStub{},
 		Shuffler:                   nodeShuffler,

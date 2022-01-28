@@ -12,6 +12,7 @@ import (
 type Proxy interface {
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
 	GetRatingsConfig(ctx context.Context) (*data.RatingsConfig, error)
+	GetEnableEpochsConfig(ctx context.Context) (*data.EnableEpochsConfig, error)
 	GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error)
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	SendTransactions(ctx context.Context, txs []*data.Transaction) ([]string, error)

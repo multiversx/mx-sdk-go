@@ -36,7 +36,12 @@ func NewHeaderCheckHandler(proxy Proxy) (*headerCheckHandler, error) {
 		return nil, err
 	}
 
-	headerVerifier, err := headerVerify.NewHeaderSignatureVerifier(ratingsConfig, networkConfig)
+	enableEpochsConfig, err := proxy.GetEnableEpochsConfig(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	headerVerifier, err := headerVerify.NewHeaderSignatureVerifier(ratingsConfig, networkConfig, enableEpochsConfig)
 	if err != nil {
 		return nil, err
 	}

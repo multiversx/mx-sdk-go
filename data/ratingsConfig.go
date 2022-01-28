@@ -1,7 +1,5 @@
 package data
 
-import "strconv"
-
 // RatingsConfigResponse holds the ratings config endpoint response
 type RatingsConfigResponse struct {
 	Data struct {
@@ -96,22 +94,4 @@ func (rc *RatingsConfig) GetShardchainProposerValidatorImportance() float32 {
 
 func (rc *RatingsConfig) GetShardchainValidatorDecreaseFactor() float32 {
 	return strToFloat32(rc.ShardchainValidatorDecreaseFactor)
-}
-
-func strToFloat32(s string) float32 {
-	value, err := strconv.ParseFloat(s, 32)
-	if err != nil {
-		panic("failed to convert string to float32")
-	}
-
-	return float32(value)
-}
-
-func strToFloat64(s string) float64 {
-	value, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		panic("failed to convert string to float64")
-	}
-
-	return float64(value)
 }
