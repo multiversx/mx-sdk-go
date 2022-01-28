@@ -24,9 +24,16 @@ type NodesCoordinatorLiteWithRater struct {
 }
 
 func NewNodesCoordinatorLiteWithRater(
-	nodesCoordinatorLite *nodesCoordinator.IndexHashedNodesCoordinatorLite,
+	hasher hashing.Hasher,
 	rater sharding.ChanceComputer,
+	networkConfig *data.NetworkConfig,
+	enableEpochsConfig *data.EnableEpochsConfig,
 ) (*NodesCoordinatorLiteWithRater, error) {
+
+	nodesCoordinatorLite, err := createNodesCoordinatorLite(hasher, networkConfig, enableEpochsConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	ndL := &NodesCoordinatorLiteWithRater{
 		IndexHashedNodesCoordinatorLite: nodesCoordinatorLite,
@@ -36,6 +43,47 @@ func NewNodesCoordinatorLiteWithRater(
 	ndL.SetNodesCoordinatorHelper(ndL)
 
 	return ndL, nil
+}
+
+func createNodesCoordinatorLite(
+	hasher hashing.Hasher,
+	networkConfig *data.NetworkConfig,
+	enableEpochsConfig *data.EnableEpochsConfig,
+) (*nodesCoordinator.IndexHashedNodesCoordinatorLite, error) {
+
+	waitingMap := make(map[uint32][]validator)
+	eligibleMap := createDummyNodesMap(networkConfig.MetaConsensusGroup, networkConfig.NumShardsWithoutMeta)
+
+	argsNodesShuffler := createArgsNodesShuffler(enableEpochsConfig, networkConfig)
+	nodeShuffler, err := nodesCoordinator.NewHashValidatorsShuffler(argsNodesShuffler)
+	if err != nil {
+		return nil, err
+	}
+
+	initialEpoch := uint32(0)
+	dummySelfPublicKey := []byte("dummy")
+	arguments := nodesCoordinator.ArgNodesCoordinatorLite{
+		Epoch:                      initialEpoch,
+		ShardConsensusGroupSize:    int(networkConfig.ShardConsensusGroupSize),
+		MetaConsensusGroupSize:     int(networkConfig.MetaConsensusGroup),
+		Hasher:                     hasher,
+		NbShards:                   networkConfig.NumShardsWithoutMeta,
+		EligibleNodes:              eligibleMap,
+		WaitingNodes:               waitingMap,
+		SelfPublicKey:              dummySelfPublicKey,
+		ConsensusGroupCache:        &mock.NodesCoordinatorCacheMock{},
+		WaitingListFixEnabledEpoch: enableEpochsConfig.WaitingListFixEnableEpoch,
+		ChanStopNode:               make(chan endProcess.ArgEndProcess),
+		NodeTypeProvider:           &nodeTypeProviderMock.NodeTypeProviderStub{},
+		Shuffler:                   nodeShuffler,
+	}
+
+	nd, err := nodesCoordinator.NewIndexHashedNodesCoordinatorLite(arguments)
+	if err != nil {
+		return nil, err
+	}
+
+	return nd, nil
 }
 
 // GetChance returns the chance from an actual rating
@@ -125,47 +173,4 @@ func createArgsNodesShuffler(
 	}
 
 	return argsNodesShuffler
-}
-
-func CreateNodesCoordinatorLite(
-	hasher hashing.Hasher,
-	rater sharding.ChanceComputer,
-	networkConfig *data.NetworkConfig,
-	enableEpochsConfig *data.EnableEpochsConfig,
-) (*NodesCoordinatorLiteWithRater, error) {
-
-	waitingMap := make(map[uint32][]validator)
-	eligibleMap := createDummyNodesMap(networkConfig.MetaConsensusGroup, networkConfig.NumShardsWithoutMeta)
-
-	argsNodesShuffler := createArgsNodesShuffler(enableEpochsConfig, networkConfig)
-	nodeShuffler, err := nodesCoordinator.NewHashValidatorsShuffler(argsNodesShuffler)
-	initialEpoch := uint32(0)
-
-	arguments := nodesCoordinator.ArgNodesCoordinatorLite{
-		Epoch:                      initialEpoch,
-		ShardConsensusGroupSize:    int(networkConfig.ShardConsensusGroupSize),
-		MetaConsensusGroupSize:     int(networkConfig.MetaConsensusGroup),
-		Hasher:                     hasher,
-		NbShards:                   networkConfig.NumShardsWithoutMeta,
-		EligibleNodes:              eligibleMap,
-		WaitingNodes:               waitingMap,
-		SelfPublicKey:              []byte("dummy"),
-		ConsensusGroupCache:        &mock.NodesCoordinatorCacheMock{},
-		WaitingListFixEnabledEpoch: enableEpochsConfig.WaitingListFixEnableEpoch,
-		ChanStopNode:               make(chan endProcess.ArgEndProcess),
-		NodeTypeProvider:           &nodeTypeProviderMock.NodeTypeProviderStub{},
-		Shuffler:                   nodeShuffler,
-	}
-
-	nd, err := nodesCoordinator.NewIndexHashedNodesCoordinatorLite(arguments)
-	if err != nil {
-		return nil, err
-	}
-
-	ndWithRater, err := NewNodesCoordinatorLiteWithRater(nd, rater)
-	if err != nil {
-		return nil, err
-	}
-
-	return ndWithRater, nil
 }

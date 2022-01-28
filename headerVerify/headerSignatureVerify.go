@@ -13,18 +13,25 @@ import (
 
 var log = logger.GetOrCreate("elrond-sdk-erdgo/headerVerify")
 
-type HeaderSignatureVerifier struct {
-	headerVerifier *headerCheck.HeaderSigVerifier
-	ndLite         *NodesCoordinatorLiteWithRater
-	marshaller     marshal.Marshalizer
+type ArgHeaderVerifier struct {
+	RatingsConfig      *data.RatingsConfig
+	NetworkConfig      *data.NetworkConfig
+	EnableEpochsConfig *data.EnableEpochsConfig
 }
 
-func NewHeaderSignatureVerifier(
-	ratingsConfig *data.RatingsConfig,
-	networkConfig *data.NetworkConfig,
-	enableEpochsConfig *data.EnableEpochsConfig,
-) (*HeaderSignatureVerifier, error) {
-	coreComp, err := factory.CreateCoreComponents(ratingsConfig, networkConfig)
+type headerVerifier struct {
+	headerSigVerifier *headerCheck.HeaderSigVerifier
+	ndLite            *NodesCoordinatorLiteWithRater
+	marshaller        marshal.Marshalizer
+}
+
+func NewHeaderVerifier(args ArgHeaderVerifier) (*headerVerifier, error) {
+	err := checkArguments(args)
+	if err != nil {
+		return nil, err
+	}
+
+	coreComp, err := factory.CreateCoreComponents(args.RatingsConfig, args.NetworkConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -34,17 +41,17 @@ func NewHeaderSignatureVerifier(
 		return nil, err
 	}
 
-	ndLite, err := CreateNodesCoordinatorLite(
+	ndLite, err := NewNodesCoordinatorLiteWithRater(
 		coreComp.Hasher,
 		coreComp.Rater,
-		networkConfig,
-		enableEpochsConfig,
+		args.NetworkConfig,
+		args.EnableEpochsConfig,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	args := &headerCheck.ArgsHeaderSigVerifier{
+	headerSigArgs := &headerCheck.ArgsHeaderSigVerifier{
 		Marshalizer:             coreComp.Marshalizer,
 		Hasher:                  coreComp.Hasher,
 		NodesCoordinator:        ndLite,
@@ -54,26 +61,40 @@ func NewHeaderSignatureVerifier(
 		FallbackHeaderValidator: &testscommon.FallBackHeaderValidatorStub{},
 	}
 
-	headerVerifier, err := headerCheck.NewHeaderSigVerifier(args)
+	headerSigVerifier, err := headerCheck.NewHeaderSigVerifier(headerSigArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	hsv := &HeaderSignatureVerifier{
-		headerVerifier: headerVerifier,
-		ndLite:         ndLite,
-		marshaller:     coreComp.Marshalizer,
+	hsv := &headerVerifier{
+		headerSigVerifier: headerSigVerifier,
+		ndLite:            ndLite,
+		marshaller:        coreComp.Marshalizer,
 	}
 
 	return hsv, nil
 }
 
-func (hsv *HeaderSignatureVerifier) IsInCache(epoch uint32) bool {
+func checkArguments(args ArgHeaderVerifier) error {
+	if args.NetworkConfig == nil {
+		return ErrNilNetworkConfig
+	}
+	if args.RatingsConfig == nil {
+		return ErrNilRatingsConfig
+	}
+	if args.EnableEpochsConfig == nil {
+		return ErrNilEnableEpochsConfig
+	}
+
+	return nil
+}
+
+func (hsv *headerVerifier) IsInCache(epoch uint32) bool {
 	status := hsv.ndLite.IsEpochInConfig(epoch)
 	return status
 }
 
-func (hsv *HeaderSignatureVerifier) SetNodesConfigPerEpoch(
+func (hsv *headerVerifier) SetNodesConfigPerEpoch(
 	validatorsInfo []*state.ShardValidatorInfo,
 	epoch uint32,
 	randomness []byte,
@@ -82,8 +103,8 @@ func (hsv *HeaderSignatureVerifier) SetNodesConfigPerEpoch(
 	return err
 }
 
-func (hsv *HeaderSignatureVerifier) VerifyHeader(header coreData.HeaderHandler) bool {
-	err := hsv.headerVerifier.VerifySignature(header)
+func (hsv *headerVerifier) VerifyHeader(header coreData.HeaderHandler) bool {
+	err := hsv.headerSigVerifier.VerifySignature(header)
 	if err != nil {
 		log.Error(err.Error())
 		return false
@@ -92,6 +113,6 @@ func (hsv *HeaderSignatureVerifier) VerifyHeader(header coreData.HeaderHandler) 
 	return true
 }
 
-func (hsv *HeaderSignatureVerifier) Marshaller() marshal.Marshalizer {
+func (hsv *headerVerifier) Marshaller() marshal.Marshalizer {
 	return hsv.marshaller
 }
