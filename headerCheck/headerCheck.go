@@ -5,6 +5,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
+	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
 	"github.com/ElrondNetwork/elrond-go/state"
 	"github.com/ElrondNetwork/elrond-go/testscommon"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -21,7 +22,7 @@ type ArgHeaderVerifier struct {
 
 type headerVerifier struct {
 	headerSigVerifier *headerCheck.HeaderSigVerifier
-	ndLite            *NodesCoordinatorLiteWithRater
+	ndLite            nodesCoordinator.EpochsConfigUpdateHandler
 	marshaller        marshal.Marshalizer
 }
 
@@ -41,7 +42,7 @@ func NewHeaderVerifier(args ArgHeaderVerifier) (*headerVerifier, error) {
 		return nil, err
 	}
 
-	ndLite, err := NewNodesCoordinatorLiteWithRater(
+	ndLite, err := CreateNodesCoordinatorLite(
 		coreComp.Hasher,
 		coreComp.Rater,
 		args.NetworkConfig,

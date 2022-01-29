@@ -7,7 +7,7 @@ import (
 	marshalizerFactory "github.com/ElrondNetwork/elrond-go-core/marshal/factory"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/process/rating"
-	"github.com/ElrondNetwork/elrond-go/sharding"
+	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
@@ -17,7 +17,7 @@ const hasherType = "blake2b"
 type coreComponents struct {
 	Marshalizer marshal.Marshalizer
 	Hasher      hashing.Hasher
-	Rater       sharding.ChanceComputer
+	Rater       nodesCoordinator.ChanceComputer
 }
 
 func CreateCoreComponents(
@@ -46,7 +46,7 @@ func CreateCoreComponents(
 	}, nil
 }
 
-func createRater(rc *data.RatingsConfig, nc *data.NetworkConfig) (sharding.ChanceComputer, error) {
+func createRater(rc *data.RatingsConfig, nc *data.NetworkConfig) (nodesCoordinator.ChanceComputer, error) {
 	ratingsConfig := createRatingsConfig(rc)
 
 	ratingDataArgs := rating.RatingsDataArg{

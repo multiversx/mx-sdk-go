@@ -8,48 +8,20 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/sha256"
 	"github.com/ElrondNetwork/elrond-go/config"
-	"github.com/ElrondNetwork/elrond-go/sharding"
 	"github.com/ElrondNetwork/elrond-go/sharding/mock"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
-	"github.com/ElrondNetwork/elrond-go/state"
 	"github.com/ElrondNetwork/elrond-go/testscommon/nodeTypeProviderMock"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
 type validator = nodesCoordinator.Validator
 
-type NodesCoordinatorLiteWithRater struct {
-	*nodesCoordinator.IndexHashedNodesCoordinatorLite
-	chanceComputer sharding.ChanceComputer
-}
-
-func NewNodesCoordinatorLiteWithRater(
+func CreateNodesCoordinatorLite(
 	hasher hashing.Hasher,
-	rater sharding.ChanceComputer,
+	rater nodesCoordinator.ChanceComputer,
 	networkConfig *data.NetworkConfig,
 	enableEpochsConfig *data.EnableEpochsConfig,
-) (*NodesCoordinatorLiteWithRater, error) {
-
-	nodesCoordinatorLite, err := createNodesCoordinatorLite(hasher, networkConfig, enableEpochsConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	ndL := &NodesCoordinatorLiteWithRater{
-		IndexHashedNodesCoordinatorLite: nodesCoordinatorLite,
-		chanceComputer:                  rater,
-	}
-
-	ndL.SetNodesCoordinatorHelper(ndL)
-
-	return ndL, nil
-}
-
-func createNodesCoordinatorLite(
-	hasher hashing.Hasher,
-	networkConfig *data.NetworkConfig,
-	enableEpochsConfig *data.EnableEpochsConfig,
-) (*nodesCoordinator.IndexHashedNodesCoordinatorLite, error) {
+) (nodesCoordinator.EpochsConfigUpdateHandler, error) {
 
 	waitingMap := make(map[uint32][]validator)
 	eligibleMap := createDummyNodesMap(networkConfig.MetaConsensusGroup, networkConfig.NumShardsWithoutMeta)
@@ -62,10 +34,13 @@ func createNodesCoordinatorLite(
 
 	initialEpoch := uint32(0)
 	dummySelfPublicKey := []byte("dummy")
-	arguments := nodesCoordinator.ArgNodesCoordinatorLite{
+	arguments := nodesCoordinator.ArgNodesCoordinator{
 		Epoch:                      initialEpoch,
 		ShardConsensusGroupSize:    int(networkConfig.ShardConsensusGroupSize),
 		MetaConsensusGroupSize:     int(networkConfig.MetaConsensusGroup),
+		Marshalizer:                &mock.MarshalizerMock{},
+		EpochStartNotifier:         &mock.EpochStartNotifierStub{},
+		BootStorer:                 mock.NewStorerMock(),
 		Hasher:                     hasher,
 		NbShards:                   networkConfig.NumShardsWithoutMeta,
 		EligibleNodes:              eligibleMap,
@@ -76,44 +51,20 @@ func createNodesCoordinatorLite(
 		ChanStopNode:               make(chan endProcess.ArgEndProcess),
 		NodeTypeProvider:           &nodeTypeProviderMock.NodeTypeProviderStub{},
 		Shuffler:                   nodeShuffler,
+		ShuffledOutHandler:         &mock.ShuffledOutHandlerStub{},
 	}
 
-	nd, err := nodesCoordinator.NewIndexHashedNodesCoordinatorLite(arguments)
+	baseNodesCoordinator, err := nodesCoordinator.NewIndexHashedNodesCoordinator(arguments)
+	if err != nil {
+		return nil, err
+	}
+
+	nd, err := nodesCoordinator.NewIndexHashedNodesCoordinatorWithRater(baseNodesCoordinator, rater)
 	if err != nil {
 		return nil, err
 	}
 
 	return nd, nil
-}
-
-// GetChance returns the chance from an actual rating
-func (ndwr *NodesCoordinatorLiteWithRater) GetChance(rating uint32) uint32 {
-	return ndwr.chanceComputer.GetChance(rating)
-}
-
-// ValidatorsWeights returns the weights/chances for each given validator
-func (ndwr *NodesCoordinatorLiteWithRater) ValidatorsWeights(validators []validator) ([]uint32, error) {
-	minChance := ndwr.GetChance(0)
-	weights := make([]uint32, len(validators))
-
-	for i, validatorInShard := range validators {
-		weights[i] = validatorInShard.Chances()
-		if weights[i] < minChance {
-			//default weight if all validators need to be selected
-			weights[i] = minChance
-		}
-	}
-
-	return weights, nil
-}
-
-func (ndwr *NodesCoordinatorLiteWithRater) SetNodesConfigPerEpoch(
-	validatorsInfo []*state.ShardValidatorInfo,
-	epoch uint32,
-	randomness []byte,
-) error {
-	err := ndwr.SetNodesConfigFromValidatorsInfo(epoch, randomness, validatorsInfo)
-	return err
 }
 
 func createDummyNodesList(nbNodes uint32, suffix string) []validator {
@@ -122,7 +73,7 @@ func createDummyNodesList(nbNodes uint32, suffix string) []validator {
 
 	for j := uint32(0); j < nbNodes; j++ {
 		pk := hasher.Compute(fmt.Sprintf("pkeligible_%d", j))
-		list = append(list, mock.NewValidatorMock(pk, 1, nodesCoordinator.DefaultSelectionChances))
+		list = append(list, mock.NewValidatorMock(pk, 1, 1))
 	}
 
 	return list
