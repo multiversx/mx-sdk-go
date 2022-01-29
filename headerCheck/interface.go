@@ -1,0 +1,35 @@
+package headerCheck
+
+import (
+	"context"
+
+	"github.com/ElrondNetwork/elrond-go-core/data/block"
+	"github.com/ElrondNetwork/elrond-go/state"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+)
+
+// Proxy holds the behaviour needed for header verifier in order to interact with proxy
+type Proxy interface {
+	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
+	GetRatingsConfig(ctx context.Context) (*data.RatingsConfig, error)
+	GetEnableEpochsConfig(ctx context.Context) (*data.EnableEpochsConfig, error)
+	GetNonceAtEpochStart(ctx context.Context, shardId uint32) (uint64, error)
+	GetCurrentEpoch(ctx context.Context, shardId uint32) (uint64, error)
+	GetRawMiniBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
+	GetRawBlockByNonce(ctx context.Context, shardId uint32, nonce uint64) ([]byte, error)
+	GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
+	IsInterfaceNil() bool
+}
+
+// RawHeaderHandler holds the behaviour needed to handler raw header data from proxy
+type RawHeaderHandler interface {
+	GetMetaBlockByHash(ctx context.Context, hash string) (*block.MetaBlock, error)
+	GetShardBlockByHash(ctx context.Context, shardId uint32, hash string) (*block.Header, error)
+	GetValidatorsInfoPerEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, []byte, error)
+	IsInterfaceNil() bool
+}
+
+// HeaderVerifier defines the functions needed for verifying headers
+type HeaderVerifier interface {
+	VerifyHeaderByHash(ctx context.Context, shardId uint32, hash string) (bool, error)
+}

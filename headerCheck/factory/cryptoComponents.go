@@ -11,9 +11,9 @@ import (
 )
 
 type cryptoComponents struct {
-	KeyGen            crypto.KeyGenerator
-	MultiSigVerifier  crypto.MultiSigner
-	SingleSigVerifier crypto.SingleSigner
+	KeyGen    crypto.KeyGenerator
+	MultiSig  crypto.MultiSigner
+	SingleSig crypto.SingleSigner
 }
 
 func CreateCryptoComponents() (*cryptoComponents, error) {
@@ -46,8 +46,8 @@ func CreateCryptoComponents() (*cryptoComponents, error) {
 	}
 
 	return &cryptoComponents{
-		KeyGen:            blockSignKeyGen,
-		SingleSigVerifier: interceptSingleSigner,
-		MultiSigVerifier:  multiSigner,
+		KeyGen:    blockSignKeyGen,
+		SingleSig: interceptSingleSigner,
+		MultiSig:  multiSigner,
 	}, nil
 }

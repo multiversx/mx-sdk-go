@@ -1,119 +1,110 @@
 package headerCheck
 
 import (
+	"context"
+
+	"github.com/ElrondNetwork/elrond-go-core/core"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	coreData "github.com/ElrondNetwork/elrond-go-core/data"
-	"github.com/ElrondNetwork/elrond-go-core/marshal"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
-	"github.com/ElrondNetwork/elrond-go/state"
-	"github.com/ElrondNetwork/elrond-go/testscommon"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/factory"
+	"github.com/prometheus/common/log"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/headerCheck")
-
-type ArgHeaderVerifier struct {
-	RatingsConfig      *data.RatingsConfig
-	NetworkConfig      *data.NetworkConfig
-	EnableEpochsConfig *data.EnableEpochsConfig
+type ArgsHeaderVerifier struct {
+	HeaderFetcher     RawHeaderHandler
+	HeaderSigVerifier *headerCheck.HeaderSigVerifier
+	NodesCoordinator  nodesCoordinator.EpochsConfigUpdateHandler
 }
 
 type headerVerifier struct {
+	headerFetcher     RawHeaderHandler
 	headerSigVerifier *headerCheck.HeaderSigVerifier
-	ndLite            nodesCoordinator.EpochsConfigUpdateHandler
-	marshaller        marshal.Marshalizer
+	nodesCoordinator  nodesCoordinator.EpochsConfigUpdateHandler
 }
 
-func NewHeaderVerifier(args ArgHeaderVerifier) (*headerVerifier, error) {
+func NewHeaderVerifier(args ArgsHeaderVerifier) (HeaderVerifier, error) {
 	err := checkArguments(args)
 	if err != nil {
 		return nil, err
 	}
 
-	coreComp, err := factory.CreateCoreComponents(args.RatingsConfig, args.NetworkConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	cryptoComp, err := factory.CreateCryptoComponents()
-	if err != nil {
-		return nil, err
-	}
-
-	ndLite, err := CreateNodesCoordinatorLite(
-		coreComp.Hasher,
-		coreComp.Rater,
-		args.NetworkConfig,
-		args.EnableEpochsConfig,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	headerSigArgs := &headerCheck.ArgsHeaderSigVerifier{
-		Marshalizer:             coreComp.Marshalizer,
-		Hasher:                  coreComp.Hasher,
-		NodesCoordinator:        ndLite,
-		MultiSigVerifier:        cryptoComp.MultiSigVerifier,
-		SingleSigVerifier:       cryptoComp.SingleSigVerifier,
-		KeyGen:                  cryptoComp.KeyGen,
-		FallbackHeaderValidator: &testscommon.FallBackHeaderValidatorStub{},
-	}
-
-	headerSigVerifier, err := headerCheck.NewHeaderSigVerifier(headerSigArgs)
-	if err != nil {
-		return nil, err
-	}
-
-	hsv := &headerVerifier{
-		headerSigVerifier: headerSigVerifier,
-		ndLite:            ndLite,
-		marshaller:        coreComp.Marshalizer,
-	}
-
-	return hsv, nil
+	return &headerVerifier{
+		headerFetcher:     args.HeaderFetcher,
+		headerSigVerifier: args.HeaderSigVerifier,
+		nodesCoordinator:  args.NodesCoordinator,
+	}, nil
 }
 
-func checkArguments(args ArgHeaderVerifier) error {
-	if args.NetworkConfig == nil {
-		return ErrNilNetworkConfig
+func checkArguments(arguments ArgsHeaderVerifier) error {
+	if check.IfNil(arguments.HeaderFetcher) {
+		return ErrNilHeaderFetcher
 	}
-	if args.RatingsConfig == nil {
-		return ErrNilRatingsConfig
+	if check.IfNil(arguments.NodesCoordinator) {
+		return ErrNilNodesCoordinator
 	}
-	if args.EnableEpochsConfig == nil {
-		return ErrNilEnableEpochsConfig
+	if check.IfNil(arguments.HeaderSigVerifier) {
+		return ErrNilHeaderSigVerifier
 	}
 
 	return nil
 }
 
-func (hsv *headerVerifier) IsInCache(epoch uint32) bool {
-	status := hsv.ndLite.IsEpochInConfig(epoch)
-	return status
-}
-
-func (hsv *headerVerifier) SetNodesConfigPerEpoch(
-	validatorsInfo []*state.ShardValidatorInfo,
-	epoch uint32,
-	randomness []byte,
-) error {
-	err := hsv.ndLite.SetNodesConfigFromValidatorsInfo(epoch, randomness, validatorsInfo)
-	return err
-}
-
-func (hsv *headerVerifier) VerifyHeader(header coreData.HeaderHandler) bool {
-	err := hsv.headerSigVerifier.VerifySignature(header)
+func (hch *headerVerifier) VerifyHeaderByHash(ctx context.Context, shardId uint32, hash string) (bool, error) {
+	header, err := hch.fetchHeaderByHashAndShard(ctx, shardId, hash)
 	if err != nil {
-		log.Error(err.Error())
-		return false
+		return false, err
 	}
 
-	return true
+	headerEpoch := header.GetEpoch()
+	log.Debug("fetched header in", "epoch", headerEpoch)
+
+	if !hch.nodesCoordinator.IsEpochInConfig(headerEpoch) {
+		err := hch.updateNodesConfigPerEpoch(ctx, headerEpoch)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	err = hch.headerSigVerifier.VerifySignature(header)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
-func (hsv *headerVerifier) Marshaller() marshal.Marshalizer {
-	return hsv.marshaller
+func (hch *headerVerifier) fetchHeaderByHashAndShard(ctx context.Context, shardId uint32, hash string) (coreData.HeaderHandler, error) {
+	var err error
+	var header coreData.HeaderHandler
+
+	if shardId == core.MetachainShardId {
+		header, err = hch.headerFetcher.GetMetaBlockByHash(ctx, hash)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		header, err = hch.headerFetcher.GetShardBlockByHash(ctx, shardId, hash)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return header, nil
+}
+
+func (hch *headerVerifier) updateNodesConfigPerEpoch(ctx context.Context, epoch uint32) error {
+	log.Debug("epoch", epoch, "not in cache")
+
+	validatorInfo, randomness, err := hch.headerFetcher.GetValidatorsInfoPerEpoch(ctx, epoch)
+	if err != nil {
+		return err
+	}
+
+	err = hch.nodesCoordinator.SetNodesConfigFromValidatorsInfo(epoch, randomness, validatorInfo)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

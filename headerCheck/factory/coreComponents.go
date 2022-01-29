@@ -15,9 +15,9 @@ const marshalizerType = "gogo protobuf"
 const hasherType = "blake2b"
 
 type coreComponents struct {
-	Marshalizer marshal.Marshalizer
-	Hasher      hashing.Hasher
-	Rater       nodesCoordinator.ChanceComputer
+	Marshaller marshal.Marshalizer
+	Hasher     hashing.Hasher
+	Rater      nodesCoordinator.ChanceComputer
 }
 
 func CreateCoreComponents(
@@ -40,9 +40,9 @@ func CreateCoreComponents(
 	}
 
 	return &coreComponents{
-		Marshalizer: marshalizer,
-		Hasher:      hasher,
-		Rater:       rater,
+		Marshaller: marshalizer,
+		Hasher:     hasher,
+		Rater:      rater,
 	}, nil
 }
 

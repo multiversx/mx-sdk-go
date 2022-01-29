@@ -67,8 +67,11 @@ func CreateNodesCoordinator(
 	return nd, nil
 }
 
+// TODO: better solution for dummy nodes map generation
 func createDummyNodesList(nbNodes uint32, suffix string) []validator {
 	list := make([]validator, 0)
+
+	// TODO: use existing hasher
 	hasher := sha256.NewSha256()
 
 	for j := uint32(0); j < nbNodes; j++ {
