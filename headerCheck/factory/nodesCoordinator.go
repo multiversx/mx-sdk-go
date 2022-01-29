@@ -1,4 +1,4 @@
-package headerCheck
+package factory
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ import (
 
 type validator = nodesCoordinator.Validator
 
-func CreateNodesCoordinatorLite(
+func CreateNodesCoordinator(
 	hasher hashing.Hasher,
 	rater nodesCoordinator.ChanceComputer,
 	networkConfig *data.NetworkConfig,
@@ -90,7 +90,6 @@ func createDummyNodesMap(nodesPerShard uint32, nbShards uint32) map[uint32][]val
 			shard = core.MetachainShardId
 		}
 		list := createDummyNodesList(nodesPerShard, "_i")
-		//list := make([]validator, nodesPerShard)
 		nodesMap[shard] = list
 	}
 
