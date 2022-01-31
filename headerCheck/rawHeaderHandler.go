@@ -21,6 +21,9 @@ func NewRawHeaderHandler(proxy Proxy, marshaller marshal.Marshalizer) (RawHeader
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
 	}
+	if check.IfNil(marshaller) {
+		return nil, ErrNilMarshaller
+	}
 
 	return &rawHeaderHandler{
 		proxy:      proxy,

@@ -14,7 +14,6 @@ type Proxy interface {
 	GetRatingsConfig(ctx context.Context) (*data.RatingsConfig, error)
 	GetEnableEpochsConfig(ctx context.Context) (*data.EnableEpochsConfig, error)
 	GetNonceAtEpochStart(ctx context.Context, shardId uint32) (uint64, error)
-	GetCurrentEpoch(ctx context.Context, shardId uint32) (uint64, error)
 	GetRawMiniBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
 	GetRawBlockByNonce(ctx context.Context, shardId uint32, nonce uint64) ([]byte, error)
 	GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)

@@ -12,13 +12,13 @@ import (
 )
 
 type ArgsHeaderVerifier struct {
-	HeaderFetcher     RawHeaderHandler
+	HeaderHandler     RawHeaderHandler
 	HeaderSigVerifier *headerCheck.HeaderSigVerifier
 	NodesCoordinator  nodesCoordinator.EpochsConfigUpdateHandler
 }
 
 type headerVerifier struct {
-	headerFetcher     RawHeaderHandler
+	rawHeaderHandler  RawHeaderHandler
 	headerSigVerifier *headerCheck.HeaderSigVerifier
 	nodesCoordinator  nodesCoordinator.EpochsConfigUpdateHandler
 }
@@ -30,15 +30,15 @@ func NewHeaderVerifier(args ArgsHeaderVerifier) (HeaderVerifier, error) {
 	}
 
 	return &headerVerifier{
-		headerFetcher:     args.HeaderFetcher,
+		rawHeaderHandler:  args.HeaderHandler,
 		headerSigVerifier: args.HeaderSigVerifier,
 		nodesCoordinator:  args.NodesCoordinator,
 	}, nil
 }
 
 func checkArguments(arguments ArgsHeaderVerifier) error {
-	if check.IfNil(arguments.HeaderFetcher) {
-		return ErrNilHeaderFetcher
+	if check.IfNil(arguments.HeaderHandler) {
+		return ErrNilRawHeaderHandler
 	}
 	if check.IfNil(arguments.NodesCoordinator) {
 		return ErrNilNodesCoordinator
@@ -79,12 +79,12 @@ func (hch *headerVerifier) fetchHeaderByHashAndShard(ctx context.Context, shardI
 	var header coreData.HeaderHandler
 
 	if shardId == core.MetachainShardId {
-		header, err = hch.headerFetcher.GetMetaBlockByHash(ctx, hash)
+		header, err = hch.rawHeaderHandler.GetMetaBlockByHash(ctx, hash)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		header, err = hch.headerFetcher.GetShardBlockByHash(ctx, shardId, hash)
+		header, err = hch.rawHeaderHandler.GetShardBlockByHash(ctx, shardId, hash)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +96,7 @@ func (hch *headerVerifier) fetchHeaderByHashAndShard(ctx context.Context, shardI
 func (hch *headerVerifier) updateNodesConfigPerEpoch(ctx context.Context, epoch uint32) error {
 	log.Debug("epoch", epoch, "not in cache")
 
-	validatorInfo, randomness, err := hch.headerFetcher.GetValidatorsInfoPerEpoch(ctx, epoch)
+	validatorInfo, randomness, err := hch.rawHeaderHandler.GetValidatorsInfoPerEpoch(ctx, epoch)
 	if err != nil {
 		return err
 	}

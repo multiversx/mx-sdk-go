@@ -69,7 +69,7 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 	}
 
 	headerVerifierArgs := ArgsHeaderVerifier{
-		HeaderFetcher:     rawHeaderHandler,
+		HeaderHandler:     rawHeaderHandler,
 		HeaderSigVerifier: headerSigVerifier,
 		NodesCoordinator:  nodesCoordinator,
 	}

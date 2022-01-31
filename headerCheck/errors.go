@@ -20,8 +20,8 @@ var ErrNilNodesCoordinator = errors.New("nil nodes coordinator")
 // ErrNilHeaderSigVerifier signals that a nil header sig verifier was provided
 var ErrNilHeaderSigVerifier = errors.New("nil header signature verifier")
 
-// ErrNilHeaderFetcher signals that a nil header fetcher was provided
-var ErrNilHeaderFetcher = errors.New("nil header fetcher")
+// ErrNilRawHeaderHandler signals that a nil raw header handler was provided
+var ErrNilRawHeaderHandler = errors.New("nil raw header handler")
 
 // ErrNilMarshaller signals that a nil marshaller was provided
 var ErrNilMarshaller = errors.New("nil marshaller")
