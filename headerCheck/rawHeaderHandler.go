@@ -152,27 +152,6 @@ func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock *bl
 	return allValidatorInfo, nil
 }
 
-func (rh *rawHeaderHandler) parseMiniBlocks(miniblocks []*block.MiniBlock) ([]*state.ShardValidatorInfo, error) {
-	allValidatorInfo := make([]*state.ShardValidatorInfo, 0)
-	for _, peerMiniBlock := range miniblocks {
-		if peerMiniBlock.Type != block.PeerBlock {
-			continue
-		}
-
-		for _, txHash := range peerMiniBlock.TxHashes {
-			vid := &state.ShardValidatorInfo{}
-			err := rh.marshaller.Unmarshal(vid, txHash)
-			if err != nil {
-				return nil, err
-			}
-
-			allValidatorInfo = append(allValidatorInfo, vid)
-		}
-	}
-
-	return allValidatorInfo, nil
-}
-
 // IsInterfaceNil returns true if there is no value under the interface
 func (rh *rawHeaderHandler) IsInterfaceNil() bool {
 	return rh == nil
