@@ -5,7 +5,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
-	"github.com/ElrondNetwork/elrond-go/testscommon"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/factory"
 )
 
@@ -41,6 +41,7 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 
 	nodesCoordinator, err := factory.CreateNodesCoordinator(
 		coreComp.Hasher,
+		coreComp.Marshaller,
 		coreComp.Rater,
 		networkConfig,
 		enableEpochsConfig,
@@ -56,7 +57,7 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		MultiSigVerifier:        cryptoComp.MultiSig,
 		SingleSigVerifier:       cryptoComp.SingleSig,
 		KeyGen:                  cryptoComp.KeyGen,
-		FallbackHeaderValidator: &testscommon.FallBackHeaderValidatorStub{},
+		FallbackHeaderValidator: &disabled.FallBackHeaderValidator{},
 	}
 	headerSigVerifier, err := headerCheck.NewHeaderSigVerifier(headerSigArgs)
 	if err != nil {

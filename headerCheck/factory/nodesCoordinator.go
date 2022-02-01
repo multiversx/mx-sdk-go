@@ -7,17 +7,18 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/data/endProcess"
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/sha256"
+	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	"github.com/ElrondNetwork/elrond-go/config"
-	"github.com/ElrondNetwork/elrond-go/sharding/mock"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
-	"github.com/ElrondNetwork/elrond-go/testscommon/nodeTypeProviderMock"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
 )
 
 type validator = nodesCoordinator.Validator
 
 func CreateNodesCoordinator(
 	hasher hashing.Hasher,
+	marshaller marshal.Marshalizer,
 	rater nodesCoordinator.ChanceComputer,
 	networkConfig *data.NetworkConfig,
 	enableEpochsConfig *data.EnableEpochsConfig,
@@ -38,20 +39,20 @@ func CreateNodesCoordinator(
 		Epoch:                      initialEpoch,
 		ShardConsensusGroupSize:    int(networkConfig.ShardConsensusGroupSize),
 		MetaConsensusGroupSize:     int(networkConfig.MetaConsensusGroup),
-		Marshalizer:                &mock.MarshalizerMock{},
-		EpochStartNotifier:         &mock.EpochStartNotifierStub{},
-		BootStorer:                 mock.NewStorerMock(),
+		Marshalizer:                marshaller,
+		EpochStartNotifier:         &disabled.EpochStartNotifier{},
+		BootStorer:                 &disabled.Storer{},
 		Hasher:                     hasher,
 		NbShards:                   networkConfig.NumShardsWithoutMeta,
 		EligibleNodes:              eligibleMap,
 		WaitingNodes:               waitingMap,
 		SelfPublicKey:              dummySelfPublicKey,
-		ConsensusGroupCache:        &mock.NodesCoordinatorCacheMock{},
+		ConsensusGroupCache:        &disabled.NodesCoordinatorCache{},
 		WaitingListFixEnabledEpoch: enableEpochsConfig.WaitingListFixEnableEpoch,
 		ChanStopNode:               make(chan endProcess.ArgEndProcess),
-		NodeTypeProvider:           &nodeTypeProviderMock.NodeTypeProviderStub{},
+		NodeTypeProvider:           &disabled.NodeTypeProvider{},
 		Shuffler:                   nodeShuffler,
-		ShuffledOutHandler:         &mock.ShuffledOutHandlerStub{},
+		ShuffledOutHandler:         &disabled.ShuffledOutHandler{},
 	}
 
 	baseNodesCoordinator, err := nodesCoordinator.NewIndexHashedNodesCoordinator(arguments)
@@ -76,7 +77,8 @@ func createDummyNodesList(nbNodes uint32, suffix string) []validator {
 
 	for j := uint32(0); j < nbNodes; j++ {
 		pk := hasher.Compute(fmt.Sprintf("pkeligible_%d", j))
-		list = append(list, mock.NewValidatorMock(pk, 1, 1))
+		val, _ := nodesCoordinator.NewValidator(pk, 1, 1)
+		list = append(list, val)
 	}
 
 	return list
