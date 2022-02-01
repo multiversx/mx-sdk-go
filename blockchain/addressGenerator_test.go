@@ -57,7 +57,8 @@ func TestAddressGenerator_ComputeArwenScAddress(t *testing.T) {
 	coord, err := NewShardCoordinator(3, 0)
 	require.Nil(t, err)
 
-	ag, _ := NewAddressGenerator(coord)
+	ag, err := NewAddressGenerator(coord)
+	require.Nil(t, err)
 	owner, err := data.NewAddressFromBech32String("erd1dglncxk6sl9a3xumj78n6z2xux4ghp5c92cstv5zsn56tjgtdwpsk46qrs")
 	require.Nil(t, err)
 
