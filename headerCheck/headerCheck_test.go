@@ -1,136 +1,174 @@
 package headerCheck_test
 
-// func TestNewHeaderVerifier(t *testing.T) {
-// 	t.Parallel()
+import (
+	"context"
+	"errors"
+	"testing"
 
-// 	t.Run("nil ratings config", func(t *testing.T) {
-// 		t.Parallel()
+	"github.com/ElrondNetwork/elrond-go-core/core"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data"
+	"github.com/ElrondNetwork/elrond-go-core/data/block"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/mock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
-// 		args := createMockArgHeaderVerifier()
-// 		args.RatingsConfig = nil
-// 		hv, err := headerCheck.NewHeaderVerifier(args)
+func createMockArgHeaderVerifier() headerCheck.ArgsHeaderVerifier {
+	return headerCheck.ArgsHeaderVerifier{
+		HeaderHandler:     &mock.RawHeaderHandlerStub{},
+		HeaderSigVerifier: &mock.HeaderSigVerifierStub{},
+		NodesCoordinator:  &mock.NodesCoordinatorStub{},
+	}
+}
 
-// 		assert.True(t, check.IfNil(hv))
-// 		assert.True(t, errors.Is(err, headerCheck.ErrNilRatingsConfig))
-// 	})
-// 	t.Run("nil network config", func(t *testing.T) {
-// 		t.Parallel()
+func TestNewHeaderVerifier(t *testing.T) {
+	t.Parallel()
 
-// 		args := createMockArgHeaderVerifier()
-// 		args.NetworkConfig = nil
-// 		hv, err := headerCheck.NewHeaderVerifier(args)
+	t.Run("nil raw header handler", func(t *testing.T) {
+		t.Parallel()
 
-// 		assert.True(t, check.IfNil(hv))
-// 		assert.True(t, errors.Is(err, headerCheck.ErrNilNetworkConfig))
-// 	})
-// 	t.Run("nil enableEpochs config", func(t *testing.T) {
-// 		t.Parallel()
+		args := createMockArgHeaderVerifier()
+		args.HeaderHandler = nil
+		hv, err := headerCheck.NewHeaderVerifier(args)
 
-// 		args := createMockArgHeaderVerifier()
-// 		args.EnableEpochsConfig = nil
-// 		hv, err := headerCheck.NewHeaderVerifier(args)
+		assert.True(t, check.IfNil(hv))
+		assert.True(t, errors.Is(err, headerCheck.ErrNilRawHeaderHandler))
+	})
+	t.Run("nil header sig verifier", func(t *testing.T) {
+		t.Parallel()
 
-// 		assert.True(t, check.IfNil(hv))
-// 		assert.True(t, errors.Is(err, headerCheck.ErrNilEnableEpochsConfig))
-// 	})
-// 	t.Run("should work", func(t *testing.T) {
-// 		t.Parallel()
+		args := createMockArgHeaderVerifier()
+		args.HeaderSigVerifier = nil
+		hv, err := headerCheck.NewHeaderVerifier(args)
 
-// 		args := createMockArgHeaderVerifier()
-// 		hv, err := headerCheck.NewHeaderVerifier(args)
+		assert.True(t, check.IfNil(hv))
+		assert.True(t, errors.Is(err, headerCheck.ErrNilHeaderSigVerifier))
+	})
+	t.Run("nil nodes coordinator", func(t *testing.T) {
+		t.Parallel()
 
-// 		assert.False(t, check.IfNil(hv))
-// 		assert.Nil(t, err)
-// 	})
-// }
+		args := createMockArgHeaderVerifier()
+		args.NodesCoordinator = nil
+		hv, err := headerCheck.NewHeaderVerifier(args)
 
-// func TestHeaderVerifier_IsInCache(t *testing.T) {
-// 	t.Parallel()
+		assert.True(t, check.IfNil(hv))
+		assert.True(t, errors.Is(err, headerCheck.ErrNilNodesCoordinator))
+	})
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
 
-// 	args := createMockArgHeaderVerifier()
-// 	hv, err := headerCheck.NewHeaderVerifier(args)
-// 	require.Nil(t, err)
+		args := createMockArgHeaderVerifier()
+		hv, err := headerCheck.NewHeaderVerifier(args)
 
-// 	isInCache := hv.IsInCache(uint32(0))
-// 	assert.True(t, isInCache)
+		assert.False(t, check.IfNil(hv))
+		assert.Nil(t, err)
+	})
+}
 
-// 	isInCache = hv.IsInCache(uint32(1))
-// 	assert.False(t, isInCache)
-// }
+func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldFail(t *testing.T) {
+	t.Parallel()
 
-// func TestHeaderVerifier_SetNodesConfigPerEpoch(t *testing.T) {
-// 	t.Parallel()
+	expectedErr := errors.New("signature verifier error")
+	headerSigVerifier := &mock.HeaderSigVerifierStub{
+		VerifySignatureCalled: func(_ data.HeaderHandler) error {
+			return expectedErr
+		},
+	}
+	args := createMockArgHeaderVerifier()
+	args.HeaderSigVerifier = headerSigVerifier
+	hv, err := headerCheck.NewHeaderVerifier(args)
+	require.Nil(t, err)
 
-// 	args := createMockArgHeaderVerifier()
-// 	hv, err := headerCheck.NewHeaderVerifier(args)
-// 	require.Nil(t, err)
-// }
+	status, err := hv.VerifyHeaderByHash(context.Background(), 0, "aaaa")
+	assert.False(t, status)
+	assert.True(t, errors.Is(expectedErr, err))
+}
 
-// func createMockArgHeaderVerifier() headerCheck.ArgHeaderVerifier {
-// 	return headerCheck.ArgHeaderVerifier{
-// 		RatingsConfig: createDummyRatingsConfig(),
-// 		NetworkConfig: createDummyNetworkConfig(),
-// 		EnableEpochsConfig: &data.EnableEpochsConfig{
-// 			BalanceWaitingListsEnableEpoch: 0,
-// 			WaitingListFixEnableEpoch:      0,
-// 			MaxNodesChangeEnableEpoch:      []data.MaxNodesChangeConfig{},
-// 		},
-// 	}
-// }
+func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldWork(t *testing.T) {
+	t.Parallel()
 
-// func createDummyRatingsConfig() *data.RatingsConfig {
-// 	selectionChances := []*data.SelectionChances{
-// 		{
-// 			ChancePercent: 5,
-// 			MaxThreshold:  0,
-// 		},
-// 		{
-// 			ChancePercent: 20,
-// 			MaxThreshold:  10000000,
-// 		},
-// 	}
+	args := createMockArgHeaderVerifier()
+	hv, err := headerCheck.NewHeaderVerifier(args)
+	require.Nil(t, err)
 
-// 	return &data.RatingsConfig{
-// 		GeneralMaxRating:                          10000000,
-// 		GeneralMinRating:                          1,
-// 		GeneralSignedBlocksThreshold:              "0.025",
-// 		GeneralStartRating:                        5000001,
-// 		GeneralSelectionChances:                   selectionChances,
-// 		MetachainConsecutiveMissedBlocksPenalty:   "1.1",
-// 		MetachainHoursToMaxRatingFromStartRating:  2,
-// 		MetachainProposerDecreaseFactor:           "-4",
-// 		MetachainProposerValidatorImportance:      "1.0",
-// 		MetachainValidatorDecreaseFactor:          "-4",
-// 		PeerhonestyBadPeerThreshold:               "1.0",
-// 		PeerhonestyDecayCoefficient:               "1.0",
-// 		PeerhonestyDecayUpdateIntervalInseconds:   0,
-// 		PeerhonestyMaxScore:                       "1.0",
-// 		PeerhonestyMinScore:                       "1.0",
-// 		PeerhonestyUnitValue:                      "1.0",
-// 		ShardchainConsecutiveMissedBlocksPenalty:  "1.1",
-// 		ShardchainHoursToMaxRatingFromStartRating: 2,
-// 		ShardchainProposerDecreaseFactor:          "-4",
-// 		ShardchainProposerValidatorImportance:     "1.0",
-// 		ShardchainValidatorDecreaseFactor:         "-4"}
-// }
+	status, err := hv.VerifyHeaderByHash(context.Background(), 0, "aaaa")
+	assert.Nil(t, err)
+	assert.True(t, status)
+}
 
-// func createDummyNetworkConfig() *data.NetworkConfig {
-// 	return &data.NetworkConfig{
-// 		ChainID:                  "test",
-// 		Denomination:             1,
-// 		GasPerDataByte:           2,
-// 		LatestTagSoftwareVersion: "test",
-// 		MetaConsensusGroup:       3,
-// 		MinGasLimit:              4,
-// 		MinGasPrice:              5,
-// 		MinTransactionVersion:    6,
-// 		NumMetachainNodes:        3,
-// 		NumNodesInShard:          3,
-// 		NumShardsWithoutMeta:     2,
-// 		RoundDuration:            10,
-// 		ShardConsensusGroupSize:  3,
-// 		StartTime:                12,
-// 		Adaptivity:               "true",
-// 		Hysteresys:               "0.1",
-// 	}
-// }
+func TestNewHeaderVerifier_FetchHeaderByHashAndShard_ShouldFail(t *testing.T) {
+	t.Parallel()
+
+	t.Run("fail to get meta block", func(t *testing.T) {
+		t.Parallel()
+
+		expectedErr := errors.New("fail to fetch meta block")
+		rawHeaderHandler := &mock.RawHeaderHandlerStub{
+			GetMetaBlockByHashCalled: func(_ string) (*block.MetaBlock, error) {
+				return nil, expectedErr
+			},
+		}
+		args := createMockArgHeaderVerifier()
+		args.HeaderHandler = rawHeaderHandler
+		hv, _ := headerCheck.NewHeaderVerifier(args)
+
+		header, err := hv.FetchHeaderByHashAndShard(context.Background(), core.MetachainShardId, "aaaa")
+		assert.Nil(t, header)
+		assert.True(t, errors.Is(expectedErr, err))
+	})
+	t.Run("fail to get shard block", func(t *testing.T) {
+		t.Parallel()
+
+		expectedErr := errors.New("fail to fetch shard block")
+		rawHeaderHandler := &mock.RawHeaderHandlerStub{
+			GetShardBlockByHashCalled: func(_ uint32, _ string) (*block.Header, error) {
+				return nil, expectedErr
+			},
+		}
+		args := createMockArgHeaderVerifier()
+		args.HeaderHandler = rawHeaderHandler
+		hv, _ := headerCheck.NewHeaderVerifier(args)
+
+		header, err := hv.FetchHeaderByHashAndShard(context.Background(), 0, "aaaa")
+		assert.Nil(t, header)
+		assert.True(t, errors.Is(expectedErr, err))
+	})
+}
+
+func TestNewHeaderVerifier_FetchHeaderByHashAndShard_ShouldWork(t *testing.T) {
+	t.Parallel()
+
+	expectedMetaBlock := &block.MetaBlock{
+		Nonce: 1,
+		Epoch: 1,
+	}
+
+	expectedShardBlock := &block.Header{
+		Nonce: 2,
+		Epoch: 2,
+	}
+
+	rawHeaderHandler := &mock.RawHeaderHandlerStub{
+		GetMetaBlockByHashCalled: func(_ string) (*block.MetaBlock, error) {
+			return expectedMetaBlock, nil
+		},
+		GetShardBlockByHashCalled: func(_ uint32, _ string) (*block.Header, error) {
+			return expectedShardBlock, nil
+		},
+	}
+	args := createMockArgHeaderVerifier()
+	args.HeaderHandler = rawHeaderHandler
+
+	hv, err := headerCheck.NewHeaderVerifier(args)
+	require.Nil(t, err)
+
+	shardBlock, err := hv.FetchHeaderByHashAndShard(context.Background(), 0, "aaaa")
+	assert.Nil(t, err)
+	assert.Equal(t, expectedShardBlock, shardBlock)
+
+	metaBlock, err := hv.FetchHeaderByHashAndShard(context.Background(), core.MetachainShardId, "aaaa")
+	assert.Nil(t, err)
+	assert.Equal(t, expectedMetaBlock, metaBlock)
+}

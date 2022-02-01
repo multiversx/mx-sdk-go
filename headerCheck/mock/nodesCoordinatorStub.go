@@ -7,12 +7,14 @@ import (
 
 // NodesCoordinatorStub -
 type NodesCoordinatorStub struct {
-	ComputeValidatorsGroupCalled        func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]nodesCoordinator.Validator, error)
-	GetValidatorsPublicKeysCalled       func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]string, error)
-	GetValidatorsRewardsAddressesCalled func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]string, error)
-	GetValidatorWithPublicKeyCalled     func(publicKey []byte) (validator nodesCoordinator.Validator, shardId uint32, err error)
-	GetAllValidatorsPublicKeysCalled    func() (map[uint32][][]byte, error)
-	ConsensusGroupSizeCalled            func(shardID uint32) int
+	ComputeValidatorsGroupCalled           func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]nodesCoordinator.Validator, error)
+	GetValidatorsPublicKeysCalled          func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]string, error)
+	GetValidatorsRewardsAddressesCalled    func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]string, error)
+	GetValidatorWithPublicKeyCalled        func(publicKey []byte) (validator nodesCoordinator.Validator, shardId uint32, err error)
+	GetAllValidatorsPublicKeysCalled       func() (map[uint32][][]byte, error)
+	ConsensusGroupSizeCalled               func(shardID uint32) int
+	SetNodesConfigFromValidatorsInfoCalled func(epoch uint32, randomness []byte, validatorsInfo []*state.ShardValidatorInfo) error
+	IsEpochInConfigCalled                  func(epoch uint32) bool
 }
 
 // GetChance -
@@ -157,6 +159,22 @@ func (ncm *NodesCoordinatorStub) GetValidatorWithPublicKey(publicKey []byte) (no
 // GetOwnPublicKey -
 func (ncm *NodesCoordinatorStub) GetOwnPublicKey() []byte {
 	return []byte("key")
+}
+
+// SetNodesConfigFromValidatorsInfo -
+func (ncm *NodesCoordinatorStub) SetNodesConfigFromValidatorsInfo(epoch uint32, randomness []byte, validatorsInfo []*state.ShardValidatorInfo) error {
+	if ncm.SetNodesConfigFromValidatorsInfoCalled != nil {
+		return ncm.SetNodesConfigFromValidatorsInfoCalled(epoch, randomness, validatorsInfo)
+	}
+	return nil
+}
+
+// IsEpochInConfig -
+func (ncm *NodesCoordinatorStub) IsEpochInConfig(epoch uint32) bool {
+	if ncm.IsEpochInConfigCalled != nil {
+		return ncm.IsEpochInConfigCalled(epoch)
+	}
+	return false
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

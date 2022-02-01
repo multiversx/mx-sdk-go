@@ -3,6 +3,7 @@ package headerCheck
 import (
 	"context"
 
+	coreData "github.com/ElrondNetwork/elrond-go-core/data"
 	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go/state"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -31,4 +32,11 @@ type RawHeaderHandler interface {
 // HeaderVerifier defines the functions needed for verifying headers
 type HeaderVerifier interface {
 	VerifyHeaderByHash(ctx context.Context, shardId uint32, hash string) (bool, error)
+	IsInterfaceNil() bool
+}
+
+// HeaderSigVerifierHandler defines the functions needed to verify headers signature
+type HeaderSigVerifierHandler interface {
+	VerifySignature(header coreData.HeaderHandler) error
+	IsInterfaceNil() bool
 }

@@ -6,24 +6,23 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	coreData "github.com/ElrondNetwork/elrond-go-core/data"
-	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
 	"github.com/prometheus/common/log"
 )
 
 type ArgsHeaderVerifier struct {
 	HeaderHandler     RawHeaderHandler
-	HeaderSigVerifier *headerCheck.HeaderSigVerifier
+	HeaderSigVerifier HeaderSigVerifierHandler
 	NodesCoordinator  nodesCoordinator.EpochsConfigUpdateHandler
 }
 
 type headerVerifier struct {
 	rawHeaderHandler  RawHeaderHandler
-	headerSigVerifier *headerCheck.HeaderSigVerifier
+	headerSigVerifier HeaderSigVerifierHandler
 	nodesCoordinator  nodesCoordinator.EpochsConfigUpdateHandler
 }
 
-func NewHeaderVerifier(args ArgsHeaderVerifier) (HeaderVerifier, error) {
+func NewHeaderVerifier(args ArgsHeaderVerifier) (*headerVerifier, error) {
 	err := checkArguments(args)
 	if err != nil {
 		return nil, err
@@ -107,4 +106,9 @@ func (hch *headerVerifier) updateNodesConfigPerEpoch(ctx context.Context, epoch 
 	}
 
 	return nil
+}
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (hch *headerVerifier) IsInterfaceNil() bool {
+	return hch == nil
 }

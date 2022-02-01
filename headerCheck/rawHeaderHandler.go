@@ -9,7 +9,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	"github.com/ElrondNetwork/elrond-go/state"
-	"github.com/prometheus/common/log"
 )
 
 type rawHeaderHandler struct {
@@ -17,7 +16,7 @@ type rawHeaderHandler struct {
 	marshaller marshal.Marshalizer
 }
 
-func NewRawHeaderHandler(proxy Proxy, marshaller marshal.Marshalizer) (RawHeaderHandler, error) {
+func NewRawHeaderHandler(proxy Proxy, marshaller marshal.Marshalizer) (*rawHeaderHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
 	}
@@ -86,7 +85,6 @@ func (rh *rawHeaderHandler) GetValidatorsInfoPerEpoch(ctx context.Context, epoch
 		if metaBlock == nil {
 			break
 		}
-		log.Info("fetched previous epoch")
 		randomness = metaBlock.GetPrevRandSeed()
 
 		currEpoch = metaBlock.GetEpoch()
@@ -141,10 +139,6 @@ func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock *bl
 		}
 
 		for _, txHash := range miniBlock.TxHashes {
-			log.Info("miniblock",
-				"epoch", metaBlock.GetEpoch(),
-				"txHash", txHash)
-
 			vid := &state.ShardValidatorInfo{}
 			err := rh.marshaller.Unmarshal(vid, txHash)
 			if err != nil {
