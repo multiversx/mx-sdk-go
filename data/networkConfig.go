@@ -29,10 +29,12 @@ type NetworkConfig struct {
 	Hysteresys               string `json:"erd_hysteresis"`
 }
 
+// GetAdaptivity returns adaptivity field in the correct format
 func (nc *NetworkConfig) GetAdaptivity() bool {
 	return strToBool(nc.Adaptivity)
 }
 
+// GetHysteresis returns hysteresis field in the correct format
 func (nc *NetworkConfig) GetHysteresis() float32 {
 	return strToFloat32(nc.Hysteresys)
 }

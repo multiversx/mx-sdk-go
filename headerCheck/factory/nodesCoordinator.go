@@ -16,6 +16,7 @@ import (
 
 type validator = nodesCoordinator.Validator
 
+// CreateNodesCoordinator creates nodes coordinator which will be used for header verification
 func CreateNodesCoordinator(
 	hasher hashing.Hasher,
 	marshaller marshal.Marshalizer,

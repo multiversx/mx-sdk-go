@@ -20,6 +20,7 @@ type coreComponents struct {
 	Rater      nodesCoordinator.ChanceComputer
 }
 
+// CreateCoreComponents creates core components needed for header verification
 func CreateCoreComponents(
 	ratingsConfig *data.RatingsConfig,
 	networkConfig *data.NetworkConfig,

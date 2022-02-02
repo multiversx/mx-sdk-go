@@ -16,6 +16,7 @@ type cryptoComponents struct {
 	SingleSig crypto.SingleSigner
 }
 
+// CreateCryptoComponents creates crypto components needed for header verification
 func CreateCryptoComponents() (*cryptoComponents, error) {
 	blockSignKeyGen := signing.NewKeyGenerator(mcl.NewSuiteBLS12())
 

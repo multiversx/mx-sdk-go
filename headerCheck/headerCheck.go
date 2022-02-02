@@ -12,6 +12,8 @@ import (
 
 var log = logger.GetOrCreate("elrond-sdk-erdgo/headerCheck")
 
+// ArgsHeaderVerifier hiolds all dependencies required by headerVerifier in
+// order to create a new instance
 type ArgsHeaderVerifier struct {
 	HeaderHandler     RawHeaderHandler
 	HeaderSigVerifier HeaderSigVerifierHandler
@@ -24,6 +26,7 @@ type headerVerifier struct {
 	nodesCoordinator  nodesCoordinator.EpochsConfigUpdateHandler
 }
 
+// NewHeaderVerifier create new instance of headerVerifier
 func NewHeaderVerifier(args ArgsHeaderVerifier) (*headerVerifier, error) {
 	err := checkArguments(args)
 	if err != nil {
@@ -51,6 +54,8 @@ func checkArguments(arguments ArgsHeaderVerifier) error {
 	return nil
 }
 
+// VerifyHeaderByHash verifies wether a header signature matches by providing
+// the hash and shard where the header belongs to
 func (hch *headerVerifier) VerifyHeaderByHash(ctx context.Context, shardId uint32, hash string) (bool, error) {
 	header, err := hch.fetchHeaderByHashAndShard(ctx, shardId, hash)
 	if err != nil {

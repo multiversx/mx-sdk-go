@@ -9,6 +9,9 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/factory"
 )
 
+// NewHeaderCheckHandler will create all components needed for header
+// verification and returns the header verifier component. It behaves like a
+// main factory for header verification components
 func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy

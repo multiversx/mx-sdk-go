@@ -16,6 +16,7 @@ type rawHeaderHandler struct {
 	marshaller marshal.Marshalizer
 }
 
+// NewRawHeaderHandler will create a new rawHeaderHandler instance
 func NewRawHeaderHandler(proxy Proxy, marshaller marshal.Marshalizer) (*rawHeaderHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
@@ -30,6 +31,8 @@ func NewRawHeaderHandler(proxy Proxy, marshaller marshal.Marshalizer) (*rawHeade
 	}, nil
 }
 
+// GetMetaBlockByHash will return the MetaBlock based on the raw marshalized
+// data from proxy
 func (rh *rawHeaderHandler) GetMetaBlockByHash(ctx context.Context, hash string) (*block.MetaBlock, error) {
 	metaBlockBytes, err := rh.proxy.GetRawBlockByHash(ctx, core.MetachainShardId, hash)
 	if err != nil {
@@ -45,6 +48,8 @@ func (rh *rawHeaderHandler) GetMetaBlockByHash(ctx context.Context, hash string)
 	return blockHeader, nil
 }
 
+// GetShardBlockByHash will return the Header based on the raw marshalized data
+// from proxy
 func (rh *rawHeaderHandler) GetShardBlockByHash(ctx context.Context, shardId uint32, hash string) (*block.Header, error) {
 	metaBlockBytes, err := rh.proxy.GetRawBlockByHash(ctx, shardId, hash)
 	if err != nil {
@@ -60,6 +65,8 @@ func (rh *rawHeaderHandler) GetShardBlockByHash(ctx context.Context, shardId uin
 	return blockHeader, nil
 }
 
+// GetValidatorsInfoPerEpoch will return validators info based on start of
+// epoch metablock for a specific epoch
 func (rh *rawHeaderHandler) GetValidatorsInfoPerEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, []byte, error) {
 	metaBlock, err := rh.getLastStartOfEpochMetaBlock(ctx)
 	if err != nil {
