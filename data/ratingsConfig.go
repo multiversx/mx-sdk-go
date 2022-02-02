@@ -11,8 +11,8 @@ type RatingsConfigResponse struct {
 
 // SelectionChances holds the selection chances parameters
 type SelectionChances struct {
-	ChancePercent uint32 `json:"_chance_percent"`
-	MaxThreshold  uint32 `json:"_max_threshold"`
+	ChancePercent uint32 `json:"erd_chance_percent"`
+	MaxThreshold  uint32 `json:"erd_max_threshold"`
 }
 
 // RatingsConfig holds the ratings configuration parameters

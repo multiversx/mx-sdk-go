@@ -11,9 +11,9 @@ type EnableEpochsConfigResponse struct {
 
 // MaxNodesChangeConfig holds the max nodes change config
 type MaxNodesChangeConfig struct {
-	EpochEnable            uint32 `json:"_epoch_enable"`
-	MaxNumNodes            uint32 `json:"_max_num_nodes"`
-	NodesToShufflePerShard uint32 `json:"_nodes_to_shuffle_per_shard"`
+	EpochEnable            uint32 `json:"erd_epoch_enable"`
+	MaxNumNodes            uint32 `json:"erd_max_num_nodes"`
+	NodesToShufflePerShard uint32 `json:"erd_nodes_to_shuffle_per_shard"`
 }
 
 // EnableEpochsConfig holds the enable epochs configuration parameters
