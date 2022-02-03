@@ -436,26 +436,6 @@ func (ep *elrondProxy) getRawMiniBlock(ctx context.Context, endpoint string) ([]
 	return response.Data.MiniBlock, nil
 }
 
-// GetRoundAtEpochStart retrieves the start of epoch round from hyper block (metachain)
-func (ep *elrondProxy) GetRoundAtEpochStart(ctx context.Context) (uint64, error) {
-	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, core.MetachainShardId)
-	buff, err := ep.GetHTTP(ctx, endpoint)
-	if err != nil {
-		return 0, err
-	}
-
-	response := &data.NetworkStatusResponse{}
-	err = json.Unmarshal(buff, response)
-	if err != nil {
-		return 0, err
-	}
-	if response.Error != "" {
-		return 0, errors.New(response.Error)
-	}
-
-	return response.Data.Status.RoundAtEpochStart, nil
-}
-
 // GetNonceAtEpochStart retrieves the start of epoch nonce from hyper block (metachain)
 func (ep *elrondProxy) GetNonceAtEpochStart(ctx context.Context, shardId uint32) (uint64, error) {
 	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, shardId)
@@ -474,26 +454,6 @@ func (ep *elrondProxy) GetNonceAtEpochStart(ctx context.Context, shardId uint32)
 	}
 
 	return response.Data.Status.NonceAtEpochStart, nil
-}
-
-// GetCurrentEpoch retrieves the current epoch
-func (ep *elrondProxy) GetCurrentEpoch(ctx context.Context, shardId uint32) (uint64, error) {
-	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, shardId)
-	buff, err := ep.GetHTTP(ctx, endpoint)
-	if err != nil {
-		return 0, err
-	}
-
-	response := &data.NetworkStatusResponse{}
-	err = json.Unmarshal(buff, response)
-	if err != nil {
-		return 0, err
-	}
-	if response.Error != "" {
-		return 0, errors.New(response.Error)
-	}
-
-	return response.Data.Status.EpochNumber, nil
 }
 
 // GetHTTP does a GET method operation on the specified endpoint
