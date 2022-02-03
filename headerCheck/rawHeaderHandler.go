@@ -68,13 +68,33 @@ func (rh *rawHeaderHandler) GetShardBlockByHash(ctx context.Context, shardId uin
 // GetValidatorsInfoPerEpoch will return validators info based on start of
 // epoch metablock for a specific epoch
 func (rh *rawHeaderHandler) GetValidatorsInfoPerEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, []byte, error) {
-	metaBlock, err := rh.getLastStartOfEpochMetaBlock(ctx)
+	lastStartOfEpochMetaBlock, err := rh.getLastStartOfEpochMetaBlock(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	randomness := metaBlock.GetPrevRandSeed()
 
+	metaBlock, randomness, err := rh.getMetaBlockAndRandomnessForEpoch(ctx, epoch, lastStartOfEpochMetaBlock)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	validatorsInfoPerEpoch, err := rh.getValidatorsInfo(ctx, metaBlock)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return validatorsInfoPerEpoch, randomness, nil
+}
+
+func (rh *rawHeaderHandler) getMetaBlockAndRandomnessForEpoch(
+	ctx context.Context,
+	epoch uint32,
+	metaBlock *block.MetaBlock,
+) (*block.MetaBlock, []byte, error) {
+	var err error
+	randomness := metaBlock.GetPrevRandSeed()
 	currEpoch := metaBlock.GetEpoch()
+
 	for epoch <= currEpoch {
 		if epoch == 0 {
 			break
@@ -92,17 +112,12 @@ func (rh *rawHeaderHandler) GetValidatorsInfoPerEpoch(ctx context.Context, epoch
 		if metaBlock == nil {
 			break
 		}
-		randomness = metaBlock.GetPrevRandSeed()
 
+		randomness = metaBlock.GetPrevRandSeed()
 		currEpoch = metaBlock.GetEpoch()
 	}
 
-	validatorsInfoPerEpoch, err := rh.getValidatorsInfo(ctx, metaBlock)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return validatorsInfoPerEpoch, randomness, nil
+	return metaBlock, randomness, err
 }
 
 func (rh *rawHeaderHandler) getLastStartOfEpochMetaBlock(ctx context.Context) (*block.MetaBlock, error) {
@@ -130,13 +145,7 @@ func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock *bl
 	for _, miniBlockHeader := range metaBlock.MiniBlockHeaders {
 		hash := hex.EncodeToString(miniBlockHeader.Hash)
 
-		miniBlockBytes, err := rh.proxy.GetRawMiniBlockByHash(ctx, core.MetachainShardId, hash)
-		if err != nil {
-			return nil, err
-		}
-
-		miniBlock := &block.MiniBlock{}
-		err = rh.marshaller.Unmarshal(miniBlock, miniBlockBytes)
+		miniBlock, err := rh.getMiniBlockByHash(ctx, core.MetachainShardId, hash)
 		if err != nil {
 			return nil, err
 		}
@@ -157,6 +166,21 @@ func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock *bl
 	}
 
 	return allValidatorInfo, nil
+}
+
+func (rh *rawHeaderHandler) getMiniBlockByHash(ctx context.Context, shardId uint32, hash string) (*block.MiniBlock, error) {
+	miniBlockBytes, err := rh.proxy.GetRawMiniBlockByHash(ctx, core.MetachainShardId, hash)
+	if err != nil {
+		return nil, err
+	}
+
+	miniBlock := &block.MiniBlock{}
+	err = rh.marshaller.Unmarshal(miniBlock, miniBlockBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return miniBlock, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
