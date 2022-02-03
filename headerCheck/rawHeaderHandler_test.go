@@ -2,9 +2,9 @@ package headerCheck_test
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"reflect"
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
@@ -164,19 +164,26 @@ func TestGetShardBlockByHash_ShouldWork(t *testing.T) {
 	assert.Equal(t, metaBlock, header)
 }
 
-// TODO: more unit testing here
+// TODO: handle error paths
 func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 	t.Parallel()
 
 	prevEpochStartHash := []byte("prev epoch start hash")
 
+	miniBlockHeaders := []block.MiniBlockHeader{
+		{
+			Hash:            []byte("hash1"),
+			SenderShardID:   0,
+			ReceiverShardID: 1,
+			Type:            block.PeerBlock,
+		},
+	}
+
 	expectedRandomness := []byte("prev rand seed")
 	lastMetaBlock := &block.MetaBlock{
-		Nonce:            2,
-		Epoch:            2,
-		PrevRandSeed:     expectedRandomness,
-		MiniBlockHeaders: []block.MiniBlockHeader{},
-		ReceiptsHash:     []byte{},
+		Nonce:        2,
+		Epoch:        2,
+		PrevRandSeed: expectedRandomness,
 		EpochStart: block.EpochStart{
 			Economics: block.Economics{
 				PrevEpochStartHash: prevEpochStartHash,
@@ -186,15 +193,26 @@ func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 	lastMetaBlockBytes, _ := json.Marshal(lastMetaBlock)
 
 	metaBlock := &block.MetaBlock{
-		Nonce:        1,
-		Epoch:        1,
-		PrevRandSeed: expectedRandomness,
+		Nonce:            1,
+		Epoch:            1,
+		PrevRandSeed:     expectedRandomness,
+		MiniBlockHeaders: miniBlockHeaders,
 	}
 	metaBlockBytes, _ := json.Marshal(metaBlock)
 
+	vid := &state.ShardValidatorInfo{
+		PublicKey: []byte("public key 1"),
+		ShardId:   0,
+	}
+	vidBytes, _ := json.Marshal(vid)
+
+	expectedValidatorsInfo := []*state.ShardValidatorInfo{vid}
+
 	miniBlock := &block.MiniBlock{
+		TxHashes:        [][]byte{vidBytes},
 		ReceiverShardID: 0,
 		SenderShardID:   0,
+		Type:            block.PeerBlock,
 	}
 	miniBlockBytes, _ := json.Marshal(miniBlock)
 
@@ -203,9 +221,7 @@ func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 			return 2, nil
 		},
 		GetRawBlockByHashCalled: func(shardId uint32, hash string) ([]byte, error) {
-			if reflect.DeepEqual(hash, prevEpochStartHash) {
-				return nil, errors.New("wrong hash")
-			}
+			require.Equal(t, hex.EncodeToString(prevEpochStartHash), hash)
 			return metaBlockBytes, nil
 		},
 		GetRawBlockByNonceCalled: func(shardId uint32, nonce uint64) ([]byte, error) {
@@ -218,8 +234,6 @@ func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 
 	rh, err := headerCheck.NewRawHeaderHandler(proxy, &mock.MarshalizerMock{})
 	require.Nil(t, err)
-
-	expectedValidatorsInfo := make([]*state.ShardValidatorInfo, 0)
 
 	validatorInfo, randomness, err := rh.GetValidatorsInfoPerEpoch(context.Background(), 1)
 	assert.Nil(t, err)
