@@ -115,6 +115,9 @@ func (mc *mapCacher) Remove(key []byte) {
 
 // Keys returns a slice of the keys in the cache, from oldest to newest.
 func (mc *mapCacher) Keys() [][]byte {
+	mc.RLock()
+	defer mc.RUnlock()
+
 	keys := make([][]byte, len(mc.dataMap))
 	idx := 0
 	for k := range mc.dataMap {
