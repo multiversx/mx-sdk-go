@@ -221,7 +221,7 @@ func TestElrondProxy_GetRawBlockByHash(t *testing.T) {
 		Error: "",
 		Code:  "200",
 	}
-	rawBlockDataBytes, err := json.Marshal(rawBlockData)
+	rawBlockDataBytes, _ := json.Marshal(rawBlockData)
 
 	httpClient := &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
@@ -254,7 +254,7 @@ func TestElrondProxy_GetRawBlockByNonce(t *testing.T) {
 			Block: responseBytes,
 		},
 	}
-	rawBlockDataBytes, err := json.Marshal(rawBlockData)
+	rawBlockDataBytes, _ := json.Marshal(rawBlockData)
 
 	httpClient := &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
@@ -287,7 +287,7 @@ func TestElrondProxy_GetRawMiniBlockByHash(t *testing.T) {
 			MiniBlock: responseBytes,
 		},
 	}
-	rawBlockDataBytes, err := json.Marshal(rawBlockData)
+	rawBlockDataBytes, _ := json.Marshal(rawBlockData)
 
 	httpClient := &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
@@ -319,7 +319,7 @@ func TestElrondProxy_GetNonceAtEpochStart(t *testing.T) {
 			Status: expectedNetworkStatus,
 		},
 	}
-	statusResponseBytes, err := json.Marshal(statusResponse)
+	statusResponseBytes, _ := json.Marshal(statusResponse)
 
 	httpClient := &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
@@ -348,7 +348,7 @@ func TestElrondProxy_GetRatingsConfig(t *testing.T) {
 			Config: expectedRatingsConfig,
 		},
 	}
-	ratingsResponseBytes, err := json.Marshal(ratingsResponse)
+	ratingsResponseBytes, _ := json.Marshal(ratingsResponse)
 
 	httpClient := &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
@@ -376,7 +376,7 @@ func TestElrondProxy_GetEnableEpochsConfig(t *testing.T) {
 		}{
 			Config: expectedEnableEpochsConfig},
 	}
-	enableEpochsResponseBytes, err := json.Marshal(enableEpochsResponse)
+	enableEpochsResponseBytes, _ := json.Marshal(enableEpochsResponse)
 
 	httpClient := &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
