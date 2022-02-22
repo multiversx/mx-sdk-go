@@ -86,37 +86,37 @@ func createRatingsConfig(rd *data.RatingsConfig) config.RatingsConfig {
 		StartRating:           rd.GeneralStartRating,
 		MaxRating:             rd.GeneralMaxRating,
 		MinRating:             rd.GeneralMinRating,
-		SignedBlocksThreshold: rd.GetSignedBlockThreshold(),
+		SignedBlocksThreshold: rd.GeneralSignedBlocksThreshold,
 		SelectionChances:      selectionChances,
 	}
 
 	shardChain := config.ShardChain{
 		RatingSteps: config.RatingSteps{
 			HoursToMaxRatingFromStartRating: rd.ShardchainHoursToMaxRatingFromStartRating,
-			ProposerValidatorImportance:     rd.GetShardchainProposerValidatorImportance(),
-			ProposerDecreaseFactor:          rd.GetShardchainProposerDecreaseFactor(),
-			ValidatorDecreaseFactor:         rd.GetShardchainValidatorDecreaseFactor(),
-			ConsecutiveMissedBlocksPenalty:  rd.GetShardchainConsecutiveMissedBlocksPenalty(),
+			ProposerValidatorImportance:     rd.ShardchainProposerValidatorImportance,
+			ProposerDecreaseFactor:          rd.ShardchainProposerDecreaseFactor,
+			ValidatorDecreaseFactor:         rd.ShardchainValidatorDecreaseFactor,
+			ConsecutiveMissedBlocksPenalty:  rd.ShardchainConsecutiveMissedBlocksPenalty,
 		},
 	}
 
 	metaChain := config.MetaChain{
 		RatingSteps: config.RatingSteps{
 			HoursToMaxRatingFromStartRating: rd.MetachainHoursToMaxRatingFromStartRating,
-			ProposerValidatorImportance:     rd.GetMetachainProposerValidatorImportance(),
-			ProposerDecreaseFactor:          rd.GetMetachainProposerDecreaseFactor(),
-			ValidatorDecreaseFactor:         rd.GetMetachainValidatorDecreaseFactor(),
-			ConsecutiveMissedBlocksPenalty:  rd.GetMetachainConsecutiveMissedBlocksPenalty(),
+			ProposerValidatorImportance:     rd.MetachainProposerValidatorImportance,
+			ProposerDecreaseFactor:          rd.MetachainProposerDecreaseFactor,
+			ValidatorDecreaseFactor:         rd.MetachainValidatorDecreaseFactor,
+			ConsecutiveMissedBlocksPenalty:  rd.MetachainConsecutiveMissedBlocksPenalty,
 		},
 	}
 
 	peerHonesty := config.PeerHonestyConfig{
-		DecayCoefficient:             rd.GetPeerhonestyDecayCoefficient(),
+		DecayCoefficient:             rd.PeerhonestyDecayCoefficient,
 		DecayUpdateIntervalInSeconds: rd.PeerhonestyDecayUpdateIntervalInseconds,
-		MaxScore:                     rd.GetPeerhonestyMaxScore(),
-		MinScore:                     rd.GetPeerhonestyMinScore(),
-		BadPeerThreshold:             rd.GetPeerhonestyBadPeerThreshold(),
-		UnitValue:                    rd.GetPeerhonestyUnitValue(),
+		MaxScore:                     rd.PeerhonestyMaxScore,
+		MinScore:                     rd.PeerhonestyMinScore,
+		BadPeerThreshold:             rd.PeerhonestyBadPeerThreshold,
+		UnitValue:                    rd.PeerhonestyUnitValue,
 	}
 
 	ratingsConfig := config.RatingsConfig{

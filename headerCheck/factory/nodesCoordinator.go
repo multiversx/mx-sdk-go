@@ -120,8 +120,8 @@ func createArgsNodesShuffler(
 	argsNodesShuffler := &nodesCoordinator.NodesShufflerArgs{
 		NodesShard:                     networkConfig.NumNodesInShard,
 		NodesMeta:                      networkConfig.NumMetachainNodes,
-		Hysteresis:                     networkConfig.GetHysteresis(),
-		Adaptivity:                     networkConfig.GetAdaptivity(),
+		Hysteresis:                     networkConfig.Hysteresys,
+		Adaptivity:                     networkConfig.Adaptivity,
 		ShuffleBetweenShards:           true,
 		MaxNodesEnableConfig:           maxNodesChangeConfigs,
 		BalanceWaitingListsEnableEpoch: eec.BalanceWaitingListsEnableEpoch,
