@@ -48,6 +48,7 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		coreComp.Rater,
 		networkConfig,
 		enableEpochsConfig,
+		cryptoComp.PublicKey,
 	)
 	if err != nil {
 		return nil, err

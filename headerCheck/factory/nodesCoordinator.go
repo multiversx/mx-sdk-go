@@ -6,8 +6,8 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/data/endProcess"
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
-	"github.com/ElrondNetwork/elrond-go-core/hashing/sha256"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
+	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -23,10 +23,11 @@ func CreateNodesCoordinator(
 	rater nodesCoordinator.ChanceComputer,
 	networkConfig *data.NetworkConfig,
 	enableEpochsConfig *data.EnableEpochsConfig,
+	publicKey crypto.PublicKey,
 ) (nodesCoordinator.EpochsConfigUpdateHandler, error) {
 
 	waitingMap := make(map[uint32][]validator)
-	eligibleMap := createDummyNodesMap(networkConfig.MetaConsensusGroup, networkConfig.NumShardsWithoutMeta)
+	eligibleMap := createDummyNodesMap(networkConfig.MetaConsensusGroup, networkConfig.NumShardsWithoutMeta, hasher)
 
 	argsNodesShuffler := createArgsNodesShuffler(enableEpochsConfig, networkConfig)
 	nodeShuffler, err := nodesCoordinator.NewHashValidatorsShuffler(argsNodesShuffler)
@@ -34,8 +35,12 @@ func CreateNodesCoordinator(
 		return nil, err
 	}
 
+	publicKeyBytes, err := publicKey.ToByteArray()
+	if err != nil {
+		return nil, err
+	}
+
 	initialEpoch := uint32(0)
-	dummySelfPublicKey := []byte("dummy")
 	arguments := nodesCoordinator.ArgNodesCoordinator{
 		Epoch:                      initialEpoch,
 		ShardConsensusGroupSize:    int(networkConfig.ShardConsensusGroupSize),
@@ -47,7 +52,7 @@ func CreateNodesCoordinator(
 		NbShards:                   networkConfig.NumShardsWithoutMeta,
 		EligibleNodes:              eligibleMap,
 		WaitingNodes:               waitingMap,
-		SelfPublicKey:              dummySelfPublicKey,
+		SelfPublicKey:              publicKeyBytes,
 		ConsensusGroupCache:        &disabled.NodesCoordinatorCache{},
 		WaitingListFixEnabledEpoch: enableEpochsConfig.WaitingListFixEnableEpoch,
 		ChanStopNode:               make(chan endProcess.ArgEndProcess),
@@ -69,12 +74,8 @@ func CreateNodesCoordinator(
 	return nd, nil
 }
 
-// TODO: better solution for dummy nodes map generation
-func createDummyNodesList(nbNodes uint32, suffix string) []validator {
+func createDummyNodesList(nbNodes uint32, suffix string, hasher hashing.Hasher) []validator {
 	list := make([]validator, 0)
-
-	// TODO: use existing hasher
-	hasher := sha256.NewSha256()
 
 	for j := uint32(0); j < nbNodes; j++ {
 		pk := hasher.Compute(fmt.Sprintf("pkeligible_%d", j))
@@ -85,7 +86,7 @@ func createDummyNodesList(nbNodes uint32, suffix string) []validator {
 	return list
 }
 
-func createDummyNodesMap(nodesPerShard uint32, nbShards uint32) map[uint32][]validator {
+func createDummyNodesMap(nodesPerShard uint32, nbShards uint32, hasher hashing.Hasher) map[uint32][]validator {
 	nodesMap := make(map[uint32][]validator)
 
 	var shard uint32
@@ -95,7 +96,7 @@ func createDummyNodesMap(nodesPerShard uint32, nbShards uint32) map[uint32][]val
 		if i == nbShards {
 			shard = core.MetachainShardId
 		}
-		list := createDummyNodesList(nodesPerShard, "_i")
+		list := createDummyNodesList(nodesPerShard, "_i", hasher)
 		nodesMap[shard] = list
 	}
 

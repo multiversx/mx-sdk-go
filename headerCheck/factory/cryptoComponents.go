@@ -14,6 +14,7 @@ type cryptoComponents struct {
 	KeyGen    crypto.KeyGenerator
 	MultiSig  crypto.MultiSigner
 	SingleSig crypto.SingleSigner
+	PublicKey crypto.PublicKey
 }
 
 // CreateCryptoComponents creates crypto components needed for header verification
@@ -50,5 +51,6 @@ func CreateCryptoComponents() (*cryptoComponents, error) {
 		KeyGen:    blockSignKeyGen,
 		SingleSig: interceptSingleSigner,
 		MultiSig:  multiSigner,
+		PublicKey: publicKey,
 	}, nil
 }
