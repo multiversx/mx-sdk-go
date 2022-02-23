@@ -3,11 +3,11 @@ module github.com/ElrondNetwork/elrond-sdk-erdgo
 go 1.14
 
 require (
-	github.com/ElrondNetwork/elrond-go v1.2.36-0.20220131130250-db07b484bee6
-	github.com/ElrondNetwork/elrond-go-core v1.1.7
+	github.com/ElrondNetwork/elrond-go v1.3.6-0.20220221102635-7228fcdd5299
+	github.com/ElrondNetwork/elrond-go-core v1.1.12
 	github.com/ElrondNetwork/elrond-go-crypto v1.0.1
-	github.com/ElrondNetwork/elrond-go-logger v1.0.5
-	github.com/ElrondNetwork/elrond-vm-common v1.2.9
+	github.com/ElrondNetwork/elrond-go-logger v1.0.6
+	github.com/ElrondNetwork/elrond-vm-common v1.3.2
 	github.com/pborman/uuid v1.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tyler-smith/go-bip39 v1.1.0
@@ -19,3 +19,5 @@ replace github.com/ElrondNetwork/arwen-wasm-vm/v1_2 v1.2.35 => github.com/Elrond
 replace github.com/ElrondNetwork/arwen-wasm-vm/v1_3 v1.3.35 => github.com/ElrondNetwork/arwen-wasm-vm v1.3.35
 
 replace github.com/ElrondNetwork/arwen-wasm-vm/v1_4 v1.4.34 => github.com/ElrondNetwork/arwen-wasm-vm v1.4.34
+
+replace github.com/ElrondNetwork/arwen-wasm-vm/v1_4 v1.4.38 => github.com/ElrondNetwork/arwen-wasm-vm v1.4.38
