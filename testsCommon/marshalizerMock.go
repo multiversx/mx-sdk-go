@@ -1,4 +1,4 @@
-package mock
+package testsCommon
 
 import (
 	"encoding/json"

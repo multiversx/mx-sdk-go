@@ -11,7 +11,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go/state"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/mock"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +30,7 @@ func TestNewRawHeaderHandler(t *testing.T) {
 	t.Run("nil proxy", func(t *testing.T) {
 		t.Parallel()
 
-		rh, err := headerCheck.NewRawHeaderHandler(nil, &mock.MarshalizerStub{})
+		rh, err := headerCheck.NewRawHeaderHandler(nil, &testsCommon.MarshalizerStub{})
 
 		assert.True(t, check.IfNil(rh))
 		assert.True(t, errors.Is(err, headerCheck.ErrNilProxy))
@@ -39,7 +38,7 @@ func TestNewRawHeaderHandler(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		rh, err := headerCheck.NewRawHeaderHandler(&testsCommon.ProxyStub{}, &mock.MarshalizerStub{})
+		rh, err := headerCheck.NewRawHeaderHandler(&testsCommon.ProxyStub{}, &testsCommon.MarshalizerStub{})
 
 		assert.False(t, check.IfNil(rh))
 		assert.Nil(t, err)
@@ -57,7 +56,7 @@ func TestGetMetaBlockByHash_ShouldFail(t *testing.T) {
 			},
 		}
 
-		rh, err := headerCheck.NewRawHeaderHandler(proxy, &mock.MarshalizerMock{})
+		rh, err := headerCheck.NewRawHeaderHandler(proxy, &testsCommon.MarshalizerMock{})
 		require.Nil(t, err)
 
 		_, err = rh.GetMetaBlockByHash(context.Background(), "dummy")
@@ -66,7 +65,7 @@ func TestGetMetaBlockByHash_ShouldFail(t *testing.T) {
 	})
 	t.Run("marshaller error", func(t *testing.T) {
 		expectedErr := errors.New("unmarshall err")
-		marshaller := &mock.MarshalizerStub{
+		marshaller := &testsCommon.MarshalizerStub{
 			UnmarshalCalled: func(_ interface{}, _ []byte) error {
 				return expectedErr
 			},
@@ -96,7 +95,7 @@ func TestGetMetaBlockByHash_ShouldWork(t *testing.T) {
 		},
 	}
 
-	rh, err := headerCheck.NewRawHeaderHandler(proxy, &mock.MarshalizerMock{})
+	rh, err := headerCheck.NewRawHeaderHandler(proxy, &testsCommon.MarshalizerMock{})
 	require.Nil(t, err)
 
 	metaBlock, err := rh.GetMetaBlockByHash(context.Background(), "dummy")
@@ -116,7 +115,7 @@ func TestGetShardBlockByHash_ShouldFail(t *testing.T) {
 			},
 		}
 
-		rh, err := headerCheck.NewRawHeaderHandler(proxy, &mock.MarshalizerMock{})
+		rh, err := headerCheck.NewRawHeaderHandler(proxy, &testsCommon.MarshalizerMock{})
 		require.Nil(t, err)
 
 		_, err = rh.GetShardBlockByHash(context.Background(), 1, "dummy")
@@ -125,7 +124,7 @@ func TestGetShardBlockByHash_ShouldFail(t *testing.T) {
 	})
 	t.Run("marshaller error", func(t *testing.T) {
 		expectedErr := errors.New("unmarshall err")
-		marshaller := &mock.MarshalizerStub{
+		marshaller := &testsCommon.MarshalizerStub{
 			UnmarshalCalled: func(_ interface{}, _ []byte) error {
 				return expectedErr
 			},
@@ -155,7 +154,7 @@ func TestGetShardBlockByHash_ShouldWork(t *testing.T) {
 		},
 	}
 
-	rh, err := headerCheck.NewRawHeaderHandler(proxy, &mock.MarshalizerMock{})
+	rh, err := headerCheck.NewRawHeaderHandler(proxy, &testsCommon.MarshalizerMock{})
 	require.Nil(t, err)
 
 	metaBlock, err := rh.GetShardBlockByHash(context.Background(), 1, "dummy")
@@ -164,7 +163,6 @@ func TestGetShardBlockByHash_ShouldWork(t *testing.T) {
 	assert.Equal(t, metaBlock, header)
 }
 
-// TODO: handle error paths
 func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 	t.Parallel()
 
@@ -232,7 +230,7 @@ func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 		},
 	}
 
-	rh, err := headerCheck.NewRawHeaderHandler(proxy, &mock.MarshalizerMock{})
+	rh, err := headerCheck.NewRawHeaderHandler(proxy, &testsCommon.MarshalizerMock{})
 	require.Nil(t, err)
 
 	validatorInfo, randomness, err := rh.GetValidatorsInfoPerEpoch(context.Background(), 1)

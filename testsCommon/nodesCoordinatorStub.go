@@ -1,4 +1,4 @@
-package mock
+package testsCommon
 
 import (
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"

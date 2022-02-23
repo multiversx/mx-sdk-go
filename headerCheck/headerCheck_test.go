@@ -10,16 +10,16 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/data"
 	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/mock"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func createMockArgHeaderVerifier() headerCheck.ArgsHeaderVerifier {
 	return headerCheck.ArgsHeaderVerifier{
-		HeaderHandler:     &mock.RawHeaderHandlerStub{},
-		HeaderSigVerifier: &mock.HeaderSigVerifierStub{},
-		NodesCoordinator:  &mock.NodesCoordinatorStub{},
+		HeaderHandler:     &testsCommon.RawHeaderHandlerStub{},
+		HeaderSigVerifier: &testsCommon.HeaderSigVerifierStub{},
+		NodesCoordinator:  &testsCommon.NodesCoordinatorStub{},
 	}
 }
 
@@ -70,14 +70,14 @@ func TestNewHeaderVerifier(t *testing.T) {
 func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldFail(t *testing.T) {
 	t.Parallel()
 
-	rawHeaderHandler := &mock.RawHeaderHandlerStub{
+	rawHeaderHandler := &testsCommon.RawHeaderHandlerStub{
 		GetShardBlockByHashCalled: func(shardID uint32, hash string) (data.HeaderHandler, error) {
 			return &block.Header{Epoch: 1}, nil
 		},
 	}
 
 	expectedErr := errors.New("signature verifier error")
-	headerSigVerifier := &mock.HeaderSigVerifierStub{
+	headerSigVerifier := &testsCommon.HeaderSigVerifierStub{
 		VerifySignatureCalled: func(_ data.HeaderHandler) error {
 			return expectedErr
 		},
@@ -96,13 +96,13 @@ func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldFail(t *testing.T) {
 func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldWork(t *testing.T) {
 	t.Parallel()
 
-	rawHeaderHandler := &mock.RawHeaderHandlerStub{
+	rawHeaderHandler := &testsCommon.RawHeaderHandlerStub{
 		GetShardBlockByHashCalled: func(shardID uint32, hash string) (data.HeaderHandler, error) {
 			return &block.Header{Epoch: 1}, nil
 		},
 	}
 
-	headerSigVerifier := &mock.HeaderSigVerifierStub{
+	headerSigVerifier := &testsCommon.HeaderSigVerifierStub{
 		VerifySignatureCalled: func(_ data.HeaderHandler) error {
 			return nil
 		},
@@ -126,7 +126,7 @@ func TestNewHeaderVerifier_FetchHeaderByHashAndShard_ShouldFail(t *testing.T) {
 		t.Parallel()
 
 		expectedErr := errors.New("fail to fetch meta block")
-		rawHeaderHandler := &mock.RawHeaderHandlerStub{
+		rawHeaderHandler := &testsCommon.RawHeaderHandlerStub{
 			GetMetaBlockByHashCalled: func(_ string) (data.MetaHeaderHandler, error) {
 				return nil, expectedErr
 			},
@@ -143,7 +143,7 @@ func TestNewHeaderVerifier_FetchHeaderByHashAndShard_ShouldFail(t *testing.T) {
 		t.Parallel()
 
 		expectedErr := errors.New("fail to fetch shard block")
-		rawHeaderHandler := &mock.RawHeaderHandlerStub{
+		rawHeaderHandler := &testsCommon.RawHeaderHandlerStub{
 			GetShardBlockByHashCalled: func(_ uint32, _ string) (data.HeaderHandler, error) {
 				return nil, expectedErr
 			},
@@ -171,7 +171,7 @@ func TestNewHeaderVerifier_FetchHeaderByHashAndShard_ShouldWork(t *testing.T) {
 		Epoch: 2,
 	}
 
-	rawHeaderHandler := &mock.RawHeaderHandlerStub{
+	rawHeaderHandler := &testsCommon.RawHeaderHandlerStub{
 		GetMetaBlockByHashCalled: func(_ string) (data.MetaHeaderHandler, error) {
 			return expectedMetaBlock, nil
 		},
