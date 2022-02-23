@@ -70,6 +70,12 @@ func TestNewHeaderVerifier(t *testing.T) {
 func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldFail(t *testing.T) {
 	t.Parallel()
 
+	rawHeaderHandler := &mock.RawHeaderHandlerStub{
+		GetShardBlockByHashCalled: func(shardID uint32, hash string) (data.HeaderHandler, error) {
+			return &block.Header{Epoch: 1}, nil
+		},
+	}
+
 	expectedErr := errors.New("signature verifier error")
 	headerSigVerifier := &mock.HeaderSigVerifierStub{
 		VerifySignatureCalled: func(_ data.HeaderHandler) error {
@@ -78,6 +84,7 @@ func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldFail(t *testing.T) {
 	}
 	args := createMockArgHeaderVerifier()
 	args.HeaderSigVerifier = headerSigVerifier
+	args.HeaderHandler = rawHeaderHandler
 	hv, err := headerCheck.NewHeaderVerifier(args)
 	require.Nil(t, err)
 
@@ -89,7 +96,21 @@ func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldFail(t *testing.T) {
 func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldWork(t *testing.T) {
 	t.Parallel()
 
+	rawHeaderHandler := &mock.RawHeaderHandlerStub{
+		GetShardBlockByHashCalled: func(shardID uint32, hash string) (data.HeaderHandler, error) {
+			return &block.Header{Epoch: 1}, nil
+		},
+	}
+
+	headerSigVerifier := &mock.HeaderSigVerifierStub{
+		VerifySignatureCalled: func(_ data.HeaderHandler) error {
+			return nil
+		},
+	}
+
 	args := createMockArgHeaderVerifier()
+	args.HeaderHandler = rawHeaderHandler
+	args.HeaderSigVerifier = headerSigVerifier
 	hv, err := headerCheck.NewHeaderVerifier(args)
 	require.Nil(t, err)
 
@@ -106,7 +127,7 @@ func TestNewHeaderVerifier_FetchHeaderByHashAndShard_ShouldFail(t *testing.T) {
 
 		expectedErr := errors.New("fail to fetch meta block")
 		rawHeaderHandler := &mock.RawHeaderHandlerStub{
-			GetMetaBlockByHashCalled: func(_ string) (*block.MetaBlock, error) {
+			GetMetaBlockByHashCalled: func(_ string) (data.MetaHeaderHandler, error) {
 				return nil, expectedErr
 			},
 		}
@@ -123,7 +144,7 @@ func TestNewHeaderVerifier_FetchHeaderByHashAndShard_ShouldFail(t *testing.T) {
 
 		expectedErr := errors.New("fail to fetch shard block")
 		rawHeaderHandler := &mock.RawHeaderHandlerStub{
-			GetShardBlockByHashCalled: func(_ uint32, _ string) (*block.Header, error) {
+			GetShardBlockByHashCalled: func(_ uint32, _ string) (data.HeaderHandler, error) {
 				return nil, expectedErr
 			},
 		}
@@ -151,10 +172,10 @@ func TestNewHeaderVerifier_FetchHeaderByHashAndShard_ShouldWork(t *testing.T) {
 	}
 
 	rawHeaderHandler := &mock.RawHeaderHandlerStub{
-		GetMetaBlockByHashCalled: func(_ string) (*block.MetaBlock, error) {
+		GetMetaBlockByHashCalled: func(_ string) (data.MetaHeaderHandler, error) {
 			return expectedMetaBlock, nil
 		},
-		GetShardBlockByHashCalled: func(_ uint32, _ string) (*block.Header, error) {
+		GetShardBlockByHashCalled: func(_ uint32, _ string) (data.HeaderHandler, error) {
 			return expectedShardBlock, nil
 		},
 	}

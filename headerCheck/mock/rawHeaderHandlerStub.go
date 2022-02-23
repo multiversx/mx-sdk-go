@@ -3,19 +3,19 @@ package mock
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-go-core/data/block"
+	"github.com/ElrondNetwork/elrond-go-core/data"
 	state "github.com/ElrondNetwork/elrond-go/state"
 )
 
 // RawHeaderHandlerStub -
 type RawHeaderHandlerStub struct {
-	GetMetaBlockByHashCalled        func(hash string) (*block.MetaBlock, error)
-	GetShardBlockByHashCalled       func(shardId uint32, hash string) (*block.Header, error)
+	GetMetaBlockByHashCalled        func(hash string) (data.MetaHeaderHandler, error)
+	GetShardBlockByHashCalled       func(shardId uint32, hash string) (data.HeaderHandler, error)
 	GetValidatorsInfoPerEpochCalled func(epoch uint32) ([]*state.ShardValidatorInfo, []byte, error)
 }
 
 // GetMetaBlockByHash -
-func (rh *RawHeaderHandlerStub) GetMetaBlockByHash(_ context.Context, hash string) (*block.MetaBlock, error) {
+func (rh *RawHeaderHandlerStub) GetMetaBlockByHash(_ context.Context, hash string) (data.MetaHeaderHandler, error) {
 	if rh.GetMetaBlockByHashCalled != nil {
 		return rh.GetMetaBlockByHashCalled(hash)
 	}
@@ -23,7 +23,7 @@ func (rh *RawHeaderHandlerStub) GetMetaBlockByHash(_ context.Context, hash strin
 }
 
 // GetShardBlockByHash -
-func (rh *RawHeaderHandlerStub) GetShardBlockByHash(_ context.Context, shardId uint32, hash string) (*block.Header, error) {
+func (rh *RawHeaderHandlerStub) GetShardBlockByHash(_ context.Context, shardId uint32, hash string) (data.HeaderHandler, error) {
 	if rh.GetShardBlockByHashCalled != nil {
 		return rh.GetShardBlockByHashCalled(shardId, hash)
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	coreData "github.com/ElrondNetwork/elrond-go-core/data"
-	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go/state"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -23,8 +22,8 @@ type Proxy interface {
 
 // RawHeaderHandler holds the behaviour needed to handler raw header data from proxy
 type RawHeaderHandler interface {
-	GetMetaBlockByHash(ctx context.Context, hash string) (*block.MetaBlock, error)
-	GetShardBlockByHash(ctx context.Context, shardId uint32, hash string) (*block.Header, error)
+	GetMetaBlockByHash(ctx context.Context, hash string) (coreData.MetaHeaderHandler, error)
+	GetShardBlockByHash(ctx context.Context, shardId uint32, hash string) (coreData.HeaderHandler, error)
 	GetValidatorsInfoPerEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, []byte, error)
 	IsInterfaceNil() bool
 }

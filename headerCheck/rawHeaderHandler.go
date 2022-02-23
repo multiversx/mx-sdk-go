@@ -6,6 +6,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data"
 	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	"github.com/ElrondNetwork/elrond-go/state"
@@ -33,7 +34,7 @@ func NewRawHeaderHandler(proxy Proxy, marshaller marshal.Marshalizer) (*rawHeade
 
 // GetMetaBlockByHash will return the MetaBlock based on the raw marshalized
 // data from proxy
-func (rh *rawHeaderHandler) GetMetaBlockByHash(ctx context.Context, hash string) (*block.MetaBlock, error) {
+func (rh *rawHeaderHandler) GetMetaBlockByHash(ctx context.Context, hash string) (data.MetaHeaderHandler, error) {
 	metaBlockBytes, err := rh.proxy.GetRawBlockByHash(ctx, core.MetachainShardId, hash)
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func (rh *rawHeaderHandler) GetMetaBlockByHash(ctx context.Context, hash string)
 
 // GetShardBlockByHash will return the Header based on the raw marshalized data
 // from proxy
-func (rh *rawHeaderHandler) GetShardBlockByHash(ctx context.Context, shardId uint32, hash string) (*block.Header, error) {
+func (rh *rawHeaderHandler) GetShardBlockByHash(ctx context.Context, shardId uint32, hash string) (data.HeaderHandler, error) {
 	metaBlockBytes, err := rh.proxy.GetRawBlockByHash(ctx, shardId, hash)
 	if err != nil {
 		return nil, err
@@ -89,22 +90,18 @@ func (rh *rawHeaderHandler) GetValidatorsInfoPerEpoch(ctx context.Context, epoch
 func (rh *rawHeaderHandler) getMetaBlockAndRandomnessForEpoch(
 	ctx context.Context,
 	epoch uint32,
-	metaBlock *block.MetaBlock,
-) (*block.MetaBlock, []byte, error) {
+	metaBlock data.MetaHeaderHandler,
+) (data.MetaHeaderHandler, []byte, error) {
 	var err error
 	randomness := metaBlock.GetPrevRandSeed()
 	currEpoch := metaBlock.GetEpoch()
 
-	for epoch <= currEpoch {
+	for epoch < currEpoch {
 		if epoch == 0 {
 			break
 		}
 
-		if epoch == currEpoch {
-			break
-		}
-
-		newHash := hex.EncodeToString(metaBlock.EpochStart.Economics.PrevEpochStartHash)
+		newHash := hex.EncodeToString(metaBlock.GetEpochStartHandler().GetEconomicsHandler().GetPrevEpochStartHash())
 		metaBlock, err = rh.GetMetaBlockByHash(ctx, newHash)
 		if err != nil {
 			return nil, nil, err
@@ -120,7 +117,7 @@ func (rh *rawHeaderHandler) getMetaBlockAndRandomnessForEpoch(
 	return metaBlock, randomness, err
 }
 
-func (rh *rawHeaderHandler) getLastStartOfEpochMetaBlock(ctx context.Context) (*block.MetaBlock, error) {
+func (rh *rawHeaderHandler) getLastStartOfEpochMetaBlock(ctx context.Context) (data.MetaHeaderHandler, error) {
 	nonce, err := rh.proxy.GetNonceAtEpochStart(ctx, core.MetachainShardId)
 	if err != nil {
 		return nil, err
@@ -140,10 +137,10 @@ func (rh *rawHeaderHandler) getLastStartOfEpochMetaBlock(ctx context.Context) (*
 	return blockHeader, nil
 }
 
-func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock *block.MetaBlock) ([]*state.ShardValidatorInfo, error) {
+func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock data.HeaderHandler) ([]*state.ShardValidatorInfo, error) {
 	allValidatorInfo := make([]*state.ShardValidatorInfo, 0)
-	for _, miniBlockHeader := range metaBlock.MiniBlockHeaders {
-		hash := hex.EncodeToString(miniBlockHeader.Hash)
+	for _, miniBlockHeader := range metaBlock.GetMiniBlockHeaderHandlers() {
+		hash := hex.EncodeToString(miniBlockHeader.GetHash())
 
 		miniBlock, err := rh.getMiniBlockByHash(ctx, core.MetachainShardId, hash)
 		if err != nil {
