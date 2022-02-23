@@ -46,12 +46,22 @@ func (b *Blockchain) GetCurrentBlockHeaderHash() []byte {
 func (b *Blockchain) SetCurrentBlockHeaderHash(_ []byte) {
 }
 
-// IsInterfaceNil returns true if there is no value under the interface
-func (b *Blockchain) IsInterfaceNil() bool {
-	return b == nil
-}
-
 // CreateNewHeader returns nil
 func (b *Blockchain) CreateNewHeader() data.HeaderHandler {
 	return nil
+}
+
+// GetCurrentBlockRootHash returns nil
+func (b *Blockchain) GetCurrentBlockRootHash() []byte {
+	return nil
+}
+
+// SetCurrentBlockHeaderAndRootHash return nil
+func (b *Blockchain) SetCurrentBlockHeaderAndRootHash(bh data.HeaderHandler, rootHash []byte) error {
+	return nil
+}
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (b *Blockchain) IsInterfaceNil() bool {
+	return b == nil
 }
