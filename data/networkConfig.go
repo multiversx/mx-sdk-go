@@ -25,6 +25,6 @@ type NetworkConfig struct {
 	RoundDuration            int64   `json:"erd_round_duration"`
 	ShardConsensusGroupSize  uint64  `json:"erd_shard_consensus_group_size"`
 	StartTime                int64   `json:"erd_start_time"`
-	Adaptivity               bool    `json:"erd_adaptivity"`
-	Hysteresys               float32 `json:"erd_hysteresis"`
+	Adaptivity               bool    `json:"erd_adaptivity,string"`
+	Hysteresys               float32 `json:"erd_hysteresis,string"`
 }
