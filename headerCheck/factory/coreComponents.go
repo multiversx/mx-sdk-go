@@ -110,20 +110,11 @@ func createRatingsConfig(rd *data.RatingsConfig) config.RatingsConfig {
 		},
 	}
 
-	peerHonesty := config.PeerHonestyConfig{
-		DecayCoefficient:             rd.PeerhonestyDecayCoefficient,
-		DecayUpdateIntervalInSeconds: rd.PeerhonestyDecayUpdateIntervalInseconds,
-		MaxScore:                     rd.PeerhonestyMaxScore,
-		MinScore:                     rd.PeerhonestyMinScore,
-		BadPeerThreshold:             rd.PeerhonestyBadPeerThreshold,
-		UnitValue:                    rd.PeerhonestyUnitValue,
-	}
-
 	ratingsConfig := config.RatingsConfig{
 		General:     general,
 		ShardChain:  shardChain,
 		MetaChain:   metaChain,
-		PeerHonesty: peerHonesty,
+		PeerHonesty: config.PeerHonestyConfig{},
 	}
 
 	return ratingsConfig
