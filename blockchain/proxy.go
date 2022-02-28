@@ -37,6 +37,7 @@ const (
 	getRawBlockByHashEndpoint     = "internal/%d/raw/block/by-hash/%s"
 	getRawBlockByNonceEndpoint    = "internal/%d/raw/block/by-nonce/%d"
 	getRawMiniBlockByHashEndpoint = "internal/%d/raw/miniblock/by-hash/%s/epoch/%d"
+	getRawStartOfEpochMetaBlock   = "internal/raw/startofepoch/metablock/by-epoch/%d"
 )
 
 // HTTPClient is the interface we expect to call in order to do the HTTP requests
@@ -389,6 +390,13 @@ func (ep *elrondProxy) GetRawBlockByHash(ctx context.Context, shardId uint32, ha
 // GetRawBlockByNonce retrieves a raw block by hash from the network
 func (ep *elrondProxy) GetRawBlockByNonce(ctx context.Context, shardId uint32, nonce uint64) ([]byte, error) {
 	endpoint := fmt.Sprintf(getRawBlockByNonceEndpoint, shardId, nonce)
+
+	return ep.getRawBlock(ctx, endpoint)
+}
+
+// GetRawStartOfEpochMetaBlock retrieves a raw block by hash from the network
+func (ep *elrondProxy) GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error) {
+	endpoint := fmt.Sprintf(getRawStartOfEpochMetaBlock, epoch)
 
 	return ep.getRawBlock(ctx, endpoint)
 }

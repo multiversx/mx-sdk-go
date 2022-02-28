@@ -17,6 +17,7 @@ type Proxy interface {
 	GetRawMiniBlockByHash(ctx context.Context, shardId uint32, hash string, epoch uint32) ([]byte, error)
 	GetRawBlockByNonce(ctx context.Context, shardId uint32, nonce uint64) ([]byte, error)
 	GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
+	GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error)
 	IsInterfaceNil() bool
 }
 

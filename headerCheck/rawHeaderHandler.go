@@ -66,64 +66,10 @@ func (rh *rawHeaderHandler) GetShardBlockByHash(ctx context.Context, shardId uin
 	return blockHeader, nil
 }
 
-// GetValidatorsInfoPerEpoch will return validators info based on start of
-// epoch metablock for a specific epoch
-func (rh *rawHeaderHandler) GetValidatorsInfoPerEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, []byte, error) {
-	lastStartOfEpochMetaBlock, err := rh.getLastStartOfEpochMetaBlock(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	metaBlock, randomness, err := rh.getMetaBlockAndRandomnessForEpoch(ctx, epoch, lastStartOfEpochMetaBlock)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	validatorsInfoPerEpoch, err := rh.getValidatorsInfo(ctx, metaBlock)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return validatorsInfoPerEpoch, randomness, nil
-}
-
-func (rh *rawHeaderHandler) getMetaBlockAndRandomnessForEpoch(
-	ctx context.Context,
-	epoch uint32,
-	metaBlock data.MetaHeaderHandler,
-) (data.MetaHeaderHandler, []byte, error) {
-	var err error
-	randomness := metaBlock.GetPrevRandSeed()
-	currEpoch := metaBlock.GetEpoch()
-
-	for epoch < currEpoch {
-		if epoch == 0 {
-			break
-		}
-
-		newHash := hex.EncodeToString(metaBlock.GetEpochStartHandler().GetEconomicsHandler().GetPrevEpochStartHash())
-		metaBlock, err = rh.GetMetaBlockByHash(ctx, newHash)
-		if err != nil {
-			return nil, nil, err
-		}
-		if metaBlock == nil {
-			break
-		}
-
-		randomness = metaBlock.GetPrevRandSeed()
-		currEpoch = metaBlock.GetEpoch()
-	}
-
-	return metaBlock, randomness, err
-}
-
-func (rh *rawHeaderHandler) getLastStartOfEpochMetaBlock(ctx context.Context) (data.MetaHeaderHandler, error) {
-	nonce, err := rh.proxy.GetNonceAtEpochStart(ctx, core.MetachainShardId)
-	if err != nil {
-		return nil, err
-	}
-
-	metaBlockBytes, err := rh.proxy.GetRawBlockByNonce(ctx, core.MetachainShardId, uint64(nonce))
+// GetStartOfEpochMetaBlock will return the start of epoch metablock based on
+// the raw marshalized data from proxy
+func (rh *rawHeaderHandler) GetStartOfEpochMetaBlock(ctx context.Context, epoch uint32) (data.MetaHeaderHandler, error) {
+	metaBlockBytes, err := rh.proxy.GetRawStartOfEpochMetaBlock(ctx, epoch)
 	if err != nil {
 		return nil, err
 	}
@@ -135,6 +81,23 @@ func (rh *rawHeaderHandler) getLastStartOfEpochMetaBlock(ctx context.Context) (d
 	}
 
 	return blockHeader, nil
+}
+
+// GetValidatorsInfoPerEpoch will return validators info based on start of
+// epoch metablock for a specific epoch
+func (rh *rawHeaderHandler) GetValidatorsInfoPerEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, []byte, error) {
+	metaBlock, err := rh.GetStartOfEpochMetaBlock(ctx, epoch)
+	if err != nil {
+		return nil, nil, err
+	}
+	randomness := metaBlock.GetPrevRandSeed()
+
+	validatorsInfoPerEpoch, err := rh.getValidatorsInfo(ctx, metaBlock)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return validatorsInfoPerEpoch, randomness, nil
 }
 
 func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock data.HeaderHandler) ([]*state.ShardValidatorInfo, error) {
