@@ -142,7 +142,7 @@ func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock dat
 	for _, miniBlockHeader := range metaBlock.GetMiniBlockHeaderHandlers() {
 		hash := hex.EncodeToString(miniBlockHeader.GetHash())
 
-		miniBlock, err := rh.getMiniBlockByHash(ctx, core.MetachainShardId, hash)
+		miniBlock, err := rh.getMiniBlockByHash(ctx, core.MetachainShardId, hash, metaBlock.GetEpoch())
 		if err != nil {
 			return nil, err
 		}
@@ -165,8 +165,8 @@ func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock dat
 	return allValidatorInfo, nil
 }
 
-func (rh *rawHeaderHandler) getMiniBlockByHash(ctx context.Context, shardId uint32, hash string) (*block.MiniBlock, error) {
-	miniBlockBytes, err := rh.proxy.GetRawMiniBlockByHash(ctx, core.MetachainShardId, hash)
+func (rh *rawHeaderHandler) getMiniBlockByHash(ctx context.Context, shardId uint32, hash string, epoch uint32) (*block.MiniBlock, error) {
+	miniBlockBytes, err := rh.proxy.GetRawMiniBlockByHash(ctx, core.MetachainShardId, hash, epoch)
 	if err != nil {
 		return nil, err
 	}
