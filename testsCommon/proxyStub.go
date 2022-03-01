@@ -9,17 +9,18 @@ import (
 
 // ProxyStub -
 type ProxyStub struct {
-	GetNetworkConfigCalled      func() (*data.NetworkConfig, error)
-	GetRatingsConfigCalled      func() (*data.RatingsConfig, error)
-	GetEnableEpochsConfigCalled func() (*data.EnableEpochsConfig, error)
-	GetAccountCalled            func(address core.AddressHandler) (*data.Account, error)
-	SendTransactionCalled       func(tx *data.Transaction) (string, error)
-	SendTransactionsCalled      func(txs []*data.Transaction) ([]string, error)
-	ExecuteVMQueryCalled        func(vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
-	GetNonceAtEpochStartCalled  func(shardId uint32) (uint64, error)
-	GetRawMiniBlockByHashCalled func(shardId uint32, hash string) ([]byte, error)
-	GetRawBlockByNonceCalled    func(shardId uint32, nonce uint64) ([]byte, error)
-	GetRawBlockByHashCalled     func(shardId uint32, hash string) ([]byte, error)
+	GetNetworkConfigCalled            func() (*data.NetworkConfig, error)
+	GetRatingsConfigCalled            func() (*data.RatingsConfig, error)
+	GetEnableEpochsConfigCalled       func() (*data.EnableEpochsConfig, error)
+	GetAccountCalled                  func(address core.AddressHandler) (*data.Account, error)
+	SendTransactionCalled             func(tx *data.Transaction) (string, error)
+	SendTransactionsCalled            func(txs []*data.Transaction) ([]string, error)
+	ExecuteVMQueryCalled              func(vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
+	GetNonceAtEpochStartCalled        func(shardId uint32) (uint64, error)
+	GetRawMiniBlockByHashCalled       func(shardId uint32, hash string, epoch uint32) ([]byte, error)
+	GetRawBlockByNonceCalled          func(shardId uint32, nonce uint64) ([]byte, error)
+	GetRawBlockByHashCalled           func(shardId uint32, hash string) ([]byte, error)
+	GetRawStartOfEpochMetaBlockCalled func(epoch uint32) ([]byte, error)
 }
 
 // ExecuteVMQuery -
@@ -95,9 +96,9 @@ func (stub *ProxyStub) GetNonceAtEpochStart(_ context.Context, shardId uint32) (
 }
 
 // GetRawMiniBlockByHash -
-func (stub *ProxyStub) GetRawMiniBlockByHash(_ context.Context, shardId uint32, hash string) ([]byte, error) {
+func (stub *ProxyStub) GetRawMiniBlockByHash(_ context.Context, shardId uint32, hash string, epoch uint32) ([]byte, error) {
 	if stub.GetRawMiniBlockByHashCalled != nil {
-		return stub.GetRawMiniBlockByHashCalled(shardId, hash)
+		return stub.GetRawMiniBlockByHashCalled(shardId, hash, epoch)
 	}
 
 	return []byte{}, nil
@@ -116,6 +117,15 @@ func (stub *ProxyStub) GetRawBlockByNonce(_ context.Context, shardId uint32, non
 func (stub *ProxyStub) GetRawBlockByHash(_ context.Context, shardId uint32, hash string) ([]byte, error) {
 	if stub.GetRawBlockByHashCalled != nil {
 		return stub.GetRawBlockByHashCalled(shardId, hash)
+	}
+
+	return []byte{}, nil
+}
+
+// GetRawStartOfEpochMetaBlock -
+func (stub *ProxyStub) GetRawStartOfEpochMetaBlock(_ context.Context, epoch uint32) ([]byte, error) {
+	if stub.GetRawStartOfEpochMetaBlockCalled != nil {
+		return stub.GetRawStartOfEpochMetaBlockCalled(epoch)
 	}
 
 	return []byte{}, nil

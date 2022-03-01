@@ -2,7 +2,6 @@ package headerCheck_test
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -166,8 +165,6 @@ func TestGetShardBlockByHash_ShouldWork(t *testing.T) {
 func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 	t.Parallel()
 
-	prevEpochStartHash := []byte("prev epoch start hash")
-
 	miniBlockHeaders := []block.MiniBlockHeader{
 		{
 			Hash:            []byte("hash1"),
@@ -178,17 +175,6 @@ func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 	}
 
 	expectedRandomness := []byte("prev rand seed")
-	lastMetaBlock := &block.MetaBlock{
-		Nonce:        2,
-		Epoch:        2,
-		PrevRandSeed: expectedRandomness,
-		EpochStart: block.EpochStart{
-			Economics: block.Economics{
-				PrevEpochStartHash: prevEpochStartHash,
-			},
-		},
-	}
-	lastMetaBlockBytes, _ := json.Marshal(lastMetaBlock)
 
 	metaBlock := &block.MetaBlock{
 		Nonce:            1,
@@ -215,18 +201,11 @@ func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 	miniBlockBytes, _ := json.Marshal(miniBlock)
 
 	proxy := &testsCommon.ProxyStub{
-		GetNonceAtEpochStartCalled: func(shardId uint32) (uint64, error) {
-			return 2, nil
-		},
-		GetRawBlockByHashCalled: func(shardId uint32, hash string) ([]byte, error) {
-			require.Equal(t, hex.EncodeToString(prevEpochStartHash), hash)
-			return metaBlockBytes, nil
-		},
-		GetRawBlockByNonceCalled: func(shardId uint32, nonce uint64) ([]byte, error) {
-			return lastMetaBlockBytes, nil
-		},
-		GetRawMiniBlockByHashCalled: func(shardId uint32, hash string) ([]byte, error) {
+		GetRawMiniBlockByHashCalled: func(shardId uint32, hash string, epoch uint32) ([]byte, error) {
 			return miniBlockBytes, nil
+		},
+		GetRawStartOfEpochMetaBlockCalled: func(epoch uint32) ([]byte, error) {
+			return metaBlockBytes, nil
 		},
 	}
 
