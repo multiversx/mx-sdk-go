@@ -298,7 +298,7 @@ func TestElrondProxy_GetRawMiniBlockByHash(t *testing.T) {
 	}
 	ep := NewElrondProxy("http://localhost:8079", httpClient)
 
-	response, err := ep.GetRawMiniBlockByHash(context.Background(), 0, "aaaa")
+	response, err := ep.GetRawMiniBlockByHash(context.Background(), 0, "aaaa", 1)
 	require.Nil(t, err)
 
 	ts := &testStruct{}
