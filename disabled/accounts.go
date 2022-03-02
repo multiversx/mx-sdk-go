@@ -60,6 +60,11 @@ func (a *Accounts) Commit() ([]byte, error) {
 	return nil, nil
 }
 
+// CommitInEpoch returns nil byte slice and nil
+func (a *Accounts) CommitInEpoch(uint32, uint32) ([]byte, error) {
+	return nil, nil
+}
+
 // GetExistingAccount returns nil  account handler and nil error
 func (a *Accounts) GetExistingAccount(_ []byte) (vmcommon.AccountHandler, error) {
 	return nil, nil

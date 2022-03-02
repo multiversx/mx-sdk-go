@@ -20,6 +20,8 @@ const (
 	// endpoints
 	networkConfigEndpoint            = "network/config"
 	networkEconomicsEndpoint         = "network/economics"
+	ratingsConfigEndpoint            = "network/ratings"
+	enableEpochsConfigEndpoint       = "network/enable-epochs"
 	accountEndpoint                  = "address/%s"
 	costTransactionEndpoint          = "transaction/cost"
 	sendTransactionEndpoint          = "transaction/send"
@@ -31,6 +33,11 @@ const (
 	getNetworkStatusEndpoint         = "network/status/%v"
 	withResultsQueryParam            = "?withResults=true"
 	vmValuesEndpoint                 = "vm-values/query"
+
+	getRawBlockByHashEndpoint     = "internal/%d/raw/block/by-hash/%s"
+	getRawBlockByNonceEndpoint    = "internal/%d/raw/block/by-nonce/%d"
+	getRawMiniBlockByHashEndpoint = "internal/%d/raw/miniblock/by-hash/%s/epoch/%d"
+	getRawStartOfEpochMetaBlock   = "internal/raw/startofepoch/metablock/by-epoch/%d"
 )
 
 // HTTPClient is the interface we expect to call in order to do the HTTP requests
@@ -373,6 +380,90 @@ func (ep *elrondProxy) getHyperBlock(ctx context.Context, endpoint string) (*dat
 	return &response.Data.HyperBlock, nil
 }
 
+// GetRawBlockByHash retrieves a raw block by hash from the network
+func (ep *elrondProxy) GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error) {
+	endpoint := fmt.Sprintf(getRawBlockByHashEndpoint, shardId, hash)
+
+	return ep.getRawBlock(ctx, endpoint)
+}
+
+// GetRawBlockByNonce retrieves a raw block by hash from the network
+func (ep *elrondProxy) GetRawBlockByNonce(ctx context.Context, shardId uint32, nonce uint64) ([]byte, error) {
+	endpoint := fmt.Sprintf(getRawBlockByNonceEndpoint, shardId, nonce)
+
+	return ep.getRawBlock(ctx, endpoint)
+}
+
+// GetRawStartOfEpochMetaBlock retrieves a raw block by hash from the network
+func (ep *elrondProxy) GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error) {
+	endpoint := fmt.Sprintf(getRawStartOfEpochMetaBlock, epoch)
+
+	return ep.getRawBlock(ctx, endpoint)
+}
+
+func (ep *elrondProxy) getRawBlock(ctx context.Context, endpoint string) ([]byte, error) {
+	buff, err := ep.GetHTTP(ctx, endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &data.RawBlockRespone{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.Block, nil
+}
+
+// GetRawMiniBlockByHash retrieves a raw block by hash from the network
+func (ep *elrondProxy) GetRawMiniBlockByHash(ctx context.Context, shardId uint32, hash string, epoch uint32) ([]byte, error) {
+	endpoint := fmt.Sprintf(getRawMiniBlockByHashEndpoint, shardId, hash, epoch)
+
+	return ep.getRawMiniBlock(ctx, endpoint)
+}
+
+func (ep *elrondProxy) getRawMiniBlock(ctx context.Context, endpoint string) ([]byte, error) {
+	buff, err := ep.GetHTTP(ctx, endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &data.RawMiniBlockRespone{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.MiniBlock, nil
+}
+
+// GetNonceAtEpochStart retrieves the start of epoch nonce from hyper block (metachain)
+func (ep *elrondProxy) GetNonceAtEpochStart(ctx context.Context, shardId uint32) (uint64, error) {
+	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, shardId)
+	buff, err := ep.GetHTTP(ctx, endpoint)
+	if err != nil {
+		return 0, err
+	}
+
+	response := &data.NetworkStatusResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return 0, err
+	}
+	if response.Error != "" {
+		return 0, errors.New(response.Error)
+	}
+
+	return response.Data.Status.NonceAtEpochStart, nil
+}
+
 // GetHTTP does a GET method operation on the specified endpoint
 func (ep *elrondProxy) GetHTTP(ctx context.Context, endpoint string) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", ep.proxyURL, endpoint)
@@ -416,6 +507,44 @@ func (ep *elrondProxy) PostHTTP(ctx context.Context, endpoint string, data []byt
 	}()
 
 	return ioutil.ReadAll(response.Body)
+}
+
+// GetRatingsConfig retrieves the ratings configuration from the proxy
+func (ep *elrondProxy) GetRatingsConfig(ctx context.Context) (*data.RatingsConfig, error) {
+	buff, err := ep.GetHTTP(ctx, ratingsConfigEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &data.RatingsConfigResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.Config, nil
+}
+
+// GetEnableEpochsConfig retrieves the ratings configuration from the proxy
+func (ep *elrondProxy) GetEnableEpochsConfig(ctx context.Context) (*data.EnableEpochsConfig, error) {
+	buff, err := ep.GetHTTP(ctx, enableEpochsConfigEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &data.EnableEpochsConfigResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.Config, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

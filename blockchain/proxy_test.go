@@ -12,12 +12,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const testHttpURL = "https://test.org"
+
+type testStruct struct {
+	Nonce int
+	Name  string
+}
 
 type mockHTTPClient struct {
 	lastRequest *http.Request
@@ -198,4 +204,191 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 	})
 	require.Nil(t, err)
 	require.Equal(t, "0.5.5", string(response.Data.ReturnData[0]))
+}
+
+func TestElrondProxy_GetRawBlockByHash(t *testing.T) {
+	expectedTs := &testStruct{
+		Nonce: 1,
+		Name:  "a test struct to be sent and received",
+	}
+	responseBytes, _ := json.Marshal(expectedTs)
+	rawBlockData := &data.RawBlockRespone{
+		Data: struct {
+			Block []byte "json:\"block\""
+		}{
+			Block: responseBytes,
+		},
+		Error: "",
+		Code:  "200",
+	}
+	rawBlockDataBytes, _ := json.Marshal(rawBlockData)
+
+	httpClient := &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body: ioutil.NopCloser(bytes.NewReader(rawBlockDataBytes)),
+			}, nil
+		},
+	}
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
+
+	response, err := ep.GetRawBlockByHash(context.Background(), 0, "aaaa")
+	require.Nil(t, err)
+
+	ts := &testStruct{}
+	err = json.Unmarshal(response, ts)
+	require.Nil(t, err)
+	require.Equal(t, expectedTs, ts)
+}
+
+func TestElrondProxy_GetRawBlockByNonce(t *testing.T) {
+	expectedTs := &testStruct{
+		Nonce: 10,
+		Name:  "a test struct to be sent and received",
+	}
+	responseBytes, _ := json.Marshal(expectedTs)
+	rawBlockData := &data.RawBlockRespone{
+		Data: struct {
+			Block []byte "json:\"block\""
+		}{
+			Block: responseBytes,
+		},
+	}
+	rawBlockDataBytes, _ := json.Marshal(rawBlockData)
+
+	httpClient := &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body: ioutil.NopCloser(bytes.NewReader(rawBlockDataBytes)),
+			}, nil
+		},
+	}
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
+
+	response, err := ep.GetRawBlockByNonce(context.Background(), 0, 10)
+	require.Nil(t, err)
+
+	ts := &testStruct{}
+	err = json.Unmarshal(response, ts)
+	require.Nil(t, err)
+	require.Equal(t, expectedTs, ts)
+}
+
+func TestElrondProxy_GetRawMiniBlockByHash(t *testing.T) {
+	expectedTs := &testStruct{
+		Nonce: 10,
+		Name:  "a test struct to be sent and received",
+	}
+	responseBytes, _ := json.Marshal(expectedTs)
+	rawBlockData := &data.RawMiniBlockRespone{
+		Data: struct {
+			MiniBlock []byte "json:\"miniblock\""
+		}{
+			MiniBlock: responseBytes,
+		},
+	}
+	rawBlockDataBytes, _ := json.Marshal(rawBlockData)
+
+	httpClient := &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body: ioutil.NopCloser(bytes.NewReader(rawBlockDataBytes)),
+			}, nil
+		},
+	}
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
+
+	response, err := ep.GetRawMiniBlockByHash(context.Background(), 0, "aaaa", 1)
+	require.Nil(t, err)
+
+	ts := &testStruct{}
+	err = json.Unmarshal(response, ts)
+	require.Nil(t, err)
+	require.Equal(t, expectedTs, ts)
+}
+
+func TestElrondProxy_GetNonceAtEpochStart(t *testing.T) {
+	expectedNonce := uint64(2)
+	expectedNetworkStatus := &data.NetworkStatus{
+		NonceAtEpochStart: expectedNonce,
+	}
+	statusResponse := &data.NetworkStatusResponse{
+		Data: struct {
+			Status *data.NetworkStatus "json:\"status\""
+		}{
+			Status: expectedNetworkStatus,
+		},
+	}
+	statusResponseBytes, _ := json.Marshal(statusResponse)
+
+	httpClient := &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body: ioutil.NopCloser(bytes.NewReader(statusResponseBytes)),
+			}, nil
+		},
+	}
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
+
+	response, err := ep.GetNonceAtEpochStart(context.Background(), core.MetachainShardId)
+	require.Nil(t, err)
+
+	require.Equal(t, expectedNonce, response)
+}
+
+func TestElrondProxy_GetRatingsConfig(t *testing.T) {
+	expectedRatingsConfig := &data.RatingsConfig{
+		GeneralMaxRating: 0,
+		GeneralMinRating: 0,
+	}
+	ratingsResponse := &data.RatingsConfigResponse{
+		Data: struct {
+			Config *data.RatingsConfig "json:\"config\""
+		}{
+			Config: expectedRatingsConfig,
+		},
+	}
+	ratingsResponseBytes, _ := json.Marshal(ratingsResponse)
+
+	httpClient := &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body: ioutil.NopCloser(bytes.NewReader(ratingsResponseBytes)),
+			}, nil
+		},
+	}
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
+
+	response, err := ep.GetRatingsConfig(context.Background())
+	require.Nil(t, err)
+
+	require.Equal(t, expectedRatingsConfig, response)
+}
+
+func TestElrondProxy_GetEnableEpochsConfig(t *testing.T) {
+	expectedEnableEpochsConfig := &data.EnableEpochsConfig{
+		BalanceWaitingListsEnableEpoch: 1,
+		WaitingListFixEnableEpoch:      1,
+	}
+	enableEpochsResponse := &data.EnableEpochsConfigResponse{
+		Data: struct {
+			Config *data.EnableEpochsConfig "json:\"enableEpochs\""
+		}{
+			Config: expectedEnableEpochsConfig},
+	}
+	enableEpochsResponseBytes, _ := json.Marshal(enableEpochsResponse)
+
+	httpClient := &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body: ioutil.NopCloser(bytes.NewReader(enableEpochsResponseBytes)),
+			}, nil
+		},
+	}
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
+
+	response, err := ep.GetEnableEpochsConfig(context.Background())
+	require.Nil(t, err)
+
+	require.Equal(t, expectedEnableEpochsConfig, response)
 }
