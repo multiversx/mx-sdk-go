@@ -26,6 +26,7 @@ func CreateNodesCoordinator(
 	publicKey crypto.PublicKey,
 ) (nodesCoordinator.EpochsConfigUpdateHandler, error) {
 
+	// TODO: manage epoch 0 from real nodes config
 	waitingMap := make(map[uint32][]validator)
 	eligibleMap := createDummyNodesMap(networkConfig.MetaConsensusGroup, networkConfig.NumShardsWithoutMeta, hasher)
 

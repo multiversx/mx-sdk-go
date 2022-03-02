@@ -12,7 +12,7 @@ import (
 
 var log = logger.GetOrCreate("elrond-sdk-erdgo/headerCheck")
 
-// ArgsHeaderVerifier hiolds all dependencies required by headerVerifier in
+// ArgsHeaderVerifier holds all dependencies required by headerVerifier in
 // order to create a new instance
 type ArgsHeaderVerifier struct {
 	HeaderHandler     RawHeaderHandler
@@ -26,7 +26,7 @@ type headerVerifier struct {
 	nodesCoordinator  nodesCoordinator.EpochsConfigUpdateHandler
 }
 
-// NewHeaderVerifier create new instance of headerVerifier
+// NewHeaderVerifier creates new instance of headerVerifier
 func NewHeaderVerifier(args ArgsHeaderVerifier) (*headerVerifier, error) {
 	err := checkArguments(args)
 	if err != nil {
