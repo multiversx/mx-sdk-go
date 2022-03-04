@@ -42,6 +42,11 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		return nil, err
 	}
 
+	genesisNodesConfig, err := proxy.GetGenesisNodesConfig(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
 	nodesCoordinator, err := factory.CreateNodesCoordinator(
 		coreComp.Hasher,
 		coreComp.Marshaller,
@@ -49,6 +54,7 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		networkConfig,
 		enableEpochsConfig,
 		cryptoComp.PublicKey,
+		genesisNodesConfig,
 	)
 	if err != nil {
 		return nil, err

@@ -33,6 +33,7 @@ const (
 	getNetworkStatusEndpoint         = "network/status/%v"
 	withResultsQueryParam            = "?withResults=true"
 	vmValuesEndpoint                 = "vm-values/query"
+	genesisNodesConfigEndpoint       = "node/genesisnodesconfig"
 
 	getRawBlockByHashEndpoint     = "internal/%d/raw/block/by-hash/%s"
 	getRawBlockByNonceEndpoint    = "internal/%d/raw/block/by-nonce/%d"
@@ -536,6 +537,25 @@ func (ep *elrondProxy) GetEnableEpochsConfig(ctx context.Context) (*data.EnableE
 	}
 
 	response := &data.EnableEpochsConfigResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.Config, nil
+}
+
+// GetGenesisNodesConfig
+func (ep *elrondProxy) GetGenesisNodesConfig(ctx context.Context) (*data.GenesisNodesConfig, error) {
+	buff, err := ep.GetHTTP(ctx, genesisNodesConfigEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &data.GenesisNodesConfigResponse{}
 	err = json.Unmarshal(buff, response)
 	if err != nil {
 		return nil, err

@@ -18,6 +18,7 @@ type Proxy interface {
 	GetRawBlockByNonce(ctx context.Context, shardId uint32, nonce uint64) ([]byte, error)
 	GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
 	GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error)
+	GetGenesisNodesConfig(ctx context.Context) (*data.GenesisNodesConfig, error)
 	IsInterfaceNil() bool
 }
 
