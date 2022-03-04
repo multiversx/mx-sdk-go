@@ -9,6 +9,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/data"
 	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
+	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/state"
 )
 
@@ -52,13 +53,12 @@ func (rh *rawHeaderHandler) GetMetaBlockByHash(ctx context.Context, hash string)
 // GetShardBlockByHash will return the Header based on the raw marshalized data
 // from proxy
 func (rh *rawHeaderHandler) GetShardBlockByHash(ctx context.Context, shardId uint32, hash string) (data.HeaderHandler, error) {
-	metaBlockBytes, err := rh.proxy.GetRawBlockByHash(ctx, shardId, hash)
+	headerBytes, err := rh.proxy.GetRawBlockByHash(ctx, shardId, hash)
 	if err != nil {
 		return nil, err
 	}
 
-	blockHeader := &block.Header{}
-	err = rh.marshaller.Unmarshal(blockHeader, metaBlockBytes)
+	blockHeader, err := process.CreateShardHeader(rh.marshaller, headerBytes)
 	if err != nil {
 		return nil, err
 	}
