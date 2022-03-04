@@ -8,12 +8,13 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
-	commonFactory "github.com/ElrondNetwork/elrond-go/common/factory"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
 )
+
+const defaultSelectionChances = uint32(1)
 
 type initialNode struct {
 	assignedShard uint32
@@ -23,17 +24,11 @@ type initialNode struct {
 	initialRating uint32
 }
 
-func NewInitialNode(pubKeyConverter core.PubkeyConverter, pubKey string, address string, rating uint32) (*initialNode, error) {
-	pubKeyBytes, err := pubKeyConverter.Decode(pubKey)
-	if err != nil {
-		return nil, err
-	}
-
+func NewInitialNode(pubKey []byte) *initialNode {
 	return &initialNode{
-		pubKey:        pubKeyBytes,
-		address:       []byte(address),
-		initialRating: rating,
-	}, nil
+		pubKey:  pubKey,
+		address: []byte{},
+	}
 }
 
 func (in *initialNode) AssignedShard() uint32    { return in.assignedShard }
@@ -45,54 +40,49 @@ func (in *initialNode) IsInterfaceNil() bool     { return in == nil }
 type validator = nodesCoordinator.Validator
 
 func convertGenesisNodesConfigToValidators(
-	genesisNodesConfig *data.GenesisNodesConfig,
+	genesisNodesConfig *data.GenesisNodes,
 ) (map[uint32][]nodesCoordinator.GenesisNodeInfoHandler,
 	map[uint32][]nodesCoordinator.GenesisNodeInfoHandler) {
-
-	pubkeyConfig := &config.PubkeyConfig{
-		Length:          96,
-		Type:            "hex",
-		SignatureLength: 48,
-	}
-	validatorPubkeyConverter, _ := commonFactory.NewPubkeyConverter(*pubkeyConfig)
 
 	el := genesisNodesConfig.Eligible
 	wt := genesisNodesConfig.Waiting
 
-	eligible := make(map[uint32][]nodesCoordinator.GenesisNodeInfoHandler)
-	waiting := make(map[uint32][]nodesCoordinator.GenesisNodeInfoHandler)
-
-	for shardID, nodes := range el {
-		for _, node := range nodes {
-			nd, err := NewInitialNode(
-				validatorPubkeyConverter,
-				node.PubKey,
-				node.Address,
-				node.InitialRating,
-			)
-			if err != nil {
-				continue
-			}
-			eligible[shardID] = append(eligible[shardID], nd)
-		}
-	}
-
-	for shardID, nodes := range wt {
-		for _, node := range nodes {
-			nd, err := NewInitialNode(
-				validatorPubkeyConverter,
-				node.PubKey,
-				node.Address,
-				node.InitialRating,
-			)
-			if err != nil {
-				continue
-			}
-			waiting[shardID] = append(waiting[shardID], nd)
-		}
-	}
+	eligible := generateGenesisNodes(el)
+	waiting := generateGenesisNodes(wt)
 
 	return eligible, waiting
+}
+
+func generateGenesisNodes(nodesConfig map[uint32][][]byte) map[uint32][]nodesCoordinator.GenesisNodeInfoHandler {
+	nodes := make(map[uint32][]nodesCoordinator.GenesisNodeInfoHandler)
+
+	for shardID, nodesPubKeys := range nodesConfig {
+		for _, pubKey := range nodesPubKeys {
+			nd := NewInitialNode(pubKey)
+			nodes[shardID] = append(nodes[shardID], nd)
+		}
+	}
+
+	return nodes
+}
+
+func generateGenesisNodesV2(nodesConfig map[uint32][][]byte) (map[uint32][]validator, error) {
+	validatorsMap := make(map[uint32][]validator)
+
+	for shardID, nodesPubKeys := range nodesConfig {
+		validators := make([]validator, 0, len(nodesPubKeys))
+		for i, pubKey := range nodesPubKeys {
+			validatorObj, err := nodesCoordinator.NewValidator(pubKey, defaultSelectionChances, uint32(i))
+			if err != nil {
+				return nil, err
+			}
+
+			validators = append(validators, validatorObj)
+		}
+		validatorsMap[shardID] = validators
+	}
+
+	return validatorsMap, nil
 }
 
 // CreateNodesCoordinator creates nodes coordinator which will be used for header verification
@@ -103,7 +93,7 @@ func CreateNodesCoordinator(
 	networkConfig *data.NetworkConfig,
 	enableEpochsConfig *data.EnableEpochsConfig,
 	publicKey crypto.PublicKey,
-	genesisNodesConfig *data.GenesisNodesConfig,
+	genesisNodesConfig *data.GenesisNodes,
 ) (nodesCoordinator.EpochsConfigUpdateHandler, error) {
 
 	fmt.Println(genesisNodesConfig)

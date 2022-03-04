@@ -549,13 +549,13 @@ func (ep *elrondProxy) GetEnableEpochsConfig(ctx context.Context) (*data.EnableE
 }
 
 // GetGenesisNodesConfig
-func (ep *elrondProxy) GetGenesisNodesConfig(ctx context.Context) (*data.GenesisNodesConfig, error) {
+func (ep *elrondProxy) GetGenesisNodesConfig(ctx context.Context) (*data.GenesisNodes, error) {
 	buff, err := ep.GetHTTP(ctx, genesisNodesConfigEndpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	response := &data.GenesisNodesConfigResponse{}
+	response := &data.GenesisNodesResponse{}
 	err = json.Unmarshal(buff, response)
 	if err != nil {
 		return nil, err
