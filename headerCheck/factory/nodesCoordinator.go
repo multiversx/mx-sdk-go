@@ -1,9 +1,8 @@
 package factory
 
 import (
+	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/data/endProcess"
-	"github.com/ElrondNetwork/elrond-go-core/hashing"
-	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
@@ -11,24 +10,24 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
 )
 
-const defaultSelectionChances = uint32(1)
+const (
+	defaultSelectionChances = uint32(1)
+)
 
 // CreateNodesCoordinator creates nodes coordinator which will be used for header verification
 func CreateNodesCoordinator(
-	hasher hashing.Hasher,
-	marshaller marshal.Marshalizer,
-	rater nodesCoordinator.ChanceComputer,
+	coreComp *coreComponents,
 	networkConfig *data.NetworkConfig,
 	enableEpochsConfig *data.EnableEpochsConfig,
 	publicKey crypto.PublicKey,
 	genesisNodesConfig *data.GenesisNodes,
 ) (nodesCoordinator.EpochsConfigUpdateHandler, error) {
-	eligibleValidators, err := generateGenesisNodes(genesisNodesConfig.Eligible)
+	eligibleValidators, err := generateGenesisNodes(coreComp.PubKeyConverter, genesisNodesConfig.Eligible)
 	if err != nil {
 		return nil, err
 	}
 
-	waitingValidators, err := generateGenesisNodes(genesisNodesConfig.Waiting)
+	waitingValidators, err := generateGenesisNodes(coreComp.PubKeyConverter, genesisNodesConfig.Waiting)
 	if err != nil {
 		return nil, err
 	}
@@ -49,10 +48,10 @@ func CreateNodesCoordinator(
 		Epoch:                      initialEpoch,
 		ShardConsensusGroupSize:    int(networkConfig.ShardConsensusGroupSize),
 		MetaConsensusGroupSize:     int(networkConfig.MetaConsensusGroup),
-		Marshalizer:                marshaller,
+		Marshalizer:                coreComp.Marshaller,
 		EpochStartNotifier:         &disabled.EpochStartNotifier{},
 		BootStorer:                 &disabled.Storer{},
-		Hasher:                     hasher,
+		Hasher:                     coreComp.Hasher,
 		NbShards:                   networkConfig.NumShardsWithoutMeta,
 		EligibleNodes:              eligibleValidators,
 		WaitingNodes:               waitingValidators,
@@ -70,7 +69,7 @@ func CreateNodesCoordinator(
 		return nil, err
 	}
 
-	nd, err := nodesCoordinator.NewIndexHashedNodesCoordinatorWithRater(baseNodesCoordinator, rater)
+	nd, err := nodesCoordinator.NewIndexHashedNodesCoordinatorWithRater(baseNodesCoordinator, coreComp.Rater)
 	if err != nil {
 		return nil, err
 	}
@@ -78,13 +77,18 @@ func CreateNodesCoordinator(
 	return nd, nil
 }
 
-func generateGenesisNodes(nodesConfig map[uint32][][]byte) (map[uint32][]nodesCoordinator.Validator, error) {
+func generateGenesisNodes(converter core.PubkeyConverter, nodesConfig map[uint32][]string) (map[uint32][]nodesCoordinator.Validator, error) {
 	validatorsMap := make(map[uint32][]nodesCoordinator.Validator)
 
 	for shardID, nodesPubKeys := range nodesConfig {
 		validators := make([]nodesCoordinator.Validator, 0, len(nodesPubKeys))
 		for i, pubKey := range nodesPubKeys {
-			validatorObj, err := nodesCoordinator.NewValidator(pubKey, defaultSelectionChances, uint32(i))
+			pubKeyBytes, err := converter.Decode(pubKey)
+			if err != nil {
+				return nil, err
+			}
+
+			validatorObj, err := nodesCoordinator.NewValidator(pubKeyBytes, defaultSelectionChances, uint32(i))
 			if err != nil {
 				return nil, err
 			}
