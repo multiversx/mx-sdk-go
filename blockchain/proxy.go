@@ -33,7 +33,7 @@ const (
 	getNetworkStatusEndpoint         = "network/status/%v"
 	withResultsQueryParam            = "?withResults=true"
 	vmValuesEndpoint                 = "vm-values/query"
-	genesisNodesConfigEndpoint       = "network/genesisnodes"
+	genesisNodesConfigEndpoint       = "network/genesis-nodes"
 
 	getRawBlockByHashEndpoint     = "internal/%d/raw/block/by-hash/%s"
 	getRawBlockByNonceEndpoint    = "internal/%d/raw/block/by-nonce/%d"
