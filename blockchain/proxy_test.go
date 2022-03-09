@@ -392,3 +392,32 @@ func TestElrondProxy_GetEnableEpochsConfig(t *testing.T) {
 
 	require.Equal(t, expectedEnableEpochsConfig, response)
 }
+
+func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
+	expectedGenesisNodes := &data.GenesisNodes{
+		Eligible: map[uint32][]string{
+			0: {"pubkey1"},
+		},
+	}
+	enableGenesisNodesResponse := &data.GenesisNodesResponse{
+		Data: struct {
+			Nodes *data.GenesisNodes "json:\"nodes\""
+		}{
+			Nodes: expectedGenesisNodes},
+	}
+	enableEpochsResponseBytes, _ := json.Marshal(enableGenesisNodesResponse)
+
+	httpClient := &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body: ioutil.NopCloser(bytes.NewReader(enableEpochsResponseBytes)),
+			}, nil
+		},
+	}
+	ep := NewElrondProxy("http://localhost:8079", httpClient)
+
+	response, err := ep.GetGenesisNodesPubKeys(context.Background())
+	require.Nil(t, err)
+
+	require.Equal(t, expectedGenesisNodes, response)
+}

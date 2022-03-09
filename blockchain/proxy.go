@@ -33,7 +33,7 @@ const (
 	getNetworkStatusEndpoint         = "network/status/%v"
 	withResultsQueryParam            = "?withResults=true"
 	vmValuesEndpoint                 = "vm-values/query"
-	genesisNodesConfigEndpoint       = "node/genesisnodesconfig"
+	genesisNodesConfigEndpoint       = "network/genesisnodes"
 
 	getRawBlockByHashEndpoint     = "internal/%d/raw/block/by-hash/%s"
 	getRawBlockByNonceEndpoint    = "internal/%d/raw/block/by-nonce/%d"
@@ -548,8 +548,8 @@ func (ep *elrondProxy) GetEnableEpochsConfig(ctx context.Context) (*data.EnableE
 	return response.Data.Config, nil
 }
 
-// GetGenesisNodesConfig
-func (ep *elrondProxy) GetGenesisNodesConfig(ctx context.Context) (*data.GenesisNodes, error) {
+// GetGenesisNodesPubKeys retrieves genesis nodes configuration from proxy
+func (ep *elrondProxy) GetGenesisNodesPubKeys(ctx context.Context) (*data.GenesisNodes, error) {
 	buff, err := ep.GetHTTP(ctx, genesisNodesConfigEndpoint)
 	if err != nil {
 		return nil, err
@@ -564,7 +564,7 @@ func (ep *elrondProxy) GetGenesisNodesConfig(ctx context.Context) (*data.Genesis
 		return nil, errors.New(response.Error)
 	}
 
-	return response.Data.Config, nil
+	return response.Data.Nodes, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
