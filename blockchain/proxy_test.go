@@ -399,13 +399,13 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 			0: {"pubkey1"},
 		},
 	}
-	enableGenesisNodesResponse := &data.GenesisNodesResponse{
+	genesisNodesResponse := &data.GenesisNodesResponse{
 		Data: struct {
 			Nodes *data.GenesisNodes "json:\"nodes\""
 		}{
 			Nodes: expectedGenesisNodes},
 	}
-	enableEpochsResponseBytes, _ := json.Marshal(enableGenesisNodesResponse)
+	enableEpochsResponseBytes, _ := json.Marshal(genesisNodesResponse)
 
 	httpClient := &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {

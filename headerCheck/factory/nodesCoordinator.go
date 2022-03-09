@@ -88,12 +88,12 @@ func generateGenesisNodes(converter core.PubkeyConverter, nodesConfig map[uint32
 				return nil, err
 			}
 
-			validatorObj, err := nodesCoordinator.NewValidator(pubKeyBytes, defaultSelectionChances, uint32(i))
+			validator, err := nodesCoordinator.NewValidator(pubKeyBytes, defaultSelectionChances, uint32(i))
 			if err != nil {
 				return nil, err
 			}
 
-			validators = append(validators, validatorObj)
+			validators = append(validators, validator)
 		}
 		validatorsMap[shardID] = validators
 	}
