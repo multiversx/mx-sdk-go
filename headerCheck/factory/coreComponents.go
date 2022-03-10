@@ -1,6 +1,8 @@
 package factory
 
 import (
+	"github.com/ElrondNetwork/elrond-go-core/core"
+	"github.com/ElrondNetwork/elrond-go-core/core/pubkeyConverter"
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	hasherFactory "github.com/ElrondNetwork/elrond-go-core/hashing/factory"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
@@ -11,13 +13,17 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
-const marshalizerType = "gogo protobuf"
-const hasherType = "blake2b"
+const (
+	marshalizerType          = "gogo protobuf"
+	hasherType               = "blake2b"
+	validatorHexPubKeyLength = 96
+)
 
 type coreComponents struct {
-	Marshaller marshal.Marshalizer
-	Hasher     hashing.Hasher
-	Rater      nodesCoordinator.ChanceComputer
+	Marshaller      marshal.Marshalizer
+	Hasher          hashing.Hasher
+	Rater           nodesCoordinator.ChanceComputer
+	PubKeyConverter core.PubkeyConverter
 }
 
 // CreateCoreComponents creates core components needed for header verification
@@ -40,10 +46,16 @@ func CreateCoreComponents(
 		return nil, err
 	}
 
+	converter, err := pubkeyConverter.NewHexPubkeyConverter(validatorHexPubKeyLength)
+	if err != nil {
+		return nil, err
+	}
+
 	return &coreComponents{
-		Marshaller: marshalizer,
-		Hasher:     hasher,
-		Rater:      rater,
+		Marshaller:      marshalizer,
+		Hasher:          hasher,
+		Rater:           rater,
+		PubKeyConverter: converter,
 	}, nil
 }
 

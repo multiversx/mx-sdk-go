@@ -1,12 +1,8 @@
 package factory
 
 import (
-	"fmt"
-
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/data/endProcess"
-	"github.com/ElrondNetwork/elrond-go-core/hashing"
-	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
@@ -14,21 +10,27 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
 )
 
-type validator = nodesCoordinator.Validator
+const (
+	defaultSelectionChances = uint32(1)
+)
 
 // CreateNodesCoordinator creates nodes coordinator which will be used for header verification
 func CreateNodesCoordinator(
-	hasher hashing.Hasher,
-	marshaller marshal.Marshalizer,
-	rater nodesCoordinator.ChanceComputer,
+	coreComp *coreComponents,
 	networkConfig *data.NetworkConfig,
 	enableEpochsConfig *data.EnableEpochsConfig,
 	publicKey crypto.PublicKey,
+	genesisNodesConfig *data.GenesisNodes,
 ) (nodesCoordinator.EpochsConfigUpdateHandler, error) {
+	eligibleValidators, err := generateGenesisNodes(coreComp.PubKeyConverter, genesisNodesConfig.Eligible)
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO: manage epoch 0 from real nodes config
-	waitingMap := make(map[uint32][]validator)
-	eligibleMap := createDummyNodesMap(networkConfig.MetaConsensusGroup, networkConfig.NumShardsWithoutMeta, hasher)
+	waitingValidators, err := generateGenesisNodes(coreComp.PubKeyConverter, genesisNodesConfig.Waiting)
+	if err != nil {
+		return nil, err
+	}
 
 	argsNodesShuffler := createArgsNodesShuffler(enableEpochsConfig, networkConfig)
 	nodeShuffler, err := nodesCoordinator.NewHashValidatorsShuffler(argsNodesShuffler)
@@ -46,13 +48,13 @@ func CreateNodesCoordinator(
 		Epoch:                      initialEpoch,
 		ShardConsensusGroupSize:    int(networkConfig.ShardConsensusGroupSize),
 		MetaConsensusGroupSize:     int(networkConfig.MetaConsensusGroup),
-		Marshalizer:                marshaller,
+		Marshalizer:                coreComp.Marshaller,
 		EpochStartNotifier:         &disabled.EpochStartNotifier{},
 		BootStorer:                 &disabled.Storer{},
-		Hasher:                     hasher,
+		Hasher:                     coreComp.Hasher,
 		NbShards:                   networkConfig.NumShardsWithoutMeta,
-		EligibleNodes:              eligibleMap,
-		WaitingNodes:               waitingMap,
+		EligibleNodes:              eligibleValidators,
+		WaitingNodes:               waitingValidators,
 		SelfPublicKey:              publicKeyBytes,
 		ConsensusGroupCache:        &disabled.NodesCoordinatorCache{},
 		WaitingListFixEnabledEpoch: enableEpochsConfig.WaitingListFixEnableEpoch,
@@ -67,7 +69,7 @@ func CreateNodesCoordinator(
 		return nil, err
 	}
 
-	nd, err := nodesCoordinator.NewIndexHashedNodesCoordinatorWithRater(baseNodesCoordinator, rater)
+	nd, err := nodesCoordinator.NewIndexHashedNodesCoordinatorWithRater(baseNodesCoordinator, coreComp.Rater)
 	if err != nil {
 		return nil, err
 	}
@@ -75,33 +77,28 @@ func CreateNodesCoordinator(
 	return nd, nil
 }
 
-func createDummyNodesList(nbNodes uint32, suffix string, hasher hashing.Hasher) []validator {
-	list := make([]validator, 0)
+func generateGenesisNodes(converter core.PubkeyConverter, nodesConfig map[uint32][]string) (map[uint32][]nodesCoordinator.Validator, error) {
+	validatorsMap := make(map[uint32][]nodesCoordinator.Validator)
 
-	for j := uint32(0); j < nbNodes; j++ {
-		pk := hasher.Compute(fmt.Sprintf("pkeligible_%d", j))
-		val, _ := nodesCoordinator.NewValidator(pk, 1, 1)
-		list = append(list, val)
-	}
+	for shardID, nodesPubKeys := range nodesConfig {
+		validators := make([]nodesCoordinator.Validator, 0, len(nodesPubKeys))
+		for i, pubKey := range nodesPubKeys {
+			pubKeyBytes, err := converter.Decode(pubKey)
+			if err != nil {
+				return nil, err
+			}
 
-	return list
-}
+			validator, err := nodesCoordinator.NewValidator(pubKeyBytes, defaultSelectionChances, uint32(i))
+			if err != nil {
+				return nil, err
+			}
 
-func createDummyNodesMap(nodesPerShard uint32, nbShards uint32, hasher hashing.Hasher) map[uint32][]validator {
-	nodesMap := make(map[uint32][]validator)
-
-	var shard uint32
-
-	for i := uint32(0); i <= nbShards; i++ {
-		shard = i
-		if i == nbShards {
-			shard = core.MetachainShardId
+			validators = append(validators, validator)
 		}
-		list := createDummyNodesList(nodesPerShard, "_i", hasher)
-		nodesMap[shard] = list
+		validatorsMap[shardID] = validators
 	}
 
-	return nodesMap
+	return validatorsMap, nil
 }
 
 func createArgsNodesShuffler(
