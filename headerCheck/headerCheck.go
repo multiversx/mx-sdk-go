@@ -66,6 +66,7 @@ func (hch *headerVerifier) VerifyHeaderByHash(ctx context.Context, shardId uint3
 	log.Debug("fetched header in", "epoch", headerEpoch)
 
 	if !hch.nodesCoordinator.IsEpochInConfig(headerEpoch) {
+		log.Info("nodes config is set for epoch", "epoch", headerEpoch)
 		err := hch.updateNodesConfigPerEpoch(ctx, headerEpoch)
 		if err != nil {
 			return false, err
