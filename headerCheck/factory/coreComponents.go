@@ -16,7 +16,7 @@ import (
 const (
 	marshalizerType          = "gogo protobuf"
 	hasherType               = "blake2b"
-	hexPubKeyConverterLength = 96
+	validatorHexPubKeyLength = 96
 )
 
 type coreComponents struct {
@@ -46,7 +46,7 @@ func CreateCoreComponents(
 		return nil, err
 	}
 
-	converter, err := pubkeyConverter.NewHexPubkeyConverter(hexPubKeyConverterLength)
+	converter, err := pubkeyConverter.NewHexPubkeyConverter(validatorHexPubKeyLength)
 	if err != nil {
 		return nil, err
 	}
