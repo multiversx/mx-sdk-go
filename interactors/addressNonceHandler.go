@@ -1,6 +1,7 @@
 package interactors
 
 import (
+	"bytes"
 	"context"
 	"sync"
 
@@ -99,6 +100,14 @@ func (anh *addressNonceHandler) sendTransaction(ctx context.Context, tx *data.Tr
 	anh.mut.Unlock()
 
 	return anh.proxy.SendTransaction(ctx, tx)
+}
+
+func (anh *addressNonceHandler) isTxAlreadySent(tx *data.Transaction) bool {
+	oldTx, nonceAlreadyUsed := anh.transactions[tx.Nonce]
+
+	return nonceAlreadyUsed && bytes.Compare(oldTx.Data, tx.Data) == 0 &&
+		oldTx.SndAddr == tx.SndAddr &&
+		oldTx.Value == tx.Value
 }
 
 func (anh *addressNonceHandler) markReFetchNonce() {
