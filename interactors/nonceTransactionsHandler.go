@@ -93,7 +93,7 @@ func (nth *nonceTransactionsHandler) SendTransaction(ctx context.Context, tx *da
 
 	anh := nth.getOrCreateAddressNonceHandler(addressHandler)
 	if nth.checkForDuplicates && anh.isTxAlreadySent(tx) {
-		// TODO: add gas comparation logic
+		// TODO: add gas comparation logic EN-11887
 		return "", ErrTxAlreadySent
 	}
 	sentHash, err := anh.sendTransaction(ctx, tx)

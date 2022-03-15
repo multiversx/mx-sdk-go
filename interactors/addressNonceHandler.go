@@ -106,9 +106,10 @@ func (anh *addressNonceHandler) isTxAlreadySent(tx *data.Transaction) bool {
 	anh.mut.RLock()
 	defer anh.mut.RUnlock()
 	for _, oldTx := range anh.transactions {
-		if oldTx.RcvAddr == tx.RcvAddr &&
+		isTheSameReceiverDataValue := oldTx.RcvAddr == tx.RcvAddr &&
 			bytes.Equal(oldTx.Data, tx.Data) &&
-			oldTx.Value == tx.Value {
+			oldTx.Value == tx.Value
+		if isTheSameReceiverDataValue {
 			return true
 		}
 	}
