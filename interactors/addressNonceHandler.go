@@ -103,11 +103,14 @@ func (anh *addressNonceHandler) sendTransaction(ctx context.Context, tx *data.Tr
 }
 
 func (anh *addressNonceHandler) isTxAlreadySent(tx *data.Transaction) bool {
-	oldTx, nonceAlreadyUsed := anh.transactions[tx.Nonce]
-
-	return nonceAlreadyUsed && bytes.Compare(oldTx.Data, tx.Data) == 0 &&
-		oldTx.SndAddr == tx.SndAddr &&
-		oldTx.Value == tx.Value
+	for _, oldTx := range anh.transactions {
+		if oldTx.RcvAddr == tx.RcvAddr &&
+			bytes.Equal(oldTx.Data, tx.Data) &&
+			oldTx.Value == tx.Value {
+			return true
+		}
+	}
+	return false
 }
 
 func (anh *addressNonceHandler) markReFetchNonce() {

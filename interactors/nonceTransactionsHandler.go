@@ -32,6 +32,7 @@ type nonceTransactionsHandler struct {
 
 // NewNonceTransactionHandler will create a new instance of the nonceTransactionsHandler. It requires a Proxy implementation
 // and an interval at which the transactions sent are rechecked and eventually, resent.
+// checkForDuplicates set as true will prevent sending a transaction with the same receiver, value and data.
 func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration, checkForDuplicates bool) (*nonceTransactionsHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
@@ -92,6 +93,7 @@ func (nth *nonceTransactionsHandler) SendTransaction(ctx context.Context, tx *da
 
 	anh := nth.getOrCreateAddressNonceHandler(addressHandler)
 	if nth.checkForDuplicates && anh.isTxAlreadySent(tx) {
+		// TODO: add gas comparation logic
 		return "", ErrTxAlreadySent
 	}
 	sentHash, err := anh.sendTransaction(ctx, tx)
