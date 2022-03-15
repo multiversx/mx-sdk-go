@@ -25,3 +25,6 @@ var ErrNilAddress = errors.New("nil address")
 
 // ErrNilTransaction signals that provided transaction is nil
 var ErrNilTransaction = errors.New("nil transaction")
+
+// ErrTxAlreadySent signals that a transaction was already sent
+var ErrTxAlreadySent = errors.New("transaction already sent")

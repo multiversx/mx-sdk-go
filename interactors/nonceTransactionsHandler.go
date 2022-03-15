@@ -22,16 +22,18 @@ const minimumIntervalToResend = time.Second
 // nonceTransactionsHandler should be terminated and collected by the GC.
 // This struct is concurrent safe.
 type nonceTransactionsHandler struct {
-	proxy            Proxy
-	mutHandlers      sync.Mutex
-	handlers         map[string]*addressNonceHandler
-	cancelFunc       func()
-	intervalToResend time.Duration
+	proxy              Proxy
+	mutHandlers        sync.Mutex
+	handlers           map[string]*addressNonceHandler
+	checkForDuplicates bool
+	cancelFunc         func()
+	intervalToResend   time.Duration
 }
 
 // NewNonceTransactionHandler will create a new instance of the nonceTransactionsHandler. It requires a Proxy implementation
 // and an interval at which the transactions sent are rechecked and eventually, resent.
-func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration) (*nonceTransactionsHandler, error) {
+// checkForDuplicates set as true will prevent sending a transaction with the same receiver, value and data.
+func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration, checkForDuplicates bool) (*nonceTransactionsHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
 	}
@@ -40,9 +42,10 @@ func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration) (*n
 	}
 
 	nth := &nonceTransactionsHandler{
-		proxy:            proxy,
-		handlers:         make(map[string]*addressNonceHandler),
-		intervalToResend: intervalToResend,
+		proxy:              proxy,
+		handlers:           make(map[string]*addressNonceHandler),
+		intervalToResend:   intervalToResend,
+		checkForDuplicates: checkForDuplicates,
 	}
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -89,6 +92,10 @@ func (nth *nonceTransactionsHandler) SendTransaction(ctx context.Context, tx *da
 	}
 
 	anh := nth.getOrCreateAddressNonceHandler(addressHandler)
+	if nth.checkForDuplicates && anh.isTxAlreadySent(tx) {
+		// TODO: add gas comparation logic EN-11887
+		return "", ErrTxAlreadySent
+	}
 	sentHash, err := anh.sendTransaction(ctx, tx)
 	if err != nil {
 		return "", fmt.Errorf("%w while sending transaction for address %s", err, addrAsBech32)
