@@ -18,7 +18,7 @@ import (
 // having a function that sweeps the map in order to resend a transaction or remove them
 // because they were executed. This struct is concurrent safe.
 type addressNonceHandler struct {
-	mut                 sync.Mutex
+	mut                 sync.RWMutex
 	address             erdgoCore.AddressHandler
 	proxy               Proxy
 	computedNonceWasSet bool
@@ -103,6 +103,8 @@ func (anh *addressNonceHandler) sendTransaction(ctx context.Context, tx *data.Tr
 }
 
 func (anh *addressNonceHandler) isTxAlreadySent(tx *data.Transaction) bool {
+	anh.mut.RLock()
+	defer anh.mut.RUnlock()
 	for _, oldTx := range anh.transactions {
 		if oldTx.RcvAddr == tx.RcvAddr &&
 			bytes.Equal(oldTx.Data, tx.Data) &&
