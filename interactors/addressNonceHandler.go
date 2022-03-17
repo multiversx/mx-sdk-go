@@ -116,6 +116,14 @@ func (anh *addressNonceHandler) isTxAlreadySent(tx *data.Transaction) bool {
 	return false
 }
 
+func (anh *addressNonceHandler) decrementComputedNonce() {
+	anh.mut.Lock()
+	defer anh.mut.Unlock()
+	if anh.computedNonce > 0 {
+		anh.computedNonce--
+	}
+}
+
 func (anh *addressNonceHandler) markReFetchNonce() {
 	anh.mut.Lock()
 	defer anh.mut.Unlock()
