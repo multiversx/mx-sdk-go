@@ -372,6 +372,7 @@ func TestNonceTransactionsHandler_SendDuplicateTransactions(t *testing.T) {
 	nth, _ := NewNonceTransactionHandler(proxy, time.Second*60, true)
 
 	nonce, err := nth.GetNonce(context.Background(), testAddress)
+	require.Nil(t, err)
 	tx := &data.Transaction{
 		Nonce:     nonce,
 		Value:     "1",
