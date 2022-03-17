@@ -364,12 +364,16 @@ func TestNonceTransactionsHandler_SendDuplicateTransactions(t *testing.T) {
 		},
 		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
 			require.LessOrEqual(t, numCalls, 1)
+			currentNonce++
 			return "", nil
 		},
 	}
 
+	nth, _ := NewNonceTransactionHandler(proxy, time.Second*60, true)
+
+	nonce, err := nth.GetNonce(context.Background(), testAddress)
 	tx := &data.Transaction{
-		Nonce:     currentNonce,
+		Nonce:     nonce,
 		Value:     "1",
 		RcvAddr:   testAddress.AddressAsBech32String(),
 		SndAddr:   testAddress.AddressAsBech32String(),
@@ -380,12 +384,21 @@ func TestNonceTransactionsHandler_SendDuplicateTransactions(t *testing.T) {
 		ChainID:   "3",
 		Version:   1,
 	}
-	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2, true)
-
-	_, err := nth.SendTransaction(context.Background(), tx)
-	require.Nil(t, err)
 	_, err = nth.SendTransaction(context.Background(), tx)
-	require.Equal(t, err, ErrTxAlreadySent)
+	require.Nil(t, err)
+	acc := nth.getOrCreateAddressNonceHandler(testAddress)
+	t.Run("after sending first tx, nonce shall increase", func(t *testing.T) {
+		require.Equal(t, acc.computedNonce+1, currentNonce)
+	})
+	t.Run("sending the same tx, NonceTransactionHandler shall return ErrTxAlreadySent "+
+		"and computedNonce shall not increase", func(t *testing.T) {
+		nonce, err = nth.GetNonce(context.Background(), testAddress)
+		_, err = nth.SendTransaction(context.Background(), tx)
+		require.Equal(t, err, ErrTxAlreadySent)
+		require.Equal(t, nonce, currentNonce)
+		require.Equal(t, acc.computedNonce+1, currentNonce)
+	})
+
 }
 
 func createMockTransactionsWithGetNonce(
