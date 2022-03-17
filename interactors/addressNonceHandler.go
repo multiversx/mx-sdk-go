@@ -62,6 +62,8 @@ func (anh *addressNonceHandler) reSendTransactionsIfRequired(ctx context.Context
 	}
 
 	anh.mut.Lock()
+	log.Debug("nonces:", "account", account.Nonce, "computed", anh.computedNonce)
+
 	if account.Nonce == anh.computedNonce {
 		anh.transactions = make(map[uint64]*data.Transaction)
 		anh.mut.Unlock()
