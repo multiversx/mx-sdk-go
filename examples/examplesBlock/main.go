@@ -12,7 +12,13 @@ import (
 var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesBlock")
 
 func main() {
-	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
+	args := blockchain.ArgsElrondProxy{
+		ProxyURL:       examples.TestnetGateway,
+		Client:         nil,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := blockchain.NewElrondProxy(args)
 
 	// Get latest hyper block (metachain) nonce
 	nonce, err := ep.GetLatestHyperBlockNonce(context.Background())

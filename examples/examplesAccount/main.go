@@ -13,7 +13,13 @@ import (
 var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesAccount")
 
 func main() {
-	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
+	args := blockchain.ArgsElrondProxy{
+		ProxyURL:       examples.TestnetGateway,
+		Client:         nil,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := blockchain.NewElrondProxy(args)
 
 	// Retrieving network configuration parameters
 	networkConfig, err := ep.GetNetworkConfig(context.Background())

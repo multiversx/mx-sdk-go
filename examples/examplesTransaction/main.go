@@ -15,7 +15,13 @@ var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesTransaction")
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
 
-	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
+	args := blockchain.ArgsElrondProxy{
+		ProxyURL:       examples.TestnetGateway,
+		Client:         nil,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := blockchain.NewElrondProxy(args)
 	w := interactors.NewWallet()
 
 	privateKey, err := w.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))

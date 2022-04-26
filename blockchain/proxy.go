@@ -46,21 +46,32 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+type ArgsElrondProxy struct {
+	ProxyURL       string
+	Client         HTTPClient
+	SameScState    bool
+	ShouldBeSynced bool
+}
+
 // elrondProxy implements basic functions for interacting with an Elrond Proxy
 type elrondProxy struct {
-	proxyURL string
-	client   HTTPClient
+	proxyURL       string
+	client         HTTPClient
+	sameScState    bool
+	shouldBeSynced bool
 }
 
 // NewElrondProxy initializes and returns an ElrondProxy object
-func NewElrondProxy(url string, client HTTPClient) *elrondProxy {
-	if check.IfNilReflect(client) {
-		client = http.DefaultClient
+func NewElrondProxy(args ArgsElrondProxy) *elrondProxy {
+	if check.IfNilReflect(args.Client) {
+		args.Client = http.DefaultClient
 	}
 
 	ep := &elrondProxy{
-		proxyURL: url,
-		client:   client,
+		proxyURL:       args.ProxyURL,
+		client:         args.Client,
+		sameScState:    args.SameScState,
+		shouldBeSynced: args.ShouldBeSynced,
 	}
 
 	return ep
@@ -68,7 +79,12 @@ func NewElrondProxy(url string, client HTTPClient) *elrondProxy {
 
 // ExecuteVMQuery retrieves data from existing SC trie through the use of a VM
 func (ep *elrondProxy) ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
-	jsonVMRequest, err := json.Marshal(vmRequest)
+	jsonVMRequestWithOptionalParams := data.VmValueRequestWithOptionalParameters{
+		VmValueRequest: vmRequest,
+		SameScState:    ep.sameScState,
+		ShouldBeSynced: ep.shouldBeSynced,
+	}
+	jsonVMRequest, err := json.Marshal(jsonVMRequestWithOptionalParams)
 	if err != nil {
 		return nil, err
 	}
