@@ -46,6 +46,7 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// ArgsElrondProxy is the DTO used in the elrond proxy constructor
 type ArgsElrondProxy struct {
 	ProxyURL       string
 	Client         HTTPClient
