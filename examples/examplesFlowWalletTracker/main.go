@@ -50,16 +50,21 @@ func main() {
 
 func runApp() error {
 	args := blockchain.ArgsElrondProxy{
-		ProxyURL:       examples.TestnetGateway,
-		Client:         nil,
-		SameScState:    false,
-		ShouldBeSynced: false,
+		ProxyURL:            examples.TestnetGateway,
+		Client:              nil,
+		SameScState:         false,
+		ShouldBeSynced:      false,
+		FinalityCheck:       false,
+		CacheExpirationTime: time.Minute,
 	}
-	ep := blockchain.NewElrondProxy(args)
+	ep, err := blockchain.NewElrondProxy(args)
+	if err != nil {
+		return err
+	}
 
 	tap := mock.NewTrackableAddressProviderMock()
 	mnt := &mock.MemoryNonceTracker{}
-	err := setTestParams(ep, tap, mnt)
+	err = setTestParams(ep, tap, mnt)
 	if err != nil {
 		return err
 	}

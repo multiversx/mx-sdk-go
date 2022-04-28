@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
@@ -14,12 +15,18 @@ var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesAccount")
 
 func main() {
 	args := blockchain.ArgsElrondProxy{
-		ProxyURL:       examples.TestnetGateway,
-		Client:         nil,
-		SameScState:    false,
-		ShouldBeSynced: false,
+		ProxyURL:            examples.TestnetGateway,
+		Client:              nil,
+		SameScState:         false,
+		ShouldBeSynced:      false,
+		FinalityCheck:       false,
+		CacheExpirationTime: time.Minute,
 	}
-	ep := blockchain.NewElrondProxy(args)
+	ep, err := blockchain.NewElrondProxy(args)
+	if err != nil {
+		log.Error("error creating proxy", "error", err)
+		return
+	}
 
 	// Retrieving network configuration parameters
 	networkConfig, err := ep.GetNetworkConfig(context.Background())

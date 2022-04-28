@@ -16,3 +16,9 @@ type Proxy interface {
 	ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
 	IsInterfaceNil() bool
 }
+
+type httpClientWrapper interface {
+	GetHTTP(ctx context.Context, endpoint string) ([]byte, error)
+	PostHTTP(ctx context.Context, endpoint string, data []byte) ([]byte, error)
+	IsInterfaceNil() bool
+}

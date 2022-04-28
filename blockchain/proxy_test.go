@@ -4,15 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	erdgoHttp "github.com/ElrondNetwork/elrond-sdk-erdgo/core/http"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,75 +43,132 @@ func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	}, nil
 }
 
-func TestElrondProxy_GetHTTPContextDone(t *testing.T) {
-	t.Parallel()
-
-	testHttpServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		// simulating that the operation takes a lot of time
-
-		time.Sleep(time.Second * 2)
-
-		rw.WriteHeader(http.StatusOK)
-		_, _ = rw.Write(nil)
-	}))
-	args := ArgsElrondProxy{
-		ProxyURL:       testHttpServer.URL,
-		Client:         &http.Client{},
-		SameScState:    false,
-		ShouldBeSynced: false,
+func createMockArgsElrondProxy(httpClient erdgoHttp.Client) ArgsElrondProxy {
+	return ArgsElrondProxy{
+		ProxyURL:            testHttpURL,
+		Client:              httpClient,
+		SameScState:         false,
+		ShouldBeSynced:      false,
+		FinalityCheck:       false,
+		AllowedDeltaToFinal: 1,
+		CacheExpirationTime: time.Second,
 	}
-	proxy := NewElrondProxy(args)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
-	defer cancel()
-
-	resp, err := proxy.GetHTTP(ctx, "endpoint")
-	assert.Nil(t, resp)
-	require.NotNil(t, err)
-	assert.Equal(t, "*url.Error", fmt.Sprintf("%T", err))
-	assert.True(t, strings.Contains(err.Error(), "context deadline exceeded"))
 }
 
-func TestElrondProxy_PostHTTPContextDone(t *testing.T) {
+func handleRequestNetworkConfigAndStatus(
+	req *http.Request,
+	numShards uint32,
+	nonce uint64,
+	crossCheck string,
+) (*http.Response, bool, error) {
+
+	handled := false
+	url := req.URL.String()
+	var response interface{}
+	switch url {
+	case fmt.Sprintf("%s/%s", testHttpURL, networkConfigEndpoint):
+		handled = true
+		response = data.NetworkConfigResponse{
+			Data: struct {
+				Config *data.NetworkConfig `json:"config"`
+			}{
+				Config: &data.NetworkConfig{
+					NumShardsWithoutMeta: numShards,
+				},
+			},
+		}
+
+	case fmt.Sprintf("%s/%s", testHttpURL, fmt.Sprintf(getNetworkStatusEndpoint, core.MetachainShardId)):
+		handled = true
+		response = data.NetworkStatusResponse{
+			Data: struct {
+				Status *data.NetworkStatus `json:"status"`
+			}{
+				Status: &data.NetworkStatus{
+					CrossCheckBlockHeight: crossCheck,
+				},
+			},
+			Error: "",
+			Code:  "",
+		}
+
+	case fmt.Sprintf("%s/%s", testHttpURL, fmt.Sprintf(getNetworkStatusEndpoint, 2)):
+		handled = true
+		response = data.NetworkStatusResponse{
+			Data: struct {
+				Status *data.NetworkStatus `json:"status"`
+			}{
+				Status: &data.NetworkStatus{
+					Nonce: nonce,
+				},
+			},
+			Error: "",
+			Code:  "",
+		}
+	}
+
+	if !handled {
+		return nil, handled, nil
+	}
+
+	buff, _ := json.Marshal(response)
+	return &http.Response{
+		Body: ioutil.NopCloser(bytes.NewReader(buff)),
+	}, handled, nil
+}
+
+func TestNewElrondProxy(t *testing.T) {
 	t.Parallel()
 
-	testHttpServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		// simulating that the operation takes a lot of time
+	t.Run("invalid time cache should error", func(t *testing.T) {
+		t.Parallel()
 
-		time.Sleep(time.Second * 2)
+		args := createMockArgsElrondProxy(nil)
+		args.CacheExpirationTime = time.Second - time.Nanosecond
+		proxy, err := NewElrondProxy(args)
 
-		rw.WriteHeader(http.StatusOK)
-		_, _ = rw.Write(nil)
-	}))
-	args := ArgsElrondProxy{
-		ProxyURL:       testHttpServer.URL,
-		Client:         &http.Client{},
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	proxy := NewElrondProxy(args)
+		assert.True(t, check.IfNil(proxy))
+		assert.True(t, errors.Is(err, ErrInvalidCacherDuration))
+	})
+	t.Run("invalid nonce delta should error", func(t *testing.T) {
+		t.Parallel()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
-	defer cancel()
+		args := createMockArgsElrondProxy(nil)
+		args.FinalityCheck = true
+		args.AllowedDeltaToFinal = 0
+		proxy, err := NewElrondProxy(args)
 
-	resp, err := proxy.PostHTTP(ctx, "endpoint", nil)
-	assert.Nil(t, resp)
-	require.NotNil(t, err)
-	assert.Equal(t, "*url.Error", fmt.Sprintf("%T", err))
-	assert.True(t, strings.Contains(err.Error(), "context deadline exceeded"))
+		assert.True(t, check.IfNil(proxy))
+		assert.True(t, errors.Is(err, ErrInvalidAllowedDeltaToFinal))
+	})
+	t.Run("should work with finality check", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsElrondProxy(nil)
+		args.FinalityCheck = true
+		proxy, err := NewElrondProxy(args)
+
+		assert.False(t, check.IfNil(proxy))
+		assert.Nil(t, err)
+	})
+	t.Run("should work without finality check", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsElrondProxy(nil)
+		proxy, err := NewElrondProxy(args)
+
+		assert.False(t, check.IfNil(proxy))
+		assert.Nil(t, err)
+	})
 }
 
 func TestGetAccount(t *testing.T) {
 	t.Parallel()
 
 	httpClient := &mockHTTPClient{}
-	args := ArgsElrondProxy{
-		ProxyURL:       testHttpURL,
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	proxy := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	proxy, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	address, err := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
 	if err != nil {
@@ -137,13 +196,9 @@ func TestElrondProxy_GetNetworkEconomics(t *testing.T) {
 			}, nil
 		},
 	}
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	networkEconomics, err := ep.GetNetworkEconomics(context.Background())
 	require.Nil(t, err)
@@ -169,13 +224,9 @@ func TestElrondProxy_RequestTransactionCost(t *testing.T) {
 			}, nil
 		},
 	}
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	tx := &data.Transaction{
 		Nonce:   1,
@@ -206,13 +257,9 @@ func TestElrondProxy_GetTransactionInfoWithResults(t *testing.T) {
 			}, nil
 		},
 	}
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	tx, err := ep.GetTransactionInfoWithResults(context.Background(), "a40e5a6af4efe221608297a73459211756ab88b96896e6e331842807a138f343")
 	require.Nil(t, err)
@@ -222,33 +269,118 @@ func TestElrondProxy_GetTransactionInfoWithResults(t *testing.T) {
 }
 
 func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
-	responseBytes := []byte(`{"data":{"data":{"returnData":["MC41LjU="],"returnCode":"ok","returnMessage":"","gasRemaining":18446744073685949187,"gasRefund":0,"outputAccounts":{"0000000000000000050033bb65a91ee17ab84c6f8a01846ef8644e15fb76696a":{"address":"erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt","nonce":0,"balance":null,"balanceDelta":0,"storageUpdates":{},"code":null,"codeMetaData":null,"outputTransfers":[],"callType":0}},"deletedAccounts":[],"touchedAccounts":[],"logs":[]}},"error":"","code":"successful"}`)
-	httpClient := &mockHTTPClient{
-		doCalled: func(req *http.Request) (*http.Response, error) {
-			return &http.Response{
-				Body: ioutil.NopCloser(bytes.NewReader(responseBytes)),
-			}, nil
-		},
-	}
-	_ = httpClient
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	t.Parallel()
 
-	response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
-		Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
-		FuncName:   "version",
-		CallerAddr: "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
+	responseBytes := []byte(`{"data":{"data":{"returnData":["MC41LjU="],"returnCode":"ok","returnMessage":"","gasRemaining":18446744073685949187,"gasRefund":0,"outputAccounts":{"0000000000000000050033bb65a91ee17ab84c6f8a01846ef8644e15fb76696a":{"address":"erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt","nonce":0,"balance":null,"balanceDelta":0,"storageUpdates":{},"code":null,"codeMetaData":null,"outputTransfers":[],"callType":0}},"deletedAccounts":[],"touchedAccounts":[],"logs":[]}},"error":"","code":"successful"}`)
+	t.Run("no finality check", func(t *testing.T) {
+		httpClient := &mockHTTPClient{
+			doCalled: func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					Body: ioutil.NopCloser(bytes.NewReader(responseBytes)),
+				}, nil
+			},
+		}
+		args := createMockArgsElrondProxy(httpClient)
+		ep, err := NewElrondProxy(args)
+		require.Nil(t, err)
+
+		response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
+			Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
+			FuncName:   "version",
+			CallerAddr: "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
+		})
+		require.Nil(t, err)
+		require.Equal(t, "0.5.5", string(response.Data.ReturnData[0]))
 	})
-	require.Nil(t, err)
-	require.Equal(t, "0.5.5", string(response.Data.ReturnData[0]))
+	t.Run("with finality check, chain is stuck", func(t *testing.T) {
+		httpClient := &mockHTTPClient{
+			doCalled: func(req *http.Request) (*http.Response, error) {
+				response, handled, err := handleRequestNetworkConfigAndStatus(req, 3, 9170526, goodResponseExample)
+				if handled {
+					return response, err
+				}
+
+				assert.Fail(t, "should have not reached this point in which the VM query is actually requested")
+				return nil, nil
+			},
+		}
+		args := createMockArgsElrondProxy(httpClient)
+		args.FinalityCheck = true
+		ep, err := NewElrondProxy(args)
+		require.Nil(t, err)
+
+		response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
+			Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
+			FuncName:   "version",
+			CallerAddr: "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
+		})
+
+		assert.NotNil(t, err)
+		assert.True(t, strings.Contains(err.Error(), "shardID 2 is stuck"))
+		assert.Nil(t, response)
+	})
+	t.Run("with finality check, invalid address", func(t *testing.T) {
+		httpClient := &mockHTTPClient{
+			doCalled: func(req *http.Request) (*http.Response, error) {
+				response, handled, err := handleRequestNetworkConfigAndStatus(req, 3, 9170526, goodResponseExample)
+				if handled {
+					return response, err
+				}
+
+				assert.Fail(t, "should have not reached this point in which the VM query is actually requested")
+				return nil, nil
+			},
+		}
+		args := createMockArgsElrondProxy(httpClient)
+		args.FinalityCheck = true
+		ep, err := NewElrondProxy(args)
+		require.Nil(t, err)
+
+		response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
+			Address:    "invalid",
+			FuncName:   "version",
+			CallerAddr: "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
+		})
+
+		assert.NotNil(t, err)
+		assert.True(t, strings.Contains(err.Error(), "invalid bech32 string length 7"))
+		assert.Nil(t, response)
+	})
+	t.Run("with finality check, should work", func(t *testing.T) {
+		wasHandled := false
+		httpClient := &mockHTTPClient{
+			doCalled: func(req *http.Request) (*http.Response, error) {
+				response, handled, err := handleRequestNetworkConfigAndStatus(req, 3, 9170525, goodResponseExample)
+				if handled {
+					wasHandled = true
+					return response, err
+				}
+
+				return &http.Response{
+					Body: ioutil.NopCloser(bytes.NewReader(responseBytes)),
+				}, nil
+			},
+		}
+		args := createMockArgsElrondProxy(httpClient)
+		args.FinalityCheck = true
+		ep, err := NewElrondProxy(args)
+		require.Nil(t, err)
+
+		response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
+			Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
+			FuncName:   "version",
+			CallerAddr: "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
+		})
+
+		assert.True(t, wasHandled)
+		require.Nil(t, err)
+		require.Equal(t, "0.5.5", string(response.Data.ReturnData[0]))
+	})
 }
 
 func TestElrondProxy_GetRawBlockByHash(t *testing.T) {
+	t.Parallel()
+
 	expectedTs := &testStruct{
 		Nonce: 1,
 		Name:  "a test struct to be sent and received",
@@ -272,13 +404,9 @@ func TestElrondProxy_GetRawBlockByHash(t *testing.T) {
 			}, nil
 		},
 	}
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	response, err := ep.GetRawBlockByHash(context.Background(), 0, "aaaa")
 	require.Nil(t, err)
@@ -290,6 +418,8 @@ func TestElrondProxy_GetRawBlockByHash(t *testing.T) {
 }
 
 func TestElrondProxy_GetRawBlockByNonce(t *testing.T) {
+	t.Parallel()
+
 	expectedTs := &testStruct{
 		Nonce: 10,
 		Name:  "a test struct to be sent and received",
@@ -311,13 +441,9 @@ func TestElrondProxy_GetRawBlockByNonce(t *testing.T) {
 			}, nil
 		},
 	}
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	response, err := ep.GetRawBlockByNonce(context.Background(), 0, 10)
 	require.Nil(t, err)
@@ -329,6 +455,8 @@ func TestElrondProxy_GetRawBlockByNonce(t *testing.T) {
 }
 
 func TestElrondProxy_GetRawMiniBlockByHash(t *testing.T) {
+	t.Parallel()
+
 	expectedTs := &testStruct{
 		Nonce: 10,
 		Name:  "a test struct to be sent and received",
@@ -350,13 +478,9 @@ func TestElrondProxy_GetRawMiniBlockByHash(t *testing.T) {
 			}, nil
 		},
 	}
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	response, err := ep.GetRawMiniBlockByHash(context.Background(), 0, "aaaa", 1)
 	require.Nil(t, err)
@@ -368,6 +492,8 @@ func TestElrondProxy_GetRawMiniBlockByHash(t *testing.T) {
 }
 
 func TestElrondProxy_GetNonceAtEpochStart(t *testing.T) {
+	t.Parallel()
+
 	expectedNonce := uint64(2)
 	expectedNetworkStatus := &data.NetworkStatus{
 		NonceAtEpochStart: expectedNonce,
@@ -388,13 +514,9 @@ func TestElrondProxy_GetNonceAtEpochStart(t *testing.T) {
 			}, nil
 		},
 	}
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	response, err := ep.GetNonceAtEpochStart(context.Background(), core.MetachainShardId)
 	require.Nil(t, err)
@@ -403,6 +525,8 @@ func TestElrondProxy_GetNonceAtEpochStart(t *testing.T) {
 }
 
 func TestElrondProxy_GetRatingsConfig(t *testing.T) {
+	t.Parallel()
+
 	expectedRatingsConfig := &data.RatingsConfig{
 		GeneralMaxRating: 0,
 		GeneralMinRating: 0,
@@ -423,13 +547,9 @@ func TestElrondProxy_GetRatingsConfig(t *testing.T) {
 			}, nil
 		},
 	}
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	response, err := ep.GetRatingsConfig(context.Background())
 	require.Nil(t, err)
@@ -438,6 +558,8 @@ func TestElrondProxy_GetRatingsConfig(t *testing.T) {
 }
 
 func TestElrondProxy_GetEnableEpochsConfig(t *testing.T) {
+	t.Parallel()
+
 	expectedEnableEpochsConfig := &data.EnableEpochsConfig{
 		BalanceWaitingListsEnableEpoch: 1,
 		WaitingListFixEnableEpoch:      1,
@@ -457,13 +579,9 @@ func TestElrondProxy_GetEnableEpochsConfig(t *testing.T) {
 			}, nil
 		},
 	}
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	response, err := ep.GetEnableEpochsConfig(context.Background())
 	require.Nil(t, err)
@@ -472,6 +590,8 @@ func TestElrondProxy_GetEnableEpochsConfig(t *testing.T) {
 }
 
 func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
+	t.Parallel()
+
 	expectedGenesisNodes := &data.GenesisNodes{
 		Eligible: map[uint32][]string{
 			0: {"pubkey1"},
@@ -492,13 +612,9 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 			}, nil
 		},
 	}
-	args := ArgsElrondProxy{
-		ProxyURL:       "http://localhost:8079",
-		Client:         httpClient,
-		SameScState:    false,
-		ShouldBeSynced: false,
-	}
-	ep := NewElrondProxy(args)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, err := NewElrondProxy(args)
+	require.Nil(t, err)
 
 	response, err := ep.GetGenesisNodesPubKeys(context.Background())
 	require.Nil(t, err)

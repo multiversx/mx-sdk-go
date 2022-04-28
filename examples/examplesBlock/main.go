@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
@@ -13,12 +14,18 @@ var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesBlock")
 
 func main() {
 	args := blockchain.ArgsElrondProxy{
-		ProxyURL:       examples.TestnetGateway,
-		Client:         nil,
-		SameScState:    false,
-		ShouldBeSynced: false,
+		ProxyURL:            examples.TestnetGateway,
+		Client:              nil,
+		SameScState:         false,
+		ShouldBeSynced:      false,
+		FinalityCheck:       false,
+		CacheExpirationTime: time.Minute,
 	}
-	ep := blockchain.NewElrondProxy(args)
+	ep, err := blockchain.NewElrondProxy(args)
+	if err != nil {
+		log.Error("error creating proxy", "error", err)
+		return
+	}
 
 	// Get latest hyper block (metachain) nonce
 	nonce, err := ep.GetLatestHyperBlockNonce(context.Background())
