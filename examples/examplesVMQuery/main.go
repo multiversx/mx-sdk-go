@@ -12,7 +12,13 @@ import (
 var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesVMQuery")
 
 func main() {
-	ep := blockchain.NewElrondProxy(examples.TestnetGateway, nil)
+	args := blockchain.ArgsElrondProxy{
+		ProxyURL:       examples.TestnetGateway,
+		Client:         nil,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := blockchain.NewElrondProxy(args)
 
 	vmRequest := &data.VmValueRequest{
 		Address:    "erd1qqqqqqqqqqqqqpgqp699jngundfqw07d8jzkepucvpzush6k3wvqyc44rx",

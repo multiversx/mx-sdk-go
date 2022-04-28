@@ -52,7 +52,13 @@ func TestElrondProxy_GetHTTPContextDone(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 		_, _ = rw.Write(nil)
 	}))
-	proxy := NewElrondProxy(testHttpServer.URL, &http.Client{})
+	args := ArgsElrondProxy{
+		ProxyURL:       testHttpServer.URL,
+		Client:         &http.Client{},
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	proxy := NewElrondProxy(args)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
@@ -75,7 +81,13 @@ func TestElrondProxy_PostHTTPContextDone(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 		_, _ = rw.Write(nil)
 	}))
-	proxy := NewElrondProxy(testHttpServer.URL, &http.Client{})
+	args := ArgsElrondProxy{
+		ProxyURL:       testHttpServer.URL,
+		Client:         &http.Client{},
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	proxy := NewElrondProxy(args)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
@@ -91,7 +103,13 @@ func TestGetAccount(t *testing.T) {
 	t.Parallel()
 
 	httpClient := &mockHTTPClient{}
-	proxy := NewElrondProxy(testHttpURL, httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       testHttpURL,
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	proxy := NewElrondProxy(args)
 
 	address, err := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
 	if err != nil {
@@ -119,7 +137,13 @@ func TestElrondProxy_GetNetworkEconomics(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	networkEconomics, err := ep.GetNetworkEconomics(context.Background())
 	require.Nil(t, err)
@@ -145,7 +169,13 @@ func TestElrondProxy_RequestTransactionCost(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	tx := &data.Transaction{
 		Nonce:   1,
@@ -176,7 +206,13 @@ func TestElrondProxy_GetTransactionInfoWithResults(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	tx, err := ep.GetTransactionInfoWithResults(context.Background(), "a40e5a6af4efe221608297a73459211756ab88b96896e6e331842807a138f343")
 	require.Nil(t, err)
@@ -195,7 +231,13 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 		},
 	}
 	_ = httpClient
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
 		Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
@@ -230,7 +272,13 @@ func TestElrondProxy_GetRawBlockByHash(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	response, err := ep.GetRawBlockByHash(context.Background(), 0, "aaaa")
 	require.Nil(t, err)
@@ -263,7 +311,13 @@ func TestElrondProxy_GetRawBlockByNonce(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	response, err := ep.GetRawBlockByNonce(context.Background(), 0, 10)
 	require.Nil(t, err)
@@ -296,7 +350,13 @@ func TestElrondProxy_GetRawMiniBlockByHash(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	response, err := ep.GetRawMiniBlockByHash(context.Background(), 0, "aaaa", 1)
 	require.Nil(t, err)
@@ -328,7 +388,13 @@ func TestElrondProxy_GetNonceAtEpochStart(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	response, err := ep.GetNonceAtEpochStart(context.Background(), core.MetachainShardId)
 	require.Nil(t, err)
@@ -357,7 +423,13 @@ func TestElrondProxy_GetRatingsConfig(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	response, err := ep.GetRatingsConfig(context.Background())
 	require.Nil(t, err)
@@ -385,7 +457,13 @@ func TestElrondProxy_GetEnableEpochsConfig(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	response, err := ep.GetEnableEpochsConfig(context.Background())
 	require.Nil(t, err)
@@ -414,7 +492,13 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 			}, nil
 		},
 	}
-	ep := NewElrondProxy("http://localhost:8079", httpClient)
+	args := ArgsElrondProxy{
+		ProxyURL:       "http://localhost:8079",
+		Client:         httpClient,
+		SameScState:    false,
+		ShouldBeSynced: false,
+	}
+	ep := NewElrondProxy(args)
 
 	response, err := ep.GetGenesisNodesPubKeys(context.Background())
 	require.Nil(t, err)
