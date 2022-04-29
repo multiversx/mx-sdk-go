@@ -138,7 +138,7 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 		require.True(t, wasCalled)
 		assert.Equal(t, expectedReturnedNetworkConfig, configs)
 	})
-	t.Run("and Proxy.GetNetworkConfig returns error", func(t *testing.T) {
+	t.Run("Proxy.GetNetworkConfig returns error", func(t *testing.T) {
 		t.Parallel()
 
 		expectedError := errors.New("expected error")
@@ -551,14 +551,6 @@ func createNetworkStatusBytes(crtNonce uint64, crossCheck string) []byte {
 func TestExtractNonceOfShardID(t *testing.T) {
 	t.Parallel()
 
-	t.Run("empty response should error", func(t *testing.T) {
-		t.Parallel()
-
-		nonce, err := extractNonceOfShardID("", 0)
-		assert.True(t, errors.Is(err, ErrInvalidNonceCrossCheckValueFormat))
-		assert.True(t, strings.Contains(err.Error(), "empty value"))
-		assert.Equal(t, uint64(0), nonce)
-	})
 	t.Run("empty response should error", func(t *testing.T) {
 		t.Parallel()
 

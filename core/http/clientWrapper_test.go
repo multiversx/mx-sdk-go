@@ -54,7 +54,7 @@ func TestClientWrapper_GetHTTP(t *testing.T) {
 	})
 }
 
-func TestElrondBaseProxy_PostHTTP(t *testing.T) {
+func TestClientWrapper_PostHTTP(t *testing.T) {
 	t.Parallel()
 
 	response := []byte("response")
