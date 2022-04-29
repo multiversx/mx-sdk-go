@@ -167,8 +167,7 @@ func TestGetAccount(t *testing.T) {
 
 	httpClient := &mockHTTPClient{}
 	args := createMockArgsElrondProxy(httpClient)
-	proxy, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	proxy, _ := NewElrondProxy(args)
 
 	address, err := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
 	if err != nil {
@@ -197,8 +196,7 @@ func TestElrondProxy_GetNetworkEconomics(t *testing.T) {
 		},
 	}
 	args := createMockArgsElrondProxy(httpClient)
-	ep, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	ep, _ := NewElrondProxy(args)
 
 	networkEconomics, err := ep.GetNetworkEconomics(context.Background())
 	require.Nil(t, err)
@@ -225,8 +223,7 @@ func TestElrondProxy_RequestTransactionCost(t *testing.T) {
 		},
 	}
 	args := createMockArgsElrondProxy(httpClient)
-	ep, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	ep, _ := NewElrondProxy(args)
 
 	tx := &data.Transaction{
 		Nonce:   1,
@@ -258,8 +255,7 @@ func TestElrondProxy_GetTransactionInfoWithResults(t *testing.T) {
 		},
 	}
 	args := createMockArgsElrondProxy(httpClient)
-	ep, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	ep, _ := NewElrondProxy(args)
 
 	tx, err := ep.GetTransactionInfoWithResults(context.Background(), "a40e5a6af4efe221608297a73459211756ab88b96896e6e331842807a138f343")
 	require.Nil(t, err)
@@ -281,8 +277,7 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 			},
 		}
 		args := createMockArgsElrondProxy(httpClient)
-		ep, err := NewElrondProxy(args)
-		require.Nil(t, err)
+		ep, _ := NewElrondProxy(args)
 
 		response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
 			Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
@@ -306,8 +301,7 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 		}
 		args := createMockArgsElrondProxy(httpClient)
 		args.FinalityCheck = true
-		ep, err := NewElrondProxy(args)
-		require.Nil(t, err)
+		ep, _ := NewElrondProxy(args)
 
 		response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
 			Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
@@ -333,8 +327,7 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 		}
 		args := createMockArgsElrondProxy(httpClient)
 		args.FinalityCheck = true
-		ep, err := NewElrondProxy(args)
-		require.Nil(t, err)
+		ep, _ := NewElrondProxy(args)
 
 		response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
 			Address:    "invalid",
@@ -363,8 +356,7 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 		}
 		args := createMockArgsElrondProxy(httpClient)
 		args.FinalityCheck = true
-		ep, err := NewElrondProxy(args)
-		require.Nil(t, err)
+		ep, _ := NewElrondProxy(args)
 
 		response, err := ep.ExecuteVMQuery(context.Background(), &data.VmValueRequest{
 			Address:    "erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt",
@@ -405,8 +397,7 @@ func TestElrondProxy_GetRawBlockByHash(t *testing.T) {
 		},
 	}
 	args := createMockArgsElrondProxy(httpClient)
-	ep, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	ep, _ := NewElrondProxy(args)
 
 	response, err := ep.GetRawBlockByHash(context.Background(), 0, "aaaa")
 	require.Nil(t, err)
@@ -442,8 +433,7 @@ func TestElrondProxy_GetRawBlockByNonce(t *testing.T) {
 		},
 	}
 	args := createMockArgsElrondProxy(httpClient)
-	ep, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	ep, _ := NewElrondProxy(args)
 
 	response, err := ep.GetRawBlockByNonce(context.Background(), 0, 10)
 	require.Nil(t, err)
@@ -479,8 +469,7 @@ func TestElrondProxy_GetRawMiniBlockByHash(t *testing.T) {
 		},
 	}
 	args := createMockArgsElrondProxy(httpClient)
-	ep, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	ep, _ := NewElrondProxy(args)
 
 	response, err := ep.GetRawMiniBlockByHash(context.Background(), 0, "aaaa", 1)
 	require.Nil(t, err)
@@ -515,8 +504,7 @@ func TestElrondProxy_GetNonceAtEpochStart(t *testing.T) {
 		},
 	}
 	args := createMockArgsElrondProxy(httpClient)
-	ep, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	ep, _ := NewElrondProxy(args)
 
 	response, err := ep.GetNonceAtEpochStart(context.Background(), core.MetachainShardId)
 	require.Nil(t, err)
@@ -548,8 +536,7 @@ func TestElrondProxy_GetRatingsConfig(t *testing.T) {
 		},
 	}
 	args := createMockArgsElrondProxy(httpClient)
-	ep, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	ep, _ := NewElrondProxy(args)
 
 	response, err := ep.GetRatingsConfig(context.Background())
 	require.Nil(t, err)
@@ -580,8 +567,7 @@ func TestElrondProxy_GetEnableEpochsConfig(t *testing.T) {
 		},
 	}
 	args := createMockArgsElrondProxy(httpClient)
-	ep, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	ep, _ := NewElrondProxy(args)
 
 	response, err := ep.GetEnableEpochsConfig(context.Background())
 	require.Nil(t, err)
@@ -613,8 +599,7 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 		},
 	}
 	args := createMockArgsElrondProxy(httpClient)
-	ep, err := NewElrondProxy(args)
-	require.Nil(t, err)
+	ep, _ := NewElrondProxy(args)
 
 	response, err := ep.GetGenesisNodesPubKeys(context.Background())
 	require.Nil(t, err)

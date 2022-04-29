@@ -115,7 +115,7 @@ func (proxy *elrondBaseProxy) cacheConfigs(ctx context.Context) (*data.NetworkCo
 	return configs, nil
 }
 
-// GetNetworkConfig retrieves the network configuration from the proxy
+// getNetworkConfigFromSource retrieves the network configuration from the proxy
 func (proxy *elrondBaseProxy) getNetworkConfigFromSource(ctx context.Context) (*data.NetworkConfig, error) {
 	buff, err := proxy.GetHTTP(ctx, networkConfigEndpoint)
 	if err != nil {
@@ -136,7 +136,7 @@ func (proxy *elrondBaseProxy) getNetworkConfigFromSource(ctx context.Context) (*
 
 // CheckShardFinalization will query the proxy and check if the target shard ID has a current nonce close to the cross
 // check nonce from the metachain
-// nonce(target shard ID notarized by meta) + maxNoncesDelta >= nonce(target shard ID)
+// nonce(target shard ID) <= nonce(target shard ID notarized by meta) + maxNoncesDelta
 func (proxy *elrondBaseProxy) CheckShardFinalization(ctx context.Context, targetShardID uint32, maxNoncesDelta uint64) error {
 	if maxNoncesDelta < minAllowedDeltaToFinal {
 		return fmt.Errorf("%w, provided: %d, minimum: %d", ErrInvalidAllowedDeltaToFinal, maxNoncesDelta, minAllowedDeltaToFinal)
@@ -155,7 +155,7 @@ func (proxy *elrondBaseProxy) CheckShardFinalization(ctx context.Context, target
 		return fmt.Errorf("shardID %d is syncing, meta cross check nonce is %d, current nonce is %d, max delta: %d",
 			targetShardID, nonceFromMeta, nonceFromShard, maxNoncesDelta)
 	}
-	if nonceFromMeta+maxNoncesDelta >= nonceFromShard {
+	if nonceFromShard <= nonceFromMeta+maxNoncesDelta {
 		return nil
 	}
 
