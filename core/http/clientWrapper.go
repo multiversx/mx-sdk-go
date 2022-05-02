@@ -10,6 +10,17 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 )
 
+const (
+	httpUserAgentKey = "User-Agent"
+	httpUserAgent    = "Elrond go SDK / 1.0.0 <Posting to nodes>"
+
+	httpAcceptTypeKey = "Accept"
+	httpAcceptType    = "application/json"
+
+	httpContentTypeKey = "Content-Type"
+	httpContentType    = "application/json"
+)
+
 type clientWrapper struct {
 	url    string
 	client Client
@@ -29,16 +40,18 @@ func NewHttpClientWrapper(client Client, url string) *clientWrapper {
 }
 
 // GetHTTP does a GET method operation on the specified endpoint
-func (wrapper *clientWrapper) GetHTTP(ctx context.Context, endpoint string) ([]byte, error) {
+func (wrapper *clientWrapper) GetHTTP(ctx context.Context, endpoint string) ([]byte, int, error) {
 	url := fmt.Sprintf("%s/%s", wrapper.url, endpoint)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
+
+	applyGetHeaderParams(request)
 
 	response, err := wrapper.client.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 	defer func() {
 		_ = response.Body.Close()
@@ -46,34 +59,47 @@ func (wrapper *clientWrapper) GetHTTP(ctx context.Context, endpoint string) ([]b
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, err
+		return nil, response.StatusCode, err
 	}
 
-	return body, nil
+	return body, response.StatusCode, nil
 }
 
 // PostHTTP does a POST method operation on the specified endpoint with the provided raw data bytes
-func (wrapper *clientWrapper) PostHTTP(ctx context.Context, endpoint string, data []byte) ([]byte, error) {
+func (wrapper *clientWrapper) PostHTTP(ctx context.Context, endpoint string, data []byte) ([]byte, int, error) {
 	url := fmt.Sprintf("%s/%s", wrapper.url, endpoint)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
-	request.Header.Set("Content-Type", "")
+	applyPostHeaderParams(request)
+
 	response, err := wrapper.client.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	defer func() {
 		_ = response.Body.Close()
 	}()
 
-	return ioutil.ReadAll(response.Body)
+	buff, err := ioutil.ReadAll(response.Body)
+
+	return buff, response.StatusCode, err
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
 func (wrapper *clientWrapper) IsInterfaceNil() bool {
 	return wrapper == nil
+}
+
+func applyGetHeaderParams(request *http.Request) {
+	request.Header.Set(httpAcceptTypeKey, httpAcceptType)
+	request.Header.Set(httpUserAgentKey, httpUserAgent)
+}
+
+func applyPostHeaderParams(request *http.Request) {
+	applyGetHeaderParams(request)
+	request.Header.Set(httpContentTypeKey, httpContentType)
 }

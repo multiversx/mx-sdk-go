@@ -30,6 +30,10 @@ func TestClientWrapper_GetHTTP(t *testing.T) {
 		time.Sleep(time.Second * 2)
 		rw.WriteHeader(http.StatusOK)
 		_, _ = rw.Write(response)
+
+		assert.Equal(t, httpAcceptType, req.Header.Get(httpAcceptTypeKey))
+		assert.Equal(t, "", req.Header.Get(httpContentTypeKey)) // this is not set on a GET request
+		assert.Equal(t, httpUserAgent, req.Header.Get(httpUserAgentKey))
 	}))
 	wrapper := NewHttpClientWrapper(nil, testHttpServer.URL)
 
@@ -39,18 +43,20 @@ func TestClientWrapper_GetHTTP(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 		defer cancel()
 
-		resp, err := wrapper.GetHTTP(ctx, "endpoint")
+		resp, code, err := wrapper.GetHTTP(ctx, "endpoint")
 		assert.Nil(t, resp)
 		require.NotNil(t, err)
 		assert.Equal(t, "*url.Error", fmt.Sprintf("%T", err))
 		assert.True(t, strings.Contains(err.Error(), "context deadline exceeded"))
+		assert.Equal(t, http.StatusBadRequest, code)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		resp, err := wrapper.GetHTTP(context.Background(), "endpoint")
+		resp, code, err := wrapper.GetHTTP(context.Background(), "endpoint")
 		assert.Equal(t, response, resp)
 		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, code)
 	})
 }
 
@@ -63,6 +69,10 @@ func TestClientWrapper_PostHTTP(t *testing.T) {
 		time.Sleep(time.Second * 2)
 		rw.WriteHeader(http.StatusOK)
 		_, _ = rw.Write(response)
+
+		assert.Equal(t, httpAcceptType, req.Header.Get(httpAcceptTypeKey))
+		assert.Equal(t, httpContentType, req.Header.Get(httpContentTypeKey))
+		assert.Equal(t, httpUserAgent, req.Header.Get(httpUserAgentKey))
 	}))
 	wrapper := NewHttpClientWrapper(nil, testHttpServer.URL)
 
@@ -72,17 +82,19 @@ func TestClientWrapper_PostHTTP(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 		defer cancel()
 
-		resp, err := wrapper.PostHTTP(ctx, "endpoint", nil)
+		resp, code, err := wrapper.PostHTTP(ctx, "endpoint", nil)
 		assert.Nil(t, resp)
 		require.NotNil(t, err)
 		assert.Equal(t, "*url.Error", fmt.Sprintf("%T", err))
 		assert.True(t, strings.Contains(err.Error(), "context deadline exceeded"))
+		assert.Equal(t, http.StatusBadRequest, code)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		resp, err := wrapper.PostHTTP(context.Background(), "endpoint", nil)
+		resp, code, err := wrapper.PostHTTP(context.Background(), "endpoint", nil)
 		assert.Equal(t, response, resp)
 		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, code)
 	})
 }
