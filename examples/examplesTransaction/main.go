@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
@@ -16,12 +17,19 @@ func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
 
 	args := blockchain.ArgsElrondProxy{
-		ProxyURL:       examples.TestnetGateway,
-		Client:         nil,
-		SameScState:    false,
-		ShouldBeSynced: false,
+		ProxyURL:            examples.TestnetGateway,
+		Client:              nil,
+		SameScState:         false,
+		ShouldBeSynced:      false,
+		FinalityCheck:       false,
+		CacheExpirationTime: time.Minute,
 	}
-	ep := blockchain.NewElrondProxy(args)
+	ep, err := blockchain.NewElrondProxy(args)
+	if err != nil {
+		log.Error("error creating proxy", "error", err)
+		return
+	}
+
 	w := interactors.NewWallet()
 
 	privateKey, err := w.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))
@@ -36,8 +44,8 @@ func main() {
 		return
 	}
 
-	//netConfigs can be used multiple times (for example when sending multiple transactions) as to improve the
-	//responsiveness of the system
+	// netConfigs can be used multiple times (for example when sending multiple transactions) as to improve the
+	// responsiveness of the system
 	netConfigs, err := ep.GetNetworkConfig(context.Background())
 	if err != nil {
 		log.Error("unable to get the network configs", "error", err)
@@ -50,8 +58,8 @@ func main() {
 		return
 	}
 
-	transactionArguments.RcvAddr = address.AddressAsBech32String() //send to self
-	transactionArguments.Value = "1000000000000000000"             //1EGLD
+	transactionArguments.RcvAddr = address.AddressAsBech32String() // send to self
+	transactionArguments.Value = "1000000000000000000"             // 1EGLD
 
 	txBuilder, err := builders.NewTxBuilder(blockchain.NewTxSigner())
 	if err != nil {
@@ -72,11 +80,11 @@ func main() {
 	}
 	ti.AddTransaction(tx)
 
-	//a new transaction with the signature done on the hash of the transaction
-	//it's ok to reuse the arguments here, they will be copied, anyway
+	// a new transaction with the signature done on the hash of the transaction
+	// it's ok to reuse the arguments here, they will be copied, anyway
 	transactionArguments.Version = 2
 	transactionArguments.Options = 1
-	transactionArguments.Nonce++ //do not forget to increment the nonce, otherwise you will get 2 transactions
+	transactionArguments.Nonce++ // do not forget to increment the nonce, otherwise you will get 2 transactions
 	// with the same nonce (only one of them will get executed)
 	txSigOnHash, err := ti.ApplySignatureAndGenerateTx(privateKey, transactionArguments)
 	if err != nil {

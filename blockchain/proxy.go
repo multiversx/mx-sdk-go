@@ -1,24 +1,22 @@
 package blockchain
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"sort"
+	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core/http"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
 const (
 	// endpoints
-	networkConfigEndpoint            = "network/config"
 	networkEconomicsEndpoint         = "network/economics"
 	ratingsConfigEndpoint            = "network/ratings"
 	enableEpochsConfigEndpoint       = "network/enable-epochs"
@@ -30,7 +28,6 @@ const (
 	getTransactionInfoEndpoint       = "transaction/%s"
 	getHyperBlockByNonceEndpoint     = "hyperblock/by-nonce/%v"
 	getHyperBlockByHashEndpoint      = "hyperblock/by-hash/%s"
-	getNetworkStatusEndpoint         = "network/status/%v"
 	withResultsQueryParam            = "?withResults=true"
 	vmValuesEndpoint                 = "vm-values/query"
 	genesisNodesConfigEndpoint       = "network/genesis-nodes"
@@ -41,45 +38,72 @@ const (
 	getRawStartOfEpochMetaBlock   = "internal/raw/startofepoch/metablock/by-epoch/%d"
 )
 
-// HTTPClient is the interface we expect to call in order to do the HTTP requests
-type HTTPClient interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
 // ArgsElrondProxy is the DTO used in the elrond proxy constructor
 type ArgsElrondProxy struct {
-	ProxyURL       string
-	Client         HTTPClient
-	SameScState    bool
-	ShouldBeSynced bool
+	ProxyURL            string
+	Client              http.Client
+	SameScState         bool
+	ShouldBeSynced      bool
+	FinalityCheck       bool
+	AllowedDeltaToFinal int
+	CacheExpirationTime time.Duration
 }
 
 // elrondProxy implements basic functions for interacting with an Elrond Proxy
 type elrondProxy struct {
-	proxyURL       string
-	client         HTTPClient
-	sameScState    bool
-	shouldBeSynced bool
+	*elrondBaseProxy
+	sameScState         bool
+	shouldBeSynced      bool
+	finalityCheck       bool
+	allowedDeltaToFinal int
 }
 
 // NewElrondProxy initializes and returns an ElrondProxy object
-func NewElrondProxy(args ArgsElrondProxy) *elrondProxy {
-	if check.IfNilReflect(args.Client) {
-		args.Client = http.DefaultClient
+func NewElrondProxy(args ArgsElrondProxy) (*elrondProxy, error) {
+	err := checkArgsProxy(args)
+	if err != nil {
+		return nil, err
+	}
+
+	clientWrapper := http.NewHttpClientWrapper(args.Client, args.ProxyURL)
+	baseArgs := argsElrondBaseProxy{
+		httpClientWrapper: clientWrapper,
+		expirationTime:    args.CacheExpirationTime,
+	}
+	baseProxy, err := newElrondBaseProxy(baseArgs)
+	if err != nil {
+		return nil, err
 	}
 
 	ep := &elrondProxy{
-		proxyURL:       args.ProxyURL,
-		client:         args.Client,
-		sameScState:    args.SameScState,
-		shouldBeSynced: args.ShouldBeSynced,
+		elrondBaseProxy:     baseProxy,
+		sameScState:         args.SameScState,
+		shouldBeSynced:      args.ShouldBeSynced,
+		finalityCheck:       args.FinalityCheck,
+		allowedDeltaToFinal: args.AllowedDeltaToFinal,
 	}
 
-	return ep
+	return ep, nil
+}
+
+func checkArgsProxy(args ArgsElrondProxy) error {
+	if args.FinalityCheck {
+		if args.AllowedDeltaToFinal < minAllowedDeltaToFinal {
+			return fmt.Errorf("%w, provided: %d, minimum: %d",
+				ErrInvalidAllowedDeltaToFinal, args.AllowedDeltaToFinal, minAllowedDeltaToFinal)
+		}
+	}
+
+	return nil
 }
 
 // ExecuteVMQuery retrieves data from existing SC trie through the use of a VM
 func (ep *elrondProxy) ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
+	err := ep.checkFinalState(ctx, vmRequest.Address)
+	if err != nil {
+		return nil, err
+	}
+
 	jsonVMRequestWithOptionalParams := data.VmValueRequestWithOptionalParameters{
 		VmValueRequest: vmRequest,
 		SameScState:    ep.sameScState,
@@ -107,23 +131,17 @@ func (ep *elrondProxy) ExecuteVMQuery(ctx context.Context, vmRequest *data.VmVal
 	return &response.Data, nil
 }
 
-// GetNetworkConfig retrieves the network configuration from the proxy
-func (ep *elrondProxy) GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error) {
-	buff, err := ep.GetHTTP(ctx, networkConfigEndpoint)
-	if err != nil {
-		return nil, err
+func (ep *elrondProxy) checkFinalState(ctx context.Context, address string) error {
+	if !ep.finalityCheck {
+		return nil
 	}
 
-	response := &data.NetworkConfigResponse{}
-	err = json.Unmarshal(buff, response)
+	targetShardID, err := ep.GetShardOfAddress(ctx, address)
 	if err != nil {
-		return nil, err
-	}
-	if response.Error != "" {
-		return nil, errors.New(response.Error)
+		return err
 	}
 
-	return response.Data.Config, nil
+	return ep.CheckShardFinalization(ctx, targetShardID, uint64(ep.allowedDeltaToFinal))
 }
 
 // GetNetworkEconomics retrieves the network economics from the proxy
@@ -348,22 +366,12 @@ func (ep *elrondProxy) RequestTransactionCost(ctx context.Context, tx *data.Tran
 
 // GetLatestHyperBlockNonce retrieves the latest hyper block (metachain) nonce from the network
 func (ep *elrondProxy) GetLatestHyperBlockNonce(ctx context.Context) (uint64, error) {
-	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, core.MetachainShardId)
-	buff, err := ep.GetHTTP(ctx, endpoint)
+	response, err := ep.GetNetworkStatus(ctx, core.MetachainShardId)
 	if err != nil {
 		return 0, err
 	}
 
-	response := &data.NetworkStatusResponse{}
-	err = json.Unmarshal(buff, response)
-	if err != nil {
-		return 0, err
-	}
-	if response.Error != "" {
-		return 0, errors.New(response.Error)
-	}
-
-	return response.Data.Status.Nonce, nil
+	return response.Nonce, nil
 }
 
 // GetHyperBlockByNonce retrieves a hyper block's info by nonce from the network
@@ -464,67 +472,12 @@ func (ep *elrondProxy) getRawMiniBlock(ctx context.Context, endpoint string) ([]
 
 // GetNonceAtEpochStart retrieves the start of epoch nonce from hyper block (metachain)
 func (ep *elrondProxy) GetNonceAtEpochStart(ctx context.Context, shardId uint32) (uint64, error) {
-	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, shardId)
-	buff, err := ep.GetHTTP(ctx, endpoint)
+	response, err := ep.GetNetworkStatus(ctx, shardId)
 	if err != nil {
 		return 0, err
 	}
 
-	response := &data.NetworkStatusResponse{}
-	err = json.Unmarshal(buff, response)
-	if err != nil {
-		return 0, err
-	}
-	if response.Error != "" {
-		return 0, errors.New(response.Error)
-	}
-
-	return response.Data.Status.NonceAtEpochStart, nil
-}
-
-// GetHTTP does a GET method operation on the specified endpoint
-func (ep *elrondProxy) GetHTTP(ctx context.Context, endpoint string) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", ep.proxyURL, endpoint)
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	response, err := ep.client.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = response.Body.Close()
-	}()
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return body, nil
-}
-
-// PostHTTP does a POST method operation on the specified endpoint with the provided raw data bytes
-func (ep *elrondProxy) PostHTTP(ctx context.Context, endpoint string, data []byte) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", ep.proxyURL, endpoint)
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-
-	request.Header.Set("Content-Type", "")
-	response, err := ep.client.Do(request)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		_ = response.Body.Close()
-	}()
-
-	return ioutil.ReadAll(response.Body)
+	return response.NonceAtEpochStart, nil
 }
 
 // GetRatingsConfig retrieves the ratings configuration from the proxy
