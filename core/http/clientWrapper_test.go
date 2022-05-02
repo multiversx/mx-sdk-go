@@ -30,6 +30,10 @@ func TestClientWrapper_GetHTTP(t *testing.T) {
 		time.Sleep(time.Second * 2)
 		rw.WriteHeader(http.StatusOK)
 		_, _ = rw.Write(response)
+
+		assert.Equal(t, httpAcceptType, req.Header.Get(httpAcceptTypeKey))
+		assert.Equal(t, "", req.Header.Get(httpContentTypeKey)) // this is not set on a GET request
+		assert.Equal(t, httpUserAgent, req.Header.Get(httpUserAgentKey))
 	}))
 	wrapper := NewHttpClientWrapper(nil, testHttpServer.URL)
 
@@ -63,6 +67,10 @@ func TestClientWrapper_PostHTTP(t *testing.T) {
 		time.Sleep(time.Second * 2)
 		rw.WriteHeader(http.StatusOK)
 		_, _ = rw.Write(response)
+
+		assert.Equal(t, httpAcceptType, req.Header.Get(httpAcceptTypeKey))
+		assert.Equal(t, httpContentType, req.Header.Get(httpContentTypeKey))
+		assert.Equal(t, httpUserAgent, req.Header.Get(httpUserAgentKey))
 	}))
 	wrapper := NewHttpClientWrapper(nil, testHttpServer.URL)
 

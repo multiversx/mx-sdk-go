@@ -10,6 +10,17 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 )
 
+const (
+	httpUserAgentKey = "User-Agent"
+	httpUserAgent    = "Elrond go SDK / 1.0.0 <Posting to nodes>"
+
+	httpAcceptTypeKey = "Accept"
+	httpAcceptType    = "application/json"
+
+	httpContentTypeKey = "Content-Type"
+	httpContentType    = "application/json"
+)
+
 type clientWrapper struct {
 	url    string
 	client Client
@@ -36,6 +47,8 @@ func (wrapper *clientWrapper) GetHTTP(ctx context.Context, endpoint string) ([]b
 		return nil, err
 	}
 
+	applyGetHeaderParams(request)
+
 	response, err := wrapper.client.Do(request)
 	if err != nil {
 		return nil, err
@@ -60,7 +73,8 @@ func (wrapper *clientWrapper) PostHTTP(ctx context.Context, endpoint string, dat
 		return nil, err
 	}
 
-	request.Header.Set("Content-Type", "")
+	applyPostHeaderParams(request)
+
 	response, err := wrapper.client.Do(request)
 	if err != nil {
 		return nil, err
@@ -76,4 +90,14 @@ func (wrapper *clientWrapper) PostHTTP(ctx context.Context, endpoint string, dat
 // IsInterfaceNil returns true if there is no value under the interface
 func (wrapper *clientWrapper) IsInterfaceNil() bool {
 	return wrapper == nil
+}
+
+func applyGetHeaderParams(request *http.Request) {
+	request.Header.Set(httpAcceptTypeKey, httpAcceptType)
+	request.Header.Set(httpUserAgentKey, httpUserAgent)
+}
+
+func applyPostHeaderParams(request *http.Request) {
+	applyGetHeaderParams(request)
+	request.Header.Set(httpContentTypeKey, httpContentType)
 }
