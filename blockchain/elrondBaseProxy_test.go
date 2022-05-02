@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -95,9 +96,9 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 
 		mockWrapper := &testsCommon.HTTPClientWrapperStub{}
 		wasCalled := false
-		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, error) {
+		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, int, error) {
 			wasCalled = true
-			return networkConfigBytes, nil
+			return networkConfigBytes, http.StatusOK, nil
 		}
 
 		args := createMockArgsElrondBaseProxy()
@@ -119,9 +120,9 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 
 		mockWrapper := &testsCommon.HTTPClientWrapperStub{}
 		wasCalled := false
-		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, error) {
+		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, int, error) {
 			wasCalled = true
-			return networkConfigBytes, nil
+			return networkConfigBytes, http.StatusOK, nil
 		}
 
 		args := createMockArgsElrondBaseProxy()
@@ -141,12 +142,12 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 	t.Run("Proxy.GetNetworkConfig returns error", func(t *testing.T) {
 		t.Parallel()
 
-		expectedError := errors.New("expected error")
+		expectedErr := errors.New("expected error")
 		mockWrapper := &testsCommon.HTTPClientWrapperStub{}
 		wasCalled := false
-		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, error) {
+		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, int, error) {
 			wasCalled = true
-			return nil, expectedError
+			return nil, http.StatusBadRequest, expectedErr
 		}
 
 		args := createMockArgsElrondBaseProxy()
@@ -157,16 +158,17 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 
 		require.Nil(t, configs)
 		require.True(t, wasCalled)
-		assert.Equal(t, expectedError, err)
+		assert.True(t, errors.Is(err, expectedErr))
+		assert.True(t, strings.Contains(err.Error(), http.StatusText(http.StatusBadRequest)))
 	})
 	t.Run("and Proxy.GetNetworkConfig returns malformed data", func(t *testing.T) {
 		t.Parallel()
 
 		mockWrapper := &testsCommon.HTTPClientWrapperStub{}
 		wasCalled := false
-		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, error) {
+		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, int, error) {
 			wasCalled = true
-			return []byte("malformed data"), nil
+			return []byte("malformed data"), http.StatusOK, nil
 		}
 
 		args := createMockArgsElrondBaseProxy()
@@ -195,9 +197,9 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 
 		mockWrapper := &testsCommon.HTTPClientWrapperStub{}
 		wasCalled := false
-		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, error) {
+		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, int, error) {
 			wasCalled = true
-			return erroredNetworkConfigBytes, nil
+			return erroredNetworkConfigBytes, http.StatusOK, nil
 		}
 
 		args := createMockArgsElrondBaseProxy()
@@ -216,9 +218,9 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 
 		mockWrapper := &testsCommon.HTTPClientWrapperStub{}
 		wasCalled := false
-		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, error) {
+		mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, int, error) {
 			wasCalled = true
-			return nil, nil
+			return nil, http.StatusOK, nil
 		}
 
 		args := createMockArgsElrondBaseProxy()
@@ -247,23 +249,24 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 
 		args := createMockArgsElrondBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, error) {
-				return nil, expectedErr
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return nil, http.StatusBadRequest, expectedErr
 			},
 		}
 		baseProxy, _ := newElrondBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
-		assert.Equal(t, expectedErr, err)
+		assert.True(t, errors.Is(err, expectedErr))
+		assert.True(t, strings.Contains(err.Error(), http.StatusText(http.StatusBadRequest)))
 	})
 	t.Run("malformed response", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsElrondBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, error) {
-				return []byte("malformed response"), nil
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return []byte("malformed response"), http.StatusOK, nil
 			},
 		}
 		baseProxy, _ := newElrondBaseProxy(args)
@@ -287,8 +290,8 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 
 		args := createMockArgsElrondBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, error) {
-				return respBytes, nil
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return respBytes, http.StatusOK, nil
 			},
 		}
 		baseProxy, _ := newElrondBaseProxy(args)
@@ -322,8 +325,8 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 
 		args := createMockArgsElrondBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, error) {
-				return respBytes, nil
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return respBytes, http.StatusOK, nil
 			},
 		}
 		baseProxy, _ := newElrondBaseProxy(args)
@@ -359,7 +362,8 @@ func TestElrondBaseProxy_GetShardOfAddress(t *testing.T) {
 		shardID, err := baseProxy.GetShardOfAddress(context.Background(), addrShard1)
 
 		assert.Zero(t, shardID)
-		assert.Equal(t, expectedErr, err)
+		assert.True(t, errors.Is(err, expectedErr))
+		assert.True(t, strings.Contains(err.Error(), http.StatusText(http.StatusBadRequest)))
 	})
 	t.Run("num shards without meta is 0", func(t *testing.T) {
 		t.Parallel()
@@ -406,12 +410,12 @@ func createBaseProxyForGetShardOfAddress(numShards uint32, errGet error) *elrond
 	networkConfigBytes, _ := json.Marshal(response)
 
 	mockWrapper := &testsCommon.HTTPClientWrapperStub{}
-	mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, error) {
+	mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, int, error) {
 		if errGet != nil {
-			return nil, errGet
+			return nil, http.StatusBadRequest, errGet
 		}
 
-		return networkConfigBytes, nil
+		return networkConfigBytes, http.StatusOK, nil
 	}
 
 	args := createMockArgsElrondBaseProxy()
@@ -447,7 +451,8 @@ func TestElrondBaseProxy_CheckShardFinalization(t *testing.T) {
 		baseProxy := createBaseProxyForCheckShardFinalization(0, goodResponseExample, expectedErr, nil)
 
 		err := baseProxy.CheckShardFinalization(context.Background(), 1, 1)
-		assert.Equal(t, expectedErr, err)
+		assert.True(t, errors.Is(err, expectedErr))
+		assert.True(t, strings.Contains(err.Error(), http.StatusText(http.StatusBadRequest)))
 	})
 	t.Run("invalid response from meta", func(t *testing.T) {
 		baseProxy := createBaseProxyForCheckShardFinalization(0, "invalid", nil, nil)
@@ -460,7 +465,8 @@ func TestElrondBaseProxy_CheckShardFinalization(t *testing.T) {
 		baseProxy := createBaseProxyForCheckShardFinalization(0, goodResponseExample, nil, expectedErr)
 
 		err := baseProxy.CheckShardFinalization(context.Background(), 1, 1)
-		assert.Equal(t, expectedErr, err)
+		assert.True(t, errors.Is(err, expectedErr))
+		assert.True(t, strings.Contains(err.Error(), http.StatusText(http.StatusBadRequest)))
 	})
 	t.Run("finalization checks", func(t *testing.T) {
 		t.Parallel()
@@ -508,20 +514,20 @@ func createBaseProxyForCheckShardFinalization(
 ) *elrondBaseProxy {
 
 	mockWrapper := &testsCommon.HTTPClientWrapperStub{}
-	mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, error) {
+	mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, int, error) {
 		if strings.Contains(endpoint, fmt.Sprintf("%d", core.MetachainShardId)) {
 			if fetchFromMetaError != nil {
-				return nil, fetchFromMetaError
+				return nil, http.StatusBadRequest, fetchFromMetaError
 			}
 
-			return createNetworkStatusBytes(0, crossCheck), nil
+			return createNetworkStatusBytes(0, crossCheck), http.StatusOK, nil
 		}
 
 		if fetchFromShardError != nil {
-			return nil, fetchFromShardError
+			return nil, http.StatusBadRequest, fetchFromShardError
 		}
 
-		return createNetworkStatusBytes(crtNonce, ""), nil
+		return createNetworkStatusBytes(crtNonce, ""), http.StatusOK, nil
 	}
 
 	args := createMockArgsElrondBaseProxy()

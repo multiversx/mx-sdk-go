@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -117,9 +118,9 @@ func (proxy *elrondBaseProxy) cacheConfigs(ctx context.Context) (*data.NetworkCo
 
 // getNetworkConfigFromSource retrieves the network configuration from the proxy
 func (proxy *elrondBaseProxy) getNetworkConfigFromSource(ctx context.Context) (*data.NetworkConfig, error) {
-	buff, err := proxy.GetHTTP(ctx, networkConfigEndpoint)
-	if err != nil {
-		return nil, err
+	buff, code, err := proxy.GetHTTP(ctx, networkConfigEndpoint)
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
 	}
 
 	response := &data.NetworkConfigResponse{}
@@ -209,9 +210,9 @@ func (proxy *elrondBaseProxy) GetShardOfAddress(ctx context.Context, bech32Addre
 // GetNetworkStatus will return the network status of a provided shard
 func (proxy *elrondBaseProxy) GetNetworkStatus(ctx context.Context, shardID uint32) (*data.NetworkStatus, error) {
 	endpoint := fmt.Sprintf(getNetworkStatusEndpoint, shardID)
-	buff, err := proxy.GetHTTP(ctx, endpoint)
-	if err != nil {
-		return nil, err
+	buff, code, err := proxy.GetHTTP(ctx, endpoint)
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
 	}
 
 	response := &data.NetworkStatusResponse{}

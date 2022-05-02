@@ -1,6 +1,10 @@
 package blockchain
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"net/http"
+)
 
 // ErrInvalidAddress signals that the provided address is invalid
 var ErrInvalidAddress = errors.New("invalid address")
@@ -25,3 +29,15 @@ var ErrNilHTTPClientWrapper = errors.New("nil HTTP client wrapper")
 
 // ErrInvalidNonceCrossCheckValueFormat signals that an invalid nonce cross-check value has been provided
 var ErrInvalidNonceCrossCheckValueFormat = errors.New("invalid nonce cross check value format")
+
+// ErrHTTPStatusCodeIsNotOK signals that the returned HTTP status code is not OK
+var ErrHTTPStatusCodeIsNotOK = errors.New("HTTP status code is not OK")
+
+func createHTTPStatusError(httpStatusCode int, err error) error {
+	if err == nil {
+		err = ErrHTTPStatusCodeIsNotOK
+	}
+
+	return fmt.Errorf("%w, returned http status: %d, %s",
+		err, httpStatusCode, http.StatusText(httpStatusCode))
+}

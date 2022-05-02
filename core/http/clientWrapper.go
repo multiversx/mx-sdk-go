@@ -40,18 +40,18 @@ func NewHttpClientWrapper(client Client, url string) *clientWrapper {
 }
 
 // GetHTTP does a GET method operation on the specified endpoint
-func (wrapper *clientWrapper) GetHTTP(ctx context.Context, endpoint string) ([]byte, error) {
+func (wrapper *clientWrapper) GetHTTP(ctx context.Context, endpoint string) ([]byte, int, error) {
 	url := fmt.Sprintf("%s/%s", wrapper.url, endpoint)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	applyGetHeaderParams(request)
 
 	response, err := wrapper.client.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 	defer func() {
 		_ = response.Body.Close()
@@ -59,32 +59,34 @@ func (wrapper *clientWrapper) GetHTTP(ctx context.Context, endpoint string) ([]b
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, err
+		return nil, response.StatusCode, err
 	}
 
-	return body, nil
+	return body, response.StatusCode, nil
 }
 
 // PostHTTP does a POST method operation on the specified endpoint with the provided raw data bytes
-func (wrapper *clientWrapper) PostHTTP(ctx context.Context, endpoint string, data []byte) ([]byte, error) {
+func (wrapper *clientWrapper) PostHTTP(ctx context.Context, endpoint string, data []byte) ([]byte, int, error) {
 	url := fmt.Sprintf("%s/%s", wrapper.url, endpoint)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	applyPostHeaderParams(request)
 
 	response, err := wrapper.client.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	defer func() {
 		_ = response.Body.Close()
 	}()
 
-	return ioutil.ReadAll(response.Body)
+	buff, err := ioutil.ReadAll(response.Body)
+
+	return buff, response.StatusCode, err
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

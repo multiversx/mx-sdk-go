@@ -43,18 +43,20 @@ func TestClientWrapper_GetHTTP(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 		defer cancel()
 
-		resp, err := wrapper.GetHTTP(ctx, "endpoint")
+		resp, code, err := wrapper.GetHTTP(ctx, "endpoint")
 		assert.Nil(t, resp)
 		require.NotNil(t, err)
 		assert.Equal(t, "*url.Error", fmt.Sprintf("%T", err))
 		assert.True(t, strings.Contains(err.Error(), "context deadline exceeded"))
+		assert.Equal(t, http.StatusBadRequest, code)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		resp, err := wrapper.GetHTTP(context.Background(), "endpoint")
+		resp, code, err := wrapper.GetHTTP(context.Background(), "endpoint")
 		assert.Equal(t, response, resp)
 		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, code)
 	})
 }
 
@@ -80,17 +82,19 @@ func TestClientWrapper_PostHTTP(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 		defer cancel()
 
-		resp, err := wrapper.PostHTTP(ctx, "endpoint", nil)
+		resp, code, err := wrapper.PostHTTP(ctx, "endpoint", nil)
 		assert.Nil(t, resp)
 		require.NotNil(t, err)
 		assert.Equal(t, "*url.Error", fmt.Sprintf("%T", err))
 		assert.True(t, strings.Contains(err.Error(), "context deadline exceeded"))
+		assert.Equal(t, http.StatusBadRequest, code)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		resp, err := wrapper.PostHTTP(context.Background(), "endpoint", nil)
+		resp, code, err := wrapper.PostHTTP(context.Background(), "endpoint", nil)
 		assert.Equal(t, response, resp)
 		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, code)
 	})
 }
