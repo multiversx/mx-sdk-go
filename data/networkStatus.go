@@ -20,4 +20,6 @@ type NetworkStatus struct {
 	RoundsPassedInCurrentEpoch uint64 `json:"erd_rounds_passed_in_current_epoch"`
 	RoundsPerEpoch             uint64 `json:"erd_rounds_per_epoch"`
 	CrossCheckBlockHeight      string `json:"erd_cross_check_block_height"`
+	HighestNonce               uint64 `json:"erd_highest_final_nonce"`
+	ProbableHighestNonce       uint64 `json:"erd_probable_highest_nonce"`
 }

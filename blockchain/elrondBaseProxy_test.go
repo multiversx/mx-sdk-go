@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -12,18 +11,18 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/endpointProviders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const goodResponseExample = "0: 9169897, 1: 9166353, 2: 9170524, "
-
 func createMockArgsElrondBaseProxy() argsElrondBaseProxy {
 	return argsElrondBaseProxy{
 		httpClientWrapper: &testsCommon.HTTPClientWrapperStub{},
 		expirationTime:    time.Second,
+		endpointProvider:  endpointProviders.NewNodeEndpointProvider(),
 	}
 }
 
@@ -423,184 +422,4 @@ func createBaseProxyForGetShardOfAddress(numShards uint32, errGet error) *elrond
 	baseProxy, _ := newElrondBaseProxy(args)
 
 	return baseProxy
-}
-
-func TestElrondBaseProxy_CheckShardFinalization(t *testing.T) {
-	t.Parallel()
-
-	t.Run("invalid maxNoncesDelta", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsElrondBaseProxy()
-		baseProxy, _ := newElrondBaseProxy(args)
-
-		err := baseProxy.CheckShardFinalization(context.Background(), 0, 0)
-		assert.True(t, errors.Is(err, ErrInvalidAllowedDeltaToFinal))
-	})
-	t.Run("for metachain it will return nil", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsElrondBaseProxy()
-		baseProxy, _ := newElrondBaseProxy(args)
-
-		err := baseProxy.CheckShardFinalization(context.Background(), core.MetachainShardId, 1)
-		assert.Nil(t, err)
-	})
-	t.Run("get cross check from meta fails", func(t *testing.T) {
-		expectedErr := errors.New("expected error")
-		baseProxy := createBaseProxyForCheckShardFinalization(0, goodResponseExample, expectedErr, nil)
-
-		err := baseProxy.CheckShardFinalization(context.Background(), 1, 1)
-		assert.True(t, errors.Is(err, expectedErr))
-		assert.True(t, strings.Contains(err.Error(), http.StatusText(http.StatusBadRequest)))
-	})
-	t.Run("invalid response from meta", func(t *testing.T) {
-		baseProxy := createBaseProxyForCheckShardFinalization(0, "invalid", nil, nil)
-
-		err := baseProxy.CheckShardFinalization(context.Background(), 1, 1)
-		assert.True(t, errors.Is(err, ErrInvalidNonceCrossCheckValueFormat))
-	})
-	t.Run("get nonce from shard fails", func(t *testing.T) {
-		expectedErr := errors.New("expected error")
-		baseProxy := createBaseProxyForCheckShardFinalization(0, goodResponseExample, nil, expectedErr)
-
-		err := baseProxy.CheckShardFinalization(context.Background(), 1, 1)
-		assert.True(t, errors.Is(err, expectedErr))
-		assert.True(t, strings.Contains(err.Error(), http.StatusText(http.StatusBadRequest)))
-	})
-	t.Run("finalization checks", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("0 difference", func(t *testing.T) {
-			nonce := uint64(9166353)
-			baseProxy := createBaseProxyForCheckShardFinalization(nonce, goodResponseExample, nil, nil)
-
-			err := baseProxy.CheckShardFinalization(context.Background(), 1, 1)
-			assert.Nil(t, err)
-
-			err = baseProxy.CheckShardFinalization(context.Background(), 1, 10)
-			assert.Nil(t, err)
-		})
-		t.Run("10 difference", func(t *testing.T) {
-			nonce := uint64(9166353 + 10)
-			baseProxy := createBaseProxyForCheckShardFinalization(nonce, goodResponseExample, nil, nil)
-
-			err := baseProxy.CheckShardFinalization(context.Background(), 1, 10)
-			assert.Nil(t, err)
-
-			err = baseProxy.CheckShardFinalization(context.Background(), 1, 11)
-			assert.Nil(t, err)
-
-			err = baseProxy.CheckShardFinalization(context.Background(), 1, 9)
-			assert.NotNil(t, err)
-			assert.True(t, strings.Contains(err.Error(), "shardID 1 is stuck"))
-		})
-		t.Run("shard is syncing", func(t *testing.T) {
-			nonce := uint64(9166353 - 1)
-			baseProxy := createBaseProxyForCheckShardFinalization(nonce, goodResponseExample, nil, nil)
-
-			err := baseProxy.CheckShardFinalization(context.Background(), 1, 9)
-			assert.NotNil(t, err)
-			assert.True(t, strings.Contains(err.Error(), "shardID 1 is syncing"))
-		})
-	})
-}
-
-func createBaseProxyForCheckShardFinalization(
-	crtNonce uint64,
-	crossCheck string,
-	fetchFromMetaError error,
-	fetchFromShardError error,
-) *elrondBaseProxy {
-
-	mockWrapper := &testsCommon.HTTPClientWrapperStub{}
-	mockWrapper.GetHTTPCalled = func(ctx context.Context, endpoint string) ([]byte, int, error) {
-		if strings.Contains(endpoint, fmt.Sprintf("%d", core.MetachainShardId)) {
-			if fetchFromMetaError != nil {
-				return nil, http.StatusBadRequest, fetchFromMetaError
-			}
-
-			return createNetworkStatusBytes(0, crossCheck), http.StatusOK, nil
-		}
-
-		if fetchFromShardError != nil {
-			return nil, http.StatusBadRequest, fetchFromShardError
-		}
-
-		return createNetworkStatusBytes(crtNonce, ""), http.StatusOK, nil
-	}
-
-	args := createMockArgsElrondBaseProxy()
-	args.httpClientWrapper = mockWrapper
-	baseProxy, _ := newElrondBaseProxy(args)
-
-	return baseProxy
-}
-
-func createNetworkStatusBytes(crtNonce uint64, crossCheck string) []byte {
-	response := &data.NetworkStatusResponse{
-		Data: struct {
-			Status *data.NetworkStatus `json:"status"`
-		}{
-			Status: &data.NetworkStatus{
-				Nonce:                 crtNonce,
-				CrossCheckBlockHeight: crossCheck,
-			},
-		},
-	}
-
-	networkStatusBytes, _ := json.Marshal(response)
-
-	return networkStatusBytes
-}
-
-func TestExtractNonceOfShardID(t *testing.T) {
-	t.Parallel()
-
-	t.Run("empty response should error", func(t *testing.T) {
-		t.Parallel()
-
-		nonce, err := extractNonceOfShardID("", 0)
-		assert.True(t, errors.Is(err, ErrInvalidNonceCrossCheckValueFormat))
-		assert.True(t, strings.Contains(err.Error(), "empty value"))
-		assert.Equal(t, uint64(0), nonce)
-	})
-	t.Run("shard data contains a NaN", func(t *testing.T) {
-		t.Parallel()
-
-		nonce, err := extractNonceOfShardID("0: aaa", 0)
-		assert.True(t, errors.Is(err, ErrInvalidNonceCrossCheckValueFormat))
-		assert.True(t, strings.Contains(err.Error(), "is not a valid number"))
-		assert.Equal(t, uint64(0), nonce)
-	})
-	t.Run("shard not found", func(t *testing.T) {
-		t.Parallel()
-
-		nonce, err := extractNonceOfShardID(goodResponseExample, 3)
-		assert.True(t, errors.Is(err, ErrInvalidNonceCrossCheckValueFormat))
-		assert.True(t, strings.Contains(err.Error(), "value not found for shard 3"))
-		assert.Equal(t, uint64(0), nonce)
-	})
-	t.Run("should work", func(t *testing.T) {
-		t.Parallel()
-
-		nonce, err := extractNonceOfShardID(goodResponseExample, 0)
-		assert.Nil(t, err)
-		assert.Equal(t, uint64(9169897), nonce)
-
-		nonce, err = extractNonceOfShardID(goodResponseExample, 1)
-		assert.Nil(t, err)
-		assert.Equal(t, uint64(9166353), nonce)
-
-		nonce, err = extractNonceOfShardID(goodResponseExample, 2)
-		assert.Nil(t, err)
-		assert.Equal(t, uint64(9170524), nonce)
-	})
-	t.Run("should work even if it contains extra data", func(t *testing.T) {
-		t.Parallel()
-
-		nonce, err := extractNonceOfShardID("extra,"+goodResponseExample, 0)
-		assert.Nil(t, err)
-		assert.Equal(t, uint64(9169897), nonce)
-	})
 }

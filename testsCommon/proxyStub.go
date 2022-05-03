@@ -22,6 +22,7 @@ type ProxyStub struct {
 	GetRawBlockByHashCalled           func(shardId uint32, hash string) ([]byte, error)
 	GetRawStartOfEpochMetaBlockCalled func(epoch uint32) ([]byte, error)
 	GetGenesisNodesPubKeysCalled      func() (*data.GenesisNodes, error)
+	GetNetworkStatusCalled            func(ctx context.Context, shardID uint32) (*data.NetworkStatus, error)
 }
 
 // ExecuteVMQuery -
@@ -138,6 +139,15 @@ func (stub *ProxyStub) GetGenesisNodesPubKeys(_ context.Context) (*data.GenesisN
 		return stub.GetGenesisNodesPubKeysCalled()
 	}
 	return nil, nil
+}
+
+// GetNetworkStatus -
+func (stub *ProxyStub) GetNetworkStatus(ctx context.Context, shardID uint32) (*data.NetworkStatus, error) {
+	if stub.GetNetworkStatusCalled != nil {
+		return stub.GetNetworkStatusCalled(ctx, shardID)
+	}
+
+	return &data.NetworkStatus{}, nil
 }
 
 // IsInterfaceNil -
