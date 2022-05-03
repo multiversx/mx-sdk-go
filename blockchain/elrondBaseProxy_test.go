@@ -49,6 +49,16 @@ func TestNewElrondBaseProxy(t *testing.T) {
 		assert.True(t, check.IfNil(baseProxy))
 		assert.True(t, errors.Is(err, ErrInvalidCacherDuration))
 	})
+	t.Run("nil endpoint provider", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsElrondBaseProxy()
+		args.endpointProvider = nil
+		baseProxy, err := newElrondBaseProxy(args)
+
+		assert.True(t, check.IfNil(baseProxy))
+		assert.True(t, errors.Is(err, ErrNilEndpointProvider))
+	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
@@ -300,6 +310,35 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.True(t, strings.Contains(err.Error(), expectedErr.Error()))
 	})
+	t.Run("requested from wrong shard should error", func(t *testing.T) {
+		t.Parallel()
+
+		providedNetworkStatus := &data.NetworkStatus{
+			CurrentRound:               1,
+			EpochNumber:                2,
+			Nonce:                      3,
+			NonceAtEpochStart:          4,
+			NoncesPassedInCurrentEpoch: 5,
+			RoundAtEpochStart:          6,
+			RoundsPassedInCurrentEpoch: 7,
+			RoundsPerEpoch:             8,
+			CrossCheckBlockHeight:      "aaa",
+			ShardID:                    core.MetachainShardId,
+		}
+
+		args := createMockArgsElrondBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return getNetworkStatusBytes(providedNetworkStatus), http.StatusOK, nil
+			},
+		}
+		baseProxy, _ := newElrondBaseProxy(args)
+
+		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		assert.Nil(t, result)
+		assert.True(t, errors.Is(err, ErrShardIDMismatch))
+		assert.True(t, strings.Contains(err.Error(), "requested from 0, got response from 4294967295"))
+	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
@@ -315,17 +354,10 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 			CrossCheckBlockHeight:      "aaa",
 		}
 
-		resp := &data.NetworkStatusResponse{
-			Data: struct {
-				Status *data.NetworkStatus `json:"status"`
-			}{Status: providedNetworkStatus},
-		}
-		respBytes, _ := json.Marshal(resp)
-
 		args := createMockArgsElrondBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
-				return respBytes, http.StatusOK, nil
+				return getNetworkStatusBytes(providedNetworkStatus), http.StatusOK, nil
 			},
 		}
 		baseProxy, _ := newElrondBaseProxy(args)
@@ -334,6 +366,46 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, providedNetworkStatus, result)
 	})
+	t.Run("should work with proxy endpoint provider", func(t *testing.T) {
+		t.Parallel()
+
+		providedNetworkStatus := &data.NetworkStatus{
+			CurrentRound:               1,
+			EpochNumber:                2,
+			Nonce:                      3,
+			NonceAtEpochStart:          4,
+			NoncesPassedInCurrentEpoch: 5,
+			RoundAtEpochStart:          6,
+			RoundsPassedInCurrentEpoch: 7,
+			RoundsPerEpoch:             8,
+			CrossCheckBlockHeight:      "aaa",
+			ShardID:                    core.MetachainShardId, // this won't be tested in this test
+		}
+
+		args := createMockArgsElrondBaseProxy()
+		args.endpointProvider = endpointProviders.NewProxyEndpointProvider()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return getNetworkStatusBytes(providedNetworkStatus), http.StatusOK, nil
+			},
+		}
+		baseProxy, _ := newElrondBaseProxy(args)
+
+		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		assert.Nil(t, err)
+		assert.Equal(t, providedNetworkStatus, result)
+	})
+}
+
+func getNetworkStatusBytes(status *data.NetworkStatus) []byte {
+	resp := &data.NetworkStatusResponse{
+		Data: struct {
+			Status *data.NetworkStatus `json:"status"`
+		}{Status: status},
+	}
+	respBytes, _ := json.Marshal(resp)
+
+	return respBytes
 }
 
 func TestElrondBaseProxy_GetShardOfAddress(t *testing.T) {
@@ -422,4 +494,13 @@ func createBaseProxyForGetShardOfAddress(numShards uint32, errGet error) *elrond
 	baseProxy, _ := newElrondBaseProxy(args)
 
 	return baseProxy
+}
+
+func TestElrondBaseProxy_GetRestAPIEntityType(t *testing.T) {
+	t.Parallel()
+
+	args := createMockArgsElrondBaseProxy()
+	baseProxy, _ := newElrondBaseProxy(args)
+
+	assert.Equal(t, args.endpointProvider.GetRestAPIEntityType(), baseProxy.GetRestAPIEntityType())
 }

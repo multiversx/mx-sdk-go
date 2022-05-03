@@ -41,9 +41,11 @@ type EndpointProvider interface {
 	GetGenesisNodesConfig() string
 	GetRawStartOfEpochMetaBlock(epoch uint32) string
 	GetNodeStatus(shardID uint32) string
+	ShouldCheckShardIDForNodeStatus() bool
 	GetRawBlockByHash(shardID uint32, hexHash string) string
 	GetRawBlockByNonce(shardID uint32, nonce uint64) string
 	GetRawMiniBlockByHash(shardID uint32, hexHash string, epoch uint32) string
+	GetRestAPIEntityType() core.RestAPIEntityType
 	IsInterfaceNil() bool
 }
 

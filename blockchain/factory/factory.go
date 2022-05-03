@@ -21,17 +21,17 @@ func CreateEndpointProvider(entityType core.RestAPIEntityType) (EndpointProvider
 }
 
 // CreateFinalityProvider creates a new instance of FinalityProvider
-func CreateFinalityProvider(entityType core.RestAPIEntityType, proxy proxy, checkFinality bool) (FinalityProvider, error) {
+func CreateFinalityProvider(proxy proxy, checkFinality bool) (FinalityProvider, error) {
 	if !checkFinality {
 		return finalityProvider.NewDisabledFinalityProvider(), nil
 	}
 
-	switch entityType {
+	switch proxy.GetRestAPIEntityType() {
 	case core.ObserverNode:
 		return finalityProvider.NewNodeFinalityProvider(proxy)
 	case core.Proxy:
 		return finalityProvider.NewProxyFinalityProvider(proxy)
 	default:
-		return nil, fmt.Errorf("%w: %s", ErrUnknownRestAPIEntityType, entityType)
+		return nil, fmt.Errorf("%w: %s", ErrUnknownRestAPIEntityType, proxy.GetRestAPIEntityType())
 	}
 }

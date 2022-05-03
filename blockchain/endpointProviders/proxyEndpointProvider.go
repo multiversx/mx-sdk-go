@@ -1,6 +1,10 @@
 package endpointProviders
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+)
 
 const (
 	proxyGetNodeStatus      = "network/status/%d"
@@ -24,6 +28,11 @@ func (proxy *proxyEndpointProvider) GetNodeStatus(shardID uint32) string {
 	return fmt.Sprintf(proxyGetNodeStatus, shardID)
 }
 
+// ShouldCheckShardIDForNodeStatus returns false as the proxy will ensure the correct shard dispatching of the request
+func (proxy *proxyEndpointProvider) ShouldCheckShardIDForNodeStatus() bool {
+	return false
+}
+
 // GetRawBlockByHash returns the raw block by hash endpoint
 func (proxy *proxyEndpointProvider) GetRawBlockByHash(shardID uint32, hexHash string) string {
 	return fmt.Sprintf(proxyRawBlockByHash, shardID, hexHash)
@@ -37,6 +46,11 @@ func (proxy *proxyEndpointProvider) GetRawBlockByNonce(shardID uint32, nonce uin
 // GetRawMiniBlockByHash returns the raw miniblock by hash endpoint
 func (proxy *proxyEndpointProvider) GetRawMiniBlockByHash(shardID uint32, hexHash string, epoch uint32) string {
 	return fmt.Sprintf(proxyRawMiniBlockByHash, shardID, hexHash, epoch)
+}
+
+// GetRestAPIEntityType returns the proxy constant
+func (proxy *proxyEndpointProvider) GetRestAPIEntityType() core.RestAPIEntityType {
+	return core.Proxy
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

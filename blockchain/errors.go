@@ -33,6 +33,9 @@ var ErrHTTPStatusCodeIsNotOK = errors.New("HTTP status code is not OK")
 // ErrNilEndpointProvider signals that a nil endpoint provider
 var ErrNilEndpointProvider = errors.New("nil endpoint provider")
 
+// ErrShardIDMismatch signals that a shard ID mismatch has occurred
+var ErrShardIDMismatch = errors.New("shard ID mismatch")
+
 func createHTTPStatusError(httpStatusCode int, err error) error {
 	if err == nil {
 		err = ErrHTTPStatusCodeIsNotOK

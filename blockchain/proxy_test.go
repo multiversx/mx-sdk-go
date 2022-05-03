@@ -105,6 +105,7 @@ func handleRequestNetworkConfigAndStatus(
 					Nonce:                currentNonce,
 					HighestNonce:         highestNonce,
 					ProbableHighestNonce: currentNonce,
+					ShardID:              2,
 				},
 			},
 			Error: "",
@@ -498,6 +499,7 @@ func TestElrondProxy_GetNonceAtEpochStart(t *testing.T) {
 	expectedNonce := uint64(2)
 	expectedNetworkStatus := &data.NetworkStatus{
 		NonceAtEpochStart: expectedNonce,
+		ShardID:           core.MetachainShardId,
 	}
 	statusResponse := &data.NetworkStatusResponse{
 		Data: struct {

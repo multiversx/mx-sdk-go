@@ -11,6 +11,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
@@ -169,7 +170,28 @@ func (proxy *elrondBaseProxy) GetNetworkStatus(ctx context.Context, shardID uint
 		return nil, errors.New(response.Error)
 	}
 
+	err = proxy.checkReceivedNodeStatus(response.Data.Status, shardID)
+	if err != nil {
+		return nil, err
+	}
+
 	return response.Data.Status, nil
+}
+
+func (proxy *elrondBaseProxy) checkReceivedNodeStatus(networkStatus *data.NetworkStatus, shardID uint32) error {
+	if !proxy.endpointProvider.ShouldCheckShardIDForNodeStatus() {
+		return nil
+	}
+	if networkStatus.ShardID == shardID {
+		return nil
+	}
+
+	return fmt.Errorf("%w, requested from %d, got response from %d", ErrShardIDMismatch, shardID, networkStatus.ShardID)
+}
+
+// GetRestAPIEntityType returns the REST API entity type that this implementation works with
+func (proxy *elrondBaseProxy) GetRestAPIEntityType() core.RestAPIEntityType {
+	return proxy.endpointProvider.GetRestAPIEntityType()
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

@@ -1,6 +1,10 @@
 package endpointProviders
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+)
 
 const (
 	nodeGetNodeStatusEndpoint      = "node/status"
@@ -24,6 +28,11 @@ func (node *nodeEndpointProvider) GetNodeStatus(_ uint32) string {
 	return nodeGetNodeStatusEndpoint
 }
 
+// ShouldCheckShardIDForNodeStatus returns true as some extra check will need to be done when requesting from an observer
+func (node *nodeEndpointProvider) ShouldCheckShardIDForNodeStatus() bool {
+	return true
+}
+
 // GetRawBlockByHash returns the raw block by hash endpoint
 func (node *nodeEndpointProvider) GetRawBlockByHash(_ uint32, hexHash string) string {
 	return fmt.Sprintf(nodeRawBlockByHashEndpoint, hexHash)
@@ -37,6 +46,11 @@ func (node *nodeEndpointProvider) GetRawBlockByNonce(_ uint32, nonce uint64) str
 // GetRawMiniBlockByHash returns the raw miniblock by hash endpoint
 func (node *nodeEndpointProvider) GetRawMiniBlockByHash(_ uint32, hexHash string, epoch uint32) string {
 	return fmt.Sprintf(nodeRawMiniBlockByHashEndpoint, hexHash, epoch)
+}
+
+// GetRestAPIEntityType returns the observer node constant
+func (node *nodeEndpointProvider) GetRestAPIEntityType() core.RestAPIEntityType {
+	return core.ObserverNode
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

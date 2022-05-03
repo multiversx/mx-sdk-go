@@ -3,11 +3,13 @@ package factory
 import (
 	"context"
 
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
 type proxy interface {
 	GetNetworkStatus(ctx context.Context, shardID uint32) (*data.NetworkStatus, error)
+	GetRestAPIEntityType() core.RestAPIEntityType
 	IsInterfaceNil() bool
 }
 
@@ -29,9 +31,11 @@ type EndpointProvider interface {
 	GetGenesisNodesConfig() string
 	GetRawStartOfEpochMetaBlock(epoch uint32) string
 	GetNodeStatus(shardID uint32) string
+	ShouldCheckShardIDForNodeStatus() bool
 	GetRawBlockByHash(shardID uint32, hexHash string) string
 	GetRawBlockByNonce(shardID uint32, nonce uint64) string
 	GetRawMiniBlockByHash(shardID uint32, hexHash string, epoch uint32) string
+	GetRestAPIEntityType() core.RestAPIEntityType
 	IsInterfaceNil() bool
 }
 

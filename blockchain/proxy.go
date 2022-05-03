@@ -66,7 +66,7 @@ func NewElrondProxy(args ArgsElrondProxy) (*elrondProxy, error) {
 		return nil, err
 	}
 
-	finalityProvider, err := factory.CreateFinalityProvider(args.EntityType, baseProxy, args.FinalityCheck)
+	finalityProvider, err := factory.CreateFinalityProvider(baseProxy, args.FinalityCheck)
 	if err != nil {
 		return nil, err
 	}
