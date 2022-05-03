@@ -114,7 +114,7 @@ func (proxy *elrondBaseProxy) cacheConfigs(ctx context.Context) (*data.NetworkCo
 
 // getNetworkConfigFromSource retrieves the network configuration from the proxy
 func (proxy *elrondBaseProxy) getNetworkConfigFromSource(ctx context.Context) (*data.NetworkConfig, error) {
-	buff, code, err := proxy.GetHTTP(ctx, proxy.endpointProvider.GetNetworkConfigEndpoint())
+	buff, code, err := proxy.GetHTTP(ctx, proxy.endpointProvider.GetNetworkConfig())
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
 	}
@@ -154,7 +154,7 @@ func (proxy *elrondBaseProxy) GetShardOfAddress(ctx context.Context, bech32Addre
 
 // GetNetworkStatus will return the network status of a provided shard
 func (proxy *elrondBaseProxy) GetNetworkStatus(ctx context.Context, shardID uint32) (*data.NetworkStatus, error) {
-	endpoint := proxy.endpointProvider.GetNodeStatusEndpoint(shardID)
+	endpoint := proxy.endpointProvider.GetNodeStatus(shardID)
 	buff, code, err := proxy.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)

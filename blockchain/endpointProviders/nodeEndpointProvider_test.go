@@ -14,18 +14,18 @@ func TestNewNodeEndpointProvider(t *testing.T) {
 	assert.False(t, check.IfNil(provider))
 }
 
-func TestNodeEndpointProvider_GetNodeStatusEndpoint(t *testing.T) {
+func TestNodeEndpointProvider_GetNodeStatus(t *testing.T) {
 	t.Parallel()
 
 	provider := NewNodeEndpointProvider()
-	assert.Equal(t, nodeGetNodeStatusEndpoint, provider.GetNodeStatusEndpoint(2))
+	assert.Equal(t, nodeGetNodeStatusEndpoint, provider.GetNodeStatus(2))
 }
 
 func TestNodeEndpointProvider_Getters(t *testing.T) {
 	t.Parallel()
 
 	provider := NewNodeEndpointProvider()
-	assert.Equal(t, "internal/raw/block/by-hash/hex", provider.GetRawBlockByHashEndpoint(2, "hex"))
-	assert.Equal(t, "internal/raw/block/by-nonce/3", provider.GetRawBlockByNonceEndpoint(2, 3))
-	assert.Equal(t, "internal/raw/miniblock/by-hash/hex/epoch/4", provider.GetRawMiniBlockByHashEndpoint(2, "hex", 4))
+	assert.Equal(t, "internal/raw/block/by-hash/hex", provider.GetRawBlockByHash(2, "hex"))
+	assert.Equal(t, "internal/raw/block/by-nonce/3", provider.GetRawBlockByNonce(2, 3))
+	assert.Equal(t, "internal/raw/miniblock/by-hash/hex/epoch/4", provider.GetRawMiniBlockByHash(2, "hex", 4))
 }

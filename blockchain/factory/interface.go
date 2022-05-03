@@ -13,25 +13,25 @@ type proxy interface {
 
 // EndpointProvider is able to return endpoint routes strings
 type EndpointProvider interface {
-	GetNetworkConfigEndpoint() string
-	GetNetworkEconomicsEndpoint() string
-	GetRatingsConfigEndpoint() string
-	GetEnableEpochsConfigEndpoint() string
-	GetAccountEndpoint(addressAsBech32 string) string
-	GetCostTransactionEndpoint() string
-	GetSendTransactionEndpoint() string
-	GetSendMultipleTransactionsEndpoint() string
-	GetTransactionStatusEndpoint(hexHash string) string
-	GetTransactionInfoEndpoint(hexHash string) string
-	GetHyperBlockByNonceEndpoint(nonce uint64) string
-	GetHyperBlockByHashEndpoint(hexHash string) string
-	GetVmValuesEndpoint() string
-	GetGenesisNodesConfigEndpoint() string
+	GetNetworkConfig() string
+	GetNetworkEconomics() string
+	GetRatingsConfig() string
+	GetEnableEpochsConfig() string
+	GetAccount(addressAsBech32 string) string
+	GetCostTransaction() string
+	GetSendTransaction() string
+	GetSendMultipleTransactions() string
+	GetTransactionStatus(hexHash string) string
+	GetTransactionInfo(hexHash string) string
+	GetHyperBlockByNonce(nonce uint64) string
+	GetHyperBlockByHash(hexHash string) string
+	GetVmValues() string
+	GetGenesisNodesConfig() string
 	GetRawStartOfEpochMetaBlock(epoch uint32) string
-	GetNodeStatusEndpoint(shardID uint32) string
-	GetRawBlockByHashEndpoint(shardID uint32, hexHash string) string
-	GetRawBlockByNonceEndpoint(shardID uint32, nonce uint64) string
-	GetRawMiniBlockByHashEndpoint(shardID uint32, hexHash string, epoch uint32) string
+	GetNodeStatus(shardID uint32) string
+	GetRawBlockByHash(shardID uint32, hexHash string) string
+	GetRawBlockByNonce(shardID uint32, nonce uint64) string
+	GetRawMiniBlockByHash(shardID uint32, hexHash string, epoch uint32) string
 	IsInterfaceNil() bool
 }
 

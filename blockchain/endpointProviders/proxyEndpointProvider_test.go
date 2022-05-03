@@ -15,19 +15,19 @@ func TestNewProxyEndpointProvider(t *testing.T) {
 	assert.False(t, check.IfNil(provider))
 }
 
-func TestProxyEndpointProvider_GetNodeStatusEndpoint(t *testing.T) {
+func TestProxyEndpointProvider_GetNodeStatus(t *testing.T) {
 	t.Parallel()
 
 	provider := NewProxyEndpointProvider()
-	assert.Equal(t, "network/status/0", provider.GetNodeStatusEndpoint(0))
-	assert.Equal(t, "network/status/4294967295", provider.GetNodeStatusEndpoint(core.MetachainShardId))
+	assert.Equal(t, "network/status/0", provider.GetNodeStatus(0))
+	assert.Equal(t, "network/status/4294967295", provider.GetNodeStatus(core.MetachainShardId))
 }
 
 func TestProxyEndpointProvider_Getters(t *testing.T) {
 	t.Parallel()
 
 	provider := NewProxyEndpointProvider()
-	assert.Equal(t, "internal/2/raw/block/by-hash/hex", provider.GetRawBlockByHashEndpoint(2, "hex"))
-	assert.Equal(t, "internal/2/raw/block/by-nonce/3", provider.GetRawBlockByNonceEndpoint(2, 3))
-	assert.Equal(t, "internal/2/raw/miniblock/by-hash/hex/epoch/4", provider.GetRawMiniBlockByHashEndpoint(2, "hex", 4))
+	assert.Equal(t, "internal/2/raw/block/by-hash/hex", provider.GetRawBlockByHash(2, "hex"))
+	assert.Equal(t, "internal/2/raw/block/by-nonce/3", provider.GetRawBlockByNonce(2, 3))
+	assert.Equal(t, "internal/2/raw/miniblock/by-hash/hex/epoch/4", provider.GetRawMiniBlockByHash(2, "hex", 4))
 }

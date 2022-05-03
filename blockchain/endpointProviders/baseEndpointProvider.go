@@ -3,93 +3,93 @@ package endpointProviders
 import "fmt"
 
 const (
-	networkConfigEndpoint            = "network/config"
-	networkEconomicsEndpoint         = "network/economics"
-	ratingsConfigEndpoint            = "network/ratings"
-	enableEpochsConfigEndpoint       = "network/enable-epochs"
-	accountEndpoint                  = "address/%s"
-	costTransactionEndpoint          = "transaction/cost"
-	sendTransactionEndpoint          = "transaction/send"
-	sendMultipleTransactionsEndpoint = "transaction/send-multiple"
-	transactionStatusEndpoint        = "transaction/%s/status"
-	transactionInfoEndpoint          = "transaction/%s"
-	hyperBlockByNonceEndpoint        = "hyperblock/by-nonce/%d"
-	hyperBlockByHashEndpoint         = "hyperblock/by-hash/%s"
-	vmValuesEndpoint                 = "vm-values/query"
-	genesisNodesConfigEndpoint       = "network/genesis-nodes"
-	rawStartOfEpochMetaBlock         = "internal/raw/startofepoch/metablock/by-epoch/%d"
+	networkConfig            = "network/config"
+	networkEconomics         = "network/economics"
+	ratingsConfig            = "network/ratings"
+	enableEpochsConfig       = "network/enable-epochs"
+	account                  = "address/%s"
+	costTransaction          = "transaction/cost"
+	sendTransaction          = "transaction/send"
+	sendMultipleTransactions = "transaction/send-multiple"
+	transactionStatus        = "transaction/%s/status"
+	transactionInfo          = "transaction/%s"
+	hyperBlockByNonce        = "hyperblock/by-nonce/%d"
+	hyperBlockByHash         = "hyperblock/by-hash/%s"
+	vmValues                 = "vm-values/query"
+	genesisNodesConfig       = "network/genesis-nodes"
+	rawStartOfEpochMetaBlock = "internal/raw/startofepoch/metablock/by-epoch/%d"
 )
 
 type baseEndpointProvider struct{}
 
-// GetNetworkConfigEndpoint returns the network config endpoint
-func (base *baseEndpointProvider) GetNetworkConfigEndpoint() string {
-	return networkConfigEndpoint
+// GetNetworkConfig returns the network config endpoint
+func (base *baseEndpointProvider) GetNetworkConfig() string {
+	return networkConfig
 }
 
-// GetNetworkEconomicsEndpoint returns the network economics endpoint
-func (base *baseEndpointProvider) GetNetworkEconomicsEndpoint() string {
-	return networkEconomicsEndpoint
+// GetNetworkEconomics returns the network economics endpoint
+func (base *baseEndpointProvider) GetNetworkEconomics() string {
+	return networkEconomics
 }
 
-// GetRatingsConfigEndpoint returns the ratings config endpoint
-func (base *baseEndpointProvider) GetRatingsConfigEndpoint() string {
-	return ratingsConfigEndpoint
+// GetRatingsConfig returns the ratings config endpoint
+func (base *baseEndpointProvider) GetRatingsConfig() string {
+	return ratingsConfig
 }
 
-// GetEnableEpochsConfigEndpoint returns the enable epochs config endpoint
-func (base *baseEndpointProvider) GetEnableEpochsConfigEndpoint() string {
-	return enableEpochsConfigEndpoint
+// GetEnableEpochsConfig returns the enable epochs config endpoint
+func (base *baseEndpointProvider) GetEnableEpochsConfig() string {
+	return enableEpochsConfig
 }
 
-// GetAccountEndpoint returns the account endpoint
-func (base *baseEndpointProvider) GetAccountEndpoint(addressAsBech32 string) string {
-	return fmt.Sprintf(accountEndpoint, addressAsBech32)
+// GetAccount returns the account endpoint
+func (base *baseEndpointProvider) GetAccount(addressAsBech32 string) string {
+	return fmt.Sprintf(account, addressAsBech32)
 }
 
-// GetCostTransactionEndpoint returns the transaction cost endpoint
-func (base *baseEndpointProvider) GetCostTransactionEndpoint() string {
-	return costTransactionEndpoint
+// GetCostTransaction returns the transaction cost endpoint
+func (base *baseEndpointProvider) GetCostTransaction() string {
+	return costTransaction
 }
 
-// GetSendTransactionEndpoint returns the send transaction endpoint
-func (base *baseEndpointProvider) GetSendTransactionEndpoint() string {
-	return sendTransactionEndpoint
+// GetSendTransaction returns the send transaction endpoint
+func (base *baseEndpointProvider) GetSendTransaction() string {
+	return sendTransaction
 }
 
-// GetSendMultipleTransactionsEndpoint returns the send multiple transactions endpoint
-func (base *baseEndpointProvider) GetSendMultipleTransactionsEndpoint() string {
-	return sendMultipleTransactionsEndpoint
+// GetSendMultipleTransactions returns the send multiple transactions endpoint
+func (base *baseEndpointProvider) GetSendMultipleTransactions() string {
+	return sendMultipleTransactions
 }
 
-// GetTransactionStatusEndpoint returns the transaction status endpoint
-func (base *baseEndpointProvider) GetTransactionStatusEndpoint(hexHash string) string {
-	return fmt.Sprintf(transactionStatusEndpoint, hexHash)
+// GetTransactionStatus returns the transaction status endpoint
+func (base *baseEndpointProvider) GetTransactionStatus(hexHash string) string {
+	return fmt.Sprintf(transactionStatus, hexHash)
 }
 
-// GetTransactionInfoEndpoint returns the transaction info endpoint
-func (base *baseEndpointProvider) GetTransactionInfoEndpoint(hexHash string) string {
-	return fmt.Sprintf(transactionInfoEndpoint, hexHash)
+// GetTransactionInfo returns the transaction info endpoint
+func (base *baseEndpointProvider) GetTransactionInfo(hexHash string) string {
+	return fmt.Sprintf(transactionInfo, hexHash)
 }
 
-// GetHyperBlockByNonceEndpoint returns the hyper block by nonce endpoint
-func (base *baseEndpointProvider) GetHyperBlockByNonceEndpoint(nonce uint64) string {
-	return fmt.Sprintf(hyperBlockByNonceEndpoint, nonce)
+// GetHyperBlockByNonce returns the hyper block by nonce endpoint
+func (base *baseEndpointProvider) GetHyperBlockByNonce(nonce uint64) string {
+	return fmt.Sprintf(hyperBlockByNonce, nonce)
 }
 
-// GetHyperBlockByHashEndpoint returns the hyper block by hash endpoint
-func (base *baseEndpointProvider) GetHyperBlockByHashEndpoint(hexHash string) string {
-	return fmt.Sprintf(hyperBlockByHashEndpoint, hexHash)
+// GetHyperBlockByHash returns the hyper block by hash endpoint
+func (base *baseEndpointProvider) GetHyperBlockByHash(hexHash string) string {
+	return fmt.Sprintf(hyperBlockByHash, hexHash)
 }
 
-// GetVmValuesEndpoint returns the VM values endpoint
-func (base *baseEndpointProvider) GetVmValuesEndpoint() string {
-	return vmValuesEndpoint
+// GetVmValues returns the VM values endpoint
+func (base *baseEndpointProvider) GetVmValues() string {
+	return vmValues
 }
 
-// GetGenesisNodesConfigEndpoint returns the genesis nodes config endpoint
-func (base *baseEndpointProvider) GetGenesisNodesConfigEndpoint() string {
-	return genesisNodesConfigEndpoint
+// GetGenesisNodesConfig returns the genesis nodes config endpoint
+func (base *baseEndpointProvider) GetGenesisNodesConfig() string {
+	return genesisNodesConfig
 }
 
 // GetRawStartOfEpochMetaBlock returns the raw start of epoch metablock endpoint
