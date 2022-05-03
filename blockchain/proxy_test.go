@@ -9,18 +9,24 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	erdgoHttp "github.com/ElrondNetwork/elrond-sdk-erdgo/core/http"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const testHttpURL = "https://test.org"
+const networkConfigEndpoint = "network/config"
+const getNetworkStatusEndpoint = "network/status/%d"
+const getNodeStatusEndpoint = "node/status"
 
 type testStruct struct {
 	Nonce int
@@ -37,10 +43,18 @@ func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 		return m.doCalled(req)
 	}
 
-	m.lastRequest = req
-	return &http.Response{
-		Body: ioutil.NopCloser(bytes.NewReader([]byte("account"))),
-	}, nil
+	return nil, errors.New("not implemented")
+}
+
+func createMockClientRespondingBytes(responseBytes []byte) *mockHTTPClient {
+	return &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+				StatusCode: http.StatusOK,
+			}, nil
+		},
+	}
 }
 
 func createMockArgsElrondProxy(httpClient erdgoHttp.Client) ArgsElrondProxy {
@@ -52,14 +66,15 @@ func createMockArgsElrondProxy(httpClient erdgoHttp.Client) ArgsElrondProxy {
 		FinalityCheck:       false,
 		AllowedDeltaToFinal: 1,
 		CacheExpirationTime: time.Second,
+		EntityType:          erdgoCore.ObserverNode,
 	}
 }
 
 func handleRequestNetworkConfigAndStatus(
 	req *http.Request,
 	numShards uint32,
-	nonce uint64,
-	crossCheck string,
+	currentNonce uint64,
+	highestNonce uint64,
 ) (*http.Response, bool, error) {
 
 	handled := false
@@ -78,20 +93,8 @@ func handleRequestNetworkConfigAndStatus(
 			},
 		}
 
-	case fmt.Sprintf("%s/%s", testHttpURL, fmt.Sprintf(getNetworkStatusEndpoint, core.MetachainShardId)):
-		handled = true
-		response = data.NetworkStatusResponse{
-			Data: struct {
-				Status *data.NetworkStatus `json:"status"`
-			}{
-				Status: &data.NetworkStatus{
-					CrossCheckBlockHeight: crossCheck,
-				},
-			},
-			Error: "",
-			Code:  "",
-		}
-
+	case fmt.Sprintf("%s/%s", testHttpURL, getNodeStatusEndpoint):
+		fallthrough
 	case fmt.Sprintf("%s/%s", testHttpURL, fmt.Sprintf(getNetworkStatusEndpoint, 2)):
 		handled = true
 		response = data.NetworkStatusResponse{
@@ -99,7 +102,10 @@ func handleRequestNetworkConfigAndStatus(
 				Status *data.NetworkStatus `json:"status"`
 			}{
 				Status: &data.NetworkStatus{
-					Nonce: nonce,
+					Nonce:                currentNonce,
+					HighestNonce:         highestNonce,
+					ProbableHighestNonce: currentNonce,
+					ShardID:              2,
 				},
 			},
 			Error: "",
@@ -166,23 +172,70 @@ func TestNewElrondProxy(t *testing.T) {
 func TestGetAccount(t *testing.T) {
 	t.Parallel()
 
-	httpClient := &mockHTTPClient{}
+	numAccountQueries := uint32(0)
+	httpClient := &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			response, handled, err := handleRequestNetworkConfigAndStatus(req, 3, 9170526, 9170526)
+			if handled {
+				return response, err
+			}
+
+			account := data.AccountResponse{
+				Data: struct {
+					Account *data.Account `json:"account"`
+				}{
+					Account: &data.Account{
+						Nonce:   37,
+						Balance: "38",
+					},
+				},
+			}
+			accountBytes, _ := json.Marshal(account)
+			atomic.AddUint32(&numAccountQueries, 1)
+			return &http.Response{
+				Body:       ioutil.NopCloser(bytes.NewReader(accountBytes)),
+				StatusCode: http.StatusOK,
+			}, nil
+		},
+	}
 	args := createMockArgsElrondProxy(httpClient)
+	args.FinalityCheck = true
 	proxy, _ := NewElrondProxy(args)
 
 	address, err := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
 	if err != nil {
 		assert.Error(t, err)
 	}
+	expectedErr := errors.New("expected error")
 
-	_, err = proxy.GetAccount(context.Background(), address)
-	if err != nil {
-		assert.Error(t, err)
-	}
+	t.Run("finality checker errors should not query", func(t *testing.T) {
+		proxy.finalityProvider = &testsCommon.FinalityProviderStub{
+			CheckShardFinalizationCalled: func(ctx context.Context, targetShardID uint32, maxNoncesDelta uint64) error {
+				return expectedErr
+			},
+		}
 
-	expected := testHttpURL + "/address/erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts"
+		account, errGet := proxy.GetAccount(context.Background(), address)
+		assert.Nil(t, account)
+		assert.True(t, errors.Is(errGet, expectedErr))
+		assert.Equal(t, uint32(0), atomic.LoadUint32(&numAccountQueries))
+	})
+	t.Run("finality checker returns nil should return account", func(t *testing.T) {
+		finalityCheckCalled := uint32(0)
+		proxy.finalityProvider = &testsCommon.FinalityProviderStub{
+			CheckShardFinalizationCalled: func(ctx context.Context, targetShardID uint32, maxNoncesDelta uint64) error {
+				atomic.AddUint32(&finalityCheckCalled, 1)
+				return nil
+			},
+		}
 
-	assert.Equal(t, expected, httpClient.lastRequest.URL.String())
+		account, errGet := proxy.GetAccount(context.Background(), address)
+		assert.NotNil(t, account)
+		assert.Equal(t, uint64(37), account.Nonce)
+		assert.Nil(t, errGet)
+		assert.Equal(t, uint32(1), atomic.LoadUint32(&numAccountQueries))
+		assert.Equal(t, uint32(1), atomic.LoadUint32(&finalityCheckCalled))
+	})
 }
 
 func TestElrondProxy_GetNetworkEconomics(t *testing.T) {
@@ -204,17 +257,6 @@ func TestElrondProxy_GetNetworkEconomics(t *testing.T) {
 		TotalSupply:           "21556417261819025351089574",
 		TotalTopUpValue:       "1146275808171377418645274",
 	}, networkEconomics)
-}
-
-func createMockClientRespondingBytes(responseBytes []byte) *mockHTTPClient {
-	return &mockHTTPClient{
-		doCalled: func(req *http.Request) (*http.Response, error) {
-			return &http.Response{
-				Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
-				StatusCode: http.StatusOK,
-			}, nil
-		},
-	}
 }
 
 func TestElrondProxy_RequestTransactionCost(t *testing.T) {
@@ -278,7 +320,7 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 	t.Run("with finality check, chain is stuck", func(t *testing.T) {
 		httpClient := &mockHTTPClient{
 			doCalled: func(req *http.Request) (*http.Response, error) {
-				response, handled, err := handleRequestNetworkConfigAndStatus(req, 3, 9170526, goodResponseExample)
+				response, handled, err := handleRequestNetworkConfigAndStatus(req, 3, 9170528, 9170526)
 				if handled {
 					return response, err
 				}
@@ -304,7 +346,7 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 	t.Run("with finality check, invalid address", func(t *testing.T) {
 		httpClient := &mockHTTPClient{
 			doCalled: func(req *http.Request) (*http.Response, error) {
-				response, handled, err := handleRequestNetworkConfigAndStatus(req, 3, 9170526, goodResponseExample)
+				response, handled, err := handleRequestNetworkConfigAndStatus(req, 3, 9170526, 9170526)
 				if handled {
 					return response, err
 				}
@@ -331,7 +373,7 @@ func TestElrondProxy_ExecuteVmQuery(t *testing.T) {
 		wasHandled := false
 		httpClient := &mockHTTPClient{
 			doCalled: func(req *http.Request) (*http.Response, error) {
-				response, handled, err := handleRequestNetworkConfigAndStatus(req, 3, 9170525, goodResponseExample)
+				response, handled, err := handleRequestNetworkConfigAndStatus(req, 3, 9170526, 9170525)
 				if handled {
 					wasHandled = true
 					return response, err
@@ -457,6 +499,7 @@ func TestElrondProxy_GetNonceAtEpochStart(t *testing.T) {
 	expectedNonce := uint64(2)
 	expectedNetworkStatus := &data.NetworkStatus{
 		NonceAtEpochStart: expectedNonce,
+		ShardID:           core.MetachainShardId,
 	}
 	statusResponse := &data.NetworkStatusResponse{
 		Data: struct {

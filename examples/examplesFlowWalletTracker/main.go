@@ -12,6 +12,7 @@ import (
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples/examplesFlowWalletTracker/mock"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
@@ -56,6 +57,7 @@ func runApp() error {
 		ShouldBeSynced:      false,
 		FinalityCheck:       false,
 		CacheExpirationTime: time.Minute,
+		EntityType:          core.Proxy,
 	}
 	ep, err := blockchain.NewElrondProxy(args)
 	if err != nil {
