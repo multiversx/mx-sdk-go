@@ -179,6 +179,9 @@ func (proxy *elrondBaseProxy) GetNetworkStatus(ctx context.Context, shardID uint
 }
 
 func (proxy *elrondBaseProxy) checkReceivedNodeStatus(networkStatus *data.NetworkStatus, shardID uint32) error {
+	if networkStatus == nil {
+		return fmt.Errorf("%w, requested from %d", ErrNilNetworkStatus, shardID)
+	}
 	if !proxy.endpointProvider.ShouldCheckShardIDForNodeStatus() {
 		return nil
 	}

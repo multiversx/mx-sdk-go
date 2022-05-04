@@ -310,6 +310,22 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.True(t, strings.Contains(err.Error(), expectedErr.Error()))
 	})
+	t.Run("GetNodeStatus returns nil network status", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsElrondBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return getNetworkStatusBytes(nil), http.StatusOK, nil
+			},
+		}
+		baseProxy, _ := newElrondBaseProxy(args)
+
+		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		assert.Nil(t, result)
+		assert.True(t, errors.Is(err, ErrShardIDMismatch))
+		assert.True(t, strings.Contains(err.Error(), "requested from 0, got response from 4294967295"))
+	})
 	t.Run("requested from wrong shard should error", func(t *testing.T) {
 		t.Parallel()
 
