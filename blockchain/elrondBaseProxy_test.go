@@ -269,7 +269,7 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 		assert.True(t, errors.Is(err, expectedErr))
 		assert.True(t, strings.Contains(err.Error(), http.StatusText(http.StatusBadRequest)))
 	})
-	t.Run("malformed response", func(t *testing.T) {
+	t.Run("malformed response - node endpoint provider", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsElrondBaseProxy()
@@ -285,12 +285,29 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.True(t, strings.Contains(err.Error(), "invalid character 'm'"))
 	})
-	t.Run("response error", func(t *testing.T) {
+	t.Run("malformed response - proxy endpoint provider", func(t *testing.T) {
 		t.Parallel()
 
-		resp := &data.NetworkStatusResponse{
+		args := createMockArgsElrondBaseProxy()
+		args.endpointProvider = endpointProviders.NewProxyEndpointProvider()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return []byte("malformed response"), http.StatusOK, nil
+			},
+		}
+		baseProxy, _ := newElrondBaseProxy(args)
+
+		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		assert.Nil(t, result)
+		assert.NotNil(t, err)
+		assert.True(t, strings.Contains(err.Error(), "invalid character 'm'"))
+	})
+	t.Run("response error - node endpoint provider", func(t *testing.T) {
+		t.Parallel()
+
+		resp := &data.NodeStatusResponse{
 			Data: struct {
-				Status *data.NetworkStatus `json:"status"`
+				Status *data.NetworkStatus `json:"metrics"`
 			}{},
 			Error: expectedErr.Error(),
 			Code:  "",
@@ -310,10 +327,53 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.True(t, strings.Contains(err.Error(), expectedErr.Error()))
 	})
-	t.Run("GetNodeStatus returns nil network status", func(t *testing.T) {
+	t.Run("response error - proxy endpoint provider", func(t *testing.T) {
+		t.Parallel()
+
+		resp := &data.NetworkStatusResponse{
+			Data: struct {
+				Status *data.NetworkStatus `json:"status"`
+			}{},
+			Error: expectedErr.Error(),
+			Code:  "",
+		}
+		respBytes, _ := json.Marshal(resp)
+
+		args := createMockArgsElrondBaseProxy()
+		args.endpointProvider = endpointProviders.NewProxyEndpointProvider()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return respBytes, http.StatusOK, nil
+			},
+		}
+		baseProxy, _ := newElrondBaseProxy(args)
+
+		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		assert.Nil(t, result)
+		assert.NotNil(t, err)
+		assert.True(t, strings.Contains(err.Error(), expectedErr.Error()))
+	})
+	t.Run("GetNodeStatus returns nil network status - node endpoint provider", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsElrondBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return getNetworkStatusBytes(nil), http.StatusOK, nil
+			},
+		}
+		baseProxy, _ := newElrondBaseProxy(args)
+
+		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		assert.Nil(t, result)
+		assert.True(t, errors.Is(err, ErrNilNetworkStatus))
+		assert.True(t, strings.Contains(err.Error(), "requested from 0"))
+	})
+	t.Run("GetNodeStatus returns nil network status - proxy endpoint provider", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsElrondBaseProxy()
+		args.endpointProvider = endpointProviders.NewProxyEndpointProvider()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return getNetworkStatusBytes(nil), http.StatusOK, nil
@@ -345,7 +405,7 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 		args := createMockArgsElrondBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
-				return getNetworkStatusBytes(providedNetworkStatus), http.StatusOK, nil
+				return getNodeStatusBytes(providedNetworkStatus), http.StatusOK, nil
 			},
 		}
 		baseProxy, _ := newElrondBaseProxy(args)
@@ -373,7 +433,7 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 		args := createMockArgsElrondBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
-				return getNetworkStatusBytes(providedNetworkStatus), http.StatusOK, nil
+				return getNodeStatusBytes(providedNetworkStatus), http.StatusOK, nil
 			},
 		}
 		baseProxy, _ := newElrondBaseProxy(args)
@@ -417,6 +477,17 @@ func getNetworkStatusBytes(status *data.NetworkStatus) []byte {
 	resp := &data.NetworkStatusResponse{
 		Data: struct {
 			Status *data.NetworkStatus `json:"status"`
+		}{Status: status},
+	}
+	respBytes, _ := json.Marshal(resp)
+
+	return respBytes
+}
+
+func getNodeStatusBytes(status *data.NetworkStatus) []byte {
+	resp := &data.NodeStatusResponse{
+		Data: struct {
+			Status *data.NetworkStatus `json:"metrics"`
 		}{Status: status},
 	}
 	respBytes, _ := json.Marshal(resp)

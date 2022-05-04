@@ -34,8 +34,7 @@ type testStruct struct {
 }
 
 type mockHTTPClient struct {
-	lastRequest *http.Request
-	doCalled    func(req *http.Request) (*http.Response, error)
+	doCalled func(req *http.Request) (*http.Response, error)
 }
 
 func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {

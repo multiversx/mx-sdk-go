@@ -161,8 +161,38 @@ func (proxy *elrondBaseProxy) GetNetworkStatus(ctx context.Context, shardID uint
 		return nil, createHTTPStatusError(code, err)
 	}
 
+	endpointProviderType := proxy.endpointProvider.GetRestAPIEntityType()
+	switch endpointProviderType {
+	case core.Proxy:
+		return proxy.getNetworkStatus(buff, shardID)
+	case core.ObserverNode:
+		return proxy.getNodeStatus(buff, shardID)
+	}
+
+	return &data.NetworkStatus{}, ErrInvalidEndpointProvider
+}
+
+func (proxy *elrondBaseProxy) getNetworkStatus(buff []byte, shardID uint32) (*data.NetworkStatus, error) {
 	response := &data.NetworkStatusResponse{}
-	err = json.Unmarshal(buff, response)
+	err := json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	err = proxy.checkReceivedNodeStatus(response.Data.Status, shardID)
+	if err != nil {
+		return nil, err
+	}
+
+	return response.Data.Status, nil
+}
+
+func (proxy *elrondBaseProxy) getNodeStatus(buff []byte, shardID uint32) (*data.NetworkStatus, error) {
+	response := &data.NodeStatusResponse{}
+	err := json.Unmarshal(buff, response)
 	if err != nil {
 		return nil, err
 	}
