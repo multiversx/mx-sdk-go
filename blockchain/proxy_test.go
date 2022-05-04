@@ -34,8 +34,7 @@ type testStruct struct {
 }
 
 type mockHTTPClient struct {
-	lastRequest *http.Request
-	doCalled    func(req *http.Request) (*http.Response, error)
+	doCalled func(req *http.Request) (*http.Response, error)
 }
 
 func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
@@ -94,7 +93,21 @@ func handleRequestNetworkConfigAndStatus(
 		}
 
 	case fmt.Sprintf("%s/%s", testHttpURL, getNodeStatusEndpoint):
-		fallthrough
+		handled = true
+		response = data.NodeStatusResponse{
+			Data: struct {
+				Status *data.NetworkStatus `json:"metrics"`
+			}{
+				Status: &data.NetworkStatus{
+					Nonce:                currentNonce,
+					HighestNonce:         highestNonce,
+					ProbableHighestNonce: currentNonce,
+					ShardID:              2,
+				},
+			},
+			Error: "",
+			Code:  "",
+		}
 	case fmt.Sprintf("%s/%s", testHttpURL, fmt.Sprintf(getNetworkStatusEndpoint, 2)):
 		handled = true
 		response = data.NetworkStatusResponse{
@@ -501,9 +514,9 @@ func TestElrondProxy_GetNonceAtEpochStart(t *testing.T) {
 		NonceAtEpochStart: expectedNonce,
 		ShardID:           core.MetachainShardId,
 	}
-	statusResponse := &data.NetworkStatusResponse{
+	statusResponse := &data.NodeStatusResponse{
 		Data: struct {
-			Status *data.NetworkStatus "json:\"status\""
+			Status *data.NetworkStatus "json:\"metrics\""
 		}{
 			Status: expectedNetworkStatus,
 		},

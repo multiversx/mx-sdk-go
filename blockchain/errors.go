@@ -30,11 +30,17 @@ var ErrNilHTTPClientWrapper = errors.New("nil HTTP client wrapper")
 // ErrHTTPStatusCodeIsNotOK signals that the returned HTTP status code is not OK
 var ErrHTTPStatusCodeIsNotOK = errors.New("HTTP status code is not OK")
 
-// ErrNilEndpointProvider signals that a nil endpoint provider
+// ErrNilEndpointProvider signals that a nil endpoint provider was provided
 var ErrNilEndpointProvider = errors.New("nil endpoint provider")
+
+// ErrInvalidEndpointProvider signals that an invalid endpoint provider was provided
+var ErrInvalidEndpointProvider = errors.New("invalid endpoint provider")
 
 // ErrShardIDMismatch signals that a shard ID mismatch has occurred
 var ErrShardIDMismatch = errors.New("shard ID mismatch")
+
+// ErrNilNetworkStatus signals that nil network status was received
+var ErrNilNetworkStatus = errors.New("nil network status")
 
 func createHTTPStatusError(httpStatusCode int, err error) error {
 	if err == nil {
