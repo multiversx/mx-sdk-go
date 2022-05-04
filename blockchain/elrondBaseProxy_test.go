@@ -323,8 +323,8 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
-		assert.True(t, errors.Is(err, ErrShardIDMismatch))
-		assert.True(t, strings.Contains(err.Error(), "requested from 0, got response from 4294967295"))
+		assert.True(t, errors.Is(err, ErrNilNetworkStatus))
+		assert.True(t, strings.Contains(err.Error(), "requested from 0"))
 	})
 	t.Run("requested from wrong shard should error", func(t *testing.T) {
 		t.Parallel()
