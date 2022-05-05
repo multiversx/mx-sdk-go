@@ -17,7 +17,7 @@ func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGette
 	if responseGetter == nil {
 		return nil, errNilResponseGetter
 	}
-	if maiarTokensMap == nil && fetcherName != MaiarName {
+	if maiarTokensMap == nil && fetcherName == MaiarName {
 		return nil, errNilMaiarTokensMap
 	}
 
