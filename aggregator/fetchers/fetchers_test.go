@@ -16,21 +16,34 @@ import (
 
 var errShouldSkipTest = errors.New("should skip test")
 
+func createMockMap() map[string]MaiarTokensPair {
+	return map[string]MaiarTokensPair{
+		"ETH-USD": {
+			Base:  "WEGLD-bd4d79", // for tests only until we have an ETH id
+			Quote: "USDC-c76f1f",
+		},
+		"BTC-USD": {
+			Base:  "BTC-test1",
+			Quote: "USD-test1",
+		},
+	}
+}
+
 func Test_FunctionalTesting(t *testing.T) {
 	t.Parallel()
 
 	for _, f := range ImplementedFetchers {
 		fetcherName := f
 		t.Run("Test_FunctionalTesting_"+fetcherName, func(t *testing.T) {
-			t.Skip("this test should be run only when doing debugging work on the component")
+			//t.Skip("this test should be run only when doing debugging work on the component")
 
 			t.Parallel()
 
-			fetcher, _ := NewPriceFetcher(fetcherName, &aggregator.HttpResponseGetter{})
+			fetcher, _ := NewPriceFetcher(fetcherName, &aggregator.HttpResponseGetter{}, createMockMap())
 			ethTicker := "ETH"
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
 			require.Nil(t, err)
-			fmt.Printf("price between %s and %s is: %v\n", ethTicker, quoteUSDFiat, price)
+			fmt.Printf("price between %s and %s is: %v from %s\n", ethTicker, quoteUSDFiat, price, fetcherName)
 			require.True(t, price > 0)
 		})
 	}
@@ -51,7 +64,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			expectedError := errors.New("expected error")
 			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
 				GetCalled: getFuncGetCalled(fetcherName, "", pair, expectedError),
-			})
+			}, createMockMap())
 
 			assert.False(t, check.IfNil(fetcher))
 
@@ -67,7 +80,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 
 			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
 				GetCalled: getFuncGetCalled(fetcherName, "", pair, nil),
-			})
+			}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
@@ -82,7 +95,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 
 			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
 				GetCalled: getFuncGetCalled(fetcherName, "-1", pair, nil),
-			})
+			}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
@@ -97,7 +110,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 
 			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
 				GetCalled: getFuncGetCalled(fetcherName, "not a number", pair, nil),
-			})
+			}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
@@ -108,12 +121,32 @@ func Test_FetchPriceErrors(t *testing.T) {
 			require.Equal(t, float64(0), price)
 			require.IsType(t, err, &strconv.NumError{})
 		})
+		t.Run("maiar: missing key from map should error"+fetcherName, func(t *testing.T) {
+			t.Parallel()
+
+			if fetcherName != MaiarName {
+				return
+			}
+
+			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
+				GetCalled: getFuncGetCalled(fetcherName, "4714.05000000", pair, nil),
+			}, createMockMap())
+			assert.False(t, check.IfNil(fetcher))
+
+			missingTicker := "missing ticker"
+			price, err := fetcher.FetchPrice(context.Background(), missingTicker, quoteUSDFiat)
+			if err == errShouldSkipTest {
+				return
+			}
+			assert.Equal(t, errInvalidPair, err)
+			require.Equal(t, float64(0), price)
+		})
 		t.Run("should work eth-usd"+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
 			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
 				GetCalled: getFuncGetCalled(fetcherName, "4714.05000000", pair, nil),
-			})
+			}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
@@ -131,7 +164,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			btcUsdPair := btcTicker + quoteUSDFiat
 			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
 				GetCalled: getFuncGetCalled(fetcherName, "4714.05000000", btcUsdPair, nil),
-			})
+			}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
 			price, err := fetcher.FetchPrice(context.Background(), btcTicker, quoteUSDFiat)
@@ -203,6 +236,17 @@ func getFuncGetCalled(name, returnPrice, pair string, returnErr error) func(ctx 
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*okexPriceRequest)
 			cast.Data = []okexTicker{{returnPrice}}
+			return returnErr
+		}
+	case MaiarName:
+		return func(ctx context.Context, url string, response interface{}) error {
+			cast, _ := response.(*maiarPriceRequest)
+			var err error
+			cast.BasePrice, err = strconv.ParseFloat(returnPrice, 64)
+			cast.QuotePrice = 1
+			if err != nil {
+				return errShouldSkipTest
+			}
 			return returnErr
 		}
 	}
