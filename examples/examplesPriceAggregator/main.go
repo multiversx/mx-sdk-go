@@ -119,11 +119,22 @@ func runApp() error {
 	return nil
 }
 
+func createMaiarMap() map[string]fetchers.MaiarTokensPair {
+	return map[string]fetchers.MaiarTokensPair{
+		"ETH-USD": {
+			// for tests only until we have an ETH id
+			// the price will be dropped as it is extreme compared to real price
+			Base:  "WEGLD-bd4d79",
+			Quote: "USDC-c76f1f",
+		},
+	}
+}
+
 func createPriceFetchers() ([]aggregator.PriceFetcher, error) {
 	exchanges := fetchers.ImplementedFetchers
 	priceFetchers := make([]aggregator.PriceFetcher, 0, len(exchanges))
 	for _, exchangeName := range exchanges {
-		priceFetcher, err := fetchers.NewPriceFetcher(exchangeName, &aggregator.HttpResponseGetter{})
+		priceFetcher, err := fetchers.NewPriceFetcher(exchangeName, &aggregator.HttpResponseGetter{}, createMaiarMap())
 		if err != nil {
 			return nil, err
 		}

@@ -20,7 +20,9 @@ const (
 	KrakenName = "Kraken"
 	// OkexName defines the Okex exchange
 	OkexName = "Okex"
+	// MaiarName defines the Maiar exchange
+	MaiarName = "Maiar"
 )
 
 // ImplementedFetchers is the list of all implemented exchange fetchers
-var ImplementedFetchers = []string{BinanceName, BitfinexName, CryptocomName, GeminiName, HitbtcName, HuobiName, KrakenName, OkexName}
+var ImplementedFetchers = []string{BinanceName, BitfinexName, CryptocomName, GeminiName, HitbtcName, HuobiName, KrakenName, OkexName, MaiarName}
