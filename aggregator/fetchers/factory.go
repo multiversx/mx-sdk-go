@@ -28,49 +28,49 @@ func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter,
 	switch fetcherName {
 	case BinanceName:
 		return &binance{
-			responseGetter,
-			baseFetcher{},
+			ResponseGetter: responseGetter,
+			baseFetcher:    baseFetcher{},
 		}, nil
 	case BitfinexName:
 		return &bitfinex{
-			responseGetter,
-			baseFetcher{},
+			ResponseGetter: responseGetter,
+			baseFetcher:    baseFetcher{},
 		}, nil
 	case CryptocomName:
 		return &cryptocom{
-			responseGetter,
-			baseFetcher{},
+			ResponseGetter: responseGetter,
+			baseFetcher:    baseFetcher{},
 		}, nil
 	case GeminiName:
 		return &gemini{
-			responseGetter,
-			baseFetcher{},
+			ResponseGetter: responseGetter,
+			baseFetcher:    baseFetcher{},
 		}, nil
 	case HitbtcName:
 		return &hitbtc{
-			responseGetter,
-			baseFetcher{},
+			ResponseGetter: responseGetter,
+			baseFetcher:    baseFetcher{},
 		}, nil
 	case HuobiName:
 		return &huobi{
-			responseGetter,
-			baseFetcher{},
+			ResponseGetter: responseGetter,
+			baseFetcher:    baseFetcher{},
 		}, nil
 	case KrakenName:
 		return &kraken{
-			responseGetter,
-			baseFetcher{},
+			ResponseGetter: responseGetter,
+			baseFetcher:    baseFetcher{},
 		}, nil
 	case OkexName:
 		return &okex{
-			responseGetter,
-			baseFetcher{},
+			ResponseGetter: responseGetter,
+			baseFetcher:    baseFetcher{},
 		}, nil
 	case MaiarName:
 		return &maiar{
-			responseGetter,
-			baseFetcher{},
-			maiarTokensMap,
+			ResponseGetter: responseGetter,
+			baseFetcher:    baseFetcher{},
+			maiarTokensMap: maiarTokensMap,
 		}, nil
 	}
 	return nil, fmt.Errorf("%w, fetcherName %s", errInvalidFetcherName, fetcherName)

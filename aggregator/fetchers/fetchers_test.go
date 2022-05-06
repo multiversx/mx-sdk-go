@@ -35,7 +35,7 @@ func Test_FunctionalTesting(t *testing.T) {
 	for _, f := range ImplementedFetchers {
 		fetcherName := f
 		t.Run("Test_FunctionalTesting_"+fetcherName, func(t *testing.T) {
-			//t.Skip("this test should be run only when doing debugging work on the component")
+			t.Skip("this test should be run only when doing debugging work on the component")
 
 			t.Parallel()
 
@@ -58,7 +58,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 	for _, f := range ImplementedFetchers {
 		fetcherName := f
 
-		t.Run("response getter errors should error"+fetcherName, func(t *testing.T) {
+		t.Run("response getter errors should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
 			expectedError := errors.New("expected error")
@@ -75,7 +75,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			require.Equal(t, expectedError, err)
 			require.Equal(t, float64(0), price)
 		})
-		t.Run("empty string for price should error"+fetcherName, func(t *testing.T) {
+		t.Run("empty string for price should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
 			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
@@ -90,7 +90,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			require.Equal(t, errInvalidResponseData, err)
 			require.Equal(t, float64(0), price)
 		})
-		t.Run("negative price should error"+fetcherName, func(t *testing.T) {
+		t.Run("negative price should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
 			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
@@ -105,7 +105,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			require.Equal(t, errInvalidResponseData, err)
 			require.Equal(t, float64(0), price)
 		})
-		t.Run("invalid string for price should error"+fetcherName, func(t *testing.T) {
+		t.Run("invalid string for price should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
 			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
@@ -121,7 +121,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			require.Equal(t, float64(0), price)
 			require.IsType(t, err, &strconv.NumError{})
 		})
-		t.Run("maiar: missing key from map should error"+fetcherName, func(t *testing.T) {
+		t.Run("maiar: missing key from map should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
 			if fetcherName != MaiarName {
@@ -141,7 +141,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			assert.Equal(t, errInvalidPair, err)
 			require.Equal(t, float64(0), price)
 		})
-		t.Run("should work eth-usd"+fetcherName, func(t *testing.T) {
+		t.Run("should work eth-usd "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
 			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
@@ -157,7 +157,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			require.Equal(t, 4714.05, price)
 			assert.Equal(t, fetcherName, fetcher.Name())
 		})
-		t.Run("should work btc-usd"+fetcherName, func(t *testing.T) {
+		t.Run("should work btc-usd "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
 			btcTicker := "BTC"
