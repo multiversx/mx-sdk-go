@@ -23,6 +23,7 @@ type ProxyStub struct {
 	GetRawStartOfEpochMetaBlockCalled func(epoch uint32) ([]byte, error)
 	GetGenesisNodesPubKeysCalled      func() (*data.GenesisNodes, error)
 	GetNetworkStatusCalled            func(ctx context.Context, shardID uint32) (*data.NetworkStatus, error)
+	GetShardOfAddressCalled           func(ctx context.Context, bech32Address string) (uint32, error)
 	GetRestAPIEntityTypeCalled        func() core.RestAPIEntityType
 }
 
@@ -149,6 +150,14 @@ func (stub *ProxyStub) GetNetworkStatus(ctx context.Context, shardID uint32) (*d
 	}
 
 	return &data.NetworkStatus{}, nil
+}
+
+// GetShardOfAddress -
+func (stub *ProxyStub) GetShardOfAddress(ctx context.Context, bech32Address string) (uint32, error) {
+	if stub.GetShardOfAddressCalled != nil {
+		return stub.GetShardOfAddressCalled(ctx, bech32Address)
+	}
+	return uint32(0) - 2, nil
 }
 
 // GetRestAPIEntityType -
