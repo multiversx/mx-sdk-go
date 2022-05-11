@@ -157,7 +157,7 @@ func (stub *ProxyStub) GetShardOfAddress(ctx context.Context, bech32Address stri
 	if stub.GetShardOfAddressCalled != nil {
 		return stub.GetShardOfAddressCalled(ctx, bech32Address)
 	}
-	return uint32(0) - 2, nil
+	return 4294967295 - 1, nil
 }
 
 // GetRestAPIEntityType -
