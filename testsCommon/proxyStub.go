@@ -3,7 +3,8 @@ package testsCommon
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/ElrondNetwork/elrond-go-core/core"
+	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
@@ -12,7 +13,7 @@ type ProxyStub struct {
 	GetNetworkConfigCalled            func() (*data.NetworkConfig, error)
 	GetRatingsConfigCalled            func() (*data.RatingsConfig, error)
 	GetEnableEpochsConfigCalled       func() (*data.EnableEpochsConfig, error)
-	GetAccountCalled                  func(address core.AddressHandler) (*data.Account, error)
+	GetAccountCalled                  func(address erdgoCore.AddressHandler) (*data.Account, error)
 	SendTransactionCalled             func(tx *data.Transaction) (string, error)
 	SendTransactionsCalled            func(txs []*data.Transaction) ([]string, error)
 	ExecuteVMQueryCalled              func(vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
@@ -24,7 +25,7 @@ type ProxyStub struct {
 	GetGenesisNodesPubKeysCalled      func() (*data.GenesisNodes, error)
 	GetNetworkStatusCalled            func(ctx context.Context, shardID uint32) (*data.NetworkStatus, error)
 	GetShardOfAddressCalled           func(ctx context.Context, bech32Address string) (uint32, error)
-	GetRestAPIEntityTypeCalled        func() core.RestAPIEntityType
+	GetRestAPIEntityTypeCalled        func() erdgoCore.RestAPIEntityType
 }
 
 // ExecuteVMQuery -
@@ -64,7 +65,7 @@ func (stub *ProxyStub) GetEnableEpochsConfig(_ context.Context) (*data.EnableEpo
 }
 
 // GetAccount -
-func (stub *ProxyStub) GetAccount(_ context.Context, address core.AddressHandler) (*data.Account, error) {
+func (stub *ProxyStub) GetAccount(_ context.Context, address erdgoCore.AddressHandler) (*data.Account, error) {
 	if stub.GetAccountCalled != nil {
 		return stub.GetAccountCalled(address)
 	}
@@ -157,11 +158,11 @@ func (stub *ProxyStub) GetShardOfAddress(ctx context.Context, bech32Address stri
 	if stub.GetShardOfAddressCalled != nil {
 		return stub.GetShardOfAddressCalled(ctx, bech32Address)
 	}
-	return 4294967295 - 1, nil
+	return core.AllShardId, nil
 }
 
 // GetRestAPIEntityType -
-func (stub *ProxyStub) GetRestAPIEntityType() core.RestAPIEntityType {
+func (stub *ProxyStub) GetRestAPIEntityType() erdgoCore.RestAPIEntityType {
 	if stub.GetRestAPIEntityTypeCalled != nil {
 		return stub.GetRestAPIEntityTypeCalled()
 	}
