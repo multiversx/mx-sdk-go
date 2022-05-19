@@ -22,6 +22,10 @@ func createMockMap() map[string]MaiarTokensPair {
 			Base:  "WEGLD-bd4d79", // for tests only until we have an ETH id
 			Quote: "USDC-c76f1f",
 		},
+		"EGLD-USD": {
+			Base:  "WEGLD-bd4d79",
+			Quote: "USDC-c76f1f",
+		},
 		"BTC-USD": {
 			Base:  "BTC-test1",
 			Quote: "USD-test1",
