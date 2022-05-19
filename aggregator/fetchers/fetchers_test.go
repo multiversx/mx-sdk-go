@@ -32,7 +32,7 @@ func createMockMap() map[string]MaiarTokensPair {
 func Test_FunctionalTesting(t *testing.T) {
 	t.Parallel()
 
-	for _, f := range ImplementedFetchers {
+	for f := range ImplementedFetchers {
 		fetcherName := f
 		t.Run("Test_FunctionalTesting_"+fetcherName, func(t *testing.T) {
 			t.Skip("this test should be run only when doing debugging work on the component")
@@ -55,7 +55,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 	ethTicker := "ETH"
 	pair := ethTicker + quoteUSDFiat
 
-	for _, f := range ImplementedFetchers {
+	for f := range ImplementedFetchers {
 		fetcherName := f
 
 		t.Run("response getter errors should error "+fetcherName, func(t *testing.T) {
