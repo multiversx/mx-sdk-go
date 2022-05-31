@@ -74,6 +74,7 @@ type TransactionOnNetwork struct {
 	HyperBlockNonce  uint64                                `json:"hyperblockNonce"`
 	HyperBlockHash   string                                `json:"hyperblockHash"`
 	ScResults        []*transaction.ApiSmartContractResult `json:"smartContractResults,omitempty"`
+	Logs             *transaction.ApiLogs                  `json:"logs,omitempty"`
 }
 
 // TxCostResponseData follows the format of the data field of a transaction cost request
