@@ -133,7 +133,7 @@ func createMaiarMap() map[string]fetchers.MaiarTokensPair {
 func createPriceFetchers() ([]aggregator.PriceFetcher, error) {
 	exchanges := fetchers.ImplementedFetchers
 	priceFetchers := make([]aggregator.PriceFetcher, 0, len(exchanges))
-	for _, exchangeName := range exchanges {
+	for exchangeName := range exchanges {
 		priceFetcher, err := fetchers.NewPriceFetcher(exchangeName, &aggregator.HttpResponseGetter{}, createMaiarMap())
 		if err != nil {
 			return nil, err
