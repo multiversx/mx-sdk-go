@@ -25,4 +25,6 @@ var (
 	ErrInvalidDenominationFactor = errors.New("invalid denomination factor")
 	// ErrInvalidAutoSendInterval signals that an invalid auto send interval value was provided
 	ErrInvalidAutoSendInterval = errors.New("invalid auto send interval")
+	// ErrPairNotSupported signals that the pair is not supported by the fetcher
+	ErrPairNotSupported = errors.New("pair not supported")
 )

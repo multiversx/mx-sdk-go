@@ -11,6 +11,7 @@ type ResponseGetter interface {
 type PriceFetcher interface {
 	Name() string
 	FetchPrice(ctx context.Context, base string, quote string) (float64, error)
+	AddPair(base, quote string)
 	IsInterfaceNil() bool
 }
 

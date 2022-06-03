@@ -24,6 +24,10 @@ type maiar struct {
 
 // FetchPrice will fetch the price using the http client
 func (m *maiar) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
+	if !m.hasPair(base, quote) {
+		return 0, aggregator.ErrPairNotSupported
+	}
+
 	maiarTokensPair, ok := m.fetchMaiarTokensPair(base, quote)
 	if !ok {
 		return 0, errInvalidPair

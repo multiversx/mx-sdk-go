@@ -70,7 +70,8 @@ func (pa *priceAggregator) FetchPrice(ctx context.Context, base string, quote st
 			defer wg.Done()
 			price, err := priceFetcher.FetchPrice(ctx, baseUpper, quoteUpper)
 
-			if err != nil {
+			fetchFailed := err != nil && err != ErrPairNotSupported
+			if fetchFailed {
 				log.Debug("failed to fetch price",
 					"price fetcher", priceFetcher.Name(),
 					"base", baseUpper,
@@ -92,6 +93,10 @@ func (pa *priceAggregator) FetchPrice(ctx context.Context, base string, quote st
 	}
 
 	return computeMedian(prices)
+}
+
+// AddPair does nothing, in respect with the interface
+func (pa *priceAggregator) AddPair(_, _ string) {
 }
 
 // Name returns the name

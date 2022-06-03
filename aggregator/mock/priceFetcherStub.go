@@ -6,6 +6,7 @@ import "context"
 type PriceFetcherStub struct {
 	NameCalled       func() string
 	FetchPriceCalled func(ctx context.Context, base string, quote string) (float64, error)
+	AddPairCalled    func(base, quote string)
 }
 
 // Name -
@@ -24,6 +25,13 @@ func (stub *PriceFetcherStub) FetchPrice(ctx context.Context, base string, quote
 	}
 
 	return 1, nil
+}
+
+// AddPair -
+func (stub *PriceFetcherStub) AddPair(base, quote string) {
+	if stub.AddPairCalled != nil {
+		stub.AddPairCalled(base, quote)
+	}
 }
 
 // IsInterfaceNil -

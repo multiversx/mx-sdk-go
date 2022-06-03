@@ -28,6 +28,7 @@ type ArgsPair struct {
 	PercentDifferenceToNotify uint32
 	TrimPrecision             float64
 	DenominationFactor        uint64
+	Exchanges                 map[string]struct{}
 }
 
 type priceInfo struct {

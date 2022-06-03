@@ -70,16 +70,18 @@ func runApp() error {
 		},
 	}
 
-	argsPriceNotifier := aggregator.ArgsPriceNotifier{
-		Pairs: []*aggregator.ArgsPair{
-			{
-				Base:                      base,
-				Quote:                     quote,
-				PercentDifferenceToNotify: percentDifferenceToNotify,
-				TrimPrecision:             trimPrecision,
-				DenominationFactor:        denominationFactor,
-			},
+	pairs := []*aggregator.ArgsPair{
+		{
+			Base:                      base,
+			Quote:                     quote,
+			PercentDifferenceToNotify: percentDifferenceToNotify,
+			TrimPrecision:             trimPrecision,
+			DenominationFactor:        denominationFactor,
+			Exchanges:                 fetchers.ImplementedFetchers,
 		},
+	}
+	argsPriceNotifier := aggregator.ArgsPriceNotifier{
+		Pairs:            pairs,
 		Fetcher:          aggregatorInstance,
 		Notifee:          printNotifee,
 		AutoSendInterval: autoSendInterval,
@@ -89,6 +91,8 @@ func runApp() error {
 	if err != nil {
 		return err
 	}
+
+	addPairsToFetchers(pairs, priceFetchers)
 
 	argsPollingHandler := polling.ArgsPollingHandler{
 		Log:              log,
@@ -118,6 +122,17 @@ func runApp() error {
 	<-chStop
 
 	return nil
+}
+
+func addPairsToFetchers(pairs []*aggregator.ArgsPair, priceFetchers []aggregator.PriceFetcher) {
+	for _, pair := range pairs {
+		for _, fetcher := range priceFetchers {
+			_, ok := pair.Exchanges[fetcher.Name()]
+			if ok {
+				fetcher.AddPair(pair.Base, pair.Quote)
+			}
+		}
+	}
 }
 
 func createMaiarMap() map[string]fetchers.MaiarTokensPair {
