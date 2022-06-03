@@ -154,7 +154,8 @@ func (en *elrondNotifee) prepareTxData(priceChanges []*aggregator.ArgsPriceChang
 	for _, priceChange := range priceChanges {
 		txDataBuilder.ArgBytes([]byte(priceChange.Base)).
 			ArgBytes([]byte(priceChange.Quote)).
-			ArgInt64(int64(priceChange.DenominatedPrice))
+			ArgInt64(int64(priceChange.DenominatedPrice)).
+			ArgInt64(priceChange.Timestamp)
 	}
 
 	return txDataBuilder.ToDataBytes()
