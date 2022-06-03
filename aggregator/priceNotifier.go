@@ -30,9 +30,14 @@ type ArgsPair struct {
 	DenominationFactor        uint64
 }
 
+type priceInfo struct {
+	price     float64
+	timestamp int64
+}
+
 type notifyArgs struct {
 	*ArgsPair
-	newPrice          float64
+	newPrice          priceInfo
 	lastNotifiedPrice float64
 	index             int
 }
@@ -109,21 +114,25 @@ func (pn *priceNotifier) Execute(ctx context.Context) error {
 	return pn.notify(ctx, notifyArgsSlice)
 }
 
-func (pn *priceNotifier) getAllPrices(ctx context.Context) ([]float64, error) {
-	fetchedPrices := make([]float64, len(pn.pairs))
+func (pn *priceNotifier) getAllPrices(ctx context.Context) ([]priceInfo, error) {
+	fetchedPrices := make([]priceInfo, len(pn.pairs))
 	for idx, pair := range pn.pairs {
 		price, err := pn.priceFetcher.FetchPrice(ctx, pair.Base, pair.Quote)
 		if err != nil {
 			return nil, fmt.Errorf("%w while querying the pair %s-%s", err, pair.Base, pair.Quote)
 		}
 
-		fetchedPrices[idx] = trim(price, pair.TrimPrecision)
+		fetchedPrice := priceInfo{
+			price:     trim(price, pair.TrimPrecision),
+			timestamp: time.Now().Unix(),
+		}
+		fetchedPrices[idx] = fetchedPrice
 	}
 
 	return fetchedPrices, nil
 }
 
-func (pn *priceNotifier) computeNotifyArgsSlice(fetchedPrices []float64) []*notifyArgs {
+func (pn *priceNotifier) computeNotifyArgsSlice(fetchedPrices []priceInfo) []*notifyArgs {
 	pn.mut.Lock()
 	defer pn.mut.Unlock()
 
@@ -157,7 +166,7 @@ func shouldNotify(notifyArgsValue *notifyArgs) bool {
 		return true
 	}
 
-	absoluteChange := math.Abs(notifyArgsValue.lastNotifiedPrice - notifyArgsValue.newPrice)
+	absoluteChange := math.Abs(notifyArgsValue.lastNotifiedPrice - notifyArgsValue.newPrice.price)
 	percentageChange := absoluteChange * 100 / notifyArgsValue.lastNotifiedPrice
 
 	return percentageChange >= float64(notifyArgsValue.PercentDifferenceToNotify)
@@ -170,7 +179,7 @@ func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyAr
 
 	args := make([]*ArgsPriceChanged, 0, len(notifyArgsSlice))
 	for _, notify := range notifyArgsSlice {
-		priceTrimmed := trim(notify.newPrice, notify.TrimPrecision)
+		priceTrimmed := trim(notify.newPrice.price, notify.TrimPrecision)
 		denominatedPrice := uint64(priceTrimmed * float64(notify.DenominationFactor))
 
 		argPriceChanged := &ArgsPriceChanged{
@@ -178,6 +187,7 @@ func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyAr
 			Quote:              notify.Quote,
 			DenominatedPrice:   denominatedPrice,
 			DenominationFactor: notify.DenominationFactor,
+			Timestamp:          notify.newPrice.timestamp,
 		}
 
 		args = append(args, argPriceChanged)

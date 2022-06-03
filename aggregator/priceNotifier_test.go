@@ -154,6 +154,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 	t.Run("first time should notify", func(t *testing.T) {
 		t.Parallel()
 
+		var startTimestamp, endTimestamp, receivedTimestamp int64
 		args := createMockArgsPriceNotifier()
 		args.Fetcher = &mock.PriceFetcherStub{
 			FetchPriceCalled: func(ctx context.Context, base string, quote string) (float64, error) {
@@ -169,6 +170,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 					assert.Equal(t, arg.Quote, "QUOTE")
 					assert.Equal(t, uint64(199), arg.DenominatedPrice)
 					assert.Equal(t, uint64(100), arg.DenominationFactor)
+					receivedTimestamp = arg.Timestamp
 				}
 				wasCalled = true
 
@@ -177,9 +179,13 @@ func TestPriceNotifier_Execute(t *testing.T) {
 		}
 
 		pn, _ := aggregator.NewPriceNotifier(args)
+		startTimestamp = time.Now().Unix()
 		err := pn.Execute(context.Background())
+		endTimestamp = time.Now().Unix()
 		assert.Nil(t, err)
 		assert.True(t, wasCalled)
+		assert.True(t, startTimestamp <= receivedTimestamp)
+		assert.True(t, endTimestamp >= receivedTimestamp)
 	})
 	t.Run("double call should notify once", func(t *testing.T) {
 		t.Parallel()

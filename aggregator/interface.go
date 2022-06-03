@@ -20,6 +20,7 @@ type ArgsPriceChanged struct {
 	Quote              string
 	DenominatedPrice   uint64
 	DenominationFactor uint64
+	Timestamp          int64
 }
 
 // PriceNotifee defines the behavior of a component able to be notified over a price change

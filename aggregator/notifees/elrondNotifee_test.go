@@ -69,12 +69,14 @@ func createMockPriceChanges() []*aggregator.ArgsPriceChanged {
 			Quote:              "ETH",
 			DenominatedPrice:   380000,
 			DenominationFactor: 100,
+			Timestamp:          200,
 		},
 		{
 			Base:               "USD",
 			Quote:              "BTC",
 			DenominatedPrice:   47000000000,
 			DenominationFactor: 1000000,
+			Timestamp:          300,
 		},
 	}
 }
@@ -332,6 +334,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
+		priceChanges := createMockPriceChanges()
 		sentWasCalled := false
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
@@ -341,12 +344,14 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				txDataStrings := []string{
 					function,
-					hex.EncodeToString([]byte("USD")),
-					hex.EncodeToString([]byte("ETH")),
-					hex.EncodeToString(big.NewInt(380000).Bytes()),
-					hex.EncodeToString([]byte("USD")),
-					hex.EncodeToString([]byte("BTC")),
-					hex.EncodeToString(big.NewInt(47000000000).Bytes()),
+					hex.EncodeToString([]byte(priceChanges[0].Base)),
+					hex.EncodeToString([]byte(priceChanges[0].Quote)),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[0].DenominatedPrice)).Bytes()),
+					hex.EncodeToString(big.NewInt(priceChanges[0].Timestamp).Bytes()),
+					hex.EncodeToString([]byte(priceChanges[1].Base)),
+					hex.EncodeToString([]byte(priceChanges[1].Quote)),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[1].DenominatedPrice)).Bytes()),
+					hex.EncodeToString(big.NewInt(priceChanges[1].Timestamp).Bytes()),
 				}
 				txData := []byte(strings.Join(txDataStrings, "@"))
 
@@ -357,7 +362,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 				assert.Equal(t, uint64(10), tx.GasPrice)
 				assert.Equal(t, uint64(2060), tx.GasLimit)
 				assert.Equal(t, txData, tx.Data)
-				assert.Equal(t, "1bf31bd077f397dd3e8f1cb47f8211251d696b4d67003b22e638eea6e46200e8101d3e39305f3bf502a5a9838521ba61566bf7d04a7fe91e6d012a94cc6a810e", tx.Signature)
+				assert.Equal(t, "dae1f2798d02b18ff5ef2257441b4dae3502acb7b66758cf222105439351280c5adc29ccfbd2a12141e3592a4055d8e3fc2737393f815c7461c03a4ab8444a02", tx.Signature)
 				assert.Equal(t, "test", tx.ChainID)
 				assert.Equal(t, uint32(1), tx.Version)
 
@@ -370,7 +375,6 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		en, err := NewElrondNotifee(args)
 		require.Nil(t, err)
 
-		priceChanges := createMockPriceChanges()
 		err = en.PriceChanged(context.Background(), priceChanges)
 		assert.Nil(t, err)
 		assert.True(t, sentWasCalled)

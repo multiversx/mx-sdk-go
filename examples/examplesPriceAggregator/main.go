@@ -62,7 +62,8 @@ func runApp() error {
 				log.Info("Notified about the price changed",
 					"pair", fmt.Sprintf("%s-%s", arg.Base, arg.Quote),
 					"denominated price", arg.DenominatedPrice,
-					"denomination factor", arg.DenominationFactor)
+					"denomination factor", arg.DenominationFactor,
+					"timestamp", arg.Timestamp)
 			}
 
 			return nil
