@@ -103,10 +103,6 @@ func (pa *priceAggregator) FetchPrice(ctx context.Context, base string, quote st
 	return computeMedian(prices)
 }
 
-// AddPair does nothing, in respect with the interface
-func (pa *priceAggregator) AddPair(_, _ string) {
-}
-
 // Name returns the name
 func (pa *priceAggregator) Name() string {
 	return "price aggregator"

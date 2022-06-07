@@ -11,6 +11,8 @@ var (
 	ErrInvalidNumberOfPriceFetchers = errors.New("invalid number of price fetchers")
 	// ErrNilPriceFetcher signals that a nil price fetcher was provided
 	ErrNilPriceFetcher = errors.New("nil price fetcher")
+	// ErrNilPriceAggregator signals that a nil price aggregator was provided
+	ErrNilPriceAggregator = errors.New("nil price aggregator")
 	// ErrEmptyArgsPairsSlice signals that an empty arguments pair slice was provided
 	ErrEmptyArgsPairsSlice = errors.New("empty pair arguments slice")
 	// ErrNilArgsPair signals that a nil argument pair was found

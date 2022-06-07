@@ -82,7 +82,7 @@ func runApp() error {
 	}
 	argsPriceNotifier := aggregator.ArgsPriceNotifier{
 		Pairs:            pairs,
-		Fetcher:          aggregatorInstance,
+		Aggregator:       aggregatorInstance,
 		Notifee:          printNotifee,
 		AutoSendInterval: autoSendInterval,
 	}
