@@ -88,28 +88,26 @@ func (builder *txBuilder) ApplySignatureAndGenerateTx(
 	return builder.createTransaction(arg), nil
 }
 
-// ApplySignatureAndGenerateTxHash will sign the transaction and return it's hash
-func (builder *txBuilder) ApplySignatureAndGenerateTxHash(
-	skBytes []byte,
-	arg data.ArgCreateTransaction,
-) ([]byte, *data.Transaction, error) {
-	signedTx, err := builder.ApplySignatureAndGenerateTx(skBytes, arg)
-	if err != nil {
-		return nil, nil, err
+// ComputeTxHash will return the hash of the provided transaction. It assumes that the transaction is already signed,
+// otherwise it will return an error.
+// The input can be the result of the ApplySignatureAndGenerateTx function
+func (builder *txBuilder) ComputeTxHash(tx *data.Transaction) ([]byte, error) {
+	if len(tx.Signature) == 0 {
+		return nil, ErrMissingSignature
 	}
 
-	nodeTx, err := transactionToNodeTransaction(signedTx)
+	nodeTx, err := transactionToNodeTransaction(tx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	txBytes, err := nodeInternalMarshaller.Marshal(nodeTx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	txHash := blake2bHasher.Compute(string(txBytes))
-	return txHash, signedTx, nil
+	return txHash, nil
 }
 
 func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transaction, error) {
