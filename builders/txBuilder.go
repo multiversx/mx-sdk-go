@@ -3,16 +3,24 @@ package builders
 import (
 	"encoding/hex"
 	"encoding/json"
+	"math/big"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
+	"github.com/ElrondNetwork/elrond-go-core/hashing/blake2b"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
+	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/builders")
-var txHasher = keccak.NewKeccak()
+var (
+	log                    = logger.GetOrCreate("elrond-sdk-erdgo/builders")
+	txHasher               = keccak.NewKeccak()
+	blake2bHasher          = blake2b.NewBlake2b()
+	nodeInternalMarshaller = &marshal.GogoProtoMarshalizer{}
+)
 
 type txBuilder struct {
 	txSigner TxSigner
@@ -78,6 +86,66 @@ func (builder *txBuilder) ApplySignatureAndGenerateTx(
 	arg.Signature = hex.EncodeToString(signature)
 
 	return builder.createTransaction(arg), nil
+}
+
+// ApplySignatureAndGenerateTxHash will sign the transaction and return it's hash
+func (builder *txBuilder) ApplySignatureAndGenerateTxHash(
+	skBytes []byte,
+	arg data.ArgCreateTransaction,
+) ([]byte, *data.Transaction, error) {
+	signedTx, err := builder.ApplySignatureAndGenerateTx(skBytes, arg)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	nodeTx, err := transactionToNodeTransaction(signedTx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	txBytes, err := nodeInternalMarshaller.Marshal(nodeTx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	txHash := blake2bHasher.Compute(string(txBytes))
+	return txHash, signedTx, nil
+}
+
+func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transaction, error) {
+	receiverBytes, err := core.AddressPublicKeyConverter.Decode(tx.RcvAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	senderBytes, err := core.AddressPublicKeyConverter.Decode(tx.SndAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	signaturesBytes, err := hex.DecodeString(tx.Signature)
+	if err != nil {
+		return nil, err
+	}
+
+	valueBI, ok := big.NewInt(0).SetString(tx.Value, 10)
+	if !ok {
+		return nil, ErrInvalidValue
+	}
+
+	return &transaction.Transaction{
+		Nonce:     tx.Nonce,
+		Value:     valueBI,
+		RcvAddr:   receiverBytes,
+		SndAddr:   senderBytes,
+		GasPrice:  tx.GasPrice,
+		GasLimit:  tx.GasLimit,
+		Data:      tx.Data,
+		ChainID:   []byte(tx.ChainID),
+		Version:   tx.Version,
+		Signature: signaturesBytes,
+		Options:   tx.Options,
+	}, nil
 }
 
 func (builder *txBuilder) createUnsignedMessage(arg data.ArgCreateTransaction) ([]byte, error) {
