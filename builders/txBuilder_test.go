@@ -110,3 +110,42 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 			tx.Signature)
 	})
 }
+
+func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
+	t.Parallel()
+
+	t.Run("fails if the signature is missing", func(t *testing.T) {
+		t.Parallel()
+
+		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
+		txHash, errGenerate := tb.ComputeTxHash(&data.Transaction{})
+		assert.Nil(t, txHash)
+		assert.Equal(t, ErrMissingSignature, errGenerate)
+	})
+
+	t.Run("should generate tx hash", func(t *testing.T) {
+		t.Parallel()
+
+		sk, err := hex.DecodeString("28654d9264f55f18d810bb88617e22c117df94fa684dfe341a511a72dfbf2b68")
+		require.Nil(t, err)
+
+		args := data.ArgCreateTransaction{
+			Nonce:    1,
+			Value:    "11500313000000000000",
+			RcvAddr:  "erd1p72ru5zcdsvgkkcm9swtvw2zy5epylwgv8vwquptkw7ga7pfvk7qz7snzw",
+			GasPrice: 1000000000,
+			GasLimit: 60000,
+			Data:     []byte(""),
+			ChainID:  "T",
+			Version:  uint32(1),
+		}
+		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
+
+		tx, _ := tb.ApplySignatureAndGenerateTx(sk, args)
+		assert.Equal(t, "725c6aa7def724c60f02ee481734807038fef125e453242bf4dc570fc4a4f2ff1b78e996a2ec67ef8be03f9b98b0251d419cfc72c6e6c5c9e33f879af938f008", tx.Signature)
+
+		txHash, errGenerate := tb.ComputeTxHash(tx)
+		assert.Nil(t, errGenerate)
+		assert.Equal(t, "8bbb2b7474deb2e67fa8f9db1eccef57ec14aa93710452a5de5ff52e5a369144", hex.EncodeToString(txHash))
+	})
+}
