@@ -43,7 +43,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 		ChainID:   "integration test chain id",
 		Version:   uint32(1),
 	}
-	tx, err := ti.ApplySignatureAndGenerateTx(make([]byte, 0), args)
+	tx, err := ti.ApplyUserSignatureAndGenerateTx(make([]byte, 0), args)
 	require.Nil(t, err)
 	ti.AddTransaction(tx)
 
@@ -86,7 +86,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 			ChainID:   "integration test chain id",
 			Version:   uint32(1),
 		}
-		tx, errGenerate := ti.ApplySignatureAndGenerateTx(make([]byte, 0), args)
+		tx, errGenerate := ti.ApplyUserSignatureAndGenerateTx(make([]byte, 0), args)
 		require.Nil(t, errGenerate)
 		ti.AddTransaction(tx)
 		nonce++

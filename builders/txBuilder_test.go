@@ -60,7 +60,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 			},
 		})
 
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplyUserSignatureAndGenerateTx(sk, argsCopy)
 		assert.Nil(t, tx)
 		assert.Equal(t, expectedErr, errGenerate)
 	})
@@ -75,7 +75,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 			},
 		})
 
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplyUserSignatureAndGenerateTx(sk, argsCopy)
 		assert.Nil(t, tx)
 		assert.Equal(t, expectedErr, errGenerate)
 	})
@@ -88,7 +88,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 		t.Parallel()
 
 		argsCopy := args
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplyUserSignatureAndGenerateTx(sk, argsCopy)
 		require.Nil(t, errGenerate)
 
 		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
@@ -102,7 +102,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 		argsCopy.Version = 2
 		argsCopy.Options = 1
 
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplyUserSignatureAndGenerateTx(sk, argsCopy)
 		require.Nil(t, errGenerate)
 
 		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
@@ -141,7 +141,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
 		}
 		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
 
-		tx, _ := tb.ApplySignatureAndGenerateTx(sk, args)
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
 		assert.Equal(t, "725c6aa7def724c60f02ee481734807038fef125e453242bf4dc570fc4a4f2ff1b78e996a2ec67ef8be03f9b98b0251d419cfc72c6e6c5c9e33f879af938f008", tx.Signature)
 
 		txHash, errGenerate := tb.ComputeTxHash(tx)

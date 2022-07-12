@@ -75,7 +75,7 @@ func main() {
 		return
 	}
 
-	tx, err := ti.ApplySignatureAndGenerateTx(privateKey, transactionArguments)
+	tx, err := ti.ApplyUserSignatureAndGenerateTx(privateKey, transactionArguments)
 	if err != nil {
 		log.Error("error creating transaction", "error", err)
 		return
@@ -88,7 +88,7 @@ func main() {
 	transactionArguments.Options = 1
 	transactionArguments.Nonce++ // do not forget to increment the nonce, otherwise you will get 2 transactions
 	// with the same nonce (only one of them will get executed)
-	txSigOnHash, err := ti.ApplySignatureAndGenerateTx(privateKey, transactionArguments)
+	txSigOnHash, err := ti.ApplyUserSignatureAndGenerateTx(privateKey, transactionArguments)
 	if err != nil {
 		log.Error("error creating transaction", "error", err)
 		return
