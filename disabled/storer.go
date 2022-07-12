@@ -39,6 +39,11 @@ func (s *Storer) SearchFirst(key []byte) ([]byte, error) {
 	return nil, nil
 }
 
+// RemoveFromCurrentEpoch returns nil
+func (s *Storer) RemoveFromCurrentEpoch(_ []byte) error {
+	return nil
+}
+
 // Remove return nil
 func (s *Storer) Remove(_ []byte) error {
 	return nil
