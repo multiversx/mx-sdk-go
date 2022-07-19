@@ -70,7 +70,7 @@ func (builder *txBuilder) ApplyUserSignatureAndGenerateTx(
 	}
 
 	newArg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
-	unsignedTx, err := builder.createUnsignedTransaction(newArg)
+	unsignedTx, err := builder.CreateUnsignedTransaction(newArg)
 	if err != nil {
 		return nil, err
 	}
@@ -104,18 +104,18 @@ func (builder *txBuilder) signTx(unsignedTx *data.Transaction, skBytes []byte) (
 // Does a basic check for the transaction options and guardian address.
 func (builder *txBuilder) ApplyGuardianSignature(
 	skGuardianBytes []byte,
-	nodeTx *transaction.Transaction,
+	tx *data.Transaction,
 ) error {
+	nodeTx, err:= transactionToNodeTransaction(tx)
+	if err!= nil{
+		return err
+	}
+
 	if !nodeTx.HasOptionGuardianSet() {
 		return ErrMissingGuardianOption
 	}
 
 	pkGuardianBytes, err := builder.txSigner.GeneratePkBytes(skGuardianBytes)
-	if err != nil {
-		return err
-	}
-
-	tx, err := nodeTransactionToTransaction(nodeTx)
 	if err != nil {
 		return err
 	}
@@ -129,15 +129,13 @@ func (builder *txBuilder) ApplyGuardianSignature(
 		return ErrGuardianDoesNotMatch
 	}
 
-	unsignedTx := transactionToUnsignedTx(tx)
+	unsignedTx := TransactionToUnsignedTx(tx)
 	guardianSignature, err := builder.signTx(unsignedTx, skGuardianBytes)
 	if err != nil {
 		return err
 	}
 
 	tx.GuardianSignature = hex.EncodeToString(guardianSignature)
-
-	nodeTx, err = transactionToNodeTransaction(tx)
 
 	return err
 }
@@ -164,31 +162,6 @@ func (builder *txBuilder) ComputeTxHash(tx *data.Transaction) ([]byte, error) {
 	return txHash, nil
 }
 
-func nodeTransactionToTransaction(tx *transaction.Transaction) (*data.Transaction, error) {
-	receiver := core.AddressPublicKeyConverter.Encode(tx.RcvAddr)
-	sender := core.AddressPublicKeyConverter.Encode(tx.SndAddr)
-	signature := hex.EncodeToString(tx.Signature)
-	guardianSignature := hex.EncodeToString(tx.GuardianSignature)
-	guardianAddress := core.AddressPublicKeyConverter.Encode(tx.GuardianAddr)
-	value := tx.Value.String()
-
-	return &data.Transaction{
-		Nonce:             tx.Nonce,
-		Value:             value,
-		RcvAddr:           receiver,
-		SndAddr:           sender,
-		GasPrice:          tx.GasPrice,
-		GasLimit:          tx.GasLimit,
-		Data:              tx.Data,
-		Signature:         signature,
-		ChainID:           string(tx.ChainID),
-		Version:           tx.Version,
-		Options:           tx.Options,
-		GuardianAddr:      guardianAddress,
-		GuardianSignature: guardianSignature,
-	}, nil
-}
-
 func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transaction, error) {
 	receiverBytes, err := core.AddressPublicKeyConverter.Decode(tx.RcvAddr)
 	if err != nil {
@@ -212,7 +185,7 @@ func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transactio
 
 	var guardianAddrBytes, guardianSigBytes []byte
 	if len(tx.GuardianAddr) > 0 {
-		guardianAddrBytes, err = core.AddressPublicKeyConverter.Decode(tx.RcvAddr)
+		guardianAddrBytes, err = core.AddressPublicKeyConverter.Decode(tx.GuardianAddr)
 		if err != nil {
 			return nil, err
 		}
@@ -240,17 +213,17 @@ func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transactio
 	}, nil
 }
 
-func transactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
+func TransactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
 	unsignedTx := *tx
 	unsignedTx.Signature = ""
 	unsignedTx.GuardianSignature = ""
 	return &unsignedTx
 }
 
-func (builder *txBuilder) createUnsignedTransaction(arg data.ArgCreateTransaction) (*data.Transaction, error) {
+func (builder *txBuilder) CreateUnsignedTransaction(arg data.ArgCreateTransaction) (*data.Transaction, error) {
 	tx := builder.createTransaction(arg)
 
-	return transactionToUnsignedTx(tx), nil
+	return TransactionToUnsignedTx(tx), nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
