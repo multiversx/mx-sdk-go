@@ -15,6 +15,7 @@ func TestBaseEndpointProvider(t *testing.T) {
 	assert.Equal(t, ratingsConfig, base.GetRatingsConfig())
 	assert.Equal(t, enableEpochsConfig, base.GetEnableEpochsConfig())
 	assert.Equal(t, "address/addressAsBech32", base.GetAccount("addressAsBech32"))
+	assert.Equal(t, "address/addressAsBech32/keys", base.GetAccountKeys("addressAsBech32"))
 	assert.Equal(t, costTransaction, base.GetCostTransaction())
 	assert.Equal(t, sendTransaction, base.GetSendTransaction())
 	assert.Equal(t, sendMultipleTransactions, base.GetSendMultipleTransactions())

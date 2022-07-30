@@ -20,6 +20,7 @@ type EndpointProvider interface {
 	GetRatingsConfig() string
 	GetEnableEpochsConfig() string
 	GetAccount(addressAsBech32 string) string
+	GetAccountKeys(addressAsBech32 string) string
 	GetCostTransaction() string
 	GetSendTransaction() string
 	GetSendMultipleTransactions() string

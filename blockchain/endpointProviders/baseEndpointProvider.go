@@ -8,6 +8,7 @@ const (
 	ratingsConfig            = "network/ratings"
 	enableEpochsConfig       = "network/enable-epochs"
 	account                  = "address/%s"
+	accountKeys              = "address/%s/keys"
 	costTransaction          = "transaction/cost"
 	sendTransaction          = "transaction/send"
 	sendMultipleTransactions = "transaction/send-multiple"
@@ -45,6 +46,11 @@ func (base *baseEndpointProvider) GetEnableEpochsConfig() string {
 // GetAccount returns the account endpoint
 func (base *baseEndpointProvider) GetAccount(addressAsBech32 string) string {
 	return fmt.Sprintf(account, addressAsBech32)
+}
+
+// GetAccountKeys retrieves all key-value pairs stored under a given account
+func (base *baseEndpointProvider) GetAccountKeys(addressAsBech32 string) string {
+	return fmt.Sprintf(accountKeys, addressAsBech32)
 }
 
 // GetCostTransaction returns the transaction cost endpoint
