@@ -624,7 +624,6 @@ func TestElrondProxy_GetAccountKeys(t *testing.T) {
 	if err != nil {
 		assert.Error(t, err)
 	}
-
 	t.Run("retrieve all account storage data", func(t *testing.T) {
 		httpClient := createMockClientRespondingBytes(defaultResponseBytes)
 		args := createMockArgsElrondProxy(httpClient)
@@ -634,7 +633,6 @@ func TestElrondProxy_GetAccountKeys(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, expectedAccountKeys, response)
 	})
-
 	t.Run("fail on empty address", func(t *testing.T) {
 		httpClient := createMockClientRespondingBytes(defaultResponseBytes)
 		args := createMockArgsElrondProxy(httpClient)
@@ -643,5 +641,34 @@ func TestElrondProxy_GetAccountKeys(t *testing.T) {
 		response, err := proxy.GetAccountKeys(context.Background(), nil)
 		assert.Error(t, err)
 		assert.Nil(t, response)
+	})
+	t.Run("fail on invalid address", func(t *testing.T) {
+		httpClient := createMockClientRespondingBytes(defaultResponseBytes)
+		args := createMockArgsElrondProxy(httpClient)
+		proxy, _ := NewElrondProxy(args)
+
+		response, err := proxy.GetAccountKeys(context.Background(), data.NewAddressFromBytes([]byte{}))
+		assert.Error(t, err)
+		assert.Nil(t, response)
+	})
+	t.Run("fail on empty response", func(t *testing.T) {
+		httpClient := createMockClientRespondingBytes([]byte{})
+		args := createMockArgsElrondProxy(httpClient)
+		proxy, _ := NewElrondProxy(args)
+
+		response, err := proxy.GetAccountKeys(context.Background(), address)
+		assert.NotNil(t, err)
+		assert.IsType(t, &json.SyntaxError{}, err)
+		assert.Equal(t, (*data.AccountKeys)(nil), response)
+	})
+	t.Run("fail on invalid response", func(t *testing.T) {
+		httpClient := createMockClientRespondingBytes([]byte("invalid"))
+		args := createMockArgsElrondProxy(httpClient)
+		proxy, _ := NewElrondProxy(args)
+
+		response, err := proxy.GetAccountKeys(context.Background(), address)
+		assert.NotNil(t, err)
+		assert.IsType(t, &json.SyntaxError{}, err)
+		assert.Equal(t, (*data.AccountKeys)(nil), response)
 	})
 }

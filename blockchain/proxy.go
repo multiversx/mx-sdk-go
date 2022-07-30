@@ -128,6 +128,8 @@ func (ep *elrondProxy) ExecuteVMQuery(ctx context.Context, vmRequest *data.VmVal
 	return &response.Data, nil
 }
 
+// checkFinalState state will query the proxy and check if the target shard ID has a current nonce close to the cross
+// check nonce from the metachain
 func (ep *elrondProxy) checkFinalState(ctx context.Context, address string) error {
 	if !ep.finalityCheck {
 		return nil
@@ -228,7 +230,33 @@ func (ep *elrondProxy) GetAccount(ctx context.Context, address erdgoCore.Address
 
 // GetAccountKeys retrieves all key-value pairs stored under a given account
 func (ep *elrondProxy) GetAccountKeys(ctx context.Context, address erdgoCore.AddressHandler) (*data.AccountKeys, error) {
-	return &data.AccountKeys{}, nil
+	if check.IfNil(address) {
+		return nil, ErrNilAddress
+	}
+	if !address.IsValid() {
+		return nil, ErrInvalidAddress
+	}
+	err := ep.checkFinalState(ctx, address.AddressAsBech32String())
+	if err != nil {
+		return nil, err
+	}
+	endpoint := ep.endpointProvider.GetAccountKeys(address.AddressAsBech32String())
+
+	buff, code, err := ep.GetHTTP(ctx, endpoint)
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	response := &data.AccountKeysResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return &response.Data.Pairs, nil
 }
 
 // SendTransaction broadcasts a transaction to the network and returns the txhash if successful
