@@ -617,13 +617,7 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 func TestElrondProxy_GetAccountKeys(t *testing.T) {
 	t.Parallel()
 
-	var (
-		expectedAccountKeys = &data.AccountKeys{
-			"666f6f": "626172", // "key": "value"
-		}
-		defaultResponseBytes = []byte(`{"data":{"pairs":{"666f6f":"626172"}},"error":"","code":""}`) // "key": "value"
-	)
-
+	defaultResponseBytes := []byte(`{"data":{"pairs":{"666f6f":"626172"}},"error":"","code":""}`) // "key": "value"
 	address, err := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
 	assert.NotNil(t, address)
 	assert.Nil(t, err)
@@ -633,6 +627,9 @@ func TestElrondProxy_GetAccountKeys(t *testing.T) {
 		args := createMockArgsElrondProxy(httpClient)
 		proxy, _ := NewElrondProxy(args)
 
+		expectedAccountKeys := &data.AccountKeys{
+			"666f6f": "626172", // "key": "value"
+		}
 		response, err := proxy.GetAccountKeys(context.Background(), address)
 		assert.Nil(t, err)
 		assert.Equal(t, expectedAccountKeys, response)
@@ -663,7 +660,7 @@ func TestElrondProxy_GetAccountKeys(t *testing.T) {
 		response, err := proxy.GetAccountKeys(context.Background(), address)
 		assert.NotNil(t, err)
 		assert.IsType(t, &json.SyntaxError{}, err)
-		assert.Equal(t, (*data.AccountKeys)(nil), response)
+		assert.Nil(t, response)
 	})
 	t.Run("fail on invalid response", func(t *testing.T) {
 		httpClient := createMockClientRespondingBytes([]byte("invalid"))
@@ -673,7 +670,7 @@ func TestElrondProxy_GetAccountKeys(t *testing.T) {
 		response, err := proxy.GetAccountKeys(context.Background(), address)
 		assert.NotNil(t, err)
 		assert.IsType(t, &json.SyntaxError{}, err)
-		assert.Equal(t, (*data.AccountKeys)(nil), response)
+		assert.Nil(t, response)
 	})
 	t.Run("fail on response error status", func(t *testing.T) {
 		httpClient := createMockClientRespondingBytesWithStatusCode(defaultResponseBytes, http.StatusBadRequest)
@@ -693,6 +690,6 @@ func TestElrondProxy_GetAccountKeys(t *testing.T) {
 		response, err := proxy.GetAccountKeys(context.Background(), address)
 		assert.NotNil(t, err)
 		assert.IsType(t, errors.New(""), err)
-		assert.Equal(t, (*data.AccountKeys)(nil), response)
+		assert.Nil(t, response)
 	})
 }
