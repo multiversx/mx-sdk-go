@@ -16,6 +16,17 @@ type AccountResponse struct {
 	Code  string `json:"code"`
 }
 
+type AccountKeys map[string]string
+
+type AccountKeysResponse struct {
+	Data struct {
+		Pairs AccountKeys `json:"pairs"`
+	} `json:"data"`
+
+	Error string `json:"error"`
+	Code  string `json:"code"`
+}
+
 // Account holds an Account's information
 type Account struct {
 	Address         string `json:"address"`

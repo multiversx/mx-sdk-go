@@ -609,3 +609,39 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 
 	require.Equal(t, expectedGenesisNodes, response)
 }
+
+func TestElrondProxy_GetAccountKeys(t *testing.T) {
+	t.Parallel()
+
+	var (
+		expectedAccountKeys = &data.AccountKeys{
+			"666f6f": "626172", // "key": "value"
+		}
+		defaultResponseBytes = []byte("{\"data\":{\"pairs\":{\"666f6f\":\"626172\"}},\"error\":\"\",\"code\":\"\"}") // "key": "value"
+	)
+
+	address, err := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
+	if err != nil {
+		assert.Error(t, err)
+	}
+
+	t.Run("retrieve all account storage data", func(t *testing.T) {
+		httpClient := createMockClientRespondingBytes(defaultResponseBytes)
+		args := createMockArgsElrondProxy(httpClient)
+		proxy, _ := NewElrondProxy(args)
+
+		response, err := proxy.GetAccountKeys(context.Background(), address)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedAccountKeys, response)
+	})
+
+	t.Run("fail on empty address", func(t *testing.T) {
+		httpClient := createMockClientRespondingBytes(defaultResponseBytes)
+		args := createMockArgsElrondProxy(httpClient)
+		proxy, _ := NewElrondProxy(args)
+
+		response, err := proxy.GetAccountKeys(context.Background(), nil)
+		assert.Error(t, err)
+		assert.Nil(t, response)
+	})
+}

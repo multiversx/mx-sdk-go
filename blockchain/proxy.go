@@ -226,6 +226,11 @@ func (ep *elrondProxy) GetAccount(ctx context.Context, address erdgoCore.Address
 	return response.Data.Account, nil
 }
 
+// GetAccountKeys retrieves all key-value pairs stored under a given account
+func (ep *elrondProxy) GetAccountKeys(ctx context.Context, address erdgoCore.AddressHandler) (*data.AccountKeys, error) {
+	return &data.AccountKeys{}, nil
+}
+
 // SendTransaction broadcasts a transaction to the network and returns the txhash if successful
 func (ep *elrondProxy) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
 	jsonTx, err := json.Marshal(tx)
