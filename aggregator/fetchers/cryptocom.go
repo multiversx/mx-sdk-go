@@ -30,6 +30,10 @@ type cryptocom struct {
 
 // FetchPrice will fetch the price using the http client
 func (c *cryptocom) FetchPrice(ctx context.Context, base, quote string) (float64, error) {
+	if !c.hasPair(base, quote) {
+		return 0, aggregator.ErrPairNotSupported
+	}
+
 	quote = c.normalizeQuoteName(quote, CryptocomName)
 
 	var cpr cryptocomPriceRequest
