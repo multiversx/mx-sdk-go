@@ -126,12 +126,21 @@ func runApp() error {
 
 func addPairsToFetchers(pairs []*aggregator.ArgsPair, priceFetchers []aggregator.PriceFetcher) {
 	for _, pair := range pairs {
-		for _, fetcher := range priceFetchers {
-			_, ok := pair.Exchanges[fetcher.Name()]
-			if ok {
-				fetcher.AddPair(pair.Base, pair.Quote)
-			}
+		addPairToFetchers(pair, priceFetchers)
+	}
+}
+
+func addPairToFetchers(pair *aggregator.ArgsPair, priceFetchers []aggregator.PriceFetcher) {
+	for _, fetcher := range priceFetchers {
+		name := fetcher.Name()
+		_, ok := pair.Exchanges[name]
+		if !ok {
+			log.Info("Missing fetcher name from known exchanges for pair",
+				"fetcher", name, "pair base", pair.Base, "pair quote", pair.Quote)
+			continue
 		}
+
+		fetcher.AddPair(pair.Base, pair.Quote)
 	}
 }
 
