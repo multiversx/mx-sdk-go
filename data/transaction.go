@@ -68,8 +68,11 @@ type TransactionOnNetwork struct {
 	Signature        string                                `json:"signature"`
 	SourceShard      uint32                                `json:"sourceShard"`
 	DestinationShard uint32                                `json:"destinationShard"`
+	BlockNonce       uint64                                `json:"blockNonce"`
+	BlockHash        string                                `json:"blockHash"`
 	MiniblockType    string                                `json:"miniblockType"`
 	MiniblockHash    string                                `json:"miniblockHash"`
+	Timestamp        uint64                                `json:"timestamp"`
 	Status           string                                `json:"status"`
 	HyperBlockNonce  uint64                                `json:"hyperblockNonce"`
 	HyperBlockHash   string                                `json:"hyperblockHash"`
