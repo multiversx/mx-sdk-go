@@ -27,6 +27,10 @@ type kraken struct {
 
 // FetchPrice will fetch the price using the http client
 func (k *kraken) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
+	if !k.hasPair(base, quote) {
+		return 0, aggregator.ErrPairNotSupported
+	}
+
 	quote = k.normalizeQuoteName(quote, KrakenName)
 
 	var hpr krakenPriceRequest

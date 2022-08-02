@@ -26,7 +26,7 @@ func createMockArgsPriceNotifier() aggregator.ArgsPriceNotifier {
 				DenominationFactor:        100,
 			},
 		},
-		Fetcher:          &mock.PriceFetcherStub{},
+		Aggregator:       &mock.PriceFetcherStub{},
 		Notifee:          &mock.PriceNotifeeStub{},
 		AutoSendInterval: time.Minute,
 	}
@@ -96,15 +96,15 @@ func TestNewPriceNotifier(t *testing.T) {
 		assert.True(t, check.IfNil(pn))
 		assert.Equal(t, aggregator.ErrNilPriceNotifee, err)
 	})
-	t.Run("nil fetcher", func(t *testing.T) {
+	t.Run("nil aggregator", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsPriceNotifier()
-		args.Fetcher = nil
+		args.Aggregator = nil
 
 		pn, err := aggregator.NewPriceNotifier(args)
 		assert.True(t, check.IfNil(pn))
-		assert.Equal(t, aggregator.ErrNilPriceFetcher, err)
+		assert.Equal(t, aggregator.ErrNilPriceAggregator, err)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
@@ -135,7 +135,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args := createMockArgsPriceNotifier()
-		args.Fetcher = &mock.PriceFetcherStub{
+		args.Aggregator = &mock.PriceFetcherStub{
 			FetchPriceCalled: func(ctx context.Context, base string, quote string) (float64, error) {
 				return 0, expectedErr
 			},
@@ -156,7 +156,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 
 		var startTimestamp, endTimestamp, receivedTimestamp int64
 		args := createMockArgsPriceNotifier()
-		args.Fetcher = &mock.PriceFetcherStub{
+		args.Aggregator = &mock.PriceFetcherStub{
 			FetchPriceCalled: func(ctx context.Context, base string, quote string) (float64, error) {
 				return 1.987654321, nil
 			},
@@ -191,7 +191,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsPriceNotifier()
-		args.Fetcher = &mock.PriceFetcherStub{
+		args.Aggregator = &mock.PriceFetcherStub{
 			FetchPriceCalled: func(ctx context.Context, base string, quote string) (float64, error) {
 				return 1.987654321, nil
 			},
@@ -226,7 +226,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 
 		args := createMockArgsPriceNotifier()
 		args.Pairs[0].PercentDifferenceToNotify = 0
-		args.Fetcher = &mock.PriceFetcherStub{
+		args.Aggregator = &mock.PriceFetcherStub{
 			FetchPriceCalled: func(ctx context.Context, base string, quote string) (float64, error) {
 				return 1.987654321, nil
 			},
@@ -263,7 +263,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 
 		args := createMockArgsPriceNotifier()
 		args.Pairs[0].PercentDifferenceToNotify = 1
-		args.Fetcher = &mock.PriceFetcherStub{
+		args.Aggregator = &mock.PriceFetcherStub{
 			FetchPriceCalled: func(ctx context.Context, base string, quote string) (float64, error) {
 				return 1.987654321, nil
 			},
@@ -290,7 +290,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 
 		args := createMockArgsPriceNotifier()
 		args.Pairs[0].PercentDifferenceToNotify = 1
-		args.Fetcher = &mock.PriceFetcherStub{
+		args.Aggregator = &mock.PriceFetcherStub{
 			FetchPriceCalled: func(ctx context.Context, base string, quote string) (float64, error) {
 				return 1.987654321, nil
 			},
@@ -329,7 +329,7 @@ func TestPriceNotifier_Execute(t *testing.T) {
 
 		args := createMockArgsPriceNotifier()
 		price := 1.987654321
-		args.Fetcher = &mock.PriceFetcherStub{
+		args.Aggregator = &mock.PriceFetcherStub{
 			FetchPriceCalled: func(ctx context.Context, base string, quote string) (float64, error) {
 				price = price * 1.012 // due to rounding errors, we need this slightly higher increase
 

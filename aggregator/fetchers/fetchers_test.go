@@ -45,6 +45,7 @@ func Test_FunctionalTesting(t *testing.T) {
 
 			fetcher, _ := NewPriceFetcher(fetcherName, &aggregator.HttpResponseGetter{}, createMockMap())
 			ethTicker := "ETH"
+			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
 			require.Nil(t, err)
 			fmt.Printf("price between %s and %s is: %v from %s\n", ethTicker, quoteUSDFiat, price, fetcherName)
@@ -72,6 +73,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 
 			assert.False(t, check.IfNil(fetcher))
 
+			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
 			if err == errShouldSkipTest {
 				return
@@ -87,6 +89,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
+			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
 			if err == errShouldSkipTest {
 				return
@@ -102,6 +105,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
+			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
 			if err == errShouldSkipTest {
 				return
@@ -117,6 +121,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
+			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
 			if err == errShouldSkipTest {
 				return
@@ -138,12 +143,29 @@ func Test_FetchPriceErrors(t *testing.T) {
 			assert.False(t, check.IfNil(fetcher))
 
 			missingTicker := "missing ticker"
+			fetcher.AddPair(missingTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), missingTicker, quoteUSDFiat)
 			if err == errShouldSkipTest {
 				return
 			}
 			assert.Equal(t, errInvalidPair, err)
 			require.Equal(t, float64(0), price)
+		})
+		t.Run("pair not added should error "+fetcherName, func(t *testing.T) {
+			t.Parallel()
+
+			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
+				GetCalled: getFuncGetCalled(fetcherName, "4714.05000000", pair, nil),
+			}, createMockMap())
+			assert.False(t, check.IfNil(fetcher))
+
+			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
+			if err == errShouldSkipTest {
+				return
+			}
+			require.Equal(t, aggregator.ErrPairNotSupported, err)
+			require.Equal(t, float64(0), price)
+			assert.Equal(t, fetcherName, fetcher.Name())
 		})
 		t.Run("should work eth-usd "+fetcherName, func(t *testing.T) {
 			t.Parallel()
@@ -153,6 +175,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
+			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
 			if err == errShouldSkipTest {
 				return
@@ -171,6 +194,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 			}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
+			fetcher.AddPair(btcTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), btcTicker, quoteUSDFiat)
 			if err == errShouldSkipTest {
 				return
