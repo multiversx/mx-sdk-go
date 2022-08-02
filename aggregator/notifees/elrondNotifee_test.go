@@ -364,7 +364,6 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 				assert.Equal(t, uint64(10), tx.GasPrice)
 				assert.Equal(t, uint64(2060), tx.GasLimit)
 				assert.Equal(t, txData, tx.Data)
-				assert.Equal(t, "00c0535d2d6f7e011d5096054b0627450559c4d78e2f0329bf549ddc6900fa80b30767f96055d26a676cfcec9872e31e77ff99111819ffc3f9d923319d60ce0e", tx.Signature)
 				assert.Equal(t, "test", tx.ChainID)
 				assert.Equal(t, uint32(1), tx.Version)
 				assert.Equal(t, uint32(0), tx.Options)
