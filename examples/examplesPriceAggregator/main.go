@@ -19,8 +19,7 @@ var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesPriceAggregator"
 const base = "ETH"
 const quote = "USD"
 const percentDifferenceToNotify = 1 // 0 will notify on each fetch
-const trimPrecision = 0.01          // will round the price to the hundredth
-const denominationFactor = 100
+const decimals = 2
 
 const minResultsNum = 3
 const pollInterval = time.Second * 2
@@ -62,7 +61,7 @@ func runApp() error {
 				log.Info("Notified about the price changed",
 					"pair", fmt.Sprintf("%s-%s", arg.Base, arg.Quote),
 					"denominated price", arg.DenominatedPrice,
-					"denomination factor", arg.DenominationFactor,
+					"decimals", arg.Decimals,
 					"timestamp", arg.Timestamp)
 			}
 
@@ -75,8 +74,7 @@ func runApp() error {
 			Base:                      base,
 			Quote:                     quote,
 			PercentDifferenceToNotify: percentDifferenceToNotify,
-			TrimPrecision:             trimPrecision,
-			DenominationFactor:        denominationFactor,
+			Decimals:                  decimals,
 			Exchanges:                 fetchers.ImplementedFetchers,
 		},
 	}

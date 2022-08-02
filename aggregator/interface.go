@@ -28,11 +28,11 @@ type PriceFetcher interface {
 
 // ArgsPriceChanged is the argument used when notifying the notifee instance
 type ArgsPriceChanged struct {
-	Base               string
-	Quote              string
-	DenominatedPrice   uint64
-	DenominationFactor uint64
-	Timestamp          int64
+	Base             string
+	Quote            string
+	DenominatedPrice uint64
+	Decimals         uint64
+	Timestamp        int64
 }
 
 // PriceNotifee defines the behavior of a component able to be notified over a price change
