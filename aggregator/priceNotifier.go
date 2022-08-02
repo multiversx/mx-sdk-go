@@ -56,7 +56,7 @@ func NewPriceNotifier(args ArgsPriceNotifier) (*priceNotifier, error) {
 		if argsPair == nil {
 			return nil, fmt.Errorf("%w, index %d", ErrNilArgsPair, idx)
 		}
-		pair, err := NewPair(argsPair)
+		pair, err := newPair(argsPair)
 		if err != nil {
 			return nil, err
 		}
@@ -107,13 +107,13 @@ func (pn *priceNotifier) Execute(ctx context.Context) error {
 func (pn *priceNotifier) getAllPrices(ctx context.Context) ([]priceInfo, error) {
 	fetchedPrices := make([]priceInfo, len(pn.pairs))
 	for idx, pair := range pn.pairs {
-		price, err := pn.priceAggregator.FetchPrice(ctx, pair.Base, pair.Quote)
+		price, err := pn.priceAggregator.FetchPrice(ctx, pair.base, pair.quote)
 		if err != nil {
-			return nil, fmt.Errorf("%w while querying the pair %s-%s", err, pair.Base, pair.Quote)
+			return nil, fmt.Errorf("%w while querying the pair %s-%s", err, pair.base, pair.quote)
 		}
 
 		fetchedPrice := priceInfo{
-			price:     trim(price, pair.TrimPrecision),
+			price:     trim(price, pair.trimPrecision),
 			timestamp: time.Now().Unix(),
 		}
 		fetchedPrices[idx] = fetchedPrice
@@ -150,7 +150,7 @@ func (pn *priceNotifier) computeNotifyArgsSlice(fetchedPrices []priceInfo) []*no
 }
 
 func shouldNotify(notifyArgsValue *notifyArgs) bool {
-	percentValue := float64(notifyArgsValue.PercentDifferenceToNotify) / 100
+	percentValue := float64(notifyArgsValue.percentDifferenceToNotify) / 100
 	shouldBypassPercentCheck := notifyArgsValue.lastNotifiedPrice < epsilon || percentValue < epsilon
 	if shouldBypassPercentCheck {
 		return true
@@ -159,7 +159,7 @@ func shouldNotify(notifyArgsValue *notifyArgs) bool {
 	absoluteChange := math.Abs(notifyArgsValue.lastNotifiedPrice - notifyArgsValue.newPrice.price)
 	percentageChange := absoluteChange * 100 / notifyArgsValue.lastNotifiedPrice
 
-	return percentageChange >= float64(notifyArgsValue.PercentDifferenceToNotify)
+	return percentageChange >= float64(notifyArgsValue.percentDifferenceToNotify)
 }
 
 func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyArgs) error {
@@ -169,14 +169,14 @@ func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyAr
 
 	args := make([]*ArgsPriceChanged, 0, len(notifyArgsSlice))
 	for _, notify := range notifyArgsSlice {
-		priceTrimmed := trim(notify.newPrice.price, notify.TrimPrecision)
-		denominatedPrice := uint64(priceTrimmed * float64(notify.DenominationFactor))
+		priceTrimmed := trim(notify.newPrice.price, notify.trimPrecision)
+		denominatedPrice := uint64(priceTrimmed * float64(notify.denominationFactor))
 
 		argPriceChanged := &ArgsPriceChanged{
-			Base:             notify.Base,
-			Quote:            notify.Quote,
+			Base:             notify.base,
+			Quote:            notify.quote,
 			DenominatedPrice: denominatedPrice,
-			Decimals:         notify.Decimals,
+			Decimals:         notify.decimals,
 			Timestamp:        notify.newPrice.timestamp,
 		}
 

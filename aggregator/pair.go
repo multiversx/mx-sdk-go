@@ -21,17 +21,16 @@ type ArgsPair struct {
 }
 
 type pair struct {
-	Base                      string
-	Quote                     string
-	PercentDifferenceToNotify uint32
-	Decimals                  uint64
-	TrimPrecision             float64
-	DenominationFactor        uint64
-	Exchanges                 map[string]struct{}
+	base                      string
+	quote                     string
+	percentDifferenceToNotify uint32
+	decimals                  uint64
+	trimPrecision             float64
+	denominationFactor        uint64
+	exchanges                 map[string]struct{}
 }
 
-// NewPair creates a new pair instance
-func NewPair(args *ArgsPair) (*pair, error) {
+func newPair(args *ArgsPair) (*pair, error) {
 	err := checkPairArgs(args)
 	if err != nil {
 		return nil, err
@@ -39,13 +38,13 @@ func NewPair(args *ArgsPair) (*pair, error) {
 
 	denominationFactorAsFloat64 := math.Pow(10, float64(args.Decimals))
 	return &pair{
-		Base:                      args.Base,
-		Quote:                     args.Quote,
-		PercentDifferenceToNotify: args.PercentDifferenceToNotify,
-		Decimals:                  args.Decimals,
-		TrimPrecision:             float64(1) / denominationFactorAsFloat64,
-		DenominationFactor:        uint64(denominationFactorAsFloat64),
-		Exchanges:                 args.Exchanges,
+		base:                      args.Base,
+		quote:                     args.Quote,
+		percentDifferenceToNotify: args.PercentDifferenceToNotify,
+		decimals:                  args.Decimals,
+		trimPrecision:             float64(1) / denominationFactorAsFloat64,
+		denominationFactor:        uint64(denominationFactorAsFloat64),
+		exchanges:                 args.Exchanges,
 	}, nil
 }
 
