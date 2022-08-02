@@ -16,7 +16,7 @@ const minAutoSendInterval = time.Second
 // ArgsPriceNotifier is the argument DTO for the price notifier
 type ArgsPriceNotifier struct {
 	Pairs            []*ArgsPair
-	Fetcher          PriceFetcher
+	Aggregator       PriceAggregator
 	Notifee          PriceNotifee
 	AutoSendInterval time.Duration
 }
@@ -28,6 +28,7 @@ type ArgsPair struct {
 	PercentDifferenceToNotify uint32
 	TrimPrecision             float64
 	DenominationFactor        uint64
+	Exchanges                 map[string]struct{}
 }
 
 type priceInfo struct {
@@ -44,7 +45,7 @@ type notifyArgs struct {
 
 type priceNotifier struct {
 	mut                sync.Mutex
-	priceFetcher       PriceFetcher
+	priceAggregator    PriceAggregator
 	pairs              []*ArgsPair
 	lastNotifiedPrices []float64
 	notifee            PriceNotifee
@@ -61,7 +62,7 @@ func NewPriceNotifier(args ArgsPriceNotifier) (*priceNotifier, error) {
 	}
 
 	return &priceNotifier{
-		priceFetcher:       args.Fetcher,
+		priceAggregator:    args.Aggregator,
 		pairs:              args.Pairs,
 		lastNotifiedPrices: make([]float64, len(args.Pairs)),
 		notifee:            args.Notifee,
@@ -95,8 +96,8 @@ func checkArgsPriceNotifier(args ArgsPriceNotifier) error {
 	if check.IfNil(args.Notifee) {
 		return ErrNilPriceNotifee
 	}
-	if check.IfNil(args.Fetcher) {
-		return ErrNilPriceFetcher
+	if check.IfNil(args.Aggregator) {
+		return ErrNilPriceAggregator
 	}
 
 	return nil
@@ -117,7 +118,7 @@ func (pn *priceNotifier) Execute(ctx context.Context) error {
 func (pn *priceNotifier) getAllPrices(ctx context.Context) ([]priceInfo, error) {
 	fetchedPrices := make([]priceInfo, len(pn.pairs))
 	for idx, pair := range pn.pairs {
-		price, err := pn.priceFetcher.FetchPrice(ctx, pair.Base, pair.Quote)
+		price, err := pn.priceAggregator.FetchPrice(ctx, pair.Base, pair.Quote)
 		if err != nil {
 			return nil, fmt.Errorf("%w while querying the pair %s-%s", err, pair.Base, pair.Quote)
 		}

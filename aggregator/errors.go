@@ -11,6 +11,8 @@ var (
 	ErrInvalidNumberOfPriceFetchers = errors.New("invalid number of price fetchers")
 	// ErrNilPriceFetcher signals that a nil price fetcher was provided
 	ErrNilPriceFetcher = errors.New("nil price fetcher")
+	// ErrNilPriceAggregator signals that a nil price aggregator was provided
+	ErrNilPriceAggregator = errors.New("nil price aggregator")
 	// ErrEmptyArgsPairsSlice signals that an empty arguments pair slice was provided
 	ErrEmptyArgsPairsSlice = errors.New("empty pair arguments slice")
 	// ErrNilArgsPair signals that a nil argument pair was found
@@ -25,4 +27,6 @@ var (
 	ErrInvalidDenominationFactor = errors.New("invalid denomination factor")
 	// ErrInvalidAutoSendInterval signals that an invalid auto send interval value was provided
 	ErrInvalidAutoSendInterval = errors.New("invalid auto send interval")
+	// ErrPairNotSupported signals that the pair is not supported by the fetcher
+	ErrPairNotSupported = errors.New("pair not supported")
 )

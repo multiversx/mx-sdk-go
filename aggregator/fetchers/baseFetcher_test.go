@@ -35,3 +35,16 @@ func Test_normalizeQuoteName(t *testing.T) {
 		assert.Equal(t, providedQuote, quote)
 	})
 }
+
+func TestBaseFetcher_knownPairs(t *testing.T) {
+	t.Parallel()
+
+	b := baseFetcher{
+		knownPairs: make(map[string]struct{}),
+	}
+	base := "base"
+	quote := "quote"
+	assert.False(t, b.hasPair(base, quote))
+	b.AddPair(base, quote)
+	assert.True(t, b.hasPair(base, quote))
+}

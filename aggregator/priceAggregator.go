@@ -70,6 +70,15 @@ func (pa *priceAggregator) FetchPrice(ctx context.Context, base string, quote st
 			defer wg.Done()
 			price, err := priceFetcher.FetchPrice(ctx, baseUpper, quoteUpper)
 
+			if err == ErrPairNotSupported {
+				log.Trace("pair not supported",
+					"price fetcher", priceFetcher.Name(),
+					"base", baseUpper,
+					"quote", quoteUpper,
+				)
+				return
+			}
+
 			if err != nil {
 				log.Debug("failed to fetch price",
 					"price fetcher", priceFetcher.Name(),

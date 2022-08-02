@@ -70,17 +70,19 @@ func runApp() error {
 		},
 	}
 
-	argsPriceNotifier := aggregator.ArgsPriceNotifier{
-		Pairs: []*aggregator.ArgsPair{
-			{
-				Base:                      base,
-				Quote:                     quote,
-				PercentDifferenceToNotify: percentDifferenceToNotify,
-				TrimPrecision:             trimPrecision,
-				DenominationFactor:        denominationFactor,
-			},
+	pairs := []*aggregator.ArgsPair{
+		{
+			Base:                      base,
+			Quote:                     quote,
+			PercentDifferenceToNotify: percentDifferenceToNotify,
+			TrimPrecision:             trimPrecision,
+			DenominationFactor:        denominationFactor,
+			Exchanges:                 fetchers.ImplementedFetchers,
 		},
-		Fetcher:          aggregatorInstance,
+	}
+	argsPriceNotifier := aggregator.ArgsPriceNotifier{
+		Pairs:            pairs,
+		Aggregator:       aggregatorInstance,
 		Notifee:          printNotifee,
 		AutoSendInterval: autoSendInterval,
 	}
@@ -89,6 +91,8 @@ func runApp() error {
 	if err != nil {
 		return err
 	}
+
+	addPairsToFetchers(pairs, priceFetchers)
 
 	argsPollingHandler := polling.ArgsPollingHandler{
 		Log:              log,
@@ -118,6 +122,26 @@ func runApp() error {
 	<-chStop
 
 	return nil
+}
+
+func addPairsToFetchers(pairs []*aggregator.ArgsPair, priceFetchers []aggregator.PriceFetcher) {
+	for _, pair := range pairs {
+		addPairToFetchers(pair, priceFetchers)
+	}
+}
+
+func addPairToFetchers(pair *aggregator.ArgsPair, priceFetchers []aggregator.PriceFetcher) {
+	for _, fetcher := range priceFetchers {
+		name := fetcher.Name()
+		_, ok := pair.Exchanges[name]
+		if !ok {
+			log.Info("Missing fetcher name from known exchanges for pair",
+				"fetcher", name, "pair base", pair.Base, "pair quote", pair.Quote)
+			continue
+		}
+
+		fetcher.AddPair(pair.Base, pair.Quote)
+	}
 }
 
 func createMaiarMap() map[string]fetchers.MaiarTokensPair {

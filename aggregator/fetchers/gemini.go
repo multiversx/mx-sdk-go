@@ -22,6 +22,10 @@ type gemini struct {
 
 // FetchPrice will fetch the price using the http client
 func (g *gemini) FetchPrice(ctx context.Context, base, quote string) (float64, error) {
+	if !g.hasPair(base, quote) {
+		return 0, aggregator.ErrPairNotSupported
+	}
+
 	quote = g.normalizeQuoteName(quote, GeminiName)
 
 	var gpr geminiPriceRequest
