@@ -23,6 +23,7 @@ func createMockArgsPriceNotifier() aggregator.ArgsPriceNotifier {
 				Quote:                     "QUOTE",
 				PercentDifferenceToNotify: 1,
 				Decimals:                  2,
+				Exchanges:                 map[string]struct{}{"Binance": {}},
 			},
 		},
 		Aggregator:       &mock.PriceFetcherStub{},

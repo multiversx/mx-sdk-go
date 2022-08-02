@@ -27,8 +27,6 @@ var (
 	ErrNilBaseName = errors.New("nil base name")
 	// ErrInvalidQuoteName signals that an invalid quote name was provided
 	ErrNilQuoteName = errors.New("nil quote name")
-	//ErrInvalidPercentDifferenceToNotify signals that an invalid percent for notification was provided
-	ErrInvalidPercentDifferenceToNotify = errors.New("invalid percent difference to notify")
 	//ErrNilExchanges signals that an nil exchanges map was provided
 	ErrNilExchanges = errors.New("nil exchanges map")
 	// ErrInvalidAutoSendInterval signals that an invalid auto send interval value was provided

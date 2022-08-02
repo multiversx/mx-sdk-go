@@ -6,9 +6,8 @@ import (
 )
 
 const (
-	minPercentDifferenceToNotify = 1
-	minDecimals                  = 1
-	maxDecimals                  = 18
+	minDecimals = 1
+	maxDecimals = 18
 )
 
 // ArgsPair is the argument DTO for a pair
@@ -54,9 +53,6 @@ func checkPairArgs(args *ArgsPair) error {
 	}
 	if len(args.Quote) == 0 {
 		return ErrNilQuoteName
-	}
-	if args.PercentDifferenceToNotify < minPercentDifferenceToNotify {
-		return ErrInvalidPercentDifferenceToNotify
 	}
 	if args.Decimals < minDecimals || args.Decimals > maxDecimals {
 		return fmt.Errorf("%w, got %d for pair %s-%s", ErrInvalidDecimals,
