@@ -96,6 +96,13 @@ func (w *wallet) GenerateMnemonic() (data.Mnemonic, error) {
 
 // GetPrivateKeyFromMnemonic generates a private key based on mnemonic, account and address index
 func (w *wallet) GetPrivateKeyFromMnemonic(mnemonic data.Mnemonic, account, addressIndex uint32) []byte {
+	seed := w.CreateSeedFromMnemonic(mnemonic)
+	privateKey := w.GetPrivateKeyFromSeed(seed, account, addressIndex)
+	return privateKey
+}
+
+// GetPrivateKeyFromSeed generates a private key based on seed, account and address index
+func (w *wallet) GetPrivateKeyFromSeed(seed []byte, account, addressIndex uint32) []byte {
 	var egldPath = bip32Path{
 		44 | hardened,
 		egldCoinType | hardened,
@@ -104,12 +111,17 @@ func (w *wallet) GetPrivateKeyFromMnemonic(mnemonic data.Mnemonic, account, addr
 		hardened, // addressIndex
 	}
 
-	seed := bip39.NewSeed(string(mnemonic), "")
 	egldPath[2] = account | hardened
 	egldPath[4] = addressIndex | hardened
 	keyData := derivePrivateKey(seed, egldPath)
 
 	return keyData.Key
+}
+
+// GetSeedFromMnemonic creates a seed for a given mnemonic
+func (w *wallet) CreateSeedFromMnemonic(mnemonic data.Mnemonic) []byte {
+	seed := bip39.NewSeed(string(mnemonic), "")
+	return seed
 }
 
 func derivePrivateKey(seed []byte, path bip32Path) *bip32 {
