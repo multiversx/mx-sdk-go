@@ -21,24 +21,13 @@ type ArgsPriceNotifier struct {
 	AutoSendInterval time.Duration
 }
 
-// ArgsPair is the argument DTO for a pair
-type ArgsPair struct {
-	Base                      string
-	Quote                     string
-	PercentDifferenceToNotify uint32
-	Decimals                  uint64
-	TrimPrecision             float64
-	DenominationFactor        uint64
-	Exchanges                 map[string]struct{}
-}
-
 type priceInfo struct {
 	price     float64
 	timestamp int64
 }
 
 type notifyArgs struct {
-	*ArgsPair
+	*pair
 	newPrice          priceInfo
 	lastNotifiedPrice float64
 	index             int
@@ -47,7 +36,7 @@ type notifyArgs struct {
 type priceNotifier struct {
 	mut                sync.Mutex
 	priceAggregator    PriceAggregator
-	pairs              []*ArgsPair
+	pairs              []*pair
 	lastNotifiedPrices []float64
 	notifee            PriceNotifee
 	autoSendInterval   time.Duration
@@ -62,15 +51,21 @@ func NewPriceNotifier(args ArgsPriceNotifier) (*priceNotifier, error) {
 		return nil, err
 	}
 
-	for _, argsPair := range args.Pairs {
-		denominationFactorAsFloat64 := math.Pow(10, float64(argsPair.Decimals))
-		argsPair.DenominationFactor = uint64(denominationFactorAsFloat64)
-		argsPair.TrimPrecision = float64(1) / denominationFactorAsFloat64
+	pairs := make([]*pair, 0)
+	for idx, argsPair := range args.Pairs {
+		if argsPair == nil {
+			return nil, fmt.Errorf("%w, index %d", ErrNilArgsPair, idx)
+		}
+		pair, err := NewPair(argsPair)
+		if err != nil {
+			return nil, err
+		}
+		pairs = append(pairs, pair)
 	}
 
 	return &priceNotifier{
 		priceAggregator:    args.Aggregator,
-		pairs:              args.Pairs,
+		pairs:              pairs,
 		lastNotifiedPrices: make([]float64, len(args.Pairs)),
 		notifee:            args.Notifee,
 		autoSendInterval:   args.AutoSendInterval,
@@ -84,15 +79,6 @@ func checkArgsPriceNotifier(args ArgsPriceNotifier) error {
 		return ErrEmptyArgsPairsSlice
 	}
 
-	for idx, argsPair := range args.Pairs {
-		if argsPair == nil {
-			return fmt.Errorf("%w, index %d", ErrNilArgsPair, idx)
-		}
-		if argsPair.Decimals == 0 || argsPair.Decimals > 18 {
-			return fmt.Errorf("%w, got %d for pair %s-%s", ErrInvalidDecimals,
-				argsPair.Decimals, argsPair.Base, argsPair.Quote)
-		}
-	}
 	if args.AutoSendInterval < minAutoSendInterval {
 		return fmt.Errorf("%w, minimum %v, got %v", ErrInvalidAutoSendInterval, minAutoSendInterval, args.AutoSendInterval)
 	}
@@ -145,7 +131,7 @@ func (pn *priceNotifier) computeNotifyArgsSlice(fetchedPrices []priceInfo) []*no
 	result := make([]*notifyArgs, 0, len(pn.pairs))
 	for idx, pair := range pn.pairs {
 		notifyArgsValue := &notifyArgs{
-			ArgsPair:          pair,
+			pair:              pair,
 			newPrice:          fetchedPrices[idx],
 			lastNotifiedPrice: pn.lastNotifiedPrices[idx],
 			index:             idx,

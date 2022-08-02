@@ -23,6 +23,14 @@ var (
 	ErrInvalidNumOfElementsToComputeMedian = errors.New("invalid number of elements to compute the median")
 	// ErrInvalidDecimals signals that an invalid number of decimals was provided
 	ErrInvalidDecimals = errors.New("invalid decimals")
+	// ErrInvalidBaseName signals that an invalid base name was provided
+	ErrNilBaseName = errors.New("nil base name")
+	// ErrInvalidQuoteName signals that an invalid quote name was provided
+	ErrNilQuoteName = errors.New("nil quote name")
+	//ErrInvalidPercentDifferenceToNotify signals that an invalid percent for notification was provided
+	ErrInvalidPercentDifferenceToNotify = errors.New("invalid percent difference to notify")
+	//ErrNilExchanges signals that an nil exchanges map was provided
+	ErrNilExchanges = errors.New("nil exchanges map")
 	// ErrInvalidAutoSendInterval signals that an invalid auto send interval value was provided
 	ErrInvalidAutoSendInterval = errors.New("invalid auto send interval")
 	// ErrPairNotSupported signals that the pair is not supported by the fetcher
