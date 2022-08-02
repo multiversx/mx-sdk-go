@@ -26,6 +26,7 @@ type ArgsPair struct {
 	Base                      string
 	Quote                     string
 	PercentDifferenceToNotify uint32
+	Decimals                  uint64
 	TrimPrecision             float64
 	DenominationFactor        uint64
 	Exchanges                 map[string]struct{}
@@ -61,6 +62,12 @@ func NewPriceNotifier(args ArgsPriceNotifier) (*priceNotifier, error) {
 		return nil, err
 	}
 
+	for _, argsPair := range args.Pairs {
+		denominationFactorAsFloat64 := math.Pow(10, float64(argsPair.Decimals))
+		argsPair.DenominationFactor = uint64(denominationFactorAsFloat64)
+		argsPair.TrimPrecision = float64(1) / denominationFactorAsFloat64
+	}
+
 	return &priceNotifier{
 		priceAggregator:    args.Aggregator,
 		pairs:              args.Pairs,
@@ -81,13 +88,9 @@ func checkArgsPriceNotifier(args ArgsPriceNotifier) error {
 		if argsPair == nil {
 			return fmt.Errorf("%w, index %d", ErrNilArgsPair, idx)
 		}
-		if argsPair.TrimPrecision < epsilon {
-			return fmt.Errorf("%w, got %f for pair %s-%s", ErrInvalidTrimPrecision,
-				argsPair.TrimPrecision, argsPair.Base, argsPair.Quote)
-		}
-		if argsPair.DenominationFactor == 0 {
-			return fmt.Errorf("%w, got %d for pair %s-%s", ErrInvalidDenominationFactor,
-				argsPair.DenominationFactor, argsPair.Base, argsPair.Quote)
+		if argsPair.Decimals == 0 || argsPair.Decimals > 18 {
+			return fmt.Errorf("%w, got %d for pair %s-%s", ErrInvalidDecimals,
+				argsPair.Decimals, argsPair.Base, argsPair.Quote)
 		}
 	}
 	if args.AutoSendInterval < minAutoSendInterval {
@@ -184,11 +187,11 @@ func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyAr
 		denominatedPrice := uint64(priceTrimmed * float64(notify.DenominationFactor))
 
 		argPriceChanged := &ArgsPriceChanged{
-			Base:               notify.Base,
-			Quote:              notify.Quote,
-			DenominatedPrice:   denominatedPrice,
-			DenominationFactor: notify.DenominationFactor,
-			Timestamp:          notify.newPrice.timestamp,
+			Base:             notify.Base,
+			Quote:            notify.Quote,
+			DenominatedPrice: denominatedPrice,
+			Decimals:         notify.Decimals,
+			Timestamp:        notify.newPrice.timestamp,
 		}
 
 		args = append(args, argPriceChanged)

@@ -65,18 +65,18 @@ func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
 func createMockPriceChanges() []*aggregator.ArgsPriceChanged {
 	return []*aggregator.ArgsPriceChanged{
 		{
-			Base:               "USD",
-			Quote:              "ETH",
-			DenominatedPrice:   380000,
-			DenominationFactor: 100,
-			Timestamp:          200,
+			Base:             "USD",
+			Quote:            "ETH",
+			DenominatedPrice: 380000,
+			Decimals:         2,
+			Timestamp:        200,
 		},
 		{
-			Base:               "USD",
-			Quote:              "BTC",
-			DenominatedPrice:   47000000000,
-			DenominationFactor: 1000000,
-			Timestamp:          300,
+			Base:             "USD",
+			Quote:            "BTC",
+			DenominatedPrice: 47000000000,
+			Decimals:         6,
+			Timestamp:        300,
 		},
 	}
 }
@@ -346,12 +346,14 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 					function,
 					hex.EncodeToString([]byte(priceChanges[0].Base)),
 					hex.EncodeToString([]byte(priceChanges[0].Quote)),
-					hex.EncodeToString(big.NewInt(int64(priceChanges[0].DenominatedPrice)).Bytes()),
 					hex.EncodeToString(big.NewInt(priceChanges[0].Timestamp).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[0].DenominatedPrice)).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[0].Decimals)).Bytes()),
 					hex.EncodeToString([]byte(priceChanges[1].Base)),
 					hex.EncodeToString([]byte(priceChanges[1].Quote)),
-					hex.EncodeToString(big.NewInt(int64(priceChanges[1].DenominatedPrice)).Bytes()),
 					hex.EncodeToString(big.NewInt(priceChanges[1].Timestamp).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[1].DenominatedPrice)).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[1].Decimals)).Bytes()),
 				}
 				txData := []byte(strings.Join(txDataStrings, "@"))
 
@@ -362,9 +364,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 				assert.Equal(t, uint64(10), tx.GasPrice)
 				assert.Equal(t, uint64(2060), tx.GasLimit)
 				assert.Equal(t, txData, tx.Data)
-				assert.Equal(t, "dae1f2798d02b18ff5ef2257441b4dae3502acb7b66758cf222105439351280c5adc29ccfbd2a12141e3592a4055d8e3fc2737393f815c7461c03a4ab8444a02", tx.Signature)
+				assert.Equal(t, "00c0535d2d6f7e011d5096054b0627450559c4d78e2f0329bf549ddc6900fa80b30767f96055d26a676cfcec9872e31e77ff99111819ffc3f9d923319d60ce0e", tx.Signature)
 				assert.Equal(t, "test", tx.ChainID)
 				assert.Equal(t, uint32(1), tx.Version)
+				assert.Equal(t, uint32(0), tx.Options)
 
 				sentWasCalled = true
 
