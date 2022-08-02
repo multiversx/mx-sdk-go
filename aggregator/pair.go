@@ -64,3 +64,8 @@ func checkPairArgs(args *ArgsPair) error {
 
 	return nil
 }
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (p *pair) IsInterfaceNil() bool {
+	return p == nil
+}

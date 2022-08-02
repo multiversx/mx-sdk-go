@@ -56,26 +56,6 @@ func TestNewPriceNotifier(t *testing.T) {
 		assert.True(t, errors.Is(err, aggregator.ErrNilArgsPair))
 		assert.True(t, strings.Contains(err.Error(), "index 1"))
 	})
-	t.Run("0 decimals", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsPriceNotifier()
-		args.Pairs[0].Decimals = 0
-
-		pn, err := aggregator.NewPriceNotifier(args)
-		assert.True(t, check.IfNil(pn))
-		assert.True(t, errors.Is(err, aggregator.ErrInvalidDecimals))
-	})
-	t.Run(">18 decimals", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsPriceNotifier()
-		args.Pairs[0].Decimals = 19
-
-		pn, err := aggregator.NewPriceNotifier(args)
-		assert.True(t, check.IfNil(pn))
-		assert.True(t, errors.Is(err, aggregator.ErrInvalidDecimals))
-	})
 	t.Run("invalid auto send interval", func(t *testing.T) {
 		t.Parallel()
 
