@@ -11,6 +11,7 @@ require (
 	github.com/pborman/uuid v1.2.1
 	github.com/stretchr/testify v1.7.1
 	github.com/tyler-smith/go-bip39 v1.1.0
+	github.com/urfave/cli v1.22.9
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 )
 

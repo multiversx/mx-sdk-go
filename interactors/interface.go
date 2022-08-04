@@ -22,3 +22,10 @@ type TxBuilder interface {
 	ApplyUserSignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
 	IsInterfaceNil() bool
 }
+
+// GuardedTxBuilder defines the component able to build and sign a guarded transaction
+type GuardedTxBuilder interface {
+	ApplyUserSignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	ApplyGuardianSignature(skGuardianBytes []byte, tx *data.Transaction) error
+	IsInterfaceNil() bool
+}
