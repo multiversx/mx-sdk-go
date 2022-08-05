@@ -13,6 +13,12 @@ OGViYTdmZjVhMDM5ZDYzOTgwNDlkNjM5ZTVhNjk4MGQxY2QyMzkyYWJjY2U0MTAy
 OWNkYTc0YTE1NjM1MjNhMjAyZjA5NjQxY2MyNjE4Zjg=
 -----END PRIVATE KEY for erd1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqzu66jx-----`
 
+const CharliePemContents = `-----BEGIN PRIVATE KEY for erd1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq6mjse8-----
+ZTI1M2E1NzFjYTE1M2RjMmFlZTg0NTgxOWY3NGJjYzk3NzNiMDU4NmVkZWFkMTVh
+OTRjYjcyMzVhNTAyNzQzNmIyYTExNTU1Y2U1MjFlNDk0NGUwOWFiMTc1NDlkODVi
+NDg3ZGNkMjZjODRiNTAxN2EzOWUzMWEzNjcwODg5YmE=
+-----END PRIVATE KEY for erd1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq6mjse8-----`
+
 const EvePemContents = `-----BEGIN PRIVATE KEY for erd18tudnj2z8vjh0339yu3vrkgzz2jpz8mjq0uhgnmklnap6z33qqeszq2yn4-----
 NjliODJmMzlhMTQ2MWI0MzFmOGZhMjY3Zjg3YTBiZjc5NDAyN2NlYTM3ZGM2NjE5
 MGU2NzQwYTZlNGNjY2RmMDNhZjhkOWM5NDIzYjI1NzdjNjI1MjcyMmMxZDkwMjEy

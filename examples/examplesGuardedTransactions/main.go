@@ -80,11 +80,13 @@ VERSION:
 )
 
 const (
-	alice              = "alice"
-	bob                = "bob"
-	charlie            = "charlie"
-	eve                = "eve"
-	setGuardianGasCost = 250000
+	alice                = "alice"
+	bob                  = "bob"
+	charlie              = "charlie"
+	eve                  = "eve"
+	setGuardianGasCost   = 250000
+	maskGuardedTx        = 1 << 1
+	pathGeneratedWallets = "$HOME/Elrond/testnet/filegen/output"
 )
 
 type cfg struct {
@@ -105,10 +107,12 @@ type selectedOptions struct {
 }
 
 type testData struct {
+	skFunding      []byte
 	skAlice        []byte
 	skBob          []byte
 	skCharlie      []byte
 	skEve          []byte
+	addressFunding core.AddressHandler
 	addressAlice   core.AddressHandler
 	addressBob     core.AddressHandler
 	addressCharlie core.AddressHandler
@@ -164,6 +168,11 @@ func process() error {
 	}
 
 	options, err := processCommand(td, ep, netConfigs)
+	if err != nil {
+		return err
+	}
+
+	err = fundWallets(td, ep, netConfigs)
 	if err != nil {
 		return err
 	}
@@ -237,11 +246,10 @@ func setGuardedTxByOption(td *testData, options *selectedOptions) error {
 	if err != nil {
 		return err
 	}
-	const MASKGUARDEDTX = 1 << 1
 
 	options.txArguments.GuardianAddr = selectedAddress.AddressAsBech32String()
 	options.skGuardian = sk
-	options.txArguments.Options = MASKGUARDEDTX
+	options.txArguments.Options = maskGuardedTx
 
 	return nil
 }
@@ -366,11 +374,78 @@ func generateAndSendTransaction(options *selectedOptions, proxy interactors.Prox
 	return nil
 }
 
+func fundWallets(td *testData, proxy workflows.ProxyHandler, netConfigs *data.NetworkConfig) error {
+	transactionArguments, err := proxy.GetDefaultTransactionArguments(context.Background(), td.addressFunding, netConfigs)
+	if err != nil {
+		log.Error("unable to prepare the transaction creation arguments", "error", err)
+		return err
+	}
+
+	receivers := []core.AddressHandler{td.addressAlice, td.addressBob, td.addressEve, td.addressCharlie}
+
+	err = sendFundWalletsTxs(td, proxy, transactionArguments, receivers)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func sendFundWalletsTxs(td *testData, proxy workflows.ProxyHandler, txArgs data.ArgCreateTransaction, receivers []core.AddressHandler) error {
+	txBuilder, err := builders.NewTxBuilder(blockchain.NewTxSigner())
+	if err != nil {
+		log.Error("unable to prepare the transaction creation arguments", "error", err)
+		return err
+	}
+
+	tiProxy, ok := proxy.(interactors.Proxy)
+	if !ok {
+		err = errors.New("proxy assertion failure")
+		log.Error("type assertion failed", "error", err)
+		return err
+	}
+
+	ti, err := interactors.NewTransactionInteractor(tiProxy, txBuilder)
+	if err != nil {
+		log.Error("error creating transaction interactor", "error", err)
+		return err
+	}
+
+	var tx *data.Transaction
+	txArgs.Value = "10000000000000000000" // 10EGLD
+	for _, addressHandler := range receivers {
+		txArgs.RcvAddr = addressHandler.AddressAsBech32String()
+		tx, err = ti.ApplyUserSignatureAndGenerateTx(td.skFunding, txArgs)
+		if err != nil {
+			log.Error("error creating transaction", "error", err)
+			return err
+		}
+		ti.AddTransaction(tx)
+		txArgs.Nonce++
+	}
+
+	hashes, err := ti.SendTransactionsAsBunch(context.Background(), 100)
+	if err != nil {
+		log.Error("error sending transactions", "error", err)
+		return err
+	}
+
+	log.Info("funding transactions sent", "hashes", hashes)
+	return nil
+}
+
 func loadPemFiles() (*testData, error) {
 	var err error
 	td := &testData{}
 
 	w := interactors.NewWallet()
+
+	td.skFunding, err = w.LoadPrivateKeyFromPemFile(pathGeneratedWallets)
+	if err != nil {
+		log.Error("unable to load funding wallet", "error", err)
+		return nil, err
+	}
+
 	td.skAlice, err = w.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))
 	if err != nil {
 		log.Error("unable to load alice.pem", "error", err)
@@ -383,9 +458,21 @@ func loadPemFiles() (*testData, error) {
 		return nil, err
 	}
 
+	td.skCharlie, err = w.LoadPrivateKeyFromPemData([]byte(examples.CharliePemContents))
+	if err != nil {
+		log.Error("unable to load charlie.pem", "error", err)
+		return nil, err
+	}
+
 	td.skEve, err = w.LoadPrivateKeyFromPemData([]byte(examples.EvePemContents))
 	if err != nil {
 		log.Error("unable to load eve.pem", "error", err)
+		return nil, err
+	}
+
+	td.addressFunding, err = w.GetAddressFromPrivateKey(td.skFunding)
+	if err != nil {
+		log.Error("unable to load funding address from private key", "error", err)
 		return nil, err
 	}
 
@@ -404,6 +491,13 @@ func loadPemFiles() (*testData, error) {
 	}
 
 	// Generate address from private key
+	td.addressCharlie, err = w.GetAddressFromPrivateKey(td.skCharlie)
+	if err != nil {
+		log.Error("unable to load charlie address from the private key", "error", err)
+		return nil, err
+	}
+
+	// Generate address from private key
 	td.addressEve, err = w.GetAddressFromPrivateKey(td.skEve)
 	if err != nil {
 		log.Error("unable to load eve address from the private key", "error", err)
@@ -415,7 +509,7 @@ func loadPemFiles() (*testData, error) {
 
 func createElrondProxyArgs() blockchain.ArgsElrondProxy {
 	return blockchain.ArgsElrondProxy{
-		ProxyURL:            examples.TestnetGateway,
+		ProxyURL:            examples.LocalTestnetGateway,
 		Client:              nil,
 		SameScState:         false,
 		ShouldBeSynced:      false,
