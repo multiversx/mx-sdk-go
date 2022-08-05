@@ -22,7 +22,11 @@ func TestNewWebServerHandler(t *testing.T) {
 }
 
 func TestWebServer_StartHttpServer(t *testing.T) {
+	t.Parallel()
+
 	t.Run("upgrade on get returns error", func(t *testing.T) {
+		t.Parallel()
+
 		ws, _ := NewWebServerHandler("127.0.0.1:8080")
 		assert.False(t, check.IfNil(ws))
 
@@ -40,6 +44,8 @@ func TestWebServer_StartHttpServer(t *testing.T) {
 		assert.Nil(t, err)
 	})
 	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
 		ws, _ := NewWebServerHandler("127.0.0.1:8080")
 		assert.False(t, check.IfNil(ws))
 
