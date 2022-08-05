@@ -27,7 +27,7 @@ func TestWebServer_StartHttpServer(t *testing.T) {
 	t.Run("upgrade on get returns error", func(t *testing.T) {
 		t.Parallel()
 
-		ws, _ := NewWebServerHandler("127.0.0.1:8080")
+		ws, _ := NewWebServerHandler("127.0.0.1:8081")
 		assert.False(t, check.IfNil(ws))
 
 		err := ws.StartHttpServer()
@@ -35,7 +35,7 @@ func TestWebServer_StartHttpServer(t *testing.T) {
 
 		time.Sleep(2 * time.Second)
 
-		resp, err := http.Get("http://127.0.0.1:8080/log")
+		resp, err := http.Get("http://127.0.0.1:8081/log")
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode) // Bad request
 
@@ -46,7 +46,7 @@ func TestWebServer_StartHttpServer(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		ws, _ := NewWebServerHandler("127.0.0.1:8080")
+		ws, _ := NewWebServerHandler("127.0.0.1:8082")
 		assert.False(t, check.IfNil(ws))
 
 		err := ws.StartHttpServer()
@@ -55,7 +55,7 @@ func TestWebServer_StartHttpServer(t *testing.T) {
 		time.Sleep(2 * time.Second)
 
 		client := &http.Client{}
-		req, err := http.NewRequest("GET", "http://127.0.0.1:8080/log", nil)
+		req, err := http.NewRequest("GET", "http://127.0.0.1:8082/log", nil)
 		assert.Nil(t, err)
 
 		req.Header.Set("Sec-Websocket-Version", "13")
