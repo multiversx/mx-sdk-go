@@ -8,6 +8,9 @@ require (
 	github.com/ElrondNetwork/elrond-go-crypto v1.0.1
 	github.com/ElrondNetwork/elrond-go-logger v1.0.6
 	github.com/ElrondNetwork/elrond-vm-common v1.3.2
+	github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792
+	github.com/gin-contrib/cors v0.0.0-20190301062745-f9e10995c85a
+	github.com/gin-gonic/gin v1.7.7
 	github.com/pborman/uuid v1.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tyler-smith/go-bip39 v1.1.0
