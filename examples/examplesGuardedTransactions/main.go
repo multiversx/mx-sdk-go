@@ -34,37 +34,37 @@ VERSION:
    {{end}}
 `
 	setGuardian = cli.BoolFlag{
-		Name:        "setGuardian transaction",
+		Name:        "setGuardian",
 		Usage:       "Should be set in order to construct data field for setGuardian. Could fail in combination with some other flags, e.g. with dataField flag",
 		Destination: &argsConfig.setGuardian,
 	}
 
 	guardedTxBy = cli.StringFlag{
-		Name:        "guarded transaction - with cosigner",
+		Name:        "guardedTxBy",
 		Usage:       "If used, will set the guardian to the given one. Options: alice, bob, eve, charlie",
 		Destination: &argsConfig.guardedTxBy,
 	}
 
 	guardian = cli.StringFlag{
-		Name:        "guardian address",
+		Name:        "guardian",
 		Usage:       "If used, it replaces the default guardian with the given one. Options: alice, bob, eve, charlie, erd1..... Could fail with custom address and guardedTx set",
 		Destination: &argsConfig.guardian,
 	}
 
 	sender = cli.StringFlag{
-		Name:        "sender address",
+		Name:        "sender",
 		Usage:       "If used, it replaces the default sender with the given one. Options: alice, bob, eve, charlie",
 		Destination: &argsConfig.sender,
 	}
 
 	receiver = cli.StringFlag{
-		Name:        "receiver address",
+		Name:        "receiver",
 		Usage:       "If used, it replaces the default receiver with the given one. Options: alice, bob, eve, charlie, erd1...",
 		Destination: &argsConfig.receiver,
 	}
 
 	dataField = cli.StringFlag{
-		Name:        "transaction data field",
+		Name:        "dataField",
 		Usage:       "If used, it replaces the data field with this one. Could fail in combination with some other flags, e.g. setGuardian flag set",
 		Destination: &argsConfig.dataField,
 	}
@@ -75,22 +75,31 @@ VERSION:
 		Destination: &argsConfig.value,
 	}
 
+	withFunding = cli.BoolFlag{
+		Name:        "withFunding",
+		Usage:       "If set the default accounts will be funded with 10 egld",
+		Destination: &argsConfig.withFunding,
+	}
+
 	argsConfig = &cfg{}
 	log        = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesGuardedTransaction")
 )
 
+var HOME = os.Getenv("HOME")
+var pathGeneratedWallets = HOME + "/Elrond/testnet/filegen/output/walletKey.pem"
+
 const (
-	alice                = "alice"
-	bob                  = "bob"
-	charlie              = "charlie"
-	eve                  = "eve"
-	setGuardianGasCost   = 250000
-	maskGuardedTx        = 1 << 1
-	pathGeneratedWallets = "$HOME/Elrond/testnet/filegen/output"
+	alice              = "alice"
+	bob                = "bob"
+	charlie            = "charlie"
+	eve                = "eve"
+	setGuardianGasCost = 250000
+	maskGuardedTx      = 1 << 1
 )
 
 type cfg struct {
 	setGuardian bool
+	withFunding bool
 	guardedTxBy string
 	guardian    string
 	sender      string
@@ -138,6 +147,7 @@ func main() {
 		receiver,
 		value,
 		dataField,
+		withFunding,
 	}
 
 	app.Action = func(_ *cli.Context) error {
@@ -172,9 +182,11 @@ func process() error {
 		return err
 	}
 
-	err = fundWallets(td, ep, netConfigs)
-	if err != nil {
-		return err
+	if argsConfig.withFunding {
+		err = fundWallets(td, ep, netConfigs)
+		if err != nil {
+			return err
+		}
 	}
 
 	return generateAndSendTransaction(options, ep)
@@ -219,8 +231,11 @@ func setSenderOption(td *testData, options *selectedOptions) error {
 	if err != nil {
 		return err
 	}
-	options.txArguments.SndAddr = selectedAddress.AddressAsBech32String()
-	options.skSender = sk
+
+	if selectedAddress != nil {
+		options.txArguments.SndAddr = selectedAddress.AddressAsBech32String()
+		options.skSender = sk
+	}
 
 	return nil
 }
@@ -230,14 +245,23 @@ func setReceiverOption(td *testData, options *selectedOptions) error {
 	if err != nil {
 		return err
 	}
+	if selectedAddress != nil {
+		options.txArguments.RcvAddr = selectedAddress.AddressAsBech32String()
+	}
 
-	options.txArguments.RcvAddr = selectedAddress.AddressAsBech32String()
 	return nil
 }
 
 func setGuardianOption(td *testData, options *selectedOptions) error {
 	var err error
-	options.guardianAddress, _, err = selectAddressAndSkFromString(td, argsConfig.guardian)
+	selectedAddress, _, err := selectAddressAndSkFromString(td, argsConfig.guardian)
+	if err != nil {
+		return err
+	}
+
+	if selectedAddress != nil {
+		options.guardianAddress = selectedAddress
+	}
 	return err
 }
 
@@ -247,9 +271,11 @@ func setGuardedTxByOption(td *testData, options *selectedOptions) error {
 		return err
 	}
 
-	options.txArguments.GuardianAddr = selectedAddress.AddressAsBech32String()
-	options.skGuardian = sk
-	options.txArguments.Options = maskGuardedTx
+	if selectedAddress != nil {
+		options.txArguments.GuardianAddr = selectedAddress.AddressAsBech32String()
+		options.skGuardian = sk
+		options.txArguments.Options = maskGuardedTx
+	}
 
 	return nil
 }
@@ -273,9 +299,11 @@ func selectAddressAndSkFromString(td *testData, option string) (core.AddressHand
 		sk = td.skEve
 	default:
 		var err error
-		selectedAddress, err = data.NewAddressFromBech32String(argsConfig.guardian)
-		if err != nil {
-			return nil, nil, err
+		if len(option) > 0 {
+			selectedAddress, err = data.NewAddressFromBech32String(option)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 
@@ -307,6 +335,7 @@ func treatDataIfNeeded(options *selectedOptions, config *data.NetworkConfig) err
 			return err
 		}
 		options.txArguments.GasLimit += setGuardianGasCost
+		options.txArguments.RcvAddr = options.txArguments.SndAddr
 	}
 	if len(argsConfig.dataField) > 0 {
 		options.txArguments.Data = []byte(argsConfig.dataField)
@@ -330,11 +359,13 @@ func getDefaultOptions(td *testData, ep workflows.ProxyHandler, netConfigs *data
 		return nil, err
 	}
 	transactionArguments.Value = "0"
+	transactionArguments.RcvAddr = td.addressBob.AddressAsBech32String()
 
 	return &selectedOptions{
-		skSender:    td.skAlice, // default if nothing provided
-		skGuardian:  td.skBob,   // default if nothing provided
-		txArguments: transactionArguments,
+		skSender:        td.skAlice, // default if nothing provided
+		skGuardian:      td.skBob,   // default if nothing provided
+		txArguments:     transactionArguments,
+		guardianAddress: td.addressBob,
 	}, nil
 }
 
@@ -356,10 +387,12 @@ func generateAndSendTransaction(options *selectedOptions, proxy interactors.Prox
 		return err
 	}
 
-	err = ti.ApplyGuardianSignature(options.skGuardian, tx)
-	if err != nil {
-		log.Error("error applying guardian signature", "error", err)
-		return err
+	if len(argsConfig.guardedTxBy) > 0 {
+		err = ti.ApplyGuardianSignature(options.skGuardian, tx)
+		if err != nil {
+			log.Error("error applying guardian signature", "error", err)
+			return err
+		}
 	}
 
 	ti.AddTransaction(tx)
