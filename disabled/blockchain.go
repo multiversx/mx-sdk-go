@@ -57,8 +57,18 @@ func (b *Blockchain) GetCurrentBlockRootHash() []byte {
 }
 
 // SetCurrentBlockHeaderAndRootHash return nil
-func (b *Blockchain) SetCurrentBlockHeaderAndRootHash(bh data.HeaderHandler, rootHash []byte) error {
+func (b *Blockchain) SetCurrentBlockHeaderAndRootHash(_ data.HeaderHandler, _ []byte) error {
 	return nil
+}
+
+// SetFinalBlockInfo does nothing
+func (b *Blockchain) SetFinalBlockInfo(_ uint64, _ []byte, _ []byte) {
+
+}
+
+// GetFinalBlockInfo returns nothing
+func (b *Blockchain) GetFinalBlockInfo() (nonce uint64, blockHash []byte, rootHash []byte) {
+	return 0, nil, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
