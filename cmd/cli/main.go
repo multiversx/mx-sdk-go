@@ -89,7 +89,7 @@ VERSION:
 	}
 
 	argsConfig = &cfg{}
-	log        = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesGuardedTransaction")
+	log        = logger.GetOrCreate("elrond-sdk-erdgo/cmd/cli")
 )
 
 var HOME = os.Getenv("HOME")
