@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"strconv"
@@ -88,6 +89,18 @@ VERSION:
 		Destination: &argsConfig.withFunding,
 	}
 
+	send = cli.BoolFlag{
+		Name:        "send",
+		Usage:       "If set the transactions generated will be sent, otherwise the transactions will be just printed in JSON format",
+		Destination: &argsConfig.send,
+	}
+
+	guardianSigned = cli.BoolFlag{
+		Name:        "guardianSigned",
+		Usage:       "If set the guardian will also sign the transaction. This works only if also guardedTxBy is set",
+		Destination: &argsConfig.guardianSigned,
+	}
+
 	argsConfig = &cfg{}
 	log        = logger.GetOrCreate("elrond-sdk-erdgo/cmd/cli")
 )
@@ -105,15 +118,17 @@ const (
 )
 
 type cfg struct {
-	setGuardian bool
-	withFunding bool
-	guardedTxBy string
-	guardian    string
-	sender      string
-	receiver    string
-	dataField   string
-	value       string
-	gasLimit    string
+	setGuardian    bool
+	withFunding    bool
+	send           bool
+	guardianSigned bool
+	guardedTxBy    string
+	guardian       string
+	sender         string
+	receiver       string
+	dataField      string
+	value          string
+	gasLimit       string
 }
 
 type selectedOptions struct {
@@ -157,6 +172,8 @@ func main() {
 		dataField,
 		withFunding,
 		gasLimit,
+		send,
+		guardianSigned,
 	}
 
 	app.Action = func(_ *cli.Context) error {
@@ -403,7 +420,7 @@ func generateAndSendTransaction(options *selectedOptions, proxy interactors.Prox
 		return err
 	}
 
-	if len(argsConfig.guardedTxBy) > 0 {
+	if len(argsConfig.guardedTxBy) > 0 && argsConfig.guardianSigned {
 		err = ti.ApplyGuardianSignature(options.skGuardian, tx)
 		if err != nil {
 			log.Error("error applying guardian signature", "error", err)
@@ -413,13 +430,21 @@ func generateAndSendTransaction(options *selectedOptions, proxy interactors.Prox
 
 	ti.AddTransaction(tx)
 
-	hashes, err := ti.SendTransactionsAsBunch(context.Background(), 100)
-	if err != nil {
-		log.Error("error sending transaction", "error", err)
-		return err
+	if argsConfig.send {
+		hashes, err := ti.SendTransactionsAsBunch(context.Background(), 100)
+		if err != nil {
+			log.Error("error sending transaction", "error", err)
+			return err
+		}
+
+		log.Info("transactions sent", "hashes", hashes)
+	} else {
+		for _, transaction := range ti.PopAccumulatedTransactions() {
+			txJson, _ := json.Marshal(transaction)
+			log.Info(string(txJson))
+		}
 	}
 
-	log.Info("transactions sent", "hashes", hashes)
 	return nil
 }
 
