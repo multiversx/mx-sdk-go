@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strconv"
 	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
@@ -75,6 +76,12 @@ VERSION:
 		Destination: &argsConfig.value,
 	}
 
+	gasLimit = cli.StringFlag{
+		Name:        "gasLimit",
+		Usage:       "If set it replaces the default gaslimit with this value",
+		Destination: &argsConfig.gasLimit,
+	}
+
 	withFunding = cli.BoolFlag{
 		Name:        "withFunding",
 		Usage:       "If set the default accounts will be funded with 10 egld",
@@ -106,6 +113,7 @@ type cfg struct {
 	receiver    string
 	dataField   string
 	value       string
+	gasLimit    string
 }
 
 type selectedOptions struct {
@@ -148,6 +156,7 @@ func main() {
 		value,
 		dataField,
 		withFunding,
+		gasLimit,
 	}
 
 	app.Action = func(_ *cli.Context) error {
@@ -342,6 +351,13 @@ func treatDataIfNeeded(options *selectedOptions, config *data.NetworkConfig) err
 	}
 	options.txArguments.Version = 2
 	options.txArguments.GasLimit += uint64(len(options.txArguments.Data)) * config.GasPerDataByte
+
+	if len(argsConfig.gasLimit) > 0 {
+		options.txArguments.GasLimit, err = strconv.ParseUint(argsConfig.gasLimit, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
