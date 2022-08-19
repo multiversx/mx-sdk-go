@@ -91,13 +91,13 @@ VERSION:
 
 	send = cli.BoolFlag{
 		Name:        "send",
-		Usage:       "If set the transactions generated will be send, otherwise the transactions will be just printed",
+		Usage:       "If set the transactions generated will be sent, otherwise the transactions will be just printed in JSON format",
 		Destination: &argsConfig.send,
 	}
 
 	guardianSigned = cli.BoolFlag{
 		Name:        "guardianSigned",
-		Usage:       "If set the guardian will also sign the transaciton. This works only if also guardedTxBy is set",
+		Usage:       "If set the guardian will also sign the transaction. This works only if also guardedTxBy is set",
 		Destination: &argsConfig.guardianSigned,
 	}
 
