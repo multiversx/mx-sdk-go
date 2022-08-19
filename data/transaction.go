@@ -33,7 +33,7 @@ type Transaction struct {
 	Signature         string `json:"signature,omitempty"`
 	ChainID           string `json:"chainID"`
 	Version           uint32 `json:"version"`
-	Options           uint32 `json:"options,omitempty"`
+	Options           uint32 `json:"options"`
 	GuardianAddr      string `json:"guardian,omitempty"`
 	GuardianSignature string `json:"guardianSignature,omitempty"`
 }
