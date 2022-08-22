@@ -63,14 +63,13 @@ func (builder *txBuilder) ApplyUserSignatureAndGenerateTx(
 	skBytes []byte,
 	arg data.ArgCreateTransaction,
 ) (*data.Transaction, error) {
-	newArg := arg
 	pkBytes, err := builder.txSigner.GeneratePkBytes(skBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	newArg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
-	unsignedTx, err := builder.CreateUnsignedTransaction(newArg)
+	arg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
+	unsignedTx, err := builder.CreateUnsignedTransaction(arg)
 	if err != nil {
 		return nil, err
 	}
@@ -80,9 +79,9 @@ func (builder *txBuilder) ApplyUserSignatureAndGenerateTx(
 		return nil, err
 	}
 
-	newArg.Signature = hex.EncodeToString(signature)
+	arg.Signature = hex.EncodeToString(signature)
 
-	return builder.createTransaction(newArg), nil
+	return builder.createTransaction(arg), nil
 }
 
 func (builder *txBuilder) signTx(unsignedTx *data.Transaction, skBytes []byte) ([]byte, error) {
@@ -106,8 +105,8 @@ func (builder *txBuilder) ApplyGuardianSignature(
 	skGuardianBytes []byte,
 	tx *data.Transaction,
 ) error {
-	nodeTx, err:= transactionToNodeTransaction(tx)
-	if err!= nil{
+	nodeTx, err := transactionToNodeTransaction(tx)
+	if err != nil {
 		return err
 	}
 
@@ -129,7 +128,7 @@ func (builder *txBuilder) ApplyGuardianSignature(
 		return ErrGuardianDoesNotMatch
 	}
 
-	unsignedTx := TransactionToUnsignedTx(tx)
+	unsignedTx := transactionToUnsignedTx(tx)
 	guardianSignature, err := builder.signTx(unsignedTx, skGuardianBytes)
 	if err != nil {
 		return err
@@ -213,7 +212,7 @@ func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transactio
 	}, nil
 }
 
-func TransactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
+func transactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
 	unsignedTx := *tx
 	unsignedTx.Signature = ""
 	unsignedTx.GuardianSignature = ""
@@ -223,7 +222,7 @@ func TransactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
 func (builder *txBuilder) CreateUnsignedTransaction(arg data.ArgCreateTransaction) (*data.Transaction, error) {
 	tx := builder.createTransaction(arg)
 
-	return TransactionToUnsignedTx(tx), nil
+	return transactionToUnsignedTx(tx), nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
