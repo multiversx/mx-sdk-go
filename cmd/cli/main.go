@@ -79,7 +79,7 @@ VERSION:
 
 	gasLimit = cli.StringFlag{
 		Name:        "gasLimit",
-		Usage:       "If set it replaces the default gaslimit with this value",
+		Usage:       "If set it replaces the default gas limit with this value",
 		Destination: &argsConfig.gasLimit,
 	}
 
