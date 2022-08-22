@@ -149,7 +149,6 @@ type testData struct {
 	addressBob     core.AddressHandler
 	addressCharlie core.AddressHandler
 	addressEve     core.AddressHandler
-	selected       selectedOptions
 }
 
 func main() {
