@@ -46,3 +46,9 @@ type TxSigner interface {
 	GeneratePkBytes(skBytes []byte) ([]byte, error)
 	IsInterfaceNil() bool
 }
+
+// TxSigVerifier defines the methods available for a transaction signature verifiers
+type TxSigVerifier interface {
+	Verify(pk []byte, msg []byte, skBytes []byte) error
+	IsInterfaceNil() bool
+}

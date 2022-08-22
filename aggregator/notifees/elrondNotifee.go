@@ -132,7 +132,7 @@ func (en *elrondNotifee) PriceChanged(ctx context.Context, priceChanges []*aggre
 		Version:  txVersion,
 	}
 
-	tx, err := en.txBuilder.ApplySignatureAndGenerateTx(en.skBytes, txArgs)
+	tx, err := en.txBuilder.ApplyUserSignatureAndGenerateTx(en.skBytes, txArgs)
 	if err != nil {
 		return err
 	}

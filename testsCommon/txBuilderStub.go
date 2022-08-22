@@ -8,7 +8,7 @@ type TxBuilderStub struct {
 }
 
 // ApplySignatureAndGenerateTx -
-func (stub *TxBuilderStub) ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error) {
+func (stub *TxBuilderStub) ApplyUserSignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error) {
 	if stub.ApplySignatureAndGenerateTxCalled != nil {
 		return stub.ApplySignatureAndGenerateTxCalled(skBytes, arg)
 	}

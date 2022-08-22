@@ -130,7 +130,7 @@ func (mbh *moveBalanceHandler) generateTransaction(ctx context.Context, address 
 	argsCreate.Value = value.String()
 
 	skBytes := mbh.trackableAddressesProvider.PrivateKeyOfBech32Address(address)
-	tx, err := mbh.txInteractor.ApplySignatureAndGenerateTx(skBytes, argsCreate)
+	tx, err := mbh.txInteractor.ApplyUserSignatureAndGenerateTx(skBytes, argsCreate)
 	if err != nil {
 		return err
 	}

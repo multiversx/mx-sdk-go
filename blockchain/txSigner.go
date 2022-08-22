@@ -33,6 +33,16 @@ func (ts *txSigner) SignMessage(msg []byte, skBytes []byte) ([]byte, error) {
 	return singleSigner.Sign(sk, msg)
 }
 
+// Verify verifies the given signature is correct for the public key and message supplied
+func (ts *txSigner) Verify(pk []byte, msg []byte, skBytes []byte) error {
+	pubKey, err := ts.keyGen.PublicKeyFromByteArray(pk)
+	if err != nil {
+		return err
+	}
+
+	return singleSigner.Verify(pubKey, msg, skBytes)
+}
+
 // GeneratePkBytes will generate the public key bytes out of the provided private key bytes
 func (ts *txSigner) GeneratePkBytes(skBytes []byte) ([]byte, error) {
 	sk, err := ts.keyGen.PrivateKeyFromByteArray(skBytes)

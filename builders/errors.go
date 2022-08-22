@@ -19,3 +19,9 @@ var ErrNilTxSigner = errors.New("nil transaction signer")
 
 // ErrMissingSignature signals that a transaction's signature is empty when trying to compute it's hash
 var ErrMissingSignature = errors.New("missing signature when computing the transaction's hash")
+
+// ErrMissingGuardianOption signals that the guardian flag is missing in the transaction option field
+var ErrMissingGuardianOption = errors.New("guardian flag is missing in the option field")
+
+// ErrGuardianDoesNotMatch signals a mismatch between the configured guardian in tx and the signing guardian address
+var ErrGuardianDoesNotMatch = errors.New("configured guardian does not match signing guardian")

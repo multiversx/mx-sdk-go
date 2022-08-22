@@ -1,6 +1,8 @@
 package disabled
 
 import (
+	"context"
+
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go/common"
 	"github.com/ElrondNetwork/elrond-go/state"
@@ -51,8 +53,8 @@ func (a *Accounts) SaveAccount(_ vmcommon.AccountHandler) error {
 }
 
 // GetAllLeaves returns a nil channel and nil error
-func (a *Accounts) GetAllLeaves(_ []byte) (chan core.KeyValueHolder, error) {
-	return nil, nil
+func (a *Accounts) GetAllLeaves(_ chan core.KeyValueHolder, _ context.Context, _ []byte) error {
+	return nil
 }
 
 // Commit returns nil byte slice and nil
@@ -96,7 +98,7 @@ func (a *Accounts) RecreateTrie(_ []byte) error {
 }
 
 // PruneTrie does nothing
-func (a *Accounts) PruneTrie(_ []byte, _ state.TriePruningIdentifier) {
+func (a *Accounts) PruneTrie(_ []byte, _ state.TriePruningIdentifier, _ state.PruningHandler) {
 }
 
 // CancelPrune does nothing

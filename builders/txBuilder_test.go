@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
@@ -60,7 +61,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 			},
 		})
 
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplyUserSignatureAndGenerateTx(sk, argsCopy)
 		assert.Nil(t, tx)
 		assert.Equal(t, expectedErr, errGenerate)
 	})
@@ -75,7 +76,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 			},
 		})
 
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplyUserSignatureAndGenerateTx(sk, argsCopy)
 		assert.Nil(t, tx)
 		assert.Equal(t, expectedErr, errGenerate)
 	})
@@ -88,7 +89,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 		t.Parallel()
 
 		argsCopy := args
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplyUserSignatureAndGenerateTx(sk, argsCopy)
 		require.Nil(t, errGenerate)
 
 		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
@@ -102,7 +103,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 		argsCopy.Version = 2
 		argsCopy.Options = 1
 
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplyUserSignatureAndGenerateTx(sk, argsCopy)
 		require.Nil(t, errGenerate)
 
 		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
@@ -141,11 +142,83 @@ func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
 		}
 		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
 
-		tx, _ := tb.ApplySignatureAndGenerateTx(sk, args)
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
 		assert.Equal(t, "725c6aa7def724c60f02ee481734807038fef125e453242bf4dc570fc4a4f2ff1b78e996a2ec67ef8be03f9b98b0251d419cfc72c6e6c5c9e33f879af938f008", tx.Signature)
 
 		txHash, errGenerate := tb.ComputeTxHash(tx)
 		assert.Nil(t, errGenerate)
 		assert.Equal(t, "8bbb2b7474deb2e67fa8f9db1eccef57ec14aa93710452a5de5ff52e5a369144", hex.EncodeToString(txHash))
+	})
+}
+
+func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
+	t.Parallel()
+
+	guardianAddress := "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x"
+	skGuardian, err := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c40d248169f4dd7c90537f05be1c49772ddbf8f7948b507ed17fb23284cf218b7d")
+	require.Nil(t, err)
+
+	senderAddress := "erd1lta2vgd0tkeqqadkvgef73y0efs6n3xe5ss589ufhvmt6tcur8kq34qkwr"
+	sk, err := hex.DecodeString("28654d9264f55f18d810bb88617e22c117df94fa684dfe341a511a72dfbf2b68")
+	require.Nil(t, err)
+
+	args := data.ArgCreateTransaction{
+		Nonce:        1,
+		Value:        "11500313000000000000",
+		RcvAddr:      "erd1p72ru5zcdsvgkkcm9swtvw2zy5epylwgv8vwquptkw7ga7pfvk7qz7snzw",
+		GasPrice:     1000000000,
+		GasLimit:     60000,
+		Data:         []byte(""),
+		ChainID:      "T",
+		Version:      uint32(2),
+		Options:      transaction.MaskGuardedTransaction,
+		GuardianAddr: guardianAddress,
+	}
+
+	t.Run("no guardian option should fail", func(t *testing.T) {
+		args := args
+		args.Options = 0
+		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
+
+		err = tb.ApplyGuardianSignature(skGuardian, tx)
+		require.Equal(t, ErrMissingGuardianOption, err)
+	})
+
+	t.Run("no guardian address should fail", func(t *testing.T) {
+		args := args
+		args.GuardianAddr = ""
+		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
+
+		err = tb.ApplyGuardianSignature(skGuardian, tx)
+		require.NotNil(t, err)
+	})
+
+	t.Run("different guardian address should fail", func(t *testing.T) {
+		args := args
+		args.GuardianAddr = senderAddress
+		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
+
+		err = tb.ApplyGuardianSignature(skGuardian, tx)
+		require.Equal(t, ErrGuardianDoesNotMatch, err)
+	})
+	t.Run("correct guardian ok", func(t *testing.T) {
+		args := args
+		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
+
+		err = tb.ApplyGuardianSignature(skGuardian, tx)
+		require.Nil(t, err)
+	})
+	t.Run("correct guardian and sign with hash ok", func(t *testing.T) {
+		args := args
+		args.Options |= transaction.MaskSignedWithHash
+		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
+
+		err = tb.ApplyGuardianSignature(skGuardian, tx)
+		require.Nil(t, err)
 	})
 }
