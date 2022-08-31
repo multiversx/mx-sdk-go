@@ -61,6 +61,11 @@ func Test_DeriveKeysWithConstraints(t *testing.T) {
 	keys, err := generateKeys(projectedShard, seed, firstIndex, lastIndex, useAccountIndex)
 	require.Nil(t, err)
 
+	// Cross-checked with https://github.com/ElrondNetwork/elrond-tools-go/pull/21
+	require.Equal(t, "erd1ldjsdetjvegjdnda0qw2h62kq6rpvrklkc5pw9zxm0nwulfhtyqqtyc4vq", keys[0].Address)
+	require.Equal(t, "erd1xtslmt67utuewwv8jsx729mxjxaa8dvyyzp7492hy99dl7hvcuqq30l98v", keys[1].Address)
+	require.Equal(t, "erd1j8j3hqtc5zu6l7lcl73q5mc06vzyxtrfrexrnvjs0z6v4se7myqqwkl0qq", keys[2].Address)
+
 	for _, key := range keys {
 		fmt.Println(
 			"Account", key.AccountIndex,
@@ -117,16 +122,16 @@ func generateKeys(projectedShard byte, seed []byte, firstIndex int, lastIndex in
 }
 
 // Extracted from: https://github.com/ElrondNetwork/elrond-sdk-erdgo/blob/main/interactors/wallet.go#L105
-func getPrivateKeyFromSeed(seed []byte, account, addressIndex uint32) []byte {
+func getPrivateKeyFromSeed(seed []byte, accountIndex uint32, addressIndex uint32) []byte {
 	var egldPath = bip32Path{
 		44 | bip32Hardened,
 		bip32EgldCoinType | bip32Hardened,
-		bip32Hardened, // account
+		bip32Hardened, // accountIndex
 		bip32Hardened,
 		bip32Hardened, // addressIndex
 	}
 
-	egldPath[2] = account | bip32Hardened
+	egldPath[2] = accountIndex | bip32Hardened
 	egldPath[4] = addressIndex | bip32Hardened
 	keyData := derivePrivateKey(seed, egldPath)
 
