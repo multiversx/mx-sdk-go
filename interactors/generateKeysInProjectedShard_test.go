@@ -46,7 +46,7 @@ type generatedKey struct {
 	Address      string
 }
 
-func Test_DeriveKeysWithConstraints(t *testing.T) {
+func Test_GenerateKeysInProjectedShard(t *testing.T) {
 	projectedShard := byte(0)
 
 	// A test mnemonic: https://raw.githubusercontent.com/ElrondNetwork/elrond-sdk-testwallets/main/users/mnemonic.txt
@@ -58,7 +58,7 @@ func Test_DeriveKeysWithConstraints(t *testing.T) {
 	// We are going to use "addressIndex" for HD keys generation
 	useAccountIndex := false
 
-	keys, err := generateKeys(projectedShard, seed, firstIndex, lastIndex, useAccountIndex)
+	keys, err := generateKeysInProjectedShard(projectedShard, seed, firstIndex, lastIndex, useAccountIndex)
 	require.Nil(t, err)
 
 	// Cross-checked with https://github.com/ElrondNetwork/elrond-tools-go/pull/21
@@ -78,7 +78,7 @@ func Test_DeriveKeysWithConstraints(t *testing.T) {
 	fmt.Println("Number of generated keys:", len(keys))
 }
 
-func generateKeys(projectedShard byte, seed []byte, firstIndex int, lastIndex int, useAccountIndex bool) ([]generatedKey, error) {
+func generateKeysInProjectedShard(projectedShard byte, seed []byte, firstIndex int, lastIndex int, useAccountIndex bool) ([]generatedKey, error) {
 	goodKeys := make([]generatedKey, 0)
 
 	accountIndex := 0
