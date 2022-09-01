@@ -145,7 +145,6 @@ type selectedOptions struct {
 	skGuardian      []byte
 	guardianAddress core.AddressHandler
 	txArguments     data.ArgCreateTransaction
-	proxy           string
 }
 
 type testData struct {
