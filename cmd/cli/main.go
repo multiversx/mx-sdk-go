@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	"strconv"
 	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
@@ -77,7 +76,7 @@ VERSION:
 		Destination: &argsConfig.value,
 	}
 
-	gasLimit = cli.StringFlag{
+	gasLimit = cli.Uint64Flag{
 		Name:        "gasLimit",
 		Usage:       "If set it replaces the default gas limit with this value",
 		Destination: &argsConfig.gasLimit,
@@ -101,6 +100,12 @@ VERSION:
 		Destination: &argsConfig.guardianSigned,
 	}
 
+	proxy = cli.StringFlag{
+		Name:        "proxyURL",
+		Usage:       "Use this to connect to mainnet, testnet or devnet. Options: mainnet, testnet, devnet or a <custom url>",
+		Destination: &argsConfig.proxy,
+	}
+
 	argsConfig = &cfg{}
 	log        = logger.GetOrCreate("elrond-sdk-erdgo/cmd/cli")
 )
@@ -115,6 +120,9 @@ const (
 	eve                = "eve"
 	setGuardianGasCost = 250000
 	maskGuardedTx      = 1 << 1
+	mainnet            = "mainnet"
+	testnet            = "testnet"
+	devnet             = "devnet"
 )
 
 type cfg struct {
@@ -128,7 +136,8 @@ type cfg struct {
 	receiver       string
 	dataField      string
 	value          string
-	gasLimit       string
+	gasLimit       uint64
+	proxy          string
 }
 
 type selectedOptions struct {
@@ -136,6 +145,7 @@ type selectedOptions struct {
 	skGuardian      []byte
 	guardianAddress core.AddressHandler
 	txArguments     data.ArgCreateTransaction
+	proxy           string
 }
 
 type testData struct {
@@ -157,9 +167,9 @@ func main() {
 	app := cli.NewApp()
 	cli.AppHelpTemplate = helpTemplate
 
-	app.Name = "guarded transactions cli"
+	app.Name = "cli"
 	app.Version = "v1.0.0"
-	app.Usage = "This binary enables sending and receiving transactions to the configured net"
+	app.Usage = "This binary provides commands to interact with the elrond blockchain"
 
 	app.Flags = []cli.Flag{
 		setGuardian,
@@ -173,6 +183,7 @@ func main() {
 		gasLimit,
 		send,
 		guardianSigned,
+		proxy,
 	}
 
 	app.Action = func(_ *cli.Context) error {
@@ -367,12 +378,8 @@ func treatDataIfNeeded(options *selectedOptions, config *data.NetworkConfig) err
 	}
 	options.txArguments.Version = 2
 	options.txArguments.GasLimit += uint64(len(options.txArguments.Data)) * config.GasPerDataByte
-
-	if len(argsConfig.gasLimit) > 0 {
-		options.txArguments.GasLimit, err = strconv.ParseUint(argsConfig.gasLimit, 10, 64)
-		if err != nil {
-			return err
-		}
+	if argsConfig.gasLimit != 0 {
+		options.txArguments.GasLimit = argsConfig.gasLimit
 	}
 
 	return nil
@@ -581,8 +588,22 @@ func loadPemFiles() (*testData, error) {
 }
 
 func createElrondProxyArgs() blockchain.ArgsElrondProxy {
+	proxyURL := examples.TestnetGateway
+	switch argsConfig.proxy {
+	case mainnet:
+		proxyURL = examples.MainnetGateway
+	case testnet:
+		proxyURL = examples.TestnetGateway
+	case devnet:
+		proxyURL = examples.DevnetGateway
+	default:
+		if len(argsConfig.proxy) > 0 {
+			proxyURL = argsConfig.proxy
+		}
+	}
+
 	return blockchain.ArgsElrondProxy{
-		ProxyURL:            examples.LocalTestnetGateway,
+		ProxyURL:            proxyURL,
 		Client:              nil,
 		SameScState:         false,
 		ShouldBeSynced:      false,
