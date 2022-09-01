@@ -1,5 +1,7 @@
 package disabled
 
+import "github.com/ElrondNetwork/elrond-go-core/storage"
+
 // Storer is a disabled implementation of Storer interface
 type Storer struct {
 }
@@ -25,7 +27,7 @@ func (s *Storer) GetFromEpoch(key []byte, _ uint32) ([]byte, error) {
 }
 
 // GetBulkFromEpoch returns nil
-func (s *Storer) GetBulkFromEpoch(keys [][]byte, _ uint32) (map[string][]byte, error) {
+func (s *Storer) GetBulkFromEpoch(_ [][]byte, _ uint32) ([]storage.KeyValuePair, error) {
 	return nil, nil
 }
 

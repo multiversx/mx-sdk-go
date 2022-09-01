@@ -58,7 +58,7 @@ func (rh *rawHeaderHandler) GetShardBlockByHash(ctx context.Context, shardId uin
 		return nil, err
 	}
 
-	blockHeader, err := process.CreateShardHeader(rh.marshaller, headerBytes)
+	blockHeader, err := process.UnmarshalShardHeader(rh.marshaller, headerBytes)
 	if err != nil {
 		return nil, err
 	}
