@@ -11,6 +11,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -23,11 +24,11 @@ var (
 )
 
 type txBuilder struct {
-	txSigner TxSigner
+	txSigner blockchain.TxSigner
 }
 
 // NewTxBuilder will create a new transaction builder able to build and correctly sign a transaction
-func NewTxBuilder(txSigner TxSigner) (*txBuilder, error) {
+func NewTxBuilder(txSigner blockchain.TxSigner) (*txBuilder, error) {
 	if check.IfNil(txSigner) {
 		return nil, ErrNilTxSigner
 	}

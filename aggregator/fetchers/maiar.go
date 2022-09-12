@@ -8,10 +8,26 @@ import (
 )
 
 const (
-	maiarPriceUrl = "https://api.elrond.com/mex-pairs/%s/%s"
+	//maiarPriceUrl = "https://api.elrond.com/mex-pairs/%s/%s"
+	dataApiUrl    = "https://devnet-tools.elrond.com/data-api/graphql"
+	maiarPriceUrl = `query Price($base: String!, $quote: String!) {
+						trading { 
+							pair(first_token: $base, second_token: $quote) { 
+								price { 
+									last 
+									time 
+								} 
+							} 
+						} 
+					}`
 )
 
 type maiarPriceRequest struct {
+	BasePrice  float64 `json:"basePrice"`
+	QuotePrice float64 `json:"quotePrice"`
+}
+
+type maiarPriceGraphqlRequest struct {
 	BasePrice  float64 `json:"basePrice"`
 	QuotePrice float64 `json:"quotePrice"`
 }

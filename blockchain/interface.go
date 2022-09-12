@@ -54,3 +54,10 @@ type FinalityProvider interface {
 	CheckShardFinalization(ctx context.Context, targetShardID uint32, maxNoncesDelta uint64) error
 	IsInterfaceNil() bool
 }
+
+// TxSigner defines the method used by a struct used to create valid signatures
+type TxSigner interface {
+	SignMessage(msg []byte, skBytes []byte) ([]byte, error)
+	GeneratePkBytes(skBytes []byte) ([]byte, error)
+	IsInterfaceNil() bool
+}
