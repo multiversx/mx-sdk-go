@@ -37,7 +37,7 @@ type nativeAuthClient struct {
 }
 
 // NewNativeAuthClient will create a new native client able to create authentication tokens
-func NewNativeAuthClient(args ArgsNativeAuthClient) (*nativeAuthClient, error) {
+func NewNativeAuthClient(args ArgsNativeAuthClient) (AuthClient, error) {
 	if check.IfNil(args.TxSigner) {
 		return nil, ErrNilTxSigner
 	}
@@ -71,7 +71,7 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*nativeAuthClient, error) {
 	}, nil
 }
 
-// GetToken -
+// GetAccessToken -
 func (nac *nativeAuthClient) GetAccessToken() (string, error) {
 	now := time.Now()
 	if nac.tokenExpire.After(now) {

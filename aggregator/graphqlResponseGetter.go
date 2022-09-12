@@ -2,14 +2,16 @@ package aggregator
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
+
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"golang.org/x/oauth2"
-	"io/ioutil"
-	"net/http"
-	"os"
 )
 
-// HttpResponseGetter wraps over the default http client
+// GraphqlResponseGetter wraps over the default http client
 type GraphqlResponseGetter struct {
+	authentication.AuthClient
 }
 
 type graphQLRequest struct {
@@ -17,34 +19,24 @@ type graphQLRequest struct {
 	Variables string `json:"variables"`
 }
 
-// Get does a get operation on the specified url and tries to cast the response bytes over the response object through
+// Query does a get operation on the specified url and tries to cast the response bytes over the response object through
 // the json serializer
-func (getter *GraphqlResponseGetter) Get(ctx context.Context, url string, response interface{}) error {
-	client := &http.Client{}
+func (getter *GraphqlResponseGetter) Query(ctx context.Context, url string, query string, variables string, response interface{}) error {
+
+	accessToken, err := getter.GetAccessToken()
+	if err != nil {
+		return err
+	}
 
 	client := oauth2.NewClient(
-		context.TODO(),
+		ctx,
 		oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
-		))
+			&oauth2.Token{AccessToken: accessToken},
+		),
+	)
 
-	req, err := http.NewRequestWithContext(ctx, httpGetVerb, url, nil)
-	if err != nil {
-		return err
-	}
+	gqlMarshalled, err := json.Marshal(graphQLRequest{Query: query, Variables: variables})
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	respBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	return json.Unmarshal(respBytes, response)
+	response, err = client.Post(url, "application/json", strings.NewReader(string(gqlMarshalled)))
+	return err
 }

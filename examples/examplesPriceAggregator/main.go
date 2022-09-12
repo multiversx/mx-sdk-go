@@ -7,11 +7,18 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/fetchers"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/mock"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core/polling"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
 var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesPriceAggregator")
@@ -24,6 +31,11 @@ const decimals = 2
 const minResultsNum = 3
 const pollInterval = time.Second * 2
 const autoSendInterval = time.Second * 10
+
+const networkAddress = "https://testnet-gateway.elrond.com"
+
+var suite = ed25519.NewEd25519()
+var keyGen = signing.NewKeyGenerator(suite)
 
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
@@ -156,8 +168,12 @@ func createMaiarMap() map[string]fetchers.MaiarTokensPair {
 func createPriceFetchers() ([]aggregator.PriceFetcher, error) {
 	exchanges := fetchers.ImplementedFetchers
 	priceFetchers := make([]aggregator.PriceFetcher, 0, len(exchanges))
+	graphqlResponseGetter, err := createGraphqlResponseGetter()
+	if err != nil {
+		return nil, err
+	}
 	for exchangeName := range exchanges {
-		priceFetcher, err := fetchers.NewPriceFetcher(exchangeName, &aggregator.HttpResponseGetter{}, createMaiarMap())
+		priceFetcher, err := fetchers.NewPriceFetcher(exchangeName, &aggregator.HttpResponseGetter{}, graphqlResponseGetter, createMaiarMap())
 		if err != nil {
 			return nil, err
 		}
@@ -166,4 +182,59 @@ func createPriceFetchers() ([]aggregator.PriceFetcher, error) {
 	}
 
 	return priceFetchers, nil
+}
+
+func createGraphqlResponseGetter() (aggregator.GraphqlGetter, error) {
+	authClient, err := createAuthClient()
+	if err != nil {
+		return nil, err
+	}
+
+	return &aggregator.GraphqlResponseGetter{
+		AuthClient: authClient,
+	}, nil
+}
+
+func createAuthClient() (authentication.AuthClient, error) {
+	w := interactors.NewWallet()
+	privateKeyBytes, err := w.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))
+	if err != nil {
+		log.Error("unable to load alice.pem", "error", err)
+		return nil, err
+	}
+	privateKey, err := keyGen.PrivateKeyFromByteArray(privateKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	argsProxy := blockchain.ArgsElrondProxy{
+		ProxyURL:            networkAddress,
+		SameScState:         false,
+		ShouldBeSynced:      false,
+		FinalityCheck:       false,
+		AllowedDeltaToFinal: 1,
+		CacheExpirationTime: time.Second,
+		EntityType:          core.RestAPIEntityType("Proxy"),
+	}
+
+	proxy, err := blockchain.NewElrondProxy(argsProxy)
+	if err != nil {
+		return nil, err
+	}
+
+	args := authentication.ArgsNativeAuthClient{
+		TxSigner:             blockchain.NewTxSigner(),
+		ExtraInfo:            nil,
+		Proxy:                proxy,
+		PrivateKey:           privateKey,
+		TokenExpiryInSeconds: 60 * 60 * 24,
+		Host:                 "oracle",
+	}
+
+	authClient, err := authentication.NewNativeAuthClient(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return authClient, nil
 }
