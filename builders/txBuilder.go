@@ -13,7 +13,6 @@ import (
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
 var (
@@ -28,7 +27,7 @@ type txBuilder struct {
 }
 
 // NewTxBuilder will create a new transaction builder able to build and correctly sign a transaction
-func NewTxBuilder(txSigner TxSigner) (interactors.TxBuilder, error) {
+func NewTxBuilder(txSigner TxSigner) (*txBuilder, error) {
 	if check.IfNil(txSigner) {
 		return nil, ErrNilTxSigner
 	}
