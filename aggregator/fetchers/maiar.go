@@ -59,15 +59,17 @@ func (m *maiar) FetchPrice(ctx context.Context, base string, quote string) (floa
 		return 0, err
 	}
 
-	resp, err := m.GraphqlGetter.Query(ctx, dataApiUrl, query, fmt.Sprintf("variables{%s}", variables))
+	resp, err := m.GraphqlGetter.Query(ctx, dataApiUrl, query, string(variables))
 	if err != nil {
 		return 0, err
 	}
 
-	graphqlResp, ok := resp.(graphqlResponse)
-	if !ok {
+	var graphqlResp graphqlResponse
+	err = json.Unmarshal(resp, &graphqlResp)
+	if err != nil {
 		return 0, errInvalidGraphqlResponse
 	}
+
 	price := graphqlResp.Data.Trading.Pair.Price[0].Last
 
 	if price <= 0 {

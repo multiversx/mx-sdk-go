@@ -107,7 +107,9 @@ func (nac *nativeAuthClient) createNewToken() error {
 
 	encodedToken := base64.StdEncoding.EncodeToString([]byte(token))
 
-	nac.token = fmt.Sprintf("%s.%s.%s", nac.encodedAddress, encodedToken, signature)
+	encodedSignature := base64.StdEncoding.EncodeToString(signature)
+
+	nac.token = fmt.Sprintf("%s.%s.%s", nac.encodedAddress, encodedToken, encodedSignature)
 	nac.tokenExpire = time.Now().Add(time.Duration(nac.tokenExpiryInSeconds))
 	return nil
 }

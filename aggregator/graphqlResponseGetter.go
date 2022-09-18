@@ -3,6 +3,7 @@ package aggregator
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"strings"
 
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
@@ -21,7 +22,7 @@ type graphQLRequest struct {
 
 // Query does a get operation on the specified url and tries to cast the response bytes over the response object through
 // the json serializer
-func (getter *GraphqlResponseGetter) Query(ctx context.Context, url string, query string, variables string) (interface{}, error) {
+func (getter *GraphqlResponseGetter) Query(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 
 	accessToken, err := getter.AuthClient.GetAccessToken()
 	if err != nil {
@@ -42,6 +43,11 @@ func (getter *GraphqlResponseGetter) Query(ctx context.Context, url string, quer
 	if err != nil {
 		return nil, err
 	}
+	resp, err := client.Post(url, "application/json", strings.NewReader(string(gqlMarshalled)))
+	if err != nil {
+		return nil, err
+	}
+	responseBytes, _ := io.ReadAll(resp.Body)
 
-	return client.Post(url, "application/json", strings.NewReader(string(gqlMarshalled)))
+	return responseBytes, nil
 }
