@@ -2,6 +2,7 @@ package fetchers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -194,8 +195,8 @@ func Test_FetchPriceErrors(t *testing.T) {
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
 				&mock.GraphqlResponseGetterStub{
-					GetCalled: func(ctx context.Context, url string, query string, variables string) (interface{}, error) {
-						return priceResponse{}, nil
+					GetCalled: func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
+						return make([]byte, 0), nil
 					},
 				}, createMockMap())
 
@@ -281,10 +282,10 @@ func Test_FetchPriceErrors(t *testing.T) {
 	}
 }
 
-func getFuncQueryCalled(name, returnPrice string, returnErr error) func(ctx context.Context, url string, query string, variables string) (interface{}, error) {
+func getFuncQueryCalled(name, returnPrice string, returnErr error) func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 	switch name {
 	case MaiarName:
-		return func(ctx context.Context, url string, query string, variables string) (interface{}, error) {
+		return func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 			priceArray := make([]priceResponse, 0)
 			var p priceResponse
 
@@ -299,7 +300,9 @@ func getFuncQueryCalled(name, returnPrice string, returnErr error) func(ctx cont
 
 			var response graphqlResponse
 			response.Data.Trading.Pair.Price = priceArray
-			return response, returnErr
+			responseBytes, _ := json.Marshal(response)
+
+			return responseBytes, returnErr
 		}
 	}
 	return nil

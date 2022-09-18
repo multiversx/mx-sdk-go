@@ -144,9 +144,10 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		internalToken := fmt.Sprintf("%s.%s.%d.%s", encodedHost, expectedHash, args.TokenExpiryInSeconds, encodedExtraInfo)
 		encodedInternalToken := base64.StdEncoding.EncodeToString([]byte(internalToken))
 		encodedAddress := base64.StdEncoding.EncodeToString(publicKeyBytes)
+		encodedSignature := base64.StdEncoding.EncodeToString([]byte(expectedSignature))
 		token, err := authClient.GetAccessToken()
 		require.Nil(t, err)
-		require.Equal(t, fmt.Sprintf("%s.%s.%s", encodedAddress, encodedInternalToken, expectedSignature), token)
+		require.Equal(t, fmt.Sprintf("%s.%s.%s", encodedAddress, encodedInternalToken, encodedSignature), token)
 
 	})
 }
