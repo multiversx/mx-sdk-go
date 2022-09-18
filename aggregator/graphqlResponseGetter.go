@@ -11,7 +11,7 @@ import (
 
 // GraphqlResponseGetter wraps over the default http client
 type GraphqlResponseGetter struct {
-	authentication.AuthClient
+	AuthClient authentication.AuthClient
 }
 
 type graphQLRequest struct {
@@ -21,11 +21,11 @@ type graphQLRequest struct {
 
 // Query does a get operation on the specified url and tries to cast the response bytes over the response object through
 // the json serializer
-func (getter *GraphqlResponseGetter) Query(ctx context.Context, url string, query string, variables string, response interface{}) error {
+func (getter *GraphqlResponseGetter) Query(ctx context.Context, url string, query string, variables string) (interface{}, error) {
 
-	accessToken, err := getter.GetAccessToken()
+	accessToken, err := getter.AuthClient.GetAccessToken()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	client := oauth2.NewClient(
@@ -35,8 +35,13 @@ func (getter *GraphqlResponseGetter) Query(ctx context.Context, url string, quer
 		),
 	)
 
-	gqlMarshalled, err := json.Marshal(graphQLRequest{Query: query, Variables: variables})
+	var request graphQLRequest
+	request.Query = query
+	request.Variables = variables
+	gqlMarshalled, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
 
-	response, err = client.Post(url, "application/json", strings.NewReader(string(gqlMarshalled)))
-	return err
+	return client.Post(url, "application/json", strings.NewReader(string(gqlMarshalled)))
 }
