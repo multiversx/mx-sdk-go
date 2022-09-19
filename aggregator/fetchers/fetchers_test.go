@@ -164,9 +164,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 
 			returnPrice := "4714.05000000"
 			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
-					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
-				},
+				&mock.HttpResponseGetterStub{},
 				&mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
 				}, createMockMap())
@@ -189,11 +187,8 @@ func Test_FetchPriceErrors(t *testing.T) {
 				return
 			}
 
-			returnPrice := "4714.05000000"
 			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
-					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
-				},
+				&mock.HttpResponseGetterStub{},
 				&mock.GraphqlResponseGetterStub{
 					GetCalled: func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 						return make([]byte, 0), nil

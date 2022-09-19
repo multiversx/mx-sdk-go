@@ -14,7 +14,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
 )
 
-// ArgsNativeAuthClient -
+// ArgsNativeAuthClient is the DTO used in the native auth client constructor
 type ArgsNativeAuthClient struct {
 	TxSigner             builders.TxSigner
 	ExtraInfo            interface{}
@@ -42,9 +42,10 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (AuthClient, error) {
 		return nil, ErrNilTxSigner
 	}
 
-	extraInfoBytes, _ := json.Marshal(args.ExtraInfo)
-
-	encodedExtraInfo := base64.StdEncoding.EncodeToString(extraInfoBytes)
+	extraInfoBytes, err := json.Marshal(args.ExtraInfo)
+	if err != nil {
+		return nil, fmt.Errorf("%w while marshaling args.ExtraInfo", err)
+	}
 
 	if check.IfNil(args.Proxy) {
 		return nil, ErrNilProxy
@@ -54,15 +55,22 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (AuthClient, error) {
 		return nil, ErrNilPrivateKey
 	}
 
-	publicKey := args.PrivateKey.GeneratePublic()
-	publicKeyBytes, _ := publicKey.ToByteArray()
+	skBytes, err := args.PrivateKey.ToByteArray()
+	if err != nil {
+		return nil, fmt.Errorf("%w while getting skBytes from args.PrivateKey", err)
+	}
 
-	address := data.NewAddressFromBytes(publicKeyBytes)
+	publicKey := args.PrivateKey.GeneratePublic()
+	pkBytes, err := publicKey.ToByteArray()
+	if err != nil {
+		return nil, fmt.Errorf("%w while getting pkBytes from publicKey", err)
+	}
+
+	address := data.NewAddressFromBytes(pkBytes)
 
 	encodedAddress := base64.StdEncoding.EncodeToString(address.AddressBytes())
-	skBytes, _ := args.PrivateKey.ToByteArray()
-
 	encodedHost := base64.StdEncoding.EncodeToString([]byte(args.Host))
+	encodedExtraInfo := base64.StdEncoding.EncodeToString(extraInfoBytes)
 
 	return &nativeAuthClient{
 		txSigner:             args.TxSigner,
@@ -75,7 +83,7 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (AuthClient, error) {
 	}, nil
 }
 
-// GetAccessToken -
+// GetAccessToken returns an access token used for authentication into different elrond services
 func (nac *nativeAuthClient) GetAccessToken() (string, error) {
 	now := time.Now()
 	if nac.tokenExpire.IsZero() || nac.tokenExpire.After(now) {

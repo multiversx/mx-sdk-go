@@ -12,7 +12,6 @@ require (
 	github.com/gin-contrib/cors v0.0.0-20190301062745-f9e10995c85a
 	github.com/gin-gonic/gin v1.7.7
 	github.com/pborman/uuid v1.2.1
-	github.com/prometheus/common v0.18.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tyler-smith/go-bip39 v1.1.0
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
