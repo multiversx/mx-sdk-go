@@ -29,3 +29,20 @@ type AddressNonceHandler interface {
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	DropTransactions()
 }
+
+// TransactionNonceHandlerV1 is able to handle the
+type TransactionNonceHandlerV1 interface {
+	GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error)
+	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
+	ForceNonceReFetch(address core.AddressHandler) error
+	Close() error
+	IsInterfaceNil() bool
+}
+
+// TransactionNonceHandlerV2 is able to handle the
+type TransactionNonceHandlerV2 interface {
+	ApplyNonce(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
+	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
+	Close() error
+	IsInterfaceNil() bool
+}

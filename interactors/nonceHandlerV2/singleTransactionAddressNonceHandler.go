@@ -1,4 +1,4 @@
-package interactors
+package nonceHandlerV2
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
 type singleTransactionAddressNonceHandler struct {
@@ -13,7 +14,7 @@ type singleTransactionAddressNonceHandler struct {
 	address       erdgoCore.AddressHandler
 	transaction   *data.Transaction
 	computedNonce uint64
-	proxy         Proxy
+	proxy         interactors.Proxy
 }
 
 func (anh *singleTransactionAddressNonceHandler) ApplyNonce(ctx context.Context, txArgs *data.ArgCreateTransaction, checkForDuplicates bool) error {
