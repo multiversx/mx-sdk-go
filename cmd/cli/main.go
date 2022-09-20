@@ -34,21 +34,15 @@ VERSION:
    {{.Version}}
    {{end}}
 `
-	setGuardian = cli.BoolFlag{
-		Name:        "setGuardian",
-		Usage:       "Should be set in order to construct data field for setGuardian. Could fail in combination with some other flags, e.g. with dataField flag",
-		Destination: &argsConfig.setGuardian,
-	}
-
 	guardedTxBy = cli.StringFlag{
 		Name:        "guardedTxBy",
 		Usage:       "If used, will set the guardian to the given one. Options: alice, bob, eve, charlie",
 		Destination: &argsConfig.guardedTxBy,
 	}
 
-	guardian = cli.StringFlag{
-		Name:        "guardian",
-		Usage:       "If used, it replaces the default guardian with the given one. Options: alice, bob, eve, charlie, erd1..... Could fail with custom address and guardedTx set",
+	setGuardian = cli.StringFlag{
+		Name:        "setGuardian",
+		Usage:       "If used, it fills the data field with formatted setGuardian transaction data for the given guardian address. Options: alice, bob, eve, charlie, erd1..... Could fail with custom address and guardedTx set",
 		Destination: &argsConfig.guardian,
 	}
 
@@ -66,7 +60,7 @@ VERSION:
 
 	dataField = cli.StringFlag{
 		Name:        "dataField",
-		Usage:       "If used, it replaces the data field with this one. Could fail in combination with some other flags, e.g. setGuardian flag set",
+		Usage:       "If used, it replaces the data field with this one. Could fail in combination with some other flags, e.g. setGuardian",
 		Destination: &argsConfig.dataField,
 	}
 
@@ -126,7 +120,6 @@ const (
 )
 
 type cfg struct {
-	setGuardian    bool
 	withFunding    bool
 	send           bool
 	guardianSigned bool
@@ -173,7 +166,6 @@ func main() {
 	app.Flags = []cli.Flag{
 		setGuardian,
 		guardedTxBy,
-		guardian,
 		sender,
 		receiver,
 		value,
@@ -346,7 +338,7 @@ func selectAddressAndSkFromString(td *testData, option string) (core.AddressHand
 }
 
 func setOtherOptions(options *selectedOptions, config *data.NetworkConfig) error {
-	if argsConfig.setGuardian && len(argsConfig.dataField) > 0 {
+	if len(argsConfig.guardian) > 0 && len(argsConfig.dataField) > 0 {
 		return errors.New("dataField and setGuardian cannot be set together")
 	}
 
@@ -364,7 +356,7 @@ func setOtherOptions(options *selectedOptions, config *data.NetworkConfig) error
 
 func treatDataIfNeeded(options *selectedOptions, config *data.NetworkConfig) error {
 	var err error
-	if argsConfig.setGuardian {
+	if len(argsConfig.guardian) > 0 {
 		options.txArguments.Data, err = createSetGuardianData(options.guardianAddress)
 		if err != nil {
 			return err
