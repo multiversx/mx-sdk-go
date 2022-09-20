@@ -85,6 +85,7 @@ func (builder *txBuilder) ApplyUserSignatureAndGenerateTx(
 }
 
 func (builder *txBuilder) signTx(unsignedTx *data.Transaction, skBytes []byte) ([]byte, error) {
+	// TODO: refactor to use Transaction from core so that GetDataForSigning can be used (this logic is duplicated in core)
 	unsignedMessage, err := json.Marshal(unsignedTx)
 	if err != nil {
 		return nil, err
