@@ -179,18 +179,18 @@ func (ep *elrondProxy) GetDefaultTransactionArguments(
 	}
 
 	return data.ArgCreateTransaction{
-		Nonce:            account.Nonce,
-		Value:            "",
-		RcvAddr:          "",
-		SndAddr:          address.AddressAsBech32String(),
-		GasPrice:         networkConfigs.MinGasPrice,
-		GasLimit:         networkConfigs.MinGasLimit,
-		Data:             nil,
-		Signature:        "",
-		ChainID:          networkConfigs.ChainID,
-		Version:          networkConfigs.MinTransactionVersion,
-		Options:          0,
-		AvailableBalance: account.Balance,
+		Nonce:             account.Nonce,
+		Value:             "",
+		RcvAddr:           "",
+		SndAddr:           address.AddressAsBech32String(),
+		GasPrice:          networkConfigs.MinGasPrice,
+		GasLimit:          networkConfigs.MinGasLimit,
+		Data:              nil,
+		Signature:         "",
+		ChainID:           networkConfigs.ChainID,
+		Version:           networkConfigs.MinTransactionVersion,
+		Options:           0,
+		AvailableBalance:  account.Balance,
 	}, nil
 }
 

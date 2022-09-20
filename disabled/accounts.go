@@ -124,6 +124,11 @@ func (a *Accounts) GetAccountFromBytes(_ []byte, _ []byte) (vmcommon.AccountHand
 	return nil, nil
 }
 
+// RecreateTrieFromEpoch returns nil
+func (a *Accounts) RecreateTrieFromEpoch(_ common.RootHashHolder) error {
+	return nil
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (a *Accounts) IsInterfaceNil() bool {
 	return a == nil

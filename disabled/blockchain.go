@@ -8,6 +8,10 @@ import (
 type Blockchain struct {
 }
 
+// SetFinalBlockInfo does nothing
+func (b *Blockchain) SetFinalBlockInfo(_ uint64, _ []byte, _ []byte) {
+}
+
 // GetGenesisHeader returns nil
 func (b *Blockchain) GetGenesisHeader() data.HeaderHandler {
 	return nil
@@ -59,6 +63,11 @@ func (b *Blockchain) GetCurrentBlockRootHash() []byte {
 // SetCurrentBlockHeaderAndRootHash return nil
 func (b *Blockchain) SetCurrentBlockHeaderAndRootHash(bh data.HeaderHandler, rootHash []byte) error {
 	return nil
+}
+
+// GetFinalBlockInfo returns 0, nil, nil
+func (b *Blockchain) GetFinalBlockInfo() (nonce uint64, blockHash []byte, rootHash []byte) {
+	return 0, nil, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
