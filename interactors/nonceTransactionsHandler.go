@@ -55,15 +55,15 @@ func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration, che
 	return nth, nil
 }
 
-// GetNonce will return the nonce for the provided address
-func (nth *nonceTransactionsHandler) GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error) {
+// ApplyNonce will apply the nonce to the given ArgCreateTransaction
+func (nth *nonceTransactionsHandler) ApplyNonce(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 	if check.IfNil(address) {
-		return 0, ErrNilAddress
+		return ErrNilAddress
 	}
 
 	anh := nth.getOrCreateAddressNonceHandler(address)
 
-	return anh.getNonceUpdatingCurrent(ctx)
+	return anh.ApplyNonce(ctx, txArgs, nth.checkForDuplicates)
 }
 
 func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core.AddressHandler) *addressNonceHandler {
@@ -92,12 +92,7 @@ func (nth *nonceTransactionsHandler) SendTransaction(ctx context.Context, tx *da
 	}
 
 	anh := nth.getOrCreateAddressNonceHandler(addressHandler)
-	if nth.checkForDuplicates && anh.isTxAlreadySent(tx) {
-		// TODO: add gas comparation logic EN-11887
-		anh.decrementComputedNonce()
-		return "", ErrTxAlreadySent
-	}
-	sentHash, err := anh.sendTransaction(ctx, tx)
+	sentHash, err := anh.SendTransaction(ctx, tx)
 	if err != nil {
 		return "", fmt.Errorf("%w while sending transaction for address %s", err, addrAsBech32)
 	}
@@ -135,21 +130,21 @@ func (nth *nonceTransactionsHandler) resendTransactions(ctx context.Context) {
 		}
 
 		resendCtx, cancel := context.WithTimeout(ctx, nth.intervalToResend)
-		err := anh.reSendTransactionsIfRequired(resendCtx)
+		err := anh.ReSendTransactionsIfRequired(resendCtx)
 		log.LogIfError(err)
 		cancel()
 	}
 }
 
-// ForceNonceReFetch will mark the addressNonceHandler to re-fetch its nonce from the blockchain account.
+// DropTransactions will clean the addressNonceHandler cached transactions and will re-fetch its nonce from the blockchain account.
 // This should be only used in a fallback plan, when some transactions are completely lost (or due to a bug, not even sent in first time)
-func (nth *nonceTransactionsHandler) ForceNonceReFetch(address core.AddressHandler) error {
+func (nth *nonceTransactionsHandler) DropTransactions(address core.AddressHandler) error {
 	if check.IfNil(address) {
 		return ErrNilAddress
 	}
 
 	anh := nth.getOrCreateAddressNonceHandler(address)
-	anh.markReFetchNonce()
+	anh.DropTransactions()
 
 	return nil
 }

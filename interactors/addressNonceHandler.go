@@ -23,6 +23,7 @@ type addressNonceHandler struct {
 	proxy               Proxy
 	computedNonceWasSet bool
 	computedNonce       uint64
+	lowestNonce         uint64
 	transactions        map[uint64]*data.Transaction
 }
 
@@ -34,10 +35,27 @@ func newAddressNonceHandler(proxy Proxy, address erdgoCore.AddressHandler) *addr
 	}
 }
 
+func (anh *addressNonceHandler) ApplyNonce(ctx context.Context, txArgs *data.ArgCreateTransaction, checkForDuplicates bool) error {
+	if checkForDuplicates && anh.isTxAlreadySent(txArgs) {
+		// TODO: add gas comparation logic EN-11887
+		return ErrTxAlreadySent
+	}
+	nonce, err := anh.getNonceUpdatingCurrent(ctx)
+	if err != nil {
+		return err
+	}
+	txArgs.Nonce = nonce
+	return nil
+}
+
 func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (uint64, error) {
 	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
 		return 0, err
+	}
+
+	if anh.lowestNonce > account.Nonce {
+		return account.Nonce, nil
 	}
 
 	anh.mut.Lock()
@@ -55,7 +73,7 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 	return core.MaxUint64(anh.computedNonce, account.Nonce), nil
 }
 
-func (anh *addressNonceHandler) reSendTransactionsIfRequired(ctx context.Context) error {
+func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context) error {
 	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
 		return err
@@ -63,6 +81,7 @@ func (anh *addressNonceHandler) reSendTransactionsIfRequired(ctx context.Context
 
 	anh.mut.Lock()
 	if account.Nonce == anh.computedNonce {
+		anh.lowestNonce = anh.computedNonce
 		anh.transactions = make(map[uint64]*data.Transaction)
 		anh.mut.Unlock()
 
@@ -70,14 +89,16 @@ func (anh *addressNonceHandler) reSendTransactionsIfRequired(ctx context.Context
 	}
 
 	resendableTxs := make([]*data.Transaction, 0, len(anh.transactions))
+	minNonce := uint64(0)
 	for txNonce, tx := range anh.transactions {
 		if txNonce <= account.Nonce {
 			delete(anh.transactions, txNonce)
 			continue
 		}
-
+		minNonce = core.MinUint64(txNonce, minNonce)
 		resendableTxs = append(resendableTxs, tx)
 	}
+	anh.lowestNonce = minNonce
 	anh.mut.Unlock()
 
 	if len(resendableTxs) == 0 {
@@ -94,7 +115,7 @@ func (anh *addressNonceHandler) reSendTransactionsIfRequired(ctx context.Context
 	return nil
 }
 
-func (anh *addressNonceHandler) sendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
 	anh.mut.Lock()
 	anh.transactions[tx.Nonce] = tx
 	anh.mut.Unlock()
@@ -102,7 +123,14 @@ func (anh *addressNonceHandler) sendTransaction(ctx context.Context, tx *data.Tr
 	return anh.proxy.SendTransaction(ctx, tx)
 }
 
-func (anh *addressNonceHandler) isTxAlreadySent(tx *data.Transaction) bool {
+func (anh *addressNonceHandler) DropTransactions() {
+	anh.mut.Lock()
+	anh.transactions = make(map[uint64]*data.Transaction)
+	anh.computedNonceWasSet = false
+	anh.mut.Unlock()
+}
+
+func (anh *addressNonceHandler) isTxAlreadySent(tx *data.ArgCreateTransaction) bool {
 	anh.mut.RLock()
 	defer anh.mut.RUnlock()
 	for _, oldTx := range anh.transactions {
@@ -114,19 +142,4 @@ func (anh *addressNonceHandler) isTxAlreadySent(tx *data.Transaction) bool {
 		}
 	}
 	return false
-}
-
-func (anh *addressNonceHandler) decrementComputedNonce() {
-	anh.mut.Lock()
-	defer anh.mut.Unlock()
-	if anh.computedNonce > 0 {
-		anh.computedNonce--
-	}
-}
-
-func (anh *addressNonceHandler) markReFetchNonce() {
-	anh.mut.Lock()
-	defer anh.mut.Unlock()
-
-	anh.computedNonceWasSet = false
 }

@@ -22,3 +22,10 @@ type TxBuilder interface {
 	ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
 	IsInterfaceNil() bool
 }
+
+type AddressNonceHandler interface {
+	ApplyNonce(ctx context.Context, txArgs *data.ArgCreateTransaction, checkForDuplicates bool) error
+	ReSendTransactionsIfRequired(ctx context.Context) error
+	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
+	DropTransactions()
+}
