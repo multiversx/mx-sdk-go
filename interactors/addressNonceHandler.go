@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -18,34 +19,78 @@ import (
 // having a function that sweeps the map in order to resend a transaction or remove them
 // because they were executed. This struct is concurrent safe.
 type addressNonceHandler struct {
-	mut                 sync.RWMutex
-	address             erdgoCore.AddressHandler
-	proxy               Proxy
-	computedNonceWasSet bool
-	computedNonce       uint64
-	lowestNonce         uint64
-	transactions        map[uint64]*data.Transaction
+	mut                    sync.RWMutex
+	address                erdgoCore.AddressHandler
+	proxy                  Proxy
+	computedNonceWasSet    bool
+	computedNonce          uint64
+	lowestNonce            uint64
+	gasPrice               uint64
+	nonceUntilGasIncreased uint64
+	transactions           map[uint64]*data.Transaction
 }
 
-func newAddressNonceHandler(proxy Proxy, address erdgoCore.AddressHandler) *addressNonceHandler {
+// NewAddressNonceHandler returns a new instance of a addressNonceHandler
+func NewAddressNonceHandler(proxy Proxy, address erdgoCore.AddressHandler) (*addressNonceHandler, error) {
+	if check.IfNil(proxy) {
+		return nil, ErrNilProxy
+	}
+	if check.IfNil(address) {
+		return nil, ErrNilAddress
+	}
 	return &addressNonceHandler{
 		address:      address,
 		proxy:        proxy,
 		transactions: make(map[uint64]*data.Transaction),
-	}
+	}, nil
 }
 
-func (anh *addressNonceHandler) ApplyNonce(ctx context.Context, txArgs *data.ArgCreateTransaction, checkForDuplicates bool) error {
-	if checkForDuplicates && anh.isTxAlreadySent(txArgs) {
-		// TODO: add gas comparation logic EN-11887
-		return ErrTxAlreadySent
+// ApplyNonce will apply the computed nonce to the given ArgCreateTransaction
+func (anh *addressNonceHandler) ApplyNonce(ctx context.Context, txArgs *data.ArgCreateTransaction) error {
+	oldTx, alreadyExists := anh.isTxAlreadySent(txArgs)
+	if alreadyExists {
+		err := anh.handleTxAlreadyExists(oldTx, txArgs)
+		if err != nil {
+			return err
+		}
 	}
+
 	nonce, err := anh.getNonceUpdatingCurrent(ctx)
+	txArgs.Nonce = nonce
 	if err != nil {
 		return err
 	}
-	txArgs.Nonce = nonce
+
+	anh.fetchGasPriceIfRequired(ctx, nonce)
+	txArgs.GasPrice = core.MaxUint64(anh.gasPrice, txArgs.GasPrice)
 	return nil
+}
+
+func (anh *addressNonceHandler) handleTxAlreadyExists(oldTx *data.Transaction, txArgs *data.ArgCreateTransaction) error {
+	if oldTx.GasPrice < txArgs.GasPrice {
+		return nil
+	}
+
+	if oldTx.GasPrice == txArgs.GasPrice && oldTx.GasPrice < anh.gasPrice {
+		return nil
+	}
+
+	return ErrTxAlreadySent
+}
+
+func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context, nonce uint64) {
+	if nonce == anh.nonceUntilGasIncreased+1 || anh.gasPrice == 0 {
+		networkConfig, err := anh.proxy.GetNetworkConfig(ctx)
+
+		anh.mut.Lock()
+		defer anh.mut.Unlock()
+		if err != nil {
+			log.Error("%w: while fetching network config", err)
+			anh.gasPrice = 0
+			return
+		}
+		anh.gasPrice = networkConfig.MinGasPrice
+	}
 }
 
 func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (uint64, error) {
@@ -55,7 +100,7 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 	}
 
 	if anh.lowestNonce > account.Nonce {
-		return account.Nonce, nil
+		return account.Nonce, ErrGapNonce
 	}
 
 	anh.mut.Lock()
@@ -73,6 +118,7 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 	return core.MaxUint64(anh.computedNonce, account.Nonce), nil
 }
 
+// ReSendTransactionsIfRequired will resend the cached transactions that still has a nonce greater that the one fetched from the blockchain
 func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context) error {
 	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
@@ -89,7 +135,7 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 	}
 
 	resendableTxs := make([]*data.Transaction, 0, len(anh.transactions))
-	minNonce := uint64(0)
+	minNonce := anh.computedNonce
 	for txNonce, tx := range anh.transactions {
 		if txNonce <= account.Nonce {
 			delete(anh.transactions, txNonce)
@@ -115,6 +161,7 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 	return nil
 }
 
+// SendTransaction will save and propagate a transaction to the network
 func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
 	anh.mut.Lock()
 	anh.transactions[tx.Nonce] = tx
@@ -123,14 +170,17 @@ func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *data.Tr
 	return anh.proxy.SendTransaction(ctx, tx)
 }
 
+// DropTransactions will delete the cached transactions and will try to replace the current transactions from the pool using more gas price
 func (anh *addressNonceHandler) DropTransactions() {
 	anh.mut.Lock()
 	anh.transactions = make(map[uint64]*data.Transaction)
 	anh.computedNonceWasSet = false
+	anh.gasPrice++
+	anh.nonceUntilGasIncreased = anh.computedNonce
 	anh.mut.Unlock()
 }
 
-func (anh *addressNonceHandler) isTxAlreadySent(tx *data.ArgCreateTransaction) bool {
+func (anh *addressNonceHandler) isTxAlreadySent(tx *data.ArgCreateTransaction) (*data.Transaction, bool) {
 	anh.mut.RLock()
 	defer anh.mut.RUnlock()
 	for _, oldTx := range anh.transactions {
@@ -138,8 +188,8 @@ func (anh *addressNonceHandler) isTxAlreadySent(tx *data.ArgCreateTransaction) b
 			bytes.Equal(oldTx.Data, tx.Data) &&
 			oldTx.Value == tx.Value
 		if isTheSameReceiverDataValue {
-			return true
+			return oldTx, true
 		}
 	}
-	return false
+	return nil, false
 }
