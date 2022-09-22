@@ -115,6 +115,7 @@ func TestSingleTransactionAddressNonceHandler_DropTransactions(t *testing.T) {
 	anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
 
 	err := anh.ApplyNonce(context.Background(), &txArgs)
+	require.Nil(t, err)
 
 	tx := createTx(txArgs.GasPrice, txArgs)
 	_, err = anh.SendTransaction(context.Background(), tx)
