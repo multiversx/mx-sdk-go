@@ -18,7 +18,7 @@ func TestGraphqlResponseGetter_Query(t *testing.T) {
 		t.Parallel()
 
 		responseGetter := &graphqlResponseGetter{
-			AuthClient: &mock.NativeStub{GetAccessTokenCalled: func() (string, error) {
+			authClient: &mock.NativeStub{GetAccessTokenCalled: func() (string, error) {
 				return "", expectedErr
 			}},
 		}
@@ -31,7 +31,7 @@ func TestGraphqlResponseGetter_Query(t *testing.T) {
 		t.Parallel()
 
 		responseGetter := &graphqlResponseGetter{
-			AuthClient: &mock.NativeStub{GetAccessTokenCalled: func() (string, error) {
+			authClient: &mock.NativeStub{GetAccessTokenCalled: func() (string, error) {
 				return "accessToken", nil
 			}},
 		}

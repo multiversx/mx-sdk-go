@@ -13,7 +13,7 @@ import (
 
 // graphqlResponseGetter wraps over the default http client
 type graphqlResponseGetter struct {
-	AuthClient authentication.AuthClient
+	authClient authentication.AuthClient
 }
 
 type graphQLRequest struct {
@@ -27,7 +27,7 @@ func NewGraphqlResponseGetter(authClient authentication.AuthClient) (*graphqlRes
 		return nil, ErrNilAuthClient
 	}
 	return &graphqlResponseGetter{
-		AuthClient: authClient,
+		authClient: authClient,
 	}, nil
 }
 
@@ -35,7 +35,7 @@ func NewGraphqlResponseGetter(authClient authentication.AuthClient) (*graphqlRes
 // the json serializer
 func (getter *graphqlResponseGetter) Query(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 
-	accessToken, err := getter.AuthClient.GetAccessToken()
+	accessToken, err := getter.authClient.GetAccessToken()
 	if err != nil {
 		return nil, err
 	}
