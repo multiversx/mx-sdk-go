@@ -45,6 +45,7 @@ func TestSingleTransactionAddressNonceHandler_ApplyNonce(t *testing.T) {
 	t.Parallel()
 
 	t.Run("proxy returns error should error", func(t *testing.T) {
+		t.Parallel()
 
 		proxy := &testsCommon.ProxyStub{
 			GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
@@ -60,6 +61,7 @@ func TestSingleTransactionAddressNonceHandler_ApplyNonce(t *testing.T) {
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
 
 		blockchainNonce := uint64(100)
 		proxy := &testsCommon.ProxyStub{
@@ -81,19 +83,18 @@ func TestSingleTransactionAddressNonceHandler_ApplyNonce(t *testing.T) {
 func TestSingleTransactionAddressNonceHandler_fetchGasPriceIfRequired(t *testing.T) {
 	t.Parallel()
 
-	t.Run("proxy returns error should set invalid gasPrice(0)", func(t *testing.T) {
-		proxy := &testsCommon.ProxyStub{
-			GetNetworkConfigCalled: func() (*data.NetworkConfig, error) {
-				return nil, expectedErr
-			},
-		}
-		anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
-		anh.gasPrice = 100000
-		anh.nonceUntilGasIncreased = 100
+	//proxy returns error should set invalid gasPrice(0)
+	proxy := &testsCommon.ProxyStub{
+		GetNetworkConfigCalled: func() (*data.NetworkConfig, error) {
+			return nil, expectedErr
+		},
+	}
+	anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
+	anh.gasPrice = 100000
+	anh.nonceUntilGasIncreased = 100
 
-		anh.fetchGasPriceIfRequired(context.Background(), 101)
-		require.Equal(t, uint64(0), anh.gasPrice)
-	})
+	anh.fetchGasPriceIfRequired(context.Background(), 101)
+	require.Equal(t, uint64(0), anh.gasPrice)
 }
 
 func TestSingleTransactionAddressNonceHandler_DropTransactions(t *testing.T) {
@@ -135,32 +136,35 @@ func TestSingleTransactionAddressNonceHandler_DropTransactions(t *testing.T) {
 func TestSingleTransactionAddressNonceHandler_SendTransaction(t *testing.T) {
 	t.Parallel()
 
-	t.Run("proxy returns error should error", func(t *testing.T) {
-		proxy := &testsCommon.ProxyStub{
-			SendTransactionCalled: func(tx *data.Transaction) (string, error) {
-				return "", expectedErr
-			},
-		}
+	// proxy returns error should error
+	proxy := &testsCommon.ProxyStub{
+		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+			return "", expectedErr
+		},
+	}
 
-		anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
+	anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
 
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
+	txArgs := createTxArgs()
+	tx := createTx(txArgs.GasPrice, txArgs)
 
-		_, err := anh.SendTransaction(context.Background(), tx)
-		require.Equal(t, expectedErr, err)
-	})
+	_, err := anh.SendTransaction(context.Background(), tx)
+	require.Equal(t, expectedErr, err)
 }
 
 func TestSingleTransactionAddressNonceHandler_ReSendTransactionsIfRequired(t *testing.T) {
 	t.Parallel()
 
 	t.Run("no transaction to resend shall exit early with no error", func(t *testing.T) {
+		t.Parallel()
+
 		anh, _ := NewSingleTransactionAddressNonceHandler(&testsCommon.ProxyStub{}, testAddress)
 		err := anh.ReSendTransactionsIfRequired(context.Background())
 		require.Nil(t, err)
 	})
 	t.Run("proxy returns error shall error", func(t *testing.T) {
+		t.Parallel()
+
 		proxy := &testsCommon.ProxyStub{
 			GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 				return nil, expectedErr
@@ -178,6 +182,8 @@ func TestSingleTransactionAddressNonceHandler_ReSendTransactionsIfRequired(t *te
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("proxy returns error shall error", func(t *testing.T) {
+		t.Parallel()
+
 		blockchainNonce := uint64(100)
 		proxy := &testsCommon.ProxyStub{
 			GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
@@ -197,6 +203,8 @@ func TestSingleTransactionAddressNonceHandler_ReSendTransactionsIfRequired(t *te
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("anh.transaction.Nonce != account.Nonce", func(t *testing.T) {
+		t.Parallel()
+
 		blockchainNonce := uint64(100)
 		proxy := &testsCommon.ProxyStub{
 			GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
@@ -217,6 +225,8 @@ func TestSingleTransactionAddressNonceHandler_ReSendTransactionsIfRequired(t *te
 		require.Nil(t, anh.transaction)
 	})
 	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
 		blockchainNonce := uint64(100)
 		proxy := &testsCommon.ProxyStub{
 			GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {

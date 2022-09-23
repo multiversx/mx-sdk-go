@@ -70,7 +70,7 @@ func (anh *singleTransactionAddressNonceHandler) getNonce(ctx context.Context) (
 	return account.Nonce, nil
 }
 
-// ReSendTransactionsIfRequired will resend the cached transaction if it still has a nonce greater that the one fetched from the blockchain
+// ReSendTransactionsIfRequired will resend the cached transaction if it still has a nonce greater than the one fetched from the blockchain
 func (anh *singleTransactionAddressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context) error {
 	if anh.transaction == nil {
 		return nil
@@ -104,7 +104,7 @@ func (anh *singleTransactionAddressNonceHandler) SendTransaction(ctx context.Con
 	return anh.proxy.SendTransaction(ctx, tx)
 }
 
-// DropTransactions will delete the cached transactions and will try to replace the current transactions from the pool using more gas price
+// DropTransactions will delete the cached transaction and will try to replace the current transaction from the pool using more gas price
 func (anh *singleTransactionAddressNonceHandler) DropTransactions() {
 	anh.mut.Lock()
 	defer anh.mut.Unlock()
