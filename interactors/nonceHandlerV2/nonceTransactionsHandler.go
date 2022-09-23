@@ -152,7 +152,8 @@ func (nth *nonceTransactionsHandlerV2) resendTransactions(ctx context.Context) {
 	}
 }
 
-// DropTransactions will clean the addressNonceHandler cached transactions and will re-fetch its nonce from the blockchain account.
+// DropTransactions will clean the addressNonceHandler cached transactions. A little gas increase will be applied to the next transactions
+// in order to also replace the transactions from the txPool.
 // This should be only used in a fallback plan, when some transactions are completely lost (or due to a bug, not even sent in first time)
 func (nth *nonceTransactionsHandlerV2) DropTransactions(address core.AddressHandler) error {
 	if check.IfNil(address) {

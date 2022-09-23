@@ -12,6 +12,9 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
+//TODO EN-13182: create a baseAddressNonceHandler component that can remove the duplicate code as much as possible from the
+// addressNonceHandler and singleTransactionAddressNonceHandler
+
 // addressNonceHandler is the handler used for one address. It is able to handle the current
 // nonce as max(current_stored_nonce, account_nonce). After each call of the getNonce function
 // the current_stored_nonce is incremented. This will prevent "nonce too low in transaction"
@@ -119,7 +122,7 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 	return core.MaxUint64(anh.computedNonce, account.Nonce), nil
 }
 
-// ReSendTransactionsIfRequired will resend the cached transactions that still has a nonce greater that the one fetched from the blockchain
+// ReSendTransactionsIfRequired will resend the cached transactions that still have a nonce greater that the one fetched from the blockchain
 func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context) error {
 	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
