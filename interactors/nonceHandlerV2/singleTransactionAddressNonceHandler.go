@@ -76,12 +76,12 @@ func (anh *singleTransactionAddressNonceHandler) ReSendTransactionsIfRequired(ct
 	if anh.transaction == nil {
 		return nil
 	}
-	account, err := anh.proxy.GetAccount(ctx, anh.address)
+	nonce, err := anh.getNonce(ctx)
 	if err != nil {
 		return err
 	}
 
-	if anh.transaction.Nonce != account.Nonce {
+	if anh.transaction.Nonce != nonce {
 		anh.transaction = nil
 		return nil
 	}
