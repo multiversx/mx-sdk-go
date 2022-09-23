@@ -33,4 +33,6 @@ var (
 	ErrInvalidAutoSendInterval = errors.New("invalid auto send interval")
 	// ErrPairNotSupported signals that the pair is not supported by the fetcher
 	ErrPairNotSupported = errors.New("pair not supported")
+	// ErrNilAuthClient signals that a nil auth client was provided
+	ErrNilAuthClient = errors.New("nil auth client")
 )

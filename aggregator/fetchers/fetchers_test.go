@@ -2,10 +2,12 @@ package fetchers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
@@ -42,8 +44,7 @@ func Test_FunctionalTesting(t *testing.T) {
 			t.Skip("this test should be run only when doing debugging work on the component")
 
 			t.Parallel()
-
-			fetcher, _ := NewPriceFetcher(fetcherName, &aggregator.HttpResponseGetter{}, createMockMap())
+			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{}, &mock.GraphqlResponseGetterStub{}, createMockMap())
 			ethTicker := "ETH"
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
@@ -67,9 +68,14 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			expectedError := errors.New("expected error")
-			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
-				GetCalled: getFuncGetCalled(fetcherName, "", pair, expectedError),
-			}, createMockMap())
+			returnPrice := ""
+			fetcher, _ := NewPriceFetcher(fetcherName,
+				&mock.HttpResponseGetterStub{
+					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, expectedError),
+				},
+				&mock.GraphqlResponseGetterStub{
+					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, expectedError),
+				}, createMockMap())
 
 			assert.False(t, check.IfNil(fetcher))
 
@@ -84,9 +90,15 @@ func Test_FetchPriceErrors(t *testing.T) {
 		t.Run("empty string for price should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
-				GetCalled: getFuncGetCalled(fetcherName, "", pair, nil),
-			}, createMockMap())
+			returnPrice := ""
+			fetcher, _ := NewPriceFetcher(fetcherName,
+				&mock.HttpResponseGetterStub{
+					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
+				},
+				&mock.GraphqlResponseGetterStub{
+					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
+				}, createMockMap())
+
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
@@ -100,9 +112,15 @@ func Test_FetchPriceErrors(t *testing.T) {
 		t.Run("negative price should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
-				GetCalled: getFuncGetCalled(fetcherName, "-1", pair, nil),
-			}, createMockMap())
+			returnPrice := "-1"
+			fetcher, _ := NewPriceFetcher(fetcherName,
+				&mock.HttpResponseGetterStub{
+					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
+				},
+				&mock.GraphqlResponseGetterStub{
+					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
+				}, createMockMap())
+
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
@@ -116,9 +134,15 @@ func Test_FetchPriceErrors(t *testing.T) {
 		t.Run("invalid string for price should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
-				GetCalled: getFuncGetCalled(fetcherName, "not a number", pair, nil),
-			}, createMockMap())
+			returnPrice := "not a number"
+			fetcher, _ := NewPriceFetcher(fetcherName,
+				&mock.HttpResponseGetterStub{
+					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
+				},
+				&mock.GraphqlResponseGetterStub{
+					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
+				}, createMockMap())
+
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
@@ -137,9 +161,13 @@ func Test_FetchPriceErrors(t *testing.T) {
 				return
 			}
 
-			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
-				GetCalled: getFuncGetCalled(fetcherName, "4714.05000000", pair, nil),
-			}, createMockMap())
+			returnPrice := "4714.05000000"
+			fetcher, _ := NewPriceFetcher(fetcherName,
+				&mock.HttpResponseGetterStub{},
+				&mock.GraphqlResponseGetterStub{
+					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
+				}, createMockMap())
+
 			assert.False(t, check.IfNil(fetcher))
 
 			missingTicker := "missing ticker"
@@ -151,12 +179,43 @@ func Test_FetchPriceErrors(t *testing.T) {
 			assert.Equal(t, errInvalidPair, err)
 			require.Equal(t, float64(0), price)
 		})
+		t.Run("maiar: invalid graphql response should error "+fetcherName, func(t *testing.T) {
+			t.Parallel()
+
+			if fetcherName != MaiarName {
+				return
+			}
+
+			fetcher, _ := NewPriceFetcher(fetcherName,
+				&mock.HttpResponseGetterStub{},
+				&mock.GraphqlResponseGetterStub{
+					GetCalled: func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
+						return make([]byte, 0), nil
+					},
+				}, createMockMap())
+
+			assert.False(t, check.IfNil(fetcher))
+
+			fetcher.AddPair(ethTicker, quoteUSDFiat)
+			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
+			if err == errShouldSkipTest {
+				return
+			}
+			assert.Equal(t, errInvalidGraphqlResponse, err)
+			require.Equal(t, float64(0), price)
+		})
 		t.Run("pair not added should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
-				GetCalled: getFuncGetCalled(fetcherName, "4714.05000000", pair, nil),
-			}, createMockMap())
+			returnPrice := ""
+			fetcher, _ := NewPriceFetcher(fetcherName,
+				&mock.HttpResponseGetterStub{
+					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
+				},
+				&mock.GraphqlResponseGetterStub{
+					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
+				}, createMockMap())
+
 			assert.False(t, check.IfNil(fetcher))
 
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
@@ -170,9 +229,15 @@ func Test_FetchPriceErrors(t *testing.T) {
 		t.Run("should work eth-usd "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
-				GetCalled: getFuncGetCalled(fetcherName, "4714.05000000", pair, nil),
-			}, createMockMap())
+			returnPrice := "4714.05000000"
+			fetcher, _ := NewPriceFetcher(fetcherName,
+				&mock.HttpResponseGetterStub{
+					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
+				},
+				&mock.GraphqlResponseGetterStub{
+					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
+				}, createMockMap())
+
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
@@ -189,9 +254,14 @@ func Test_FetchPriceErrors(t *testing.T) {
 
 			btcTicker := "BTC"
 			btcUsdPair := btcTicker + quoteUSDFiat
-			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{
-				GetCalled: getFuncGetCalled(fetcherName, "4714.05000000", btcUsdPair, nil),
-			}, createMockMap())
+			returnPrice := "4714.05000000"
+			fetcher, _ := NewPriceFetcher(fetcherName,
+				&mock.HttpResponseGetterStub{
+					GetCalled: getFuncGetCalled(fetcherName, returnPrice, btcUsdPair, nil),
+				},
+				&mock.GraphqlResponseGetterStub{
+					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
+				}, createMockMap())
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(btcTicker, quoteUSDFiat)
@@ -204,6 +274,32 @@ func Test_FetchPriceErrors(t *testing.T) {
 			assert.Equal(t, fetcherName, fetcher.Name())
 		})
 	}
+}
+
+func getFuncQueryCalled(name, returnPrice string, returnErr error) func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
+	switch name {
+	case MaiarName:
+		return func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
+			priceArray := make([]priceResponse, 0)
+			var p priceResponse
+
+			var err error
+			p.Last, err = strconv.ParseFloat(returnPrice, 64)
+			if err != nil {
+				return nil, errShouldSkipTest
+			}
+			p.Time = time.Now()
+
+			priceArray = append(priceArray, p)
+
+			var response graphqlResponse
+			response.Data.Trading.Pair.Price = priceArray
+			responseBytes, _ := json.Marshal(response)
+
+			return responseBytes, returnErr
+		}
+	}
+	return nil
 }
 
 func getFuncGetCalled(name, returnPrice, pair string, returnErr error) func(ctx context.Context, url string, response interface{}) error {
@@ -264,17 +360,6 @@ func getFuncGetCalled(name, returnPrice, pair string, returnErr error) func(ctx 
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*okexPriceRequest)
 			cast.Data = []okexTicker{{returnPrice}}
-			return returnErr
-		}
-	case MaiarName:
-		return func(ctx context.Context, url string, response interface{}) error {
-			cast, _ := response.(*maiarPriceRequest)
-			var err error
-			cast.BasePrice, err = strconv.ParseFloat(returnPrice, 64)
-			cast.QuotePrice = 1
-			if err != nil {
-				return errShouldSkipTest
-			}
 			return returnErr
 		}
 	}
