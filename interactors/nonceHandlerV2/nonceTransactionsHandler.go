@@ -27,7 +27,7 @@ var log = logger.GetOrCreate("elrond-sdk-erdgo/interactors/nonceHandlerV2")
 // This struct is concurrent safe.
 type nonceTransactionsHandlerV2 struct {
 	proxy              interactors.Proxy
-	mutHandlers        sync.Mutex
+	mutHandlers        sync.RWMutex
 	handlers           map[string]*addressNonceHandler
 	cancelFunc         func()
 	intervalToResend   time.Duration
@@ -74,6 +74,27 @@ func (nth *nonceTransactionsHandlerV2) ApplyNonce(ctx context.Context, address c
 }
 
 func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core.AddressHandler) (*addressNonceHandler, error) {
+	anh := nth.getAddressNonceHandler(address)
+	if !check.IfNil(anh) {
+		return anh, nil
+	}
+
+	return nth.createAddressNonceHandler(address)
+}
+
+func (nth *nonceTransactionsHandler) getAddressNonceHandler(address core.AddressHandler) *addressNonceHandler {
+	nth.mutHandlers.RLock()
+	defer nth.mutHandlers.RUnlock()
+
+	addressAsString := string(address.AddressBytes())
+	anh, found := nth.handlers[addressAsString]
+	if found {
+		return anh
+	}
+	return nil
+}
+
+func (nth *nonceTransactionsHandler) createAddressNonceHandler(address core.AddressHandler) (*addressNonceHandler, error) {
 	nth.mutHandlers.Lock()
 	defer nth.mutHandlers.Unlock()
 
@@ -98,12 +119,12 @@ func (nth *nonceTransactionsHandlerV2) SendTransaction(ctx context.Context, tx *
 	}
 
 	addrAsBech32 := tx.SndAddr
-	addressHandler, err := data.NewAddressFromBech32String(addrAsBech32)
+	address, err := data.NewAddressFromBech32String(addrAsBech32)
 	if err != nil {
 		return "", fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)
 	}
 
-	anh, err := nth.getOrCreateAddressNonceHandler(addressHandler)
+	anh, err := nth.getOrCreateAddressNonceHandler(address)
 	if err != nil {
 		return "", err
 	}
