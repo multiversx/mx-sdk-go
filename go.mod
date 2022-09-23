@@ -15,6 +15,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tyler-smith/go-bip39 v1.1.0
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
+	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
 )
 
 replace github.com/ElrondNetwork/arwen-wasm-vm/v1_2 v1.2.35 => github.com/ElrondNetwork/arwen-wasm-vm v1.2.35
