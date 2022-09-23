@@ -44,8 +44,7 @@ func Test_FunctionalTesting(t *testing.T) {
 			t.Skip("this test should be run only when doing debugging work on the component")
 
 			t.Parallel()
-
-			fetcher, _ := NewPriceFetcher(fetcherName, &aggregator.HttpResponseGetter{}, &aggregator.GraphqlResponseGetter{}, createMockMap())
+			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{}, &mock.GraphqlResponseGetterStub{}, createMockMap())
 			ethTicker := "ETH"
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)

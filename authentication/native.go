@@ -34,10 +34,11 @@ type nativeAuthClient struct {
 	encodedHost          string
 	token                string
 	tokenExpire          time.Time
+	getTimeHandler       func() time.Time
 }
 
 // NewNativeAuthClient will create a new native client able to create authentication tokens
-func NewNativeAuthClient(args ArgsNativeAuthClient) (AuthClient, error) {
+func NewNativeAuthClient(args ArgsNativeAuthClient) (*nativeAuthClient, error) {
 	if check.IfNil(args.TxSigner) {
 		return nil, ErrNilTxSigner
 	}
@@ -80,13 +81,16 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (AuthClient, error) {
 		encodedHost:          encodedHost,
 		encodedAddress:       encodedAddress,
 		tokenExpiryInSeconds: args.TokenExpiryInSeconds,
+		getTimeHandler:       time.Now,
 	}, nil
 }
 
 // GetAccessToken returns an access token used for authentication into different elrond services
 func (nac *nativeAuthClient) GetAccessToken() (string, error) {
-	now := time.Now()
-	if nac.tokenExpire.IsZero() || nac.tokenExpire.After(now) {
+	now := nac.getTimeHandler()
+	noToken := nac.tokenExpire.IsZero()
+	tokenExpired := now.After(nac.tokenExpire)
+	if noToken || tokenExpired {
 		err := nac.createNewToken()
 		if err != nil {
 			return "", err
@@ -118,6 +122,11 @@ func (nac *nativeAuthClient) createNewToken() error {
 	encodedSignature := base64.StdEncoding.EncodeToString(signature)
 
 	nac.token = fmt.Sprintf("%s.%s.%s", nac.encodedAddress, encodedToken, encodedSignature)
-	nac.tokenExpire = time.Now().Add(time.Duration(nac.tokenExpiryInSeconds))
+	nac.tokenExpire = nac.getTimeHandler().Add(time.Duration(nac.tokenExpiryInSeconds))
 	return nil
+}
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (nac *nativeAuthClient) IsInterfaceNil() bool {
+	return nac == nil
 }

@@ -6,12 +6,13 @@ import (
 	"io"
 	"strings"
 
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"golang.org/x/oauth2"
 )
 
-// GraphqlResponseGetter wraps over the default http client
-type GraphqlResponseGetter struct {
+// graphqlResponseGetter wraps over the default http client
+type graphqlResponseGetter struct {
 	AuthClient authentication.AuthClient
 }
 
@@ -20,9 +21,19 @@ type graphQLRequest struct {
 	Variables string `json:"variables"`
 }
 
+// NewGraphqlResponseGetter returns a new graphql response getter instance
+func NewGraphqlResponseGetter(authClient authentication.AuthClient) (*graphqlResponseGetter, error) {
+	if check.IfNil(authClient) {
+		return nil, ErrNilAuthClient
+	}
+	return &graphqlResponseGetter{
+		AuthClient: authClient,
+	}, nil
+}
+
 // Query does a get operation on the specified url and tries to cast the response bytes over the response object through
 // the json serializer
-func (getter *GraphqlResponseGetter) Query(ctx context.Context, url string, query string, variables string) ([]byte, error) {
+func (getter *graphqlResponseGetter) Query(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 
 	accessToken, err := getter.AuthClient.GetAccessToken()
 	if err != nil {
@@ -36,9 +47,10 @@ func (getter *GraphqlResponseGetter) Query(ctx context.Context, url string, quer
 		),
 	)
 
-	var request graphQLRequest
-	request.Query = query
-	request.Variables = variables
+	request := graphQLRequest{
+		Query:     query,
+		Variables: variables,
+	}
 	gqlMarshalled, err := json.Marshal(request)
 	if err != nil {
 		return nil, err

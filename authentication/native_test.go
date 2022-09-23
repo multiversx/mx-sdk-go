@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -139,9 +140,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		token, err := authClient.GetAccessToken()
 		require.Equal(t, "", token)
 		require.Equal(t, expectedErr, err)
-
 	})
-	t.Run("should work", func(t *testing.T) {
+	t.Run("should work, nil token", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
@@ -171,7 +171,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 			},
 		}
 		authClient, _ := NewNativeAuthClient(args)
-
+		authClient.token = ""
+		authClient.tokenExpire = time.Time{}
 		encodedHost := base64.StdEncoding.EncodeToString([]byte(args.Host))
 		encodedExtraInfo := base64.StdEncoding.EncodeToString([]byte("null"))
 		internalToken := fmt.Sprintf("%s.%s.%d.%s", encodedHost, expectedHash, args.TokenExpiryInSeconds, encodedExtraInfo)
@@ -181,7 +182,49 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		token, err := authClient.GetAccessToken()
 		require.Nil(t, err)
 		require.Equal(t, fmt.Sprintf("%s.%s.%s", encodedAddress, encodedInternalToken, encodedSignature), token)
+	})
+	t.Run("should work, token expired should generate new one", func(t *testing.T) {
+		t.Parallel()
 
+		args := createMockArgsNativeAuthClient()
+		args.Host = "test.host"
+		args.TokenExpiryInSeconds = 120
+		expectedNonce := uint64(100)
+		expectedHash := "hash"
+		expectedSignature := "signature"
+		publicKeyBytes := []byte("publicKey")
+		args.PrivateKey = &testsCommon.PrivateKeyStub{GeneratePublicCalled: func() crypto.PublicKey {
+			return &testsCommon.PublicKeyStub{ToByteArrayCalled: func() ([]byte, error) {
+				return publicKeyBytes, nil
+			}}
+		}}
+		args.Proxy = &testsCommon.ProxyStub{
+			GetLatestHyperBlockNonceCalled: func(ctx context.Context) (uint64, error) {
+				return expectedNonce, nil
+			},
+			GetHyperBlockByNonceCalled: func(ctx context.Context, nonce uint64) (*data.HyperBlock, error) {
+				require.Equal(t, expectedNonce, nonce)
+				return &data.HyperBlock{Hash: expectedHash}, nil
+			},
+		}
+		args.TxSigner = &testsCommon.TxSignerStub{
+			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+				return []byte(expectedSignature), nil
+			},
+		}
+
+		authClient, _ := NewNativeAuthClient(args)
+
+		currentTime := time.Now()
+		authClient.getTimeHandler = func() time.Time {
+			return currentTime.Add(time.Second * 1120)
+		}
+		storedToken := "token"
+		authClient.token = storedToken
+		authClient.tokenExpire = currentTime.Add(time.Second * 1000)
+		token, err := authClient.GetAccessToken()
+		require.NotEqual(t, storedToken, token)
+		require.Nil(t, err)
 	})
 }
 

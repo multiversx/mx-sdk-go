@@ -12,3 +12,8 @@ func (stub *NativeStub) GetAccessToken() (string, error) {
 	}
 	return "", nil
 }
+
+// IsInterfaceNil -
+func (stub *NativeStub) IsInterfaceNil() bool {
+	return stub == nil
+}

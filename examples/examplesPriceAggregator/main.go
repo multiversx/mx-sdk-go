@@ -168,12 +168,19 @@ func createMaiarMap() map[string]fetchers.MaiarTokensPair {
 func createPriceFetchers() ([]aggregator.PriceFetcher, error) {
 	exchanges := fetchers.ImplementedFetchers
 	priceFetchers := make([]aggregator.PriceFetcher, 0, len(exchanges))
+
 	graphqlResponseGetter, err := createGraphqlResponseGetter()
 	if err != nil {
 		return nil, err
 	}
+
+	httpResponseGetter, err := aggregator.NewHttpResponseGetter()
+	if err != nil {
+		return nil, err
+	}
+
 	for exchangeName := range exchanges {
-		priceFetcher, err := fetchers.NewPriceFetcher(exchangeName, &aggregator.HttpResponseGetter{}, graphqlResponseGetter, createMaiarMap())
+		priceFetcher, err := fetchers.NewPriceFetcher(exchangeName, httpResponseGetter, graphqlResponseGetter, createMaiarMap())
 		if err != nil {
 			return nil, err
 		}
@@ -190,9 +197,7 @@ func createGraphqlResponseGetter() (aggregator.GraphqlGetter, error) {
 		return nil, err
 	}
 
-	return &aggregator.GraphqlResponseGetter{
-		AuthClient: authClient,
-	}, nil
+	return aggregator.NewGraphqlResponseGetter(authClient)
 }
 
 func createAuthClient() (authentication.AuthClient, error) {
