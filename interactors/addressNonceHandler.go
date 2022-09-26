@@ -196,3 +196,8 @@ func (anh *addressNonceHandler) isTxAlreadySent(tx *data.ArgCreateTransaction) (
 	}
 	return nil, false
 }
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (anh *addressNonceHandler) IsInterfaceNil() bool {
+	return anh == nil
+}
