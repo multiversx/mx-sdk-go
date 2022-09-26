@@ -25,7 +25,7 @@ type Proxy interface {
 
 // TransactionNonceHandler is able to handle the
 type TransactionNonceHandler interface {
-	GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error)
+	ApplyNonce(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	IsInterfaceNil() bool
 }

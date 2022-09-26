@@ -1,4 +1,4 @@
-package interactors
+package nonceHandlerV2
 
 import (
 	"bytes"
@@ -35,12 +35,12 @@ type addressNonceHandler struct {
 }
 
 // NewAddressNonceHandler returns a new instance of a addressNonceHandler
-func NewAddressNonceHandler(proxy interactorsProxy, address erdgoCore.AddressHandler) (*addressNonceHandler, error) {
+func NewAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) (*addressNonceHandler, error) {
 	if check.IfNil(proxy) {
-		return nil, ErrNilProxy
+		return nil, interactors.ErrNilProxy
 	}
 	if check.IfNil(address) {
-		return nil, ErrNilAddress
+		return nil, interactors.ErrNilAddress
 	}
 	return &addressNonceHandler{
 		address:      address,
@@ -79,7 +79,7 @@ func (anh *addressNonceHandler) handleTxAlreadyExists(oldTx *data.Transaction, t
 		return nil
 	}
 
-	return ErrTxAlreadySent
+	return interactors.ErrTxAlreadySent
 }
 
 func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context, nonce uint64) {
@@ -104,7 +104,7 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 	}
 
 	if anh.lowestNonce > account.Nonce {
-		return account.Nonce, ErrGapNonce
+		return account.Nonce, interactors.ErrGapNonce
 	}
 
 	anh.mut.Lock()

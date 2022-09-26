@@ -1,4 +1,4 @@
-package interactors
+package nonceHandlerV2
 
 import (
 	"context"
@@ -21,12 +21,12 @@ type singleTransactionAddressNonceHandler struct {
 }
 
 // NewSingleTransactionAddressNonceHandler returns a new instance of a singleTransactionAddressNonceHandler
-func NewSingleTransactionAddressNonceHandler(proxy Proxy, address erdgoCore.AddressHandler) (*singleTransactionAddressNonceHandler, error) {
+func NewSingleTransactionAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) (*singleTransactionAddressNonceHandler, error) {
 	if check.IfNil(proxy) {
-		return nil, ErrNilProxy
+		return nil, interactors.ErrNilProxy
 	}
 	if check.IfNil(address) {
-		return nil, ErrNilAddress
+		return nil, interactors.ErrNilAddress
 	}
 	return &singleTransactionAddressNonceHandler{
 		address: address,
