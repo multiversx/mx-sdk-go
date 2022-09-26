@@ -22,15 +22,12 @@ import (
 // having a function that sweeps the map in order to resend a transaction or remove them
 // because they were executed. This struct is concurrent safe.
 type addressNonceHandler struct {
-	mut                    sync.RWMutex
-	address                erdgoCore.AddressHandler
-	proxy                  interactors.Proxy
-	computedNonceWasSet    bool
-	computedNonce          uint64
-	lowestNonce            uint64
-	gasPrice               uint64
-	nonceUntilGasIncreased uint64
-	transactions           map[uint64]*data.Transaction
+	mut                 sync.RWMutex
+	address             erdgoCore.AddressHandler
+	proxy               interactors.Proxy
+	computedNonceWasSet bool
+	computedNonce       uint64
+	transactions        map[uint64]*data.Transaction
 }
 
 func newAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) *addressNonceHandler {
