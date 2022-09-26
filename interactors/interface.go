@@ -31,7 +31,7 @@ type AddressNonceHandler interface {
 	DropTransactions()
 }
 
-// TransactionNonceHandlerV1 is able to handle the
+// TransactionNonceHandlerV1 defines the component able to manage transaction nonces
 type TransactionNonceHandlerV1 interface {
 	GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error)
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
@@ -40,7 +40,7 @@ type TransactionNonceHandlerV1 interface {
 	IsInterfaceNil() bool
 }
 
-// TransactionNonceHandlerV2 is able to handle the
+// TransactionNonceHandlerV2 defines the component able to apply nonce for a given ArgCreateTransaction
 type TransactionNonceHandlerV2 interface {
 	ApplyNonce(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
