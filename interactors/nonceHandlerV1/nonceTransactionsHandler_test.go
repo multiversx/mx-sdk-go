@@ -388,7 +388,7 @@ func TestNonceTransactionsHandler_SendDuplicateTransactions(t *testing.T) {
 	}
 	_, err = nth.SendTransaction(context.Background(), tx)
 	require.Nil(t, err)
-	acc := nth.GetOrCreateAddressNonceHandler(testAddress)
+	acc := nth.getOrCreateAddressNonceHandler(testAddress)
 	t.Run("after sending first tx, nonce shall increase", func(t *testing.T) {
 		require.Equal(t, acc.computedNonce+1, currentNonce)
 	})
