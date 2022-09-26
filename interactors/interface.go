@@ -22,3 +22,11 @@ type TxBuilder interface {
 	ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
 	IsInterfaceNil() bool
 }
+
+// AddressNonceHandler defines the component able to handler address nonces
+type AddressNonceHandler interface {
+	ApplyNonce(ctx context.Context, txArgs *data.ArgCreateTransaction) error
+	ReSendTransactionsIfRequired(ctx context.Context) error
+	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
+	DropTransactions()
+}
