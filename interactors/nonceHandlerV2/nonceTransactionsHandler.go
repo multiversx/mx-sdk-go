@@ -86,8 +86,7 @@ func (nth *nonceTransactionsHandler) getAddressNonceHandler(address core.Address
 	nth.mutHandlers.RLock()
 	defer nth.mutHandlers.RUnlock()
 
-	addressAsString := string(address.AddressBytes())
-	anh, found := nth.handlers[addressAsString]
+	anh, found := nth.handlers[string(address.AddressBytes())]
 	if found {
 		return anh
 	}
