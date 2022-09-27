@@ -1,4 +1,4 @@
-package interactors
+package nonceHandlerV2
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
 //TODO EN-13182: create a baseAddressNonceHandler component that can remove the duplicate code as much as possible from the
@@ -24,7 +25,7 @@ import (
 type addressNonceHandler struct {
 	mut                    sync.RWMutex
 	address                erdgoCore.AddressHandler
-	proxy                  Proxy
+	proxy                  interactors.Proxy
 	computedNonceWasSet    bool
 	computedNonce          uint64
 	lowestNonce            uint64
@@ -34,12 +35,12 @@ type addressNonceHandler struct {
 }
 
 // NewAddressNonceHandler returns a new instance of a addressNonceHandler
-func NewAddressNonceHandler(proxy Proxy, address erdgoCore.AddressHandler) (*addressNonceHandler, error) {
+func NewAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) (*addressNonceHandler, error) {
 	if check.IfNil(proxy) {
-		return nil, ErrNilProxy
+		return nil, interactors.ErrNilProxy
 	}
 	if check.IfNil(address) {
-		return nil, ErrNilAddress
+		return nil, interactors.ErrNilAddress
 	}
 	return &addressNonceHandler{
 		address:      address,
@@ -78,7 +79,7 @@ func (anh *addressNonceHandler) handleTxAlreadyExists(oldTx *data.Transaction, t
 		return nil
 	}
 
-	return ErrTxAlreadySent
+	return interactors.ErrTxAlreadySent
 }
 
 func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context, nonce uint64) {
@@ -103,7 +104,7 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 	}
 
 	if anh.lowestNonce > account.Nonce {
-		return account.Nonce, ErrGapNonce
+		return account.Nonce, interactors.ErrGapNonce
 	}
 
 	anh.mut.Lock()

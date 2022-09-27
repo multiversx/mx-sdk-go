@@ -1,4 +1,4 @@
-package interactors
+package nonceHandlerV2
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,14 +21,14 @@ func TestSingleTransactionAddressNonceHandler_NewSingleTransactionAddressNonceHa
 
 		anh, err := NewSingleTransactionAddressNonceHandler(nil, nil)
 		assert.Nil(t, anh)
-		assert.Equal(t, ErrNilProxy, err)
+		assert.Equal(t, interactors.ErrNilProxy, err)
 	})
 	t.Run("nil addressHandler", func(t *testing.T) {
 		t.Parallel()
 
 		anh, err := NewSingleTransactionAddressNonceHandler(&testsCommon.ProxyStub{}, nil)
 		assert.Nil(t, anh)
-		assert.Equal(t, ErrNilAddress, err)
+		assert.Equal(t, interactors.ErrNilAddress, err)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()

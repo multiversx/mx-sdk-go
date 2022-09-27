@@ -23,6 +23,9 @@ var ErrInvalidPemFile = errors.New("invalid .PEM file")
 // ErrNilAddress signals that the provided address is nil
 var ErrNilAddress = errors.New("nil address")
 
+// ErrNilArgCreateTransaction signals that the provided ArgCreateTransaction is nil
+var ErrNilArgCreateTransaction = errors.New("nil ArgCreateTransaction")
+
 // ErrNilTransaction signals that provided transaction is nil
 var ErrNilTransaction = errors.New("nil transaction")
 

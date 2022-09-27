@@ -1,4 +1,4 @@
-package interactors
+package nonceHandlerV2
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,14 +25,14 @@ func TestAddressNonceHandler_NewAddressNonceHandler(t *testing.T) {
 
 		anh, err := NewAddressNonceHandler(nil, nil)
 		assert.Nil(t, anh)
-		assert.Equal(t, ErrNilProxy, err)
+		assert.Equal(t, interactors.ErrNilProxy, err)
 	})
 	t.Run("nil addressHandler", func(t *testing.T) {
 		t.Parallel()
 
 		anh, err := NewAddressNonceHandler(&testsCommon.ProxyStub{}, nil)
 		assert.Nil(t, anh)
-		assert.Equal(t, ErrNilAddress, err)
+		assert.Equal(t, interactors.ErrNilAddress, err)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
@@ -61,7 +62,7 @@ func TestAddressNonceHandler_ApplyNonce(t *testing.T) {
 
 		anh.gasPrice = txArgs.GasPrice
 		err = anh.ApplyNonce(context.Background(), &txArgs)
-		require.Equal(t, ErrTxAlreadySent, err)
+		require.Equal(t, interactors.ErrTxAlreadySent, err)
 	})
 	t.Run("tx already sent; oldTx.GasPrice < txArgs.GasPrice", func(t *testing.T) {
 		t.Parallel()
@@ -127,7 +128,7 @@ func TestAddressNonceHandler_getNonceUpdatingCurrent(t *testing.T) {
 		anh.lowestNonce = blockchainNonce + 1
 
 		nonce, err := anh.getNonceUpdatingCurrent(context.Background())
-		require.Equal(t, ErrGapNonce, err)
+		require.Equal(t, interactors.ErrGapNonce, err)
 		require.Equal(t, nonce, blockchainNonce)
 	})
 	t.Run("when computedNonce already set, getNonceUpdatingCurrent shall increase it", func(t *testing.T) {

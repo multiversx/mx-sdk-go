@@ -1,4 +1,4 @@
-package interactors
+package nonceHandlerV2
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
 type singleTransactionAddressNonceHandler struct {
@@ -16,16 +17,16 @@ type singleTransactionAddressNonceHandler struct {
 	transaction            *data.Transaction
 	gasPrice               uint64
 	nonceUntilGasIncreased uint64
-	proxy                  Proxy
+	proxy                  interactors.Proxy
 }
 
 // NewSingleTransactionAddressNonceHandler returns a new instance of a singleTransactionAddressNonceHandler
-func NewSingleTransactionAddressNonceHandler(proxy Proxy, address erdgoCore.AddressHandler) (*singleTransactionAddressNonceHandler, error) {
+func NewSingleTransactionAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) (*singleTransactionAddressNonceHandler, error) {
 	if check.IfNil(proxy) {
-		return nil, ErrNilProxy
+		return nil, interactors.ErrNilProxy
 	}
 	if check.IfNil(address) {
-		return nil, ErrNilAddress
+		return nil, interactors.ErrNilAddress
 	}
 	return &singleTransactionAddressNonceHandler{
 		address: address,
