@@ -7,7 +7,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
-// NewAddressNonceHandler returns a new instance of a addressNonceHandler
+// NewAddressNonceHandlerWithPrivateAccess -
 func NewAddressNonceHandlerWithPrivateAccess(proxy interactors.Proxy, address erdgoCore.AddressHandler) (*addressNonceHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, interactors.ErrNilProxy
