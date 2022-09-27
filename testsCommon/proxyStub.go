@@ -26,6 +26,7 @@ type ProxyStub struct {
 	GetNetworkStatusCalled            func(ctx context.Context, shardID uint32) (*data.NetworkStatus, error)
 	GetShardOfAddressCalled           func(ctx context.Context, bech32Address string) (uint32, error)
 	GetRestAPIEntityTypeCalled        func() erdgoCore.RestAPIEntityType
+	GetGuardianDataCalled             func(ctx context.Context, address erdgoCore.AddressHandler) (*data.GuardianData, error)
 }
 
 // ExecuteVMQuery -
@@ -168,6 +169,15 @@ func (stub *ProxyStub) GetRestAPIEntityType() erdgoCore.RestAPIEntityType {
 	}
 
 	return ""
+}
+
+// GetGuardianData -
+func (stub *ProxyStub) GetGuardianData(ctx context.Context, address erdgoCore.AddressHandler) (*data.GuardianData, error) {
+	if stub.GetGuardianDataCalled != nil {
+		return stub.GetGuardianDataCalled(ctx, address)
+	}
+
+	return &data.GuardianData{}, nil
 }
 
 // IsInterfaceNil -

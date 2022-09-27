@@ -3,8 +3,8 @@ module github.com/ElrondNetwork/elrond-sdk-erdgo
 go 1.14
 
 require (
-	github.com/ElrondNetwork/elrond-go v1.3.38-0.20220901083346-925f26245a35
-	github.com/ElrondNetwork/elrond-go-core v1.1.20-0.20220901061429-fc1143a4a107
+	github.com/ElrondNetwork/elrond-go v1.3.38-0.20220912122303-9c2574322163
+	github.com/ElrondNetwork/elrond-go-core v1.1.20-0.20220912122639-a040477c8cb7
 	github.com/ElrondNetwork/elrond-go-crypto v1.0.1
 	github.com/ElrondNetwork/elrond-go-logger v1.0.7
 	github.com/ElrondNetwork/elrond-vm-common v1.3.16-0.20220830135147-b69441f225cb

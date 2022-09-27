@@ -45,6 +45,7 @@ type EndpointProvider interface {
 	GetRawBlockByHash(shardID uint32, hexHash string) string
 	GetRawBlockByNonce(shardID uint32, nonce uint64) string
 	GetRawMiniBlockByHash(shardID uint32, hexHash string, epoch uint32) string
+	GetGuardianData(address string) string
 	GetRestAPIEntityType() core.RestAPIEntityType
 	IsInterfaceNil() bool
 }

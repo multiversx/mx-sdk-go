@@ -179,18 +179,18 @@ func (ep *elrondProxy) GetDefaultTransactionArguments(
 	}
 
 	return data.ArgCreateTransaction{
-		Nonce:             account.Nonce,
-		Value:             "",
-		RcvAddr:           "",
-		SndAddr:           address.AddressAsBech32String(),
-		GasPrice:          networkConfigs.MinGasPrice,
-		GasLimit:          networkConfigs.MinGasLimit,
-		Data:              nil,
-		Signature:         "",
-		ChainID:           networkConfigs.ChainID,
-		Version:           networkConfigs.MinTransactionVersion,
-		Options:           0,
-		AvailableBalance:  account.Balance,
+		Nonce:            account.Nonce,
+		Value:            "",
+		RcvAddr:          "",
+		SndAddr:          address.AddressAsBech32String(),
+		GasPrice:         networkConfigs.MinGasPrice,
+		GasLimit:         networkConfigs.MinGasLimit,
+		Data:             nil,
+		Signature:        "",
+		ChainID:          networkConfigs.ChainID,
+		Version:          networkConfigs.MinTransactionVersion,
+		Options:          0,
+		AvailableBalance: account.Balance,
 	}, nil
 }
 
@@ -537,6 +537,37 @@ func (ep *elrondProxy) GetGenesisNodesPubKeys(ctx context.Context) (*data.Genesi
 	}
 
 	return response.Data.Nodes, nil
+}
+
+// GetGuardianData retrieves guardian data from proxy
+func (ep *elrondProxy) GetGuardianData(ctx context.Context, address erdgoCore.AddressHandler) (*data.GuardianData, error) {
+	err := ep.checkFinalState(ctx, address.AddressAsBech32String())
+	if err != nil {
+		return nil, err
+	}
+	if check.IfNil(address) {
+		return nil, ErrNilAddress
+	}
+	if !address.IsValid() {
+		return nil, ErrInvalidAddress
+	}
+
+	endpoint := ep.endpointProvider.GetGuardianData(address.AddressAsBech32String())
+	buff, code, err := ep.GetHTTP(ctx, endpoint)
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	response := &data.GuardianDataResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.GuardianData, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

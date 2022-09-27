@@ -609,3 +609,37 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 
 	require.Equal(t, expectedGenesisNodes, response)
 }
+
+func TestElrondProxy_GetGuardianData(t *testing.T) {
+	t.Parallel()
+
+	expectedGuardianData := &data.GuardianData{
+		ActiveGuardian: &data.Guardian{
+			Address:         "active guardian",
+			ActivationEpoch: 100,
+		},
+		PendingGuardian: &data.Guardian{
+			Address:         "pending guardian",
+			ActivationEpoch: 200,
+		},
+		Frozen: false,
+	}
+	guardianDataResponse := &data.GuardianDataResponse{
+		Data: struct {
+			GuardianData *data.GuardianData `json:"guardianData"`
+		}{
+			GuardianData: expectedGuardianData,
+		},
+	}
+	guardianDataResponseBytes, _ := json.Marshal(guardianDataResponse)
+
+	httpClient := createMockClientRespondingBytes(guardianDataResponseBytes)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, _ := NewElrondProxy(args)
+
+	address, _ := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
+	response, err := ep.GetGuardianData(context.Background(), address)
+	require.Nil(t, err)
+
+	require.Equal(t, expectedGuardianData, response)
+}
