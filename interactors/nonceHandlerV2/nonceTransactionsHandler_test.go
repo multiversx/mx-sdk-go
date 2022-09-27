@@ -29,7 +29,7 @@ func TestNewNonceTransactionHandlerV2(t *testing.T) {
 		require.Nil(t, nth)
 		assert.Equal(t, interactors.ErrNilProxy, err)
 	})
-	t.Run("nil AddressNonceHandlerCreator", func(t *testing.T) {
+	t.Run("nil addressNonceHandlerCreator", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNonceTransactionsHandlerV2()

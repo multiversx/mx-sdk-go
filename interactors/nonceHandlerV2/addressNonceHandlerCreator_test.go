@@ -13,7 +13,7 @@ import (
 func TestAddressNonceHandlerCreator_Create(t *testing.T) {
 	t.Parallel()
 
-	creator := AddressNonceHandlerCreator{}
+	creator := addressNonceHandlerCreator{}
 	require.False(t, creator.IsInterfaceNil())
 	pubkey := make([]byte, 32)
 	_, _ = rand.Read(pubkey)
