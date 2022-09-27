@@ -13,7 +13,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
-	interactors2 "github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon/interactors"
+	testsInteractors "github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon/interactors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -533,7 +533,7 @@ func createMockArgsNonceTransactionsHandlerV2() ArgsNonceTransactionsHandlerV2 {
 	return ArgsNonceTransactionsHandlerV2{
 		Proxy:            &testsCommon.ProxyStub{},
 		IntervalToResend: time.Second * 2,
-		Creator: &interactors2.AddressNonceHandlerCreatorStub{
+		Creator: &testsInteractors.AddressNonceHandlerCreatorStub{
 			CreateCalled: func(proxy interactors.Proxy, address core.AddressHandler) (interactors.AddressNonceHandler, error) {
 				return NewAddressNonceHandler(proxy, address)
 			},
