@@ -5,7 +5,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
-//AddressNonceHandlerCreator is used to create addressNonceHandler instances
+// AddressNonceHandlerCreator is used to create addressNonceHandler instances
 type AddressNonceHandlerCreator struct{}
 
 // Create will create

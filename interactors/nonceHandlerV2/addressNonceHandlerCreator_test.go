@@ -11,6 +11,8 @@ import (
 )
 
 func TestAddressNonceHandlerCreator_Create(t *testing.T) {
+	t.Parallel()
+
 	creator := AddressNonceHandlerCreator{}
 	require.False(t, creator.IsInterfaceNil())
 	pubkey := make([]byte, 32)

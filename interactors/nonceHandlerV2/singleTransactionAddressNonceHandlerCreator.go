@@ -5,15 +5,15 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
-//SingleTransactionAddressNonceHandlerCreator is used to create singleTransactionAddressNonceHandler instances
-type SingleTransactionAddressNonceHandlerCreator struct{}
+// singleTransactionAddressNonceHandlerCreator is used to create singleTransactionAddressNonceHandler instances
+type singleTransactionAddressNonceHandlerCreator struct{}
 
 // Create will create
-func (anhc *SingleTransactionAddressNonceHandlerCreator) Create(proxy interactors.Proxy, address core.AddressHandler) (interactors.AddressNonceHandler, error) {
+func (anhc *singleTransactionAddressNonceHandlerCreator) Create(proxy interactors.Proxy, address core.AddressHandler) (interactors.AddressNonceHandler, error) {
 	return NewSingleTransactionAddressNonceHandler(proxy, address)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (anhc *SingleTransactionAddressNonceHandlerCreator) IsInterfaceNil() bool {
+func (anhc *singleTransactionAddressNonceHandlerCreator) IsInterfaceNil() bool {
 	return anhc == nil
 }
