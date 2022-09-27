@@ -1,4 +1,4 @@
-package interactors
+package nonceHandlerV1
 
 import (
 	"context"
@@ -11,24 +11,25 @@ import (
 
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewNonceTransactionHandler(t *testing.T) {
+func TestNewNonceTransactionHandlerV1(t *testing.T) {
 	t.Parallel()
 
-	nth, err := NewNonceTransactionHandler(nil, time.Minute, false)
+	nth, err := NewNonceTransactionHandlerV1(nil, time.Minute, false)
 	require.Nil(t, nth)
-	assert.Equal(t, ErrNilProxy, err)
+	assert.Equal(t, interactors.ErrNilProxy, err)
 
-	nth, err = NewNonceTransactionHandler(&testsCommon.ProxyStub{}, time.Second-time.Nanosecond, false)
+	nth, err = NewNonceTransactionHandlerV1(&testsCommon.ProxyStub{}, time.Second-time.Nanosecond, false)
 	require.Nil(t, nth)
-	assert.True(t, errors.Is(err, ErrInvalidValue))
-	assert.True(t, strings.Contains(err.Error(), "for intervalToResend in NewNonceTransactionHandler"))
+	assert.True(t, errors.Is(err, interactors.ErrInvalidValue))
+	assert.True(t, strings.Contains(err.Error(), "for intervalToResend in NewNonceTransactionHandlerV1"))
 
-	nth, err = NewNonceTransactionHandler(&testsCommon.ProxyStub{}, time.Minute, false)
+	nth, err = NewNonceTransactionHandlerV1(&testsCommon.ProxyStub{}, time.Minute, false)
 	require.NotNil(t, nth)
 	require.Nil(t, err)
 
@@ -56,9 +57,9 @@ func TestNonceTransactionsHandler_GetNonce(t *testing.T) {
 		},
 	}
 
-	nth, _ := NewNonceTransactionHandler(proxy, time.Minute, false)
+	nth, _ := NewNonceTransactionHandlerV1(proxy, time.Minute, false)
 	nonce, err := nth.GetNonce(context.Background(), nil)
-	assert.Equal(t, ErrNilAddress, err)
+	assert.Equal(t, interactors.ErrNilAddress, err)
 	assert.Equal(t, uint64(0), nonce)
 
 	nonce, err = nth.GetNonce(context.Background(), testAddress)
@@ -115,7 +116,7 @@ func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingOn
 	}
 
 	numTxs := 5
-	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2, false)
+	nth, _ := NewNonceTransactionHandlerV1(proxy, time.Second*2, false)
 	txs := createMockTransactions(testAddress, numTxs, atomic.LoadUint64(&currentNonce))
 	for i := 0; i < numTxs; i++ {
 		_, err := nth.SendTransaction(context.TODO(), txs[i])
@@ -168,7 +169,7 @@ func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingAl
 	}
 
 	numTxs := 5
-	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2, false)
+	nth, _ := NewNonceTransactionHandlerV1(proxy, time.Second*2, false)
 	txs := createMockTransactions(testAddress, numTxs, atomic.LoadUint64(&currentNonce))
 	for i := 0; i < numTxs; i++ {
 		_, err := nth.SendTransaction(context.Background(), txs[i])
@@ -218,7 +219,7 @@ func TestNonceTransactionsHandler_SendTransactionResendingEliminatingAll(t *test
 	}
 
 	numTxs := 1
-	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2, false)
+	nth, _ := NewNonceTransactionHandlerV1(proxy, time.Second*2, false)
 	txs := createMockTransactions(testAddress, numTxs, atomic.LoadUint64(&currentNonce))
 
 	hash, err := nth.SendTransaction(context.Background(), txs[0])
@@ -260,11 +261,11 @@ func TestNonceTransactionsHandler_SendTransactionErrors(t *testing.T) {
 	}
 
 	numTxs := 1
-	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2, false)
+	nth, _ := NewNonceTransactionHandlerV1(proxy, time.Second*2, false)
 	txs := createMockTransactions(testAddress, numTxs, atomic.LoadUint64(&currentNonce))
 
 	hash, err := nth.SendTransaction(context.Background(), nil)
-	require.Equal(t, ErrNilTransaction, err)
+	require.Equal(t, interactors.ErrNilTransaction, err)
 	require.Equal(t, "", hash)
 
 	errSent = errors.New("expected error")
@@ -328,7 +329,7 @@ func TestNonceTransactionsHandler_SendTransactionsWithGetNonce(t *testing.T) {
 	}
 
 	numTxs := 5
-	nth, _ := NewNonceTransactionHandler(proxy, time.Second*2, false)
+	nth, _ := NewNonceTransactionHandlerV1(proxy, time.Second*2, false)
 	txs := createMockTransactionsWithGetNonce(t, testAddress, 5, nth)
 	for i := 0; i < numTxs; i++ {
 		_, err := nth.SendTransaction(context.Background(), txs[i])
@@ -369,7 +370,7 @@ func TestNonceTransactionsHandler_SendDuplicateTransactions(t *testing.T) {
 		},
 	}
 
-	nth, _ := NewNonceTransactionHandler(proxy, time.Second*60, true)
+	nth, _ := NewNonceTransactionHandlerV1(proxy, time.Second*60, true)
 
 	nonce, err := nth.GetNonce(context.Background(), testAddress)
 	require.Nil(t, err)
@@ -395,7 +396,7 @@ func TestNonceTransactionsHandler_SendDuplicateTransactions(t *testing.T) {
 		"and computedNonce shall not increase", func(t *testing.T) {
 		nonce, err = nth.GetNonce(context.Background(), testAddress)
 		_, err = nth.SendTransaction(context.Background(), tx)
-		require.Equal(t, err, ErrTxAlreadySent)
+		require.Equal(t, err, interactors.ErrTxAlreadySent)
 		require.Equal(t, nonce, currentNonce)
 		require.Equal(t, acc.computedNonce+1, currentNonce)
 	})
@@ -406,7 +407,7 @@ func createMockTransactionsWithGetNonce(
 	tb testing.TB,
 	addr core.AddressHandler,
 	numTxs int,
-	nth *nonceTransactionsHandler,
+	nth interactors.TransactionNonceHandlerV1,
 ) []*data.Transaction {
 	txs := make([]*data.Transaction, 0, numTxs)
 	for i := 0; i < numTxs; i++ {
@@ -450,7 +451,7 @@ func TestNonceTransactionsHandler_ForceNonceReFetch(t *testing.T) {
 		},
 	}
 
-	nth, _ := NewNonceTransactionHandler(proxy, time.Minute, false)
+	nth, _ := NewNonceTransactionHandlerV1(proxy, time.Minute, false)
 	_, _ = nth.GetNonce(context.Background(), testAddress)
 	_, _ = nth.GetNonce(context.Background(), testAddress)
 	newNonce, err := nth.GetNonce(context.Background(), testAddress)
@@ -458,7 +459,7 @@ func TestNonceTransactionsHandler_ForceNonceReFetch(t *testing.T) {
 	assert.Equal(t, atomic.LoadUint64(&currentNonce)+2, newNonce)
 
 	err = nth.ForceNonceReFetch(nil)
-	assert.Equal(t, ErrNilAddress, err)
+	assert.Equal(t, err, interactors.ErrNilAddress, err)
 
 	err = nth.ForceNonceReFetch(testAddress)
 	assert.Nil(t, err)

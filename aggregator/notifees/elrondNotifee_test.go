@@ -27,7 +27,7 @@ func createMockArgsElrondNotifee() ArgsElrondNotifee {
 	return ArgsElrondNotifee{
 		Proxy:           &testsCommon.ProxyStub{},
 		TxBuilder:       &testsCommon.TxBuilderStub{},
-		TxNonceHandler:  &testsCommon.TxNonceHandlerStub{},
+		TxNonceHandler:  &testsCommon.TxNonceHandlerV2Stub{},
 		ContractAddress: data.NewAddressFromBytes(bytes.Repeat([]byte{1}, 32)),
 		PrivateKey:      &testsCommon.PrivateKeyStub{},
 		BaseGasLimit:    1,
@@ -54,7 +54,7 @@ func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
 	return ArgsElrondNotifee{
 		Proxy:           proxy,
 		TxBuilder:       txBuilder,
-		TxNonceHandler:  &testsCommon.TxNonceHandlerStub{},
+		TxNonceHandler:  &testsCommon.TxNonceHandlerV2Stub{},
 		ContractAddress: data.NewAddressFromBytes(bytes.Repeat([]byte{1}, 32)),
 		PrivateKey:      sk,
 		BaseGasLimit:    2000,
@@ -217,9 +217,9 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 0, expectedErr
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				return expectedErr
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -238,9 +238,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -266,9 +267,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 				return nil, expectedErr
 			},
 		}
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -288,9 +290,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -315,9 +318,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				return "", expectedErr
@@ -337,9 +341,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		priceChanges := createMockPriceChanges()
 		sentWasCalled := false
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				txDataStrings := []string{

@@ -105,11 +105,6 @@ func checkArgsElrondNotifee(args ArgsElrondNotifee) error {
 // PriceChanged is the function that gets called by a price notifier. This function will assemble an Elrond
 // transaction, having the transaction's data field containing all the price changes information
 func (en *elrondNotifee) PriceChanged(ctx context.Context, priceChanges []*aggregator.ArgsPriceChanged) error {
-	nonce, err := en.txNonceHandler.GetNonce(ctx, en.selfAddress)
-	if err != nil {
-		return err
-	}
-
 	txData, err := en.prepareTxData(priceChanges)
 	if err != nil {
 		return err
@@ -122,7 +117,6 @@ func (en *elrondNotifee) PriceChanged(ctx context.Context, priceChanges []*aggre
 
 	gasLimit := en.baseGasLimit + uint64(len(priceChanges))*en.gasLimitForEach
 	txArgs := data.ArgCreateTransaction{
-		Nonce:    nonce,
 		Value:    zeroString,
 		RcvAddr:  en.contractAddress.AddressAsBech32String(),
 		GasPrice: networkConfigs.MinGasPrice,
@@ -130,6 +124,11 @@ func (en *elrondNotifee) PriceChanged(ctx context.Context, priceChanges []*aggre
 		Data:     txData,
 		ChainID:  networkConfigs.ChainID,
 		Version:  txVersion,
+	}
+
+	err = en.txNonceHandler.ApplyNonce(ctx, en.selfAddress, &txArgs)
+	if err != nil {
+		return err
 	}
 
 	tx, err := en.txBuilder.ApplySignatureAndGenerateTx(en.skBytes, txArgs)

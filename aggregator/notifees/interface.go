@@ -23,9 +23,9 @@ type Proxy interface {
 	IsInterfaceNil() bool
 }
 
-// TransactionNonceHandler is able to handle the
+// TransactionNonceHandler defines the component able to apply nonce for a given ArgCreateTransaction
 type TransactionNonceHandler interface {
-	GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error)
+	ApplyNonce(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	IsInterfaceNil() bool
 }
