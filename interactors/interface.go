@@ -29,6 +29,7 @@ type AddressNonceHandler interface {
 	ReSendTransactionsIfRequired(ctx context.Context) error
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	DropTransactions()
+	IsInterfaceNil() bool
 }
 
 // TransactionNonceHandlerV1 defines the component able to manage transaction nonces

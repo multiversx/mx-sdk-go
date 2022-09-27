@@ -35,7 +35,7 @@ type addressNonceHandler struct {
 }
 
 // NewAddressNonceHandler returns a new instance of a addressNonceHandler
-func NewAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) (*addressNonceHandler, error) {
+func NewAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) (interactors.AddressNonceHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, interactors.ErrNilProxy
 	}

@@ -17,6 +17,13 @@ const minimumIntervalToResend = time.Second
 
 var log = logger.GetOrCreate("elrond-sdk-erdgo/interactors/nonceHandlerV2")
 
+// ArgsNonceTransactionsHandlerV2 is the argument DTO for a pair
+type ArgsNonceTransactionsHandlerV2 struct {
+	Proxy                         interactors.Proxy
+	IntervalToResend              time.Duration
+	CreateAddressNonceHandlerFunc func(proxy interactors.Proxy, address core.AddressHandler) (interactors.AddressNonceHandler, error)
+}
+
 // nonceTransactionsHandlerV2 is the handler used for an unlimited number of addresses.
 // It basically contains a map of addressNonceHandler, creating new entries on the first
 // access of a provided address. This struct delegates all the operations on the right
@@ -28,30 +35,36 @@ var log = logger.GetOrCreate("elrond-sdk-erdgo/interactors/nonceHandlerV2")
 type nonceTransactionsHandlerV2 struct {
 	proxy            interactors.Proxy
 	mutHandlers      sync.RWMutex
-	handlers         map[string]*addressNonceHandler
+	handlers         map[string]interactors.AddressNonceHandler
 	cancelFunc       func()
 	intervalToResend time.Duration
+
+	createAddressNonceHandlerFunc func(proxy interactors.Proxy, address core.AddressHandler) (interactors.AddressNonceHandler, error)
 }
 
 // NewNonceTransactionHandlerV2 will create a new instance of the nonceTransactionsHandlerV2. It requires a Proxy implementation
 // and an interval at which the transactions sent are rechecked and eventually, resent.
-func NewNonceTransactionHandlerV2(proxy interactors.Proxy, intervalToResend time.Duration) (*nonceTransactionsHandlerV2, error) {
-	if check.IfNil(proxy) {
+func NewNonceTransactionHandlerV2(args ArgsNonceTransactionsHandlerV2) (*nonceTransactionsHandlerV2, error) {
+	if check.IfNil(args.Proxy) {
 		return nil, interactors.ErrNilProxy
 	}
-	if intervalToResend < minimumIntervalToResend {
+	if args.IntervalToResend < minimumIntervalToResend {
 		return nil, fmt.Errorf("%w for intervalToResend in NewNonceTransactionHandlerV2", interactors.ErrInvalidValue)
+	}
+	if args.CreateAddressNonceHandlerFunc == nil {
+		return nil, interactors.ErrNilAddressNonceHandlerConstructorFunc
 	}
 
 	nth := &nonceTransactionsHandlerV2{
-		proxy:            proxy,
-		handlers:         make(map[string]*addressNonceHandler),
-		intervalToResend: intervalToResend,
+		proxy:                         args.Proxy,
+		handlers:                      make(map[string]interactors.AddressNonceHandler),
+		intervalToResend:              args.IntervalToResend,
+		createAddressNonceHandlerFunc: args.CreateAddressNonceHandlerFunc,
 	}
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	nth.cancelFunc = cancelFunc
-	go nth.resendTransactionsLoop(ctx, intervalToResend)
+	go nth.resendTransactionsLoop(ctx, args.IntervalToResend)
 
 	return nth, nil
 }
@@ -73,7 +86,7 @@ func (nth *nonceTransactionsHandlerV2) ApplyNonce(ctx context.Context, address c
 	return anh.ApplyNonce(ctx, txArgs)
 }
 
-func (nth *nonceTransactionsHandlerV2) getOrCreateAddressNonceHandler(address core.AddressHandler) (*addressNonceHandler, error) {
+func (nth *nonceTransactionsHandlerV2) getOrCreateAddressNonceHandler(address core.AddressHandler) (interactors.AddressNonceHandler, error) {
 	anh := nth.getAddressNonceHandler(address)
 	if !check.IfNil(anh) {
 		return anh, nil
@@ -82,7 +95,7 @@ func (nth *nonceTransactionsHandlerV2) getOrCreateAddressNonceHandler(address co
 	return nth.createAddressNonceHandler(address)
 }
 
-func (nth *nonceTransactionsHandlerV2) getAddressNonceHandler(address core.AddressHandler) *addressNonceHandler {
+func (nth *nonceTransactionsHandlerV2) getAddressNonceHandler(address core.AddressHandler) interactors.AddressNonceHandler {
 	nth.mutHandlers.RLock()
 	defer nth.mutHandlers.RUnlock()
 
@@ -93,7 +106,7 @@ func (nth *nonceTransactionsHandlerV2) getAddressNonceHandler(address core.Addre
 	return nil
 }
 
-func (nth *nonceTransactionsHandlerV2) createAddressNonceHandler(address core.AddressHandler) (*addressNonceHandler, error) {
+func (nth *nonceTransactionsHandlerV2) createAddressNonceHandler(address core.AddressHandler) (interactors.AddressNonceHandler, error) {
 	nth.mutHandlers.Lock()
 	defer nth.mutHandlers.Unlock()
 
@@ -102,7 +115,7 @@ func (nth *nonceTransactionsHandlerV2) createAddressNonceHandler(address core.Ad
 	if found {
 		return anh, nil
 	}
-	anh, err := NewAddressNonceHandler(nth.proxy, address)
+	anh, err := nth.createAddressNonceHandlerFunc(nth.proxy, address)
 	if err != nil {
 		return nil, err
 	}
