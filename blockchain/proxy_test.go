@@ -15,6 +15,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data/api"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	erdgoHttp "github.com/ElrondNetwork/elrond-sdk-erdgo/core/http"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -613,12 +614,12 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 func TestElrondProxy_GetGuardianData(t *testing.T) {
 	t.Parallel()
 
-	expectedGuardianData := &data.GuardianData{
-		ActiveGuardian: &data.Guardian{
+	expectedGuardianData := &api.GuardianData{
+		ActiveGuardian: &api.Guardian{
 			Address:         "active guardian",
 			ActivationEpoch: 100,
 		},
-		PendingGuardian: &data.Guardian{
+		PendingGuardian: &api.Guardian{
 			Address:         "pending guardian",
 			ActivationEpoch: 200,
 		},
@@ -626,7 +627,7 @@ func TestElrondProxy_GetGuardianData(t *testing.T) {
 	}
 	guardianDataResponse := &data.GuardianDataResponse{
 		Data: struct {
-			GuardianData *data.GuardianData `json:"guardianData"`
+			GuardianData *api.GuardianData `json:"guardianData"`
 		}{
 			GuardianData: expectedGuardianData,
 		},

@@ -3,6 +3,7 @@ package blockchain
 import (
 	"context"
 
+	"github.com/ElrondNetwork/elrond-go-core/data/api"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -13,7 +14,7 @@ type Proxy interface {
 	GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error)
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	SendTransactions(ctx context.Context, txs []*data.Transaction) ([]string, error)
-	GetGuardianData(ctx context.Context, address core.AddressHandler) (*data.GuardianData, error)
+	GetGuardianData(ctx context.Context, address core.AddressHandler) (*api.GuardianData, error)
 	ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
 	IsInterfaceNil() bool
 }

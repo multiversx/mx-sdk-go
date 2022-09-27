@@ -4,6 +4,7 @@ import (
 	"context"
 
 	coreData "github.com/ElrondNetwork/elrond-go-core/data"
+	"github.com/ElrondNetwork/elrond-go-core/data/api"
 	"github.com/ElrondNetwork/elrond-go/state"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -20,7 +21,7 @@ type Proxy interface {
 	GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
 	GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error)
 	GetGenesisNodesPubKeys(ctx context.Context) (*data.GenesisNodes, error)
-	GetGuardianData(ctx context.Context, address erdgoCore.AddressHandler) (*data.GuardianData, error)
+	GetGuardianData(ctx context.Context, address erdgoCore.AddressHandler) (*api.GuardianData, error)
 	IsInterfaceNil() bool
 }
 

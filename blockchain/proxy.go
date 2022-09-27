@@ -11,6 +11,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data/api"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/factory"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	erdgoHttp "github.com/ElrondNetwork/elrond-sdk-erdgo/core/http"
@@ -540,7 +541,7 @@ func (ep *elrondProxy) GetGenesisNodesPubKeys(ctx context.Context) (*data.Genesi
 }
 
 // GetGuardianData retrieves guardian data from proxy
-func (ep *elrondProxy) GetGuardianData(ctx context.Context, address erdgoCore.AddressHandler) (*data.GuardianData, error) {
+func (ep *elrondProxy) GetGuardianData(ctx context.Context, address erdgoCore.AddressHandler) (*api.GuardianData, error) {
 	err := ep.checkFinalState(ctx, address.AddressAsBech32String())
 	if err != nil {
 		return nil, err
