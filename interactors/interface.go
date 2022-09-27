@@ -25,7 +25,7 @@ type TxBuilder interface {
 
 // AddressNonceHandler defines the component able to handler address nonces
 type AddressNonceHandler interface {
-	ApplyNonce(ctx context.Context, txArgs *data.ArgCreateTransaction) error
+	ApplyNonceAndGasPrice(ctx context.Context, txArgs *data.ArgCreateTransaction) error
 	ReSendTransactionsIfRequired(ctx context.Context) error
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	DropTransactions()
@@ -43,7 +43,7 @@ type TransactionNonceHandlerV1 interface {
 
 // TransactionNonceHandlerV2 defines the component able to apply nonce for a given ArgCreateTransaction
 type TransactionNonceHandlerV2 interface {
-	ApplyNonce(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
+	ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
 	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
 	Close() error
 	IsInterfaceNil() bool

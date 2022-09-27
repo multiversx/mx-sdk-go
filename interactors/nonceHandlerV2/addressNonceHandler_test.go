@@ -46,7 +46,7 @@ func TestAddressNonceHandler_NewAddressNonceHandlerWithPrivateAccess(t *testing.
 	})
 }
 
-func TestAddressNonceHandler_ApplyNonce(t *testing.T) {
+func TestAddressNonceHandler_ApplyNonceAndGasPrice(t *testing.T) {
 	t.Parallel()
 	t.Run("tx already sent; oldTx.GasPrice == txArgs.GasPrice == anh.gasPrice", func(t *testing.T) {
 		t.Parallel()
@@ -61,7 +61,7 @@ func TestAddressNonceHandler_ApplyNonce(t *testing.T) {
 		require.Nil(t, err)
 
 		anh.gasPrice = txArgs.GasPrice
-		err = anh.ApplyNonce(context.Background(), &txArgs)
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
 		require.Equal(t, interactors.ErrTxAlreadySent, err)
 	})
 	t.Run("tx already sent; oldTx.GasPrice < txArgs.GasPrice", func(t *testing.T) {
@@ -77,7 +77,7 @@ func TestAddressNonceHandler_ApplyNonce(t *testing.T) {
 		require.Nil(t, err)
 
 		anh.gasPrice = txArgs.GasPrice
-		err = anh.ApplyNonce(context.Background(), &txArgs)
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
 		require.Nil(t, err)
 	})
 	t.Run("oldTx.GasPrice == txArgs.GasPrice && oldTx.GasPrice < anh.gasPrice", func(t *testing.T) {
@@ -92,7 +92,7 @@ func TestAddressNonceHandler_ApplyNonce(t *testing.T) {
 		require.Nil(t, err)
 
 		anh.gasPrice = txArgs.GasPrice + 1
-		err = anh.ApplyNonce(context.Background(), &txArgs)
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
 		require.Nil(t, err)
 	})
 }
@@ -161,7 +161,7 @@ func TestAddressNonceHandler_getNonceUpdatingCurrent(t *testing.T) {
 		anh, _ := NewAddressNonceHandlerWithPrivateAccess(proxy, testAddress)
 		txArgs := createTxArgs()
 
-		err := anh.ApplyNonce(context.Background(), &txArgs)
+		err := anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
 		require.Equal(t, expectedErr, err)
 	})
 }
@@ -184,7 +184,7 @@ func TestAddressNonceHandler_DropTransactions(t *testing.T) {
 
 	anh, _ := NewAddressNonceHandlerWithPrivateAccess(proxy, testAddress)
 
-	err := anh.ApplyNonce(context.Background(), &txArgs)
+	err := anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
 	require.Nil(t, err)
 
 	tx := createTx(txArgs.GasPrice, txArgs)

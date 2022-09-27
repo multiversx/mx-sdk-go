@@ -36,7 +36,7 @@ func TestNewNonceTransactionHandlerV1(t *testing.T) {
 	require.Nil(t, nth.Close())
 }
 
-func TestNonceTransactionsHandler_GetNonce(t *testing.T) {
+func TestNonceTransactionsHandlerV1_GetNonce(t *testing.T) {
 	t.Parallel()
 
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
@@ -75,7 +75,7 @@ func TestNonceTransactionsHandler_GetNonce(t *testing.T) {
 	require.Nil(t, nth.Close())
 }
 
-func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingOne(t *testing.T) {
+func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminatingOne(t *testing.T) {
 	t.Parallel()
 
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
@@ -138,7 +138,7 @@ func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingOn
 	assert.Equal(t, numTxs-1, len(sentTransactions[numSentTransaction])) // resend
 }
 
-func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingAll(t *testing.T) {
+func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminatingAll(t *testing.T) {
 	t.Parallel()
 
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
@@ -188,7 +188,7 @@ func TestNonceTransactionsHandler_SendMultipleTransactionsResendingEliminatingAl
 	assert.Equal(t, 1, len(sentTransactions[0]))
 }
 
-func TestNonceTransactionsHandler_SendTransactionResendingEliminatingAll(t *testing.T) {
+func TestNonceTransactionsHandlerV1_SendTransactionResendingEliminatingAll(t *testing.T) {
 	t.Parallel()
 
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
@@ -238,7 +238,7 @@ func TestNonceTransactionsHandler_SendTransactionResendingEliminatingAll(t *test
 	assert.Equal(t, numTxs, len(sentTransactions[0]))
 }
 
-func TestNonceTransactionsHandler_SendTransactionErrors(t *testing.T) {
+func TestNonceTransactionsHandlerV1_SendTransactionErrors(t *testing.T) {
 	t.Parallel()
 
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
@@ -298,7 +298,7 @@ func createMockTransactions(addr core.AddressHandler, numTxs int, startNonce uin
 	return txs
 }
 
-func TestNonceTransactionsHandler_SendTransactionsWithGetNonce(t *testing.T) {
+func TestNonceTransactionsHandlerV1_SendTransactionsWithGetNonce(t *testing.T) {
 	t.Parallel()
 
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
@@ -348,7 +348,7 @@ func TestNonceTransactionsHandler_SendTransactionsWithGetNonce(t *testing.T) {
 	assert.Equal(t, 1, len(sentTransactions[0]))
 }
 
-func TestNonceTransactionsHandler_SendDuplicateTransactions(t *testing.T) {
+func TestNonceTransactionsHandlerV1_SendDuplicateTransactions(t *testing.T) {
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 
@@ -433,7 +433,7 @@ func createMockTransactionsWithGetNonce(
 	return txs
 }
 
-func TestNonceTransactionsHandler_ForceNonceReFetch(t *testing.T) {
+func TestNonceTransactionsHandlerV1_ForceNonceReFetch(t *testing.T) {
 	t.Parallel()
 
 	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")

@@ -126,7 +126,7 @@ func (en *elrondNotifee) PriceChanged(ctx context.Context, priceChanges []*aggre
 		Version:  txVersion,
 	}
 
-	err = en.txNonceHandler.ApplyNonce(ctx, en.selfAddress, &txArgs)
+	err = en.txNonceHandler.ApplyNonceAndGasPrice(ctx, en.selfAddress, &txArgs)
 	if err != nil {
 		return err
 	}

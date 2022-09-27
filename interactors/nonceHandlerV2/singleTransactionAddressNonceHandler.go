@@ -34,8 +34,8 @@ func NewSingleTransactionAddressNonceHandler(proxy interactors.Proxy, address er
 	}, nil
 }
 
-// ApplyNonce will apply the computed nonce to the given ArgCreateTransaction
-func (anh *singleTransactionAddressNonceHandler) ApplyNonce(ctx context.Context, txArgs *data.ArgCreateTransaction) error {
+// ApplyNonceAndGasPrice will apply the computed nonce to the given ArgCreateTransaction
+func (anh *singleTransactionAddressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txArgs *data.ArgCreateTransaction) error {
 	nonce, err := anh.getNonce(ctx)
 	if err != nil {
 		return err

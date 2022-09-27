@@ -63,13 +63,13 @@ func NewNonceTransactionHandlerV2(args ArgsNonceTransactionsHandlerV2) (*nonceTr
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	nth.cancelFunc = cancelFunc
-	go nth.resendTransactionsLoop(ctx, args.IntervalToResend)
+	go nth.resendTransactionsLoop(ctx)
 
 	return nth, nil
 }
 
-// ApplyNonce will apply the nonce to the given ArgCreateTransaction
-func (nth *nonceTransactionsHandlerV2) ApplyNonce(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+// ApplyNonceAndGasPrice will apply the nonce to the given ArgCreateTransaction
+func (nth *nonceTransactionsHandlerV2) ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 	if check.IfNil(address) {
 		return interactors.ErrNilAddress
 	}
@@ -82,7 +82,7 @@ func (nth *nonceTransactionsHandlerV2) ApplyNonce(ctx context.Context, address c
 		return err
 	}
 
-	return anh.ApplyNonce(ctx, txArgs)
+	return anh.ApplyNonceAndGasPrice(ctx, txArgs)
 }
 
 func (nth *nonceTransactionsHandlerV2) getOrCreateAddressNonceHandler(address core.AddressHandler) (interactors.AddressNonceHandler, error) {
@@ -148,12 +148,12 @@ func (nth *nonceTransactionsHandlerV2) SendTransaction(ctx context.Context, tx *
 	return sentHash, nil
 }
 
-func (nth *nonceTransactionsHandlerV2) resendTransactionsLoop(ctx context.Context, intervalToResend time.Duration) {
-	timer := time.NewTimer(intervalToResend)
+func (nth *nonceTransactionsHandlerV2) resendTransactionsLoop(ctx context.Context) {
+	timer := time.NewTimer(nth.intervalToResend)
 	defer timer.Stop()
 
 	for {
-		timer.Reset(intervalToResend)
+		timer.Reset(nth.intervalToResend)
 
 		select {
 		case <-timer.C:

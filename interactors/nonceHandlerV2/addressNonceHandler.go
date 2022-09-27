@@ -49,8 +49,8 @@ func NewAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHa
 	}, nil
 }
 
-// ApplyNonce will apply the computed nonce to the given ArgCreateTransaction
-func (anh *addressNonceHandler) ApplyNonce(ctx context.Context, txArgs *data.ArgCreateTransaction) error {
+// ApplyNonceAndGasPrice will apply the computed nonce to the given ArgCreateTransaction
+func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txArgs *data.ArgCreateTransaction) error {
 	oldTx, alreadyExists := anh.isTxAlreadySent(txArgs)
 	if alreadyExists {
 		err := anh.handleTxAlreadyExists(oldTx, txArgs)

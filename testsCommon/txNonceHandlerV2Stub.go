@@ -9,16 +9,16 @@ import (
 
 // TxNonceHandlerV2Stub -
 type TxNonceHandlerV2Stub struct {
-	ApplyNonceCalled        func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
-	SendTransactionCalled   func(ctx context.Context, tx *data.Transaction) (string, error)
-	ForceNonceReFetchCalled func(address core.AddressHandler) error
-	CloseCalled             func() error
+	ApplyNonceAndGasPriceCalled func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
+	SendTransactionCalled       func(ctx context.Context, tx *data.Transaction) (string, error)
+	ForceNonceReFetchCalled     func(address core.AddressHandler) error
+	CloseCalled                 func() error
 }
 
-// ApplyNonce -
-func (stub *TxNonceHandlerV2Stub) ApplyNonce(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
-	if stub.ApplyNonceCalled != nil {
-		return stub.ApplyNonceCalled(ctx, address, txArgs)
+// ApplyNonceAndGasPrice -
+func (stub *TxNonceHandlerV2Stub) ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+	if stub.ApplyNonceAndGasPriceCalled != nil {
+		return stub.ApplyNonceAndGasPriceCalled(ctx, address, txArgs)
 	}
 
 	return nil
