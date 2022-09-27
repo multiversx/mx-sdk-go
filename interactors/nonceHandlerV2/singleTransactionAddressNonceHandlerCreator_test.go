@@ -13,7 +13,7 @@ import (
 func TestSingleTransactionAddressNonceHandlerCreator_Create(t *testing.T) {
 	t.Parallel()
 
-	creator := singleTransactionAddressNonceHandlerCreator{}
+	creator := SingleTransactionAddressNonceHandlerCreator{}
 	require.False(t, creator.IsInterfaceNil())
 	pubkey := make([]byte, 32)
 	_, _ = rand.Read(pubkey)
