@@ -7,6 +7,11 @@ type ResponseGetter interface {
 	Get(ctx context.Context, url string, response interface{}) error
 }
 
+// GraphqlGetter is the graphql component able to execute a get operation on the provided URL
+type GraphqlGetter interface {
+	Query(ctx context.Context, url string, query string, variables string) ([]byte, error)
+}
+
 // basePriceFetcher defines the behavior of a component able to query the price
 type basePriceFetcher interface {
 	Name() string

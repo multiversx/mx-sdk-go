@@ -20,10 +20,11 @@ type testStruct struct {
 func TestHttpResponseGetter_InvalidURLShouldError(t *testing.T) {
 	t.Parallel()
 
-	responseGetter := &aggregator.HttpResponseGetter{}
+	responseGetter, err := aggregator.NewHttpResponseGetter()
+	require.Nil(t, err)
 	responseStruct := &testStruct{}
 
-	err := responseGetter.Get(context.Background(), "invalid URL", responseStruct)
+	err = responseGetter.Get(context.Background(), "invalid URL", responseStruct)
 	require.NotNil(t, err)
 	require.IsType(t, err, &url.Error{})
 }
@@ -37,9 +38,10 @@ func TestHttpResponseGetter_NilResponseObjectShouldError(t *testing.T) {
 	}))
 	defer httpServer.Close()
 
-	responseGetter := &aggregator.HttpResponseGetter{}
+	responseGetter, err := aggregator.NewHttpResponseGetter()
+	require.Nil(t, err)
 
-	err := responseGetter.Get(context.Background(), httpServer.URL, nil)
+	err = responseGetter.Get(context.Background(), httpServer.URL, nil)
 	require.NotNil(t, err)
 	require.IsType(t, err, &json.SyntaxError{})
 }
@@ -53,8 +55,10 @@ func TestHttpResponseGetter_InvalidResponseShouldError(t *testing.T) {
 	}))
 	defer httpServer.Close()
 
-	responseGetter := &aggregator.HttpResponseGetter{}
-	err := responseGetter.Get(context.Background(), httpServer.URL, responseGetter)
+	responseGetter, err := aggregator.NewHttpResponseGetter()
+	require.Nil(t, err)
+
+	err = responseGetter.Get(context.Background(), httpServer.URL, responseGetter)
 	require.NotNil(t, err)
 	require.IsType(t, err, &json.SyntaxError{})
 }
@@ -76,10 +80,12 @@ func TestHttpResponseGetter_GetShouldWork(t *testing.T) {
 	}))
 	defer httpServer.Close()
 
-	responseGetter := &aggregator.HttpResponseGetter{}
+	responseGetter, err := aggregator.NewHttpResponseGetter()
+	require.Nil(t, err)
+
 	responseStruct := &testStruct{}
 
-	err := responseGetter.Get(context.Background(), httpServer.URL, responseStruct)
+	err = responseGetter.Get(context.Background(), httpServer.URL, responseStruct)
 	require.Nil(t, err)
 	require.Equal(t, expectedStruct, responseStruct)
 }

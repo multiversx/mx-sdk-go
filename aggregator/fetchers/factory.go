@@ -13,18 +13,21 @@ type MaiarTokensPair struct {
 }
 
 // NewPriceFetcher returns a new price fetcher of the type provided
-func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, maiarTokensMap map[string]MaiarTokensPair) (aggregator.PriceFetcher, error) {
+func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, graphqlGetter aggregator.GraphqlGetter, maiarTokensMap map[string]MaiarTokensPair) (aggregator.PriceFetcher, error) {
 	if responseGetter == nil {
 		return nil, errNilResponseGetter
+	}
+	if graphqlGetter == nil {
+		return nil, errNilGraphqlGetter
 	}
 	if maiarTokensMap == nil && fetcherName == MaiarName {
 		return nil, errNilMaiarTokensMap
 	}
 
-	return createFetcher(fetcherName, responseGetter, maiarTokensMap)
+	return createFetcher(fetcherName, responseGetter, graphqlGetter, maiarTokensMap)
 }
 
-func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, maiarTokensMap map[string]MaiarTokensPair) (aggregator.PriceFetcher, error) {
+func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, graphqlGetter aggregator.GraphqlGetter, maiarTokensMap map[string]MaiarTokensPair) (aggregator.PriceFetcher, error) {
 	switch fetcherName {
 	case BinanceName:
 		return &binance{
@@ -68,7 +71,7 @@ func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter,
 		}, nil
 	case MaiarName:
 		return &maiar{
-			ResponseGetter: responseGetter,
+			GraphqlGetter:  graphqlGetter,
 			baseFetcher:    newBaseFetcher(),
 			maiarTokensMap: maiarTokensMap,
 		}, nil
