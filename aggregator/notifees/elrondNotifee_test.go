@@ -218,7 +218,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				return expectedErr
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
@@ -239,7 +239,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				txArgs.Nonce = 43
 				return nil
 			},
@@ -268,7 +268,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				txArgs.Nonce = 43
 				return nil
 			},
@@ -291,7 +291,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				txArgs.Nonce = 43
 				return nil
 			},
@@ -319,7 +319,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				txArgs.Nonce = 43
 				return nil
 			},
@@ -342,7 +342,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		sentWasCalled := false
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				txArgs.Nonce = 43
 				return nil
 			},

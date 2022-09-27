@@ -35,7 +35,7 @@ type addressNonceHandler struct {
 }
 
 // NewAddressNonceHandler returns a new instance of a addressNonceHandler
-func NewAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) (*addressNonceHandler, error) {
+func NewAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) (interactors.AddressNonceHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, interactors.ErrNilProxy
 	}
@@ -49,8 +49,8 @@ func NewAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHa
 	}, nil
 }
 
-// ApplyNonce will apply the computed nonce to the given ArgCreateTransaction
-func (anh *addressNonceHandler) ApplyNonce(ctx context.Context, txArgs *data.ArgCreateTransaction) error {
+// ApplyNonceAndGasPrice will apply the computed nonce to the given ArgCreateTransaction
+func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txArgs *data.ArgCreateTransaction) error {
 	oldTx, alreadyExists := anh.isTxAlreadySent(txArgs)
 	if alreadyExists {
 		err := anh.handleTxAlreadyExists(oldTx, txArgs)

@@ -42,7 +42,7 @@ func TestSingleTransactionAddressNonceHandler_NewSingleTransactionAddressNonceHa
 	})
 }
 
-func TestSingleTransactionAddressNonceHandler_ApplyNonce(t *testing.T) {
+func TestSingleTransactionAddressNonceHandler_ApplyNonceAndGasPrice(t *testing.T) {
 	t.Parallel()
 
 	t.Run("proxy returns error should error", func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestSingleTransactionAddressNonceHandler_ApplyNonce(t *testing.T) {
 
 		txArgs := createTxArgs()
 
-		err := anh.ApplyNonce(context.Background(), &txArgs)
+		err := anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("should work", func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestSingleTransactionAddressNonceHandler_ApplyNonce(t *testing.T) {
 
 		txArgs := createTxArgs()
 
-		err := anh.ApplyNonce(context.Background(), &txArgs)
+		err := anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
 		require.Nil(t, err)
 		require.Equal(t, blockchainNonce, txArgs.Nonce)
 	})
@@ -116,7 +116,7 @@ func TestSingleTransactionAddressNonceHandler_DropTransactions(t *testing.T) {
 
 	anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
 
-	err := anh.ApplyNonce(context.Background(), &txArgs)
+	err := anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
 	require.Nil(t, err)
 
 	tx := createTx(txArgs.GasPrice, txArgs)
