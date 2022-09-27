@@ -113,3 +113,8 @@ func (anh *singleTransactionAddressNonceHandler) DropTransactions() {
 	anh.nonceUntilGasIncreased = anh.transaction.Nonce
 	anh.transaction = nil
 }
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (anh *singleTransactionAddressNonceHandler) IsInterfaceNil() bool {
+	return anh == nil
+}
