@@ -58,7 +58,7 @@ func (rh *rawHeaderHandler) GetShardBlockByHash(ctx context.Context, shardId uin
 		return nil, err
 	}
 
-	blockHeader, err := process.CreateShardHeader(rh.marshaller, headerBytes)
+	blockHeader, err := process.UnmarshalShardHeader(rh.marshaller, headerBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock dat
 	return allValidatorInfo, nil
 }
 
-func (rh *rawHeaderHandler) getMiniBlockByHash(ctx context.Context, shardId uint32, hash string, epoch uint32) (*block.MiniBlock, error) {
+func (rh *rawHeaderHandler) getMiniBlockByHash(ctx context.Context, _ uint32, hash string, epoch uint32) (*block.MiniBlock, error) {
 	miniBlockBytes, err := rh.proxy.GetRawMiniBlockByHash(ctx, core.MetachainShardId, hash, epoch)
 	if err != nil {
 		return nil, err

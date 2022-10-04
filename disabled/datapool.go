@@ -9,6 +9,21 @@ import (
 type DataPool struct {
 }
 
+// PeerAuthentications returns nil
+func (dp *DataPool) PeerAuthentications() storage.Cacher {
+	return nil
+}
+
+// Heartbeats returns nil
+func (dp *DataPool) Heartbeats() storage.Cacher {
+	return nil
+}
+
+// Close returns nil
+func (dp *DataPool) Close() error {
+	return nil
+}
+
 // TrieNodesChunks returns nil
 func (dp *DataPool) TrieNodesChunks() storage.Cacher {
 	return nil
