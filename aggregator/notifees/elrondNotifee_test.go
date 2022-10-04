@@ -27,7 +27,7 @@ func createMockArgsElrondNotifee() ArgsElrondNotifee {
 	return ArgsElrondNotifee{
 		Proxy:           &testsCommon.ProxyStub{},
 		TxBuilder:       &testsCommon.TxBuilderStub{},
-		TxNonceHandler:  &testsCommon.TxNonceHandlerStub{},
+		TxNonceHandler:  &testsCommon.TxNonceHandlerV2Stub{},
 		ContractAddress: data.NewAddressFromBytes(bytes.Repeat([]byte{1}, 32)),
 		PrivateKey:      &testsCommon.PrivateKeyStub{},
 		BaseGasLimit:    1,
@@ -54,7 +54,7 @@ func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
 	return ArgsElrondNotifee{
 		Proxy:           proxy,
 		TxBuilder:       txBuilder,
-		TxNonceHandler:  &testsCommon.TxNonceHandlerStub{},
+		TxNonceHandler:  &testsCommon.TxNonceHandlerV2Stub{},
 		ContractAddress: data.NewAddressFromBytes(bytes.Repeat([]byte{1}, 32)),
 		PrivateKey:      sk,
 		BaseGasLimit:    2000,
@@ -65,16 +65,18 @@ func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
 func createMockPriceChanges() []*aggregator.ArgsPriceChanged {
 	return []*aggregator.ArgsPriceChanged{
 		{
-			Base:               "USD",
-			Quote:              "ETH",
-			DenominatedPrice:   380000,
-			DenominationFactor: 100,
+			Base:             "USD",
+			Quote:            "ETH",
+			DenominatedPrice: 380000,
+			Decimals:         2,
+			Timestamp:        200,
 		},
 		{
-			Base:               "USD",
-			Quote:              "BTC",
-			DenominatedPrice:   47000000000,
-			DenominationFactor: 1000000,
+			Base:             "USD",
+			Quote:            "BTC",
+			DenominatedPrice: 47000000000,
+			Decimals:         6,
+			Timestamp:        300,
 		},
 	}
 }
@@ -215,9 +217,9 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 0, expectedErr
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				return expectedErr
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -236,9 +238,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -264,9 +267,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 				return nil, expectedErr
 			},
 		}
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -286,9 +290,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -313,9 +318,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				return "", expectedErr
@@ -332,21 +338,27 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
+		priceChanges := createMockPriceChanges()
 		sentWasCalled := false
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				txDataStrings := []string{
 					function,
-					hex.EncodeToString([]byte("USD")),
-					hex.EncodeToString([]byte("ETH")),
-					hex.EncodeToString(big.NewInt(380000).Bytes()),
-					hex.EncodeToString([]byte("USD")),
-					hex.EncodeToString([]byte("BTC")),
-					hex.EncodeToString(big.NewInt(47000000000).Bytes()),
+					hex.EncodeToString([]byte(priceChanges[0].Base)),
+					hex.EncodeToString([]byte(priceChanges[0].Quote)),
+					hex.EncodeToString(big.NewInt(priceChanges[0].Timestamp).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[0].DenominatedPrice)).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[0].Decimals)).Bytes()),
+					hex.EncodeToString([]byte(priceChanges[1].Base)),
+					hex.EncodeToString([]byte(priceChanges[1].Quote)),
+					hex.EncodeToString(big.NewInt(priceChanges[1].Timestamp).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[1].DenominatedPrice)).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[1].Decimals)).Bytes()),
 				}
 				txData := []byte(strings.Join(txDataStrings, "@"))
 
@@ -357,9 +369,9 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 				assert.Equal(t, uint64(10), tx.GasPrice)
 				assert.Equal(t, uint64(2060), tx.GasLimit)
 				assert.Equal(t, txData, tx.Data)
-				assert.Equal(t, "1bf31bd077f397dd3e8f1cb47f8211251d696b4d67003b22e638eea6e46200e8101d3e39305f3bf502a5a9838521ba61566bf7d04a7fe91e6d012a94cc6a810e", tx.Signature)
 				assert.Equal(t, "test", tx.ChainID)
 				assert.Equal(t, uint32(1), tx.Version)
+				assert.Equal(t, uint32(0), tx.Options)
 
 				sentWasCalled = true
 
@@ -370,7 +382,6 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		en, err := NewElrondNotifee(args)
 		require.Nil(t, err)
 
-		priceChanges := createMockPriceChanges()
 		err = en.PriceChanged(context.Background(), priceChanges)
 		assert.Nil(t, err)
 		assert.True(t, sentWasCalled)

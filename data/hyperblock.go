@@ -13,6 +13,7 @@ type HyperBlock struct {
 		Nonce uint64 `json:"nonce"`
 		Shard uint32 `json:"shard"`
 	} `json:"shardBlocks"`
+	Timestamp    uint64 `json:"timestamp"`
 	Transactions []TransactionOnNetwork
 }
 

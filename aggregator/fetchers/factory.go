@@ -13,63 +13,66 @@ type MaiarTokensPair struct {
 }
 
 // NewPriceFetcher returns a new price fetcher of the type provided
-func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, maiarTokensMap map[string]MaiarTokensPair) (aggregator.PriceFetcher, error) {
+func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, graphqlGetter aggregator.GraphqlGetter, maiarTokensMap map[string]MaiarTokensPair) (aggregator.PriceFetcher, error) {
 	if responseGetter == nil {
 		return nil, errNilResponseGetter
+	}
+	if graphqlGetter == nil {
+		return nil, errNilGraphqlGetter
 	}
 	if maiarTokensMap == nil && fetcherName == MaiarName {
 		return nil, errNilMaiarTokensMap
 	}
 
-	return createFetcher(fetcherName, responseGetter, maiarTokensMap)
+	return createFetcher(fetcherName, responseGetter, graphqlGetter, maiarTokensMap)
 }
 
-func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, maiarTokensMap map[string]MaiarTokensPair) (aggregator.PriceFetcher, error) {
+func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, graphqlGetter aggregator.GraphqlGetter, maiarTokensMap map[string]MaiarTokensPair) (aggregator.PriceFetcher, error) {
 	switch fetcherName {
 	case BinanceName:
 		return &binance{
 			ResponseGetter: responseGetter,
-			baseFetcher:    baseFetcher{},
+			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case BitfinexName:
 		return &bitfinex{
 			ResponseGetter: responseGetter,
-			baseFetcher:    baseFetcher{},
+			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case CryptocomName:
 		return &cryptocom{
 			ResponseGetter: responseGetter,
-			baseFetcher:    baseFetcher{},
+			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case GeminiName:
 		return &gemini{
 			ResponseGetter: responseGetter,
-			baseFetcher:    baseFetcher{},
+			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case HitbtcName:
 		return &hitbtc{
 			ResponseGetter: responseGetter,
-			baseFetcher:    baseFetcher{},
+			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case HuobiName:
 		return &huobi{
 			ResponseGetter: responseGetter,
-			baseFetcher:    baseFetcher{},
+			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case KrakenName:
 		return &kraken{
 			ResponseGetter: responseGetter,
-			baseFetcher:    baseFetcher{},
+			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case OkexName:
 		return &okex{
 			ResponseGetter: responseGetter,
-			baseFetcher:    baseFetcher{},
+			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case MaiarName:
 		return &maiar{
-			ResponseGetter: responseGetter,
-			baseFetcher:    baseFetcher{},
+			GraphqlGetter:  graphqlGetter,
+			baseFetcher:    newBaseFetcher(),
 			maiarTokensMap: maiarTokensMap,
 		}, nil
 	}

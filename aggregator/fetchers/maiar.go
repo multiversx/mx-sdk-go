@@ -2,45 +2,80 @@ package fetchers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 )
 
 const (
-	maiarPriceUrl = "https://api.elrond.com/mex-pairs/%s/%s"
+	// TODO EN-13146: extract this urls constants in a file
+	dataApiUrl = "https://tools.elrond.com/data-api/graphql"
+	query      = "query MaiarPriceUrl($base: String!, $quote: String!) { trading { pair(first_token: $base, second_token: $quote) { price { last time } } } }"
 )
 
-type maiarPriceRequest struct {
-	BasePrice  float64 `json:"basePrice"`
-	QuotePrice float64 `json:"quotePrice"`
+type variables struct {
+	BasePrice  string `json:"base"`
+	QuotePrice string `json:"quote"`
+}
+
+type priceResponse struct {
+	Last float64   `json:"last"`
+	Time time.Time `json:"time"`
+}
+
+type graphqlResponse struct {
+	Data struct {
+		Trading struct {
+			Pair struct {
+				Price []priceResponse `json:"price"`
+			} `json:"pair"`
+		} `json:"trading"`
+	} `json:"data"`
 }
 
 type maiar struct {
-	aggregator.ResponseGetter
+	aggregator.GraphqlGetter
 	baseFetcher
 	maiarTokensMap map[string]MaiarTokensPair
 }
 
 // FetchPrice will fetch the price using the http client
 func (m *maiar) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
+	if !m.hasPair(base, quote) {
+		return 0, aggregator.ErrPairNotSupported
+	}
+
 	maiarTokensPair, ok := m.fetchMaiarTokensPair(base, quote)
 	if !ok {
 		return 0, errInvalidPair
 	}
 
-	var mpr maiarPriceRequest
-	err := m.ResponseGetter.Get(ctx, fmt.Sprintf(maiarPriceUrl, maiarTokensPair.Base, maiarTokensPair.Quote), &mpr)
+	variables, err := json.Marshal(variables{
+		BasePrice:  maiarTokensPair.Base,
+		QuotePrice: maiarTokensPair.Quote,
+	})
 	if err != nil {
 		return 0, err
 	}
-	if mpr.BasePrice <= 0 {
+
+	resp, err := m.GraphqlGetter.Query(ctx, dataApiUrl, query, string(variables))
+	if err != nil {
+		return 0, err
+	}
+
+	var graphqlResp graphqlResponse
+	err = json.Unmarshal(resp, &graphqlResp)
+	if err != nil {
+		return 0, errInvalidGraphqlResponse
+	}
+
+	price := graphqlResp.Data.Trading.Pair.Price[0].Last
+
+	if price <= 0 {
 		return 0, errInvalidResponseData
 	}
-	if mpr.QuotePrice <= 0 {
-		return 0, errInvalidResponseData
-	}
-	price := mpr.BasePrice / mpr.QuotePrice
 	return price, nil
 }
 

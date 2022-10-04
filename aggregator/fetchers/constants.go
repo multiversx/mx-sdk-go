@@ -24,5 +24,15 @@ const (
 	MaiarName = "Maiar"
 )
 
-// ImplementedFetchers is the list of all implemented exchange fetchers
-var ImplementedFetchers = []string{BinanceName, BitfinexName, CryptocomName, GeminiName, HitbtcName, HuobiName, KrakenName, OkexName, MaiarName}
+// ImplementedFetchers is the map of all implemented exchange fetchers
+var ImplementedFetchers = map[string]struct{}{
+	BinanceName:   {},
+	BitfinexName:  {},
+	CryptocomName: {},
+	GeminiName:    {},
+	HitbtcName:    {},
+	HuobiName:     {},
+	KrakenName:    {},
+	OkexName:      {},
+	MaiarName:     {},
+}
