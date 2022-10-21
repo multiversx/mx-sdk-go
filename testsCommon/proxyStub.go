@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
+	"github.com/ElrondNetwork/elrond-go-core/data/api"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -26,6 +27,7 @@ type ProxyStub struct {
 	GetNetworkStatusCalled            func(ctx context.Context, shardID uint32) (*data.NetworkStatus, error)
 	GetShardOfAddressCalled           func(ctx context.Context, bech32Address string) (uint32, error)
 	GetRestAPIEntityTypeCalled        func() erdgoCore.RestAPIEntityType
+	GetGuardianDataCalled             func(ctx context.Context, address erdgoCore.AddressHandler) (*api.GuardianData, error)
 }
 
 // ExecuteVMQuery -
@@ -168,6 +170,15 @@ func (stub *ProxyStub) GetRestAPIEntityType() erdgoCore.RestAPIEntityType {
 	}
 
 	return ""
+}
+
+// GetGuardianData -
+func (stub *ProxyStub) GetGuardianData(ctx context.Context, address erdgoCore.AddressHandler) (*api.GuardianData, error) {
+	if stub.GetGuardianDataCalled != nil {
+		return stub.GetGuardianDataCalled(ctx, address)
+	}
+
+	return &api.GuardianData{}, nil
 }
 
 // IsInterfaceNil -

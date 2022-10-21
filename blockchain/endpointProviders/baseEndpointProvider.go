@@ -18,6 +18,7 @@ const (
 	vmValues                 = "vm-values/query"
 	genesisNodesConfig       = "network/genesis-nodes"
 	rawStartOfEpochMetaBlock = "internal/raw/startofepoch/metablock/by-epoch/%d"
+	nodeGetGuardianData      = "/%s/guardian-data"
 )
 
 type baseEndpointProvider struct{}
@@ -90,6 +91,11 @@ func (base *baseEndpointProvider) GetVmValues() string {
 // GetGenesisNodesConfig returns the genesis nodes config endpoint
 func (base *baseEndpointProvider) GetGenesisNodesConfig() string {
 	return genesisNodesConfig
+}
+
+// GetGuardianData returns the guardian data endpoint
+func (base *baseEndpointProvider) GetGuardianData(address string) string {
+	return fmt.Sprintf(nodeGetGuardianData, address)
 }
 
 // GetRawStartOfEpochMetaBlock returns the raw start of epoch metablock endpoint
