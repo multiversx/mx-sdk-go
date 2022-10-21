@@ -222,6 +222,21 @@ func TestGetAccount(t *testing.T) {
 	}
 	expectedErr := errors.New("expected error")
 
+	t.Run("nil address should error", func(t *testing.T) {
+		t.Parallel()
+
+		response, err := proxy.GetAccount(context.Background(), nil)
+		require.Equal(t, err, ErrNilAddress)
+		require.Nil(t, response)
+	})
+	t.Run("invalid address should error", func(t *testing.T) {
+		t.Parallel()
+
+		invalidAddress := data.NewAddressFromBytes([]byte("invalid address"))
+		response, err := proxy.GetAccount(context.Background(), invalidAddress)
+		require.Equal(t, err, ErrInvalidAddress)
+		require.Nil(t, response)
+	})
 	t.Run("finality checker errors should not query", func(t *testing.T) {
 		proxy.finalityProvider = &testsCommon.FinalityProviderStub{
 			CheckShardFinalizationCalled: func(ctx context.Context, targetShardID uint32, maxNoncesDelta uint64) error {
@@ -614,33 +629,60 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 func TestElrondProxy_GetGuardianData(t *testing.T) {
 	t.Parallel()
 
-	expectedGuardianData := &api.GuardianData{
-		ActiveGuardian: &api.Guardian{
-			Address:         "active guardian",
-			ActivationEpoch: 100,
-		},
-		PendingGuardian: &api.Guardian{
-			Address:         "pending guardian",
-			ActivationEpoch: 200,
-		},
-		Frozen: false,
-	}
-	guardianDataResponse := &data.GuardianDataResponse{
-		Data: struct {
-			GuardianData *api.GuardianData `json:"guardianData"`
-		}{
-			GuardianData: expectedGuardianData,
-		},
-	}
-	guardianDataResponseBytes, _ := json.Marshal(guardianDataResponse)
+	t.Run("nil address should error", func(t *testing.T) {
+		t.Parallel()
 
-	httpClient := createMockClientRespondingBytes(guardianDataResponseBytes)
-	args := createMockArgsElrondProxy(httpClient)
-	ep, _ := NewElrondProxy(args)
+		httpClient := createMockClientRespondingBytes([]byte("dummy response"))
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
 
-	address, _ := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
-	response, err := ep.GetGuardianData(context.Background(), address)
-	require.Nil(t, err)
+		response, err := ep.GetGuardianData(context.Background(), nil)
+		require.Equal(t, err, ErrNilAddress)
+		require.Nil(t, response)
+	})
+	t.Run("invalid address should error", func(t *testing.T) {
+		t.Parallel()
 
-	require.Equal(t, expectedGuardianData, response)
+		httpClient := createMockClientRespondingBytes([]byte("dummy response"))
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		address := data.NewAddressFromBytes([]byte("invalid address"))
+		response, err := ep.GetGuardianData(context.Background(), address)
+		require.Equal(t, err, ErrInvalidAddress)
+		require.Nil(t, response)
+	})
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		expectedGuardianData := &api.GuardianData{
+			ActiveGuardian: &api.Guardian{
+				Address:         "active guardian",
+				ActivationEpoch: 100,
+			},
+			PendingGuardian: &api.Guardian{
+				Address:         "pending guardian",
+				ActivationEpoch: 200,
+			},
+			Frozen: false,
+		}
+		guardianDataResponse := &data.GuardianDataResponse{
+			Data: struct {
+				GuardianData *api.GuardianData `json:"guardianData"`
+			}{
+				GuardianData: expectedGuardianData,
+			},
+		}
+		guardianDataResponseBytes, _ := json.Marshal(guardianDataResponse)
+
+		httpClient := createMockClientRespondingBytes(guardianDataResponseBytes)
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		address, _ := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
+		response, err := ep.GetGuardianData(context.Background(), address)
+		require.Nil(t, err)
+
+		require.Equal(t, expectedGuardianData, response)
+	})
 }
