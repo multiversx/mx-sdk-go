@@ -201,3 +201,51 @@ func getAddressFromPublicKey(publicKey []byte) (string, error) {
 func belongsToProjectedShard(publicKey []byte, projectedShard byte) bool {
 	return publicKey[publicKeyLength-1] == projectedShard
 }
+
+func Test_DecodeAddress(t *testing.T) {
+	pubkey, err := decodeAddress("erd1ldjsdetjvegjdnda0qw2h62kq6rpvrklkc5pw9zxm0nwulfhtyqqtyc4vq")
+	require.Nil(t, err)
+	require.Equal(t, "fb6506e572665126cdbd781cabe9560686160edfb628171446dbe6ee7d375900", hex.EncodeToString(pubkey))
+
+	pubkey, err = decodeAddress("erd1xtslmt67utuewwv8jsx729mxjxaa8dvyyzp7492hy99dl7hvcuqq30l98v")
+	require.Nil(t, err)
+	require.Equal(t, "32e1fdaf5ee2f9973987940de5176691bbd3b5842083ea9557214adffaecc700", hex.EncodeToString(pubkey))
+
+	pubkey, err = decodeAddress("erd1j8j3hqtc5zu6l7lcl73q5mc06vzyxtrfrexrnvjs0z6v4se7myqqwkl0qq")
+	require.Nil(t, err)
+	require.Equal(t, "91e51b8178a0b9affbf8ffa20a6f0fd304432c691e4c39b25078b4cac33ed900", hex.EncodeToString(pubkey))
+
+	pubkey, err = decodeAddress("erd2j8j3hqtc5zu6l7lcl73q5mc06vzyxtrfrexrnvjs0z6v4se7myqqwkl0qq")
+	require.NotNil(t, err)
+	require.Nil(t, pubkey)
+
+	pubkey, err = decodeAddress("eee1j8j3hqtc5zu6l7lcl73q5mc06vzyxtrfrexrnvjs0z6v4se7myqqwkl0qq")
+	require.NotNil(t, err)
+	require.Nil(t, pubkey)
+
+	pubkey, err = decodeAddress("erd1ldjsdetjvegjdnda0qw2h62kq6rpvrklkc5pw9zxm0nwulfhtyqqtyc4v0")
+	require.NotNil(t, err)
+	require.Nil(t, pubkey)
+}
+
+// Extracted from: https://github.com/ElrondNetwork/elrond-go-core/blob/main/core/pubkeyConverter/bech32PubkeyConverter.go#L59
+func decodeAddress(humanReadable string) ([]byte, error) {
+	decodedPrefix, buff, err := bech32.Decode(humanReadable)
+	if err != nil {
+		return nil, err
+	}
+	if decodedPrefix != bech32Hrp {
+		return nil, errors.New("bad address")
+	}
+
+	decodedBytes, err := bech32.ConvertBits(buff, bech32ToBits, bech32FromBits, !bech32Pad)
+	if err != nil {
+		return nil, errors.New("bad address")
+	}
+
+	if len(decodedBytes) != publicKeyLength {
+		return nil, errors.New("bad length of public key")
+	}
+
+	return decodedBytes, nil
+}
