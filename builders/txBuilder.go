@@ -129,7 +129,7 @@ func (builder *txBuilder) ApplyGuardianSignature(
 		return ErrGuardianDoesNotMatch
 	}
 
-	unsignedTx := transactionToUnsignedTx(tx)
+	unsignedTx := TransactionToUnsignedTx(tx)
 	guardianSignature, err := builder.signTx(unsignedTx, skGuardianBytes)
 	if err != nil {
 		return err
@@ -213,7 +213,7 @@ func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transactio
 	}, nil
 }
 
-func transactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
+func TransactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
 	unsignedTx := *tx
 	unsignedTx.Signature = ""
 	unsignedTx.GuardianSignature = ""
@@ -223,7 +223,7 @@ func transactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
 func (builder *txBuilder) CreateUnsignedTransaction(arg data.ArgCreateTransaction) (*data.Transaction, error) {
 	tx := builder.createTransaction(arg)
 
-	return transactionToUnsignedTx(tx), nil
+	return TransactionToUnsignedTx(tx), nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
