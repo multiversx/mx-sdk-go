@@ -13,6 +13,7 @@ type SigVerifier interface {
 	IsInterfaceNil() bool
 }
 
+// VerifyTransactionSignature handles the signature verification for a given transaction
 func VerifyTransactionSignature(
 	tx *data.Transaction,
 	pk []byte,
