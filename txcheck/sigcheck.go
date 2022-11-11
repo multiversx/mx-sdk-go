@@ -8,18 +8,12 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
-// SigVerifier defines the methods available for a signature verifier
-type SigVerifier interface {
-	Verify(pk []byte, msg []byte, sigBytes []byte) error
-	IsInterfaceNil() bool
-}
-
 // VerifyTransactionSignature handles the signature verification for a given transaction
 func VerifyTransactionSignature(
 	tx *data.Transaction,
 	pk []byte,
 	signature []byte,
-	verifier SigVerifier,
+	verifier builders.TxSigVerifier,
 	marshaller coreData.Marshaller,
 	hasher coreData.Hasher,
 ) error {
@@ -46,7 +40,7 @@ func checkParams(
 	tx *data.Transaction,
 	pk []byte,
 	signature []byte,
-	verifier SigVerifier,
+	verifier builders.TxSigVerifier,
 	marshaller coreData.Marshaller,
 	hasher coreData.Hasher,
 ) error {
