@@ -33,8 +33,8 @@ func VerifyTransactionSignature(
 		return err
 	}
 
-	shouldSignOnTxHash := unsignedTx.Version >= 2 && unsignedTx.Options&1 > 0
-	if shouldSignOnTxHash {
+	shouldVerifyOnTxHash := unsignedTx.Version >= 2 && unsignedTx.Options&1 > 0
+	if shouldVerifyOnTxHash {
 		unsignedMessage = hasher.Compute(string(unsignedMessage))
 	}
 
