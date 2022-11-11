@@ -14,19 +14,19 @@ type SigVerifier interface {
 }
 
 func VerifyTransactionSignature(
-	tx data.Transaction,
+	tx *data.Transaction,
 	pk []byte,
 	signature []byte,
 	verifier SigVerifier,
 	marshaller coreData.Marshaller,
 	hasher coreData.Hasher,
 ) error {
-	err := checkParams(pk, signature, verifier, marshaller, hasher)
+	err := checkParams(tx, pk, signature, verifier, marshaller, hasher)
 	if err != nil {
 		return err
 	}
 
-	unsignedTx := builders.TransactionToUnsignedTx(&tx)
+	unsignedTx := builders.TransactionToUnsignedTx(tx)
 	unsignedMessage, err := marshaller.Marshal(unsignedTx)
 	if err != nil {
 		return err
@@ -41,25 +41,30 @@ func VerifyTransactionSignature(
 }
 
 func checkParams(
+	tx *data.Transaction,
 	pk []byte,
 	signature []byte,
 	verifier SigVerifier,
 	marshaller coreData.Marshaller,
-	hasher coreData.Hasher, ) error {
+	hasher coreData.Hasher,
+) error {
+	if tx == nil {
+		return ErrNilTransaction
+	}
 	if len(pk) == 0 {
-		return errNilPubKey
+		return ErrNilPubKey
 	}
 	if len(signature) == 0 {
-		return errNilSignature
+		return ErrNilSignature
 	}
 	if check.IfNil(verifier) {
-		return errNilSignatureVerifier
+		return ErrNilSignatureVerifier
 	}
 	if check.IfNil(marshaller) {
-		return errNilMarshaller
+		return ErrNilMarshaller
 	}
 	if check.IfNil(hasher) {
-		return errNilHasher
+		return ErrNilHasher
 	}
 	return nil
 }
