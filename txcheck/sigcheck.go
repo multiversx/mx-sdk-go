@@ -3,6 +3,7 @@ package txcheck
 import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	coreData "github.com/ElrondNetwork/elrond-go-core/data"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -33,7 +34,7 @@ func VerifyTransactionSignature(
 		return err
 	}
 
-	shouldVerifyOnTxHash := unsignedTx.Version >= 2 && unsignedTx.Options&1 > 0
+	shouldVerifyOnTxHash := unsignedTx.Version >= 2 && unsignedTx.Options&transaction.MaskSignedWithHash > 0
 	if shouldVerifyOnTxHash {
 		unsignedMessage = hasher.Compute(string(unsignedMessage))
 	}
