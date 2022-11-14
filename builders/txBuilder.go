@@ -213,6 +213,7 @@ func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transactio
 	}, nil
 }
 
+// TransactionToUnsignedTx returns a shallow clone of the transaction, that has the signature fields set to nil
 func TransactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
 	unsignedTx := *tx
 	unsignedTx.Signature = ""
