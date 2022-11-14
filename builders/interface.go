@@ -49,6 +49,6 @@ type TxSigner interface {
 
 // TxSigVerifier defines the methods available for a transaction signature verifiers
 type TxSigVerifier interface {
-	Verify(pk []byte, msg []byte, skBytes []byte) error
+	Verify(pk []byte, msg []byte, sigBytes []byte) error
 	IsInterfaceNil() bool
 }
