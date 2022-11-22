@@ -3,14 +3,16 @@ module github.com/ElrondNetwork/elrond-sdk-erdgo
 go 1.14
 
 require (
-	github.com/ElrondNetwork/elrond-go v1.3.42
-	github.com/ElrondNetwork/elrond-go-core v1.1.19
-	github.com/ElrondNetwork/elrond-go-crypto v1.0.1
-	github.com/ElrondNetwork/elrond-go-logger v1.0.7
-	github.com/ElrondNetwork/elrond-vm-common v1.3.15-rc1
+	github.com/ElrondNetwork/elastic-indexer-go v1.3.1 // indirect
+	github.com/ElrondNetwork/elrond-go v1.4.1-0.20221121144341-94a4a1bd75ac
+	github.com/ElrondNetwork/elrond-go-core v1.1.25
+	github.com/ElrondNetwork/elrond-go-crypto v1.2.1
+	github.com/ElrondNetwork/elrond-go-logger v1.0.9
+	github.com/ElrondNetwork/elrond-vm-common v1.3.26
+	github.com/ElrondNetwork/wasm-vm-v1_4 v1.4.65 // indirect
 	github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792
 	github.com/gin-contrib/cors v0.0.0-20190301062745-f9e10995c85a
-	github.com/gin-gonic/gin v1.8.0
+	github.com/gin-gonic/gin v1.8.1
 	github.com/pborman/uuid v1.2.1
 	github.com/stretchr/testify v1.7.1
 	github.com/tyler-smith/go-bip39 v1.1.0

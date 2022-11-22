@@ -7,7 +7,7 @@ import (
 	disabledSig "github.com/ElrondNetwork/elrond-go-crypto/signing/disabled/singlesig"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/mcl"
 	mclMultiSig "github.com/ElrondNetwork/elrond-go-crypto/signing/mcl/multisig"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/multisig"
+	multisig "github.com/ElrondNetwork/elrond-go-crypto/signing/multisig"
 )
 
 type cryptoComponents struct {
@@ -23,25 +23,17 @@ func CreateCryptoComponents() (*cryptoComponents, error) {
 
 	interceptSingleSigner := &disabledSig.DisabledSingleSig{}
 
-	multisigHasher, err := blake2b.NewBlake2bWithSize(multisig.BlsHashSize)
+	multisigHasher, err := blake2b.NewBlake2bWithSize(mclMultiSig.HasherOutputSize)
 	if err != nil {
 		return nil, err
 	}
 
 	// dummy key
-	privateKey, publicKey := blockSignKeyGen.GeneratePair()
-
-	publicKeyBytes, err := publicKey.ToByteArray()
-	if err != nil {
-		return nil, err
-	}
+	_, publicKey := blockSignKeyGen.GeneratePair()
 
 	multiSigner, err := multisig.NewBLSMultisig(
 		&mclMultiSig.BlsMultiSigner{Hasher: multisigHasher},
-		[]string{string(publicKeyBytes)},
-		privateKey,
 		blockSignKeyGen,
-		uint16(0),
 	)
 	if err != nil {
 		return nil, err

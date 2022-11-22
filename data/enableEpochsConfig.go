@@ -1,5 +1,7 @@
 package data
 
+import "github.com/ElrondNetwork/elrond-go/config"
+
 // EnableEpochsConfigResponse holds the enable epochs config endpoint response
 type EnableEpochsConfigResponse struct {
 	Data struct {
@@ -18,7 +20,8 @@ type MaxNodesChangeConfig struct {
 
 // EnableEpochsConfig holds the enable epochs configuration parameters
 type EnableEpochsConfig struct {
-	BalanceWaitingListsEnableEpoch uint32                 `json:"erd_balance_waiting_lists_enable_epoch"`
-	WaitingListFixEnableEpoch      uint32                 `json:"erd_waiting_list_fix_enable_epoch"`
-	MaxNodesChangeEnableEpoch      []MaxNodesChangeConfig `json:"erd_max_nodes_change_enable_epoch"`
+	// BalanceWaitingListsEnableEpoch uint32                 `json:"erd_balance_waiting_lists_enable_epoch"`
+	// WaitingListFixEnableEpoch      uint32                 `json:"erd_waiting_list_fix_enable_epoch"`
+	// MaxNodesChangeEnableEpoch      []MaxNodesChangeConfig `json:"erd_max_nodes_change_enable_epoch"`
+	EnableEpochs config.EnableEpochs
 }

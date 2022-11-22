@@ -42,6 +42,8 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		return nil, err
 	}
 
+	multiSignerContainer := disabled.NewMultiSignerContainer()
+
 	genesisNodesConfig, err := proxy.GetGenesisNodesPubKeys(context.Background())
 	if err != nil {
 		return nil, err
@@ -62,7 +64,7 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		Marshalizer:             coreComp.Marshaller,
 		Hasher:                  coreComp.Hasher,
 		NodesCoordinator:        nodesCoordinator,
-		MultiSigVerifier:        cryptoComp.MultiSig,
+		MultiSigContainer:       multiSignerContainer,
 		SingleSigVerifier:       cryptoComp.SingleSig,
 		KeyGen:                  cryptoComp.KeyGen,
 		FallbackHeaderValidator: &disabled.FallBackHeaderValidator{},

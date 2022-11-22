@@ -20,10 +20,11 @@ const (
 )
 
 type coreComponents struct {
-	Marshaller      marshal.Marshalizer
-	Hasher          hashing.Hasher
-	Rater           nodesCoordinator.ChanceComputer
-	PubKeyConverter core.PubkeyConverter
+	Marshaller          marshal.Marshalizer
+	Hasher              hashing.Hasher
+	Rater               nodesCoordinator.ChanceComputer
+	PubKeyConverter     core.PubkeyConverter
+	EnableEpochsHandler config.EnableEpochs
 }
 
 // CreateCoreComponents creates core components needed for header verification
