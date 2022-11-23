@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go/factory/crypto"
 	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/factory"
@@ -42,7 +43,17 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		return nil, err
 	}
 
-	multiSignerContainer := disabled.NewMultiSignerContainer()
+	args := crypto.MultiSigArgs{
+		MultiSigHasherType:   "blake2b",
+		BlSignKeyGen:         cryptoComp.KeyGen,
+		ConsensusType:        "bls",
+		ImportModeNoSigCheck: false,
+	}
+
+	multiSignerContainer, err := crypto.NewMultiSignerContainer(args, enableEpochsConfig.EnableEpochs.BLSMultiSignerEnableEpoch)
+	if err != nil {
+		return nil, err
+	}
 
 	genesisNodesConfig, err := proxy.GetGenesisNodesPubKeys(context.Background())
 	if err != nil {
