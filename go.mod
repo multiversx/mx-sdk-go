@@ -3,7 +3,6 @@ module github.com/ElrondNetwork/elrond-sdk-erdgo
 go 1.14
 
 require (
-	github.com/ElrondNetwork/elastic-indexer-go v1.3.1 // indirect
 	github.com/ElrondNetwork/elrond-go v1.4.1-0.20221121144341-94a4a1bd75ac
 	github.com/ElrondNetwork/elrond-go-core v1.1.25
 	github.com/ElrondNetwork/elrond-go-crypto v1.2.1
