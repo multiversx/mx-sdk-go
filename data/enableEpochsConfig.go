@@ -20,8 +20,5 @@ type MaxNodesChangeConfig struct {
 
 // EnableEpochsConfig holds the enable epochs configuration parameters
 type EnableEpochsConfig struct {
-	// BalanceWaitingListsEnableEpoch uint32                 `json:"erd_balance_waiting_lists_enable_epoch"`
-	// WaitingListFixEnableEpoch      uint32                 `json:"erd_waiting_list_fix_enable_epoch"`
-	// MaxNodesChangeEnableEpoch      []MaxNodesChangeConfig `json:"erd_max_nodes_change_enable_epoch"`
 	EnableEpochs config.EnableEpochs
 }
