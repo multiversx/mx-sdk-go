@@ -7,7 +7,7 @@ import (
 	disabledSig "github.com/ElrondNetwork/elrond-go-crypto/signing/disabled/singlesig"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/mcl"
 	mclMultiSig "github.com/ElrondNetwork/elrond-go-crypto/signing/mcl/multisig"
-	multisig "github.com/ElrondNetwork/elrond-go-crypto/signing/multisig"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/multisig"
 )
 
 type cryptoComponents struct {
