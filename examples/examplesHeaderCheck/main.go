@@ -11,7 +11,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/headerCheck")
+var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesHeaderCheck")
 
 func main() {
 	args := blockchain.ArgsElrondProxy{
