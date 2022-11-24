@@ -33,7 +33,7 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		return nil, err
 	}
 
-	coreComp, err := factory.CreateCoreComponents(ratingsConfig, networkConfig)
+	coreComp, err := factory.CreateCoreComponents(ratingsConfig, networkConfig, enableEpochsConfig)
 	if err != nil {
 		return nil, err
 	}
