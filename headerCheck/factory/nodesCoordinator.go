@@ -4,6 +4,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/data/endProcess"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
+	"github.com/ElrondNetwork/elrond-go/common"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/dataRetriever/dataPool"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
@@ -33,7 +34,7 @@ func CreateNodesCoordinator(
 		return nil, err
 	}
 
-	argsNodesShuffler := createArgsNodesShuffler(enableEpochsConfig, networkConfig)
+	argsNodesShuffler := createArgsNodesShuffler(enableEpochsConfig, networkConfig, coreComp.EnableEpochsHandler)
 	nodeShuffler, err := nodesCoordinator.NewHashValidatorsShuffler(argsNodesShuffler)
 	if err != nil {
 		return nil, err
@@ -109,6 +110,7 @@ func generateGenesisNodes(converter core.PubkeyConverter, nodesConfig map[uint32
 func createArgsNodesShuffler(
 	eec *data.EnableEpochsConfig,
 	networkConfig *data.NetworkConfig,
+	enableEpochsHandler common.EnableEpochsHandler,
 ) *nodesCoordinator.NodesShufflerArgs {
 	maxNodesChangeConfigs := make([]config.MaxNodesChangeConfig, 0)
 	for _, conf := range eec.EnableEpochs.MaxNodesChangeEnableEpoch {
@@ -128,6 +130,7 @@ func createArgsNodesShuffler(
 		Adaptivity:           networkConfig.Adaptivity,
 		ShuffleBetweenShards: true,
 		MaxNodesEnableConfig: maxNodesChangeConfigs,
+		EnableEpochsHandler:  enableEpochsHandler,
 	}
 
 	return argsNodesShuffler
