@@ -32,7 +32,7 @@ type RawHeaderHandler interface {
 
 // HeaderVerifier defines the functions needed for verifying headers
 type HeaderVerifier interface {
-	VerifyHeaderByHash(ctx context.Context, shardId uint32, hash string) (bool, error)
+	VerifyHeaderSignatureByHash(ctx context.Context, shardId uint32, hash string) (bool, error)
 	IsInterfaceNil() bool
 }
 

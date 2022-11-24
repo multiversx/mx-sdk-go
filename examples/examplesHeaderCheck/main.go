@@ -39,7 +39,7 @@ func main() {
 	headerHash := "e0b29ef07f76b75ea9608eed37c588440113724077f57cda3bac84ea0de378ab"
 	shardID := uint32(2)
 
-	ok, err := headerVerifier.VerifyHeaderByHash(context.Background(), shardID, headerHash)
+	ok, err := headerVerifier.VerifyHeaderSignatureByHash(context.Background(), shardID, headerHash)
 	if err != nil {
 		log.Error("error verifying header signature", "error", err)
 		return

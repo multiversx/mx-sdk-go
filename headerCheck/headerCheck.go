@@ -54,9 +54,9 @@ func checkArguments(arguments ArgsHeaderVerifier) error {
 	return nil
 }
 
-// VerifyHeaderByHash verifies wether a header signature matches by providing
+// VerifyHeaderSignatureByHash verifies wether a header signature matches by providing
 // the hash and shard where the header belongs to
-func (hch *headerVerifier) VerifyHeaderByHash(ctx context.Context, shardId uint32, hash string) (bool, error) {
+func (hch *headerVerifier) VerifyHeaderSignatureByHash(ctx context.Context, shardId uint32, hash string) (bool, error) {
 	header, err := hch.fetchHeaderByHashAndShard(ctx, shardId, hash)
 	if err != nil {
 		return false, err
