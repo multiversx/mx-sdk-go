@@ -60,7 +60,7 @@ func (a *address) IsValid() bool {
 // Pretty returns a short version of the bech32 address
 func (a *address) Pretty() string {
 	bech32Addr := a.AddressAsBech32String()
-	if len(bech32Addr) <= offsetPretty {
+	if len(bech32Addr) <= offsetPretty*2 {
 		return bech32Addr
 	}
 
