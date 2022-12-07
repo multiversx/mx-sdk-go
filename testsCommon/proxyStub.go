@@ -29,6 +29,7 @@ type ProxyStub struct {
 	GetRestAPIEntityTypeCalled           func() erdgoCore.RestAPIEntityType
 	GetLatestHyperBlockNonceCalled       func(ctx context.Context) (uint64, error)
 	GetHyperBlockByNonceCalled           func(ctx context.Context, nonce uint64) (*data.HyperBlock, error)
+	GetHyperBlockByHashCalled            func(ctx context.Context, hash string) (*data.HyperBlock, error)
 	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (data.ArgCreateTransaction, error)
 	GetGuardianDataCalled             func(ctx context.Context, address erdgoCore.AddressHandler) (*api.GuardianData, error)
 }
@@ -187,6 +188,14 @@ func (stub *ProxyStub) GetLatestHyperBlockNonce(ctx context.Context) (uint64, er
 func (stub *ProxyStub) GetHyperBlockByNonce(ctx context.Context, nonce uint64) (*data.HyperBlock, error) {
 	if stub.GetHyperBlockByNonceCalled != nil {
 		return stub.GetHyperBlockByNonceCalled(ctx, nonce)
+	}
+	return &data.HyperBlock{}, nil
+}
+
+// GetHyperBlockByHash -
+func (stub *ProxyStub) GetHyperBlockByHash(ctx context.Context, hash string) (*data.HyperBlock, error) {
+	if stub.GetHyperBlockByHashCalled != nil {
+		return stub.GetHyperBlockByHashCalled(ctx, hash)
 	}
 	return &data.HyperBlock{}, nil
 }

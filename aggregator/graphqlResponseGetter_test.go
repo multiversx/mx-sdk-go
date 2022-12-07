@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication/mock"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication/native/mock"
 	"github.com/stretchr/testify/require"
 )
 
