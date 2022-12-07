@@ -4,6 +4,21 @@ package disabled
 type EnableEpochsHandler struct {
 }
 
+// IsRuntimeMemStoreLimitEnabled returns false
+func (eeh *EnableEpochsHandler) IsRuntimeMemStoreLimitEnabled() bool {
+	return false
+}
+
+// IsGuardAccountEnabled returns false
+func (eeh *EnableEpochsHandler) IsGuardAccountEnabled() bool {
+	return false
+}
+
+// IsSetGuardianEnabled returns false
+func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
+	return false
+}
+
 // BlockGasAndFeesReCheckEnableEpoch returns 0
 func (eeh *EnableEpochsHandler) BlockGasAndFeesReCheckEnableEpoch() uint32 {
 	return 0

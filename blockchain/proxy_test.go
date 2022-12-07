@@ -669,7 +669,7 @@ func TestElrondProxy_GetGuardianData(t *testing.T) {
 				Address:         "pending guardian",
 				ActivationEpoch: 200,
 			},
-			Frozen: false,
+			Guarded: false,
 		}
 		guardianDataResponse := &data.GuardianDataResponse{
 			Data: struct {
