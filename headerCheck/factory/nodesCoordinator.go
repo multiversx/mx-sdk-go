@@ -4,7 +4,9 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/data/endProcess"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
+	"github.com/ElrondNetwork/elrond-go/common"
 	"github.com/ElrondNetwork/elrond-go/config"
+	"github.com/ElrondNetwork/elrond-go/dataRetriever/dataPool"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
@@ -32,7 +34,7 @@ func CreateNodesCoordinator(
 		return nil, err
 	}
 
-	argsNodesShuffler := createArgsNodesShuffler(enableEpochsConfig, networkConfig)
+	argsNodesShuffler := createArgsNodesShuffler(enableEpochsConfig, networkConfig, coreComp.EnableEpochsHandler)
 	nodeShuffler, err := nodesCoordinator.NewHashValidatorsShuffler(argsNodesShuffler)
 	if err != nil {
 		return nil, err
@@ -45,23 +47,27 @@ func CreateNodesCoordinator(
 
 	initialEpoch := uint32(0)
 	arguments := nodesCoordinator.ArgNodesCoordinator{
-		Epoch:                      initialEpoch,
-		ShardConsensusGroupSize:    int(networkConfig.ShardConsensusGroupSize),
-		MetaConsensusGroupSize:     int(networkConfig.MetaConsensusGroup),
-		Marshalizer:                coreComp.Marshaller,
-		EpochStartNotifier:         &disabled.EpochStartNotifier{},
-		BootStorer:                 &disabled.Storer{},
-		Hasher:                     coreComp.Hasher,
-		NbShards:                   networkConfig.NumShardsWithoutMeta,
-		EligibleNodes:              eligibleValidators,
-		WaitingNodes:               waitingValidators,
-		SelfPublicKey:              publicKeyBytes,
-		ConsensusGroupCache:        &disabled.NodesCoordinatorCache{},
-		WaitingListFixEnabledEpoch: enableEpochsConfig.WaitingListFixEnableEpoch,
-		ChanStopNode:               make(chan endProcess.ArgEndProcess),
-		NodeTypeProvider:           &disabled.NodeTypeProvider{},
-		Shuffler:                   nodeShuffler,
-		ShuffledOutHandler:         &disabled.ShuffledOutHandler{},
+		ShardConsensusGroupSize: int(networkConfig.ShardConsensusGroupSize),
+		MetaConsensusGroupSize:  int(networkConfig.MetaConsensusGroup),
+		Marshalizer:             coreComp.Marshaller,
+		Hasher:                  coreComp.Hasher,
+		Shuffler:                nodeShuffler,
+		EpochStartNotifier:      &disabled.EpochStartNotifier{},
+		BootStorer:              &disabled.Storer{},
+		ShardIDAsObserver:       0,
+		NbShards:                networkConfig.NumShardsWithoutMeta,
+		EligibleNodes:           eligibleValidators,
+		WaitingNodes:            waitingValidators,
+		SelfPublicKey:           publicKeyBytes,
+		Epoch:                   initialEpoch,
+		StartEpoch:              0,
+		ConsensusGroupCache:     &disabled.NodesCoordinatorCache{},
+		ShuffledOutHandler:      &disabled.ShuffledOutHandler{},
+		ChanStopNode:            make(chan endProcess.ArgEndProcess),
+		NodeTypeProvider:        &disabled.NodeTypeProvider{},
+		IsFullArchive:           false,
+		EnableEpochsHandler:     coreComp.EnableEpochsHandler,
+		ValidatorInfoCacher:     dataPool.NewCurrentEpochValidatorInfoPool(),
 	}
 
 	baseNodesCoordinator, err := nodesCoordinator.NewIndexHashedNodesCoordinator(arguments)
@@ -104,9 +110,10 @@ func generateGenesisNodes(converter core.PubkeyConverter, nodesConfig map[uint32
 func createArgsNodesShuffler(
 	eec *data.EnableEpochsConfig,
 	networkConfig *data.NetworkConfig,
+	enableEpochsHandler common.EnableEpochsHandler,
 ) *nodesCoordinator.NodesShufflerArgs {
 	maxNodesChangeConfigs := make([]config.MaxNodesChangeConfig, 0)
-	for _, conf := range eec.MaxNodesChangeEnableEpoch {
+	for _, conf := range eec.EnableEpochs.MaxNodesChangeEnableEpoch {
 		maxNodesChangeConfig := config.MaxNodesChangeConfig{
 			EpochEnable:            conf.EpochEnable,
 			MaxNumNodes:            conf.MaxNumNodes,
@@ -117,14 +124,13 @@ func createArgsNodesShuffler(
 	}
 
 	argsNodesShuffler := &nodesCoordinator.NodesShufflerArgs{
-		NodesShard:                     networkConfig.NumNodesInShard,
-		NodesMeta:                      networkConfig.NumMetachainNodes,
-		Hysteresis:                     networkConfig.Hysteresys,
-		Adaptivity:                     networkConfig.Adaptivity,
-		ShuffleBetweenShards:           true,
-		MaxNodesEnableConfig:           maxNodesChangeConfigs,
-		BalanceWaitingListsEnableEpoch: eec.BalanceWaitingListsEnableEpoch,
-		WaitingListFixEnableEpoch:      eec.WaitingListFixEnableEpoch,
+		NodesShard:           networkConfig.NumNodesInShard,
+		NodesMeta:            networkConfig.NumMetachainNodes,
+		Hysteresis:           networkConfig.Hysteresys,
+		Adaptivity:           networkConfig.Adaptivity,
+		ShuffleBetweenShards: true,
+		MaxNodesEnableConfig: maxNodesChangeConfigs,
+		EnableEpochsHandler:  enableEpochsHandler,
 	}
 
 	return argsNodesShuffler

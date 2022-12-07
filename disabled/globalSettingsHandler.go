@@ -1,23 +1,20 @@
 package disabled
 
-type disabledGlobalSettingsHandler struct{}
-
-// NewDisabledGlobalSettingHandler returns a new instance of disabledGlobalSettingsHandler
-func NewDisabledGlobalSettingHandler() *disabledGlobalSettingsHandler {
-	return &disabledGlobalSettingsHandler{}
+// GlobalSettingsHandler implements a disabled vmcommon.ESDTGlobalSettingsHandler
+type GlobalSettingsHandler struct {
 }
 
-// IsPaused returns false as this is a disabled component
-func (d *disabledGlobalSettingsHandler) IsPaused(_ []byte) bool {
+// IsPaused returns false
+func (handler *GlobalSettingsHandler) IsPaused(_ []byte) bool {
 	return false
 }
 
-// IsLimitedTransfer returns false as this is a disabled components
-func (d *disabledGlobalSettingsHandler) IsLimitedTransfer(_ []byte) bool {
+// IsLimitedTransfer returns false
+func (handler *GlobalSettingsHandler) IsLimitedTransfer(_ []byte) bool {
 	return false
 }
 
-// IsInterfaceNil returns true if the value under interface is nil
-func (d *disabledGlobalSettingsHandler) IsInterfaceNil() bool {
-	return d == nil
+// IsInterfaceNil returns true if there is no value under the interface
+func (handler *GlobalSettingsHandler) IsInterfaceNil() bool {
+	return handler == nil
 }

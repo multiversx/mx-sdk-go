@@ -1,4 +1,4 @@
-package interactors
+package nonceHandlerV1
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
 // addressNonceHandler is the handler used for one address. It is able to handle the current
@@ -20,13 +21,13 @@ import (
 type addressNonceHandler struct {
 	mut                 sync.RWMutex
 	address             erdgoCore.AddressHandler
-	proxy               Proxy
+	proxy               interactors.Proxy
 	computedNonceWasSet bool
 	computedNonce       uint64
 	transactions        map[uint64]*data.Transaction
 }
 
-func newAddressNonceHandler(proxy Proxy, address erdgoCore.AddressHandler) *addressNonceHandler {
+func newAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) *addressNonceHandler {
 	return &addressNonceHandler{
 		address:      address,
 		proxy:        proxy,

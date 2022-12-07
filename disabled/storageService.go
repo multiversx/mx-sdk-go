@@ -15,8 +15,8 @@ func (ss *StorageService) GetAllStorers() map[dataRetriever.UnitType]storage.Sto
 }
 
 // GetStorer returns nil
-func (ss *StorageService) GetStorer(_ dataRetriever.UnitType) storage.Storer {
-	return nil
+func (ss *StorageService) GetStorer(unitType dataRetriever.UnitType) (storage.Storer, error) {
+	return nil, nil
 }
 
 // AddStorer does nothing

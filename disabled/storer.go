@@ -6,23 +6,28 @@ import "github.com/ElrondNetwork/elrond-go-core/storage"
 type Storer struct {
 }
 
+// RemoveFromCurrentEpoch returns nil
+func (s *Storer) RemoveFromCurrentEpoch(_ []byte) error {
+	return nil
+}
+
 // Put returns nil
-func (s *Storer) Put(key, data []byte) error {
+func (s *Storer) Put(_, _ []byte) error {
 	return nil
 }
 
 // PutInEpoch returns nil
-func (s *Storer) PutInEpoch(key, data []byte, _ uint32) error {
+func (s *Storer) PutInEpoch(_, _ []byte, _ uint32) error {
 	return nil
 }
 
 // Get returns nil
-func (s *Storer) Get(key []byte) ([]byte, error) {
+func (s *Storer) Get(_ []byte) ([]byte, error) {
 	return nil, nil
 }
 
 // GetFromEpoch returns nil
-func (s *Storer) GetFromEpoch(key []byte, _ uint32) ([]byte, error) {
+func (s *Storer) GetFromEpoch(_ []byte, _ uint32) ([]byte, error) {
 	return nil, nil
 }
 
@@ -37,7 +42,7 @@ func (s *Storer) Has(_ []byte) error {
 }
 
 // SearchFirst returns nil
-func (s *Storer) SearchFirst(key []byte) ([]byte, error) {
+func (s *Storer) SearchFirst(_ []byte) ([]byte, error) {
 	return nil, nil
 }
 

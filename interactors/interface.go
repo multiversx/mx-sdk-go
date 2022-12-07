@@ -29,3 +29,35 @@ type GuardedTxBuilder interface {
 	ApplyGuardianSignature(skGuardianBytes []byte, tx *data.Transaction) error
 	IsInterfaceNil() bool
 }
+
+// AddressNonceHandler defines the component able to handler address nonces
+type AddressNonceHandler interface {
+	ApplyNonceAndGasPrice(ctx context.Context, txArgs *data.ArgCreateTransaction) error
+	ReSendTransactionsIfRequired(ctx context.Context) error
+	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
+	DropTransactions()
+	IsInterfaceNil() bool
+}
+
+// TransactionNonceHandlerV1 defines the component able to manage transaction nonces
+type TransactionNonceHandlerV1 interface {
+	GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error)
+	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
+	ForceNonceReFetch(address core.AddressHandler) error
+	Close() error
+	IsInterfaceNil() bool
+}
+
+// TransactionNonceHandlerV2 defines the component able to apply nonce for a given ArgCreateTransaction
+type TransactionNonceHandlerV2 interface {
+	ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
+	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
+	Close() error
+	IsInterfaceNil() bool
+}
+
+// AddressNonceHandlerCreator defines the component able to create AddressNonceHandler instances
+type AddressNonceHandlerCreator interface {
+	Create(proxy Proxy, address core.AddressHandler) (AddressNonceHandler, error)
+	IsInterfaceNil() bool
+}

@@ -50,7 +50,8 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 		NilCompiledSCStore:    true,
 		NFTStorageHandler:     &disabled.SimpleESDTNFTStorageHandler{},
 		EpochNotifier:         &disabled.EpochNotifier{},
-		GlobalSettingsHandler: disabled.NewDisabledGlobalSettingHandler(),
+		GlobalSettingsHandler: &disabled.GlobalSettingsHandler{},
+		EnableEpochsHandler:   &disabled.EnableEpochsHandler{},
 	}
 	blockchainHook, err := hooks.NewBlockChainHookImpl(argsHook)
 	if err != nil {

@@ -3,7 +3,6 @@ package disabled
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go/common"
 	"github.com/ElrondNetwork/elrond-go/state"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
@@ -11,6 +10,21 @@ import (
 
 // Accounts is a disabled implementation of the AccountAdapter interface
 type Accounts struct {
+}
+
+// SetSyncer returns nil
+func (a *Accounts) SetSyncer(_ state.AccountsDBSyncer) error {
+	return nil
+}
+
+// StartSnapshotIfNeeded returns nil
+func (a *Accounts) StartSnapshotIfNeeded() error {
+	return nil
+}
+
+// RecreateTrieFromEpoch returns nil
+func (a *Accounts) RecreateTrieFromEpoch(_ common.RootHashHolder) error {
+	return nil
 }
 
 // GetStackDebugFirstEntry return nil
@@ -52,8 +66,8 @@ func (a *Accounts) SaveAccount(_ vmcommon.AccountHandler) error {
 	return nil
 }
 
-// GetAllLeaves returns a nil channel and nil error
-func (a *Accounts) GetAllLeaves(_ chan core.KeyValueHolder, _ context.Context, _ []byte) error {
+// GetAllLeaves returns nil
+func (a *Accounts) GetAllLeaves(_ *common.TrieIteratorChannels, _ context.Context, _ []byte) error {
 	return nil
 }
 
@@ -122,11 +136,6 @@ func (a *Accounts) GetNumCheckpoints() uint32 {
 // GetAccountFromBytes returns a nil account and nil error
 func (a *Accounts) GetAccountFromBytes(_ []byte, _ []byte) (vmcommon.AccountHandler, error) {
 	return nil, nil
-}
-
-// RecreateTrieFromEpoch returns nil
-func (a *Accounts) RecreateTrieFromEpoch(_ common.RootHashHolder) error {
-	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

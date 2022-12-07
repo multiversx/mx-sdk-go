@@ -5,3 +5,6 @@ const AddressBytesLen = 32
 
 // MinAllowedDeltaToFinal is the minimum value between nonces allowed when checking finality on a shard
 const MinAllowedDeltaToFinal = 1
+
+// WebServerOffString represents the constant used to switch off the web server
+const WebServerOffString = "off"

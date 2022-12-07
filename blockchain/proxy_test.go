@@ -16,6 +16,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-go-core/data/api"
+	"github.com/ElrondNetwork/elrond-go/config"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	erdgoHttp "github.com/ElrondNetwork/elrond-sdk-erdgo/core/http"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -578,9 +579,13 @@ func TestElrondProxy_GetRatingsConfig(t *testing.T) {
 func TestElrondProxy_GetEnableEpochsConfig(t *testing.T) {
 	t.Parallel()
 
-	expectedEnableEpochsConfig := &data.EnableEpochsConfig{
+	enableEpochs := config.EnableEpochs{
 		BalanceWaitingListsEnableEpoch: 1,
 		WaitingListFixEnableEpoch:      1,
+	}
+
+	expectedEnableEpochsConfig := &data.EnableEpochsConfig{
+		EnableEpochs: enableEpochs,
 	}
 	enableEpochsResponse := &data.EnableEpochsConfigResponse{
 		Data: struct {
