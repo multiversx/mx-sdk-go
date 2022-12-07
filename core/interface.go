@@ -6,5 +6,6 @@ type AddressHandler interface {
 	AddressBytes() []byte
 	AddressSlice() [32]byte
 	IsValid() bool
+	Pretty() string
 	IsInterfaceNil() bool
 }

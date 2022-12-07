@@ -1,6 +1,12 @@
 package data
 
-import "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+import (
+	"fmt"
+
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+)
+
+const offsetPretty = 8
 
 type address struct {
 	bytes []byte
@@ -49,6 +55,18 @@ func (a *address) AddressSlice() [32]byte {
 // IsValid returns true if the contained address is valid
 func (a *address) IsValid() bool {
 	return len(a.bytes) == core.AddressBytesLen
+}
+
+// Pretty returns a short version of the bech32 address
+func (a *address) Pretty() string {
+	bech32Addr := a.AddressAsBech32String()
+	if len(bech32Addr) <= offsetPretty*2 {
+		return bech32Addr
+	}
+
+	beginning := bech32Addr[:offsetPretty]
+	ending := bech32Addr[len(bech32Addr)-offsetPretty:]
+	return fmt.Sprintf("%s...%s", beginning, ending)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
