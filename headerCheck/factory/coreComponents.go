@@ -67,6 +67,7 @@ func CreateCoreComponents(
 		},
 	}
 
+	//epochNotifier := forking.NewGenericEpochNotifier()
 	enableEpochsHandler, err := enablers.NewEnableEpochsHandler(enableEpochsConfig.EnableEpochs, &disabled.EpochNotifier{})
 	if err != nil {
 		return nil, err

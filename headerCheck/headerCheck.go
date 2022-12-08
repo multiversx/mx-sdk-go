@@ -75,6 +75,7 @@ func (hch *headerVerifier) VerifyHeaderByHash(ctx context.Context, shardId uint3
 
 	err = hch.headerSigVerifier.VerifySignature(header)
 	if err != nil {
+		log.Error("failed to verify signature")
 		return false, err
 	}
 
@@ -88,11 +89,13 @@ func (hch *headerVerifier) fetchHeaderByHashAndShard(ctx context.Context, shardI
 	if shardId == core.MetachainShardId {
 		header, err = hch.rawHeaderHandler.GetMetaBlockByHash(ctx, hash)
 		if err != nil {
+			log.Error("failed to get metablock header")
 			return nil, err
 		}
 	} else {
 		header, err = hch.rawHeaderHandler.GetShardBlockByHash(ctx, shardId, hash)
 		if err != nil {
+			log.Error("failed to get shardblock header")
 			return nil, err
 		}
 	}
@@ -105,6 +108,7 @@ func (hch *headerVerifier) updateNodesConfigPerEpoch(ctx context.Context, epoch 
 
 	validatorInfo, randomness, err := hch.rawHeaderHandler.GetValidatorsInfoPerEpoch(ctx, epoch)
 	if err != nil {
+		log.Error("failed to get validators info")
 		return err
 	}
 

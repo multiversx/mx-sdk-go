@@ -19,6 +19,7 @@ type Proxy interface {
 	GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
 	GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error)
 	GetGenesisNodesPubKeys(ctx context.Context) (*data.GenesisNodes, error)
+	GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
 	IsInterfaceNil() bool
 }
 

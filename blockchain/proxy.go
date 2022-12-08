@@ -11,6 +11,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go/state"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/factory"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	erdgoHttp "github.com/ElrondNetwork/elrond-sdk-erdgo/core/http"
@@ -537,6 +538,25 @@ func (ep *elrondProxy) GetGenesisNodesPubKeys(ctx context.Context) (*data.Genesi
 	}
 
 	return response.Data.Nodes, nil
+}
+
+// GetValidatorsInfoByEpoch retrieves the validators info by epoch
+func (ep *elrondProxy) GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error) {
+	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetValidatorsInfo(epoch))
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	response := &data.ValidatorsInfoResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.ValidatorsInfo, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
