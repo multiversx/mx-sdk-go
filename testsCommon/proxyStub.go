@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
+	state "github.com/ElrondNetwork/elrond-go/state"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -29,6 +30,7 @@ type ProxyStub struct {
 	GetLatestHyperBlockNonceCalled       func(ctx context.Context) (uint64, error)
 	GetHyperBlockByNonceCalled           func(ctx context.Context, nonce uint64) (*data.HyperBlock, error)
 	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (data.ArgCreateTransaction, error)
+	GetValidatorsInfoByEpochCalled       func(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
 }
 
 // ExecuteVMQuery -
@@ -195,6 +197,15 @@ func (stub *ProxyStub) GetDefaultTransactionArguments(ctx context.Context, addre
 		return stub.GetDefaultTransactionArgumentsCalled(ctx, address, networkConfigs)
 	}
 	return data.ArgCreateTransaction{}, nil
+}
+
+// GetValidatorsInfoByEpoch -
+func (stub *ProxyStub) GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error) {
+	if stub.GetValidatorsInfoByEpochCalled != nil {
+		return stub.GetValidatorsInfoByEpochCalled(ctx, epoch)
+	}
+
+	return make([]*state.ShardValidatorInfo, 0), nil
 }
 
 // IsInterfaceNil -
