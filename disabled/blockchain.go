@@ -8,6 +8,11 @@ import (
 type Blockchain struct {
 }
 
+// GetFinalBlockInfo return 0 and empty slices
+func (b *Blockchain) GetFinalBlockInfo() (nonce uint64, blockHash []byte, rootHash []byte) {
+	return 0, make([]byte, 0), make([]byte, 0)
+}
+
 // SetFinalBlockInfo does nothing
 func (b *Blockchain) SetFinalBlockInfo(_ uint64, _ []byte, _ []byte) {
 }
@@ -61,13 +66,8 @@ func (b *Blockchain) GetCurrentBlockRootHash() []byte {
 }
 
 // SetCurrentBlockHeaderAndRootHash return nil
-func (b *Blockchain) SetCurrentBlockHeaderAndRootHash(bh data.HeaderHandler, rootHash []byte) error {
+func (b *Blockchain) SetCurrentBlockHeaderAndRootHash(_ data.HeaderHandler, _ []byte) error {
 	return nil
-}
-
-// GetFinalBlockInfo returns 0, nil, nil
-func (b *Blockchain) GetFinalBlockInfo() (nonce uint64, blockHash []byte, rootHash []byte) {
-	return 0, nil, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
