@@ -9,6 +9,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-crypto/signing"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519/singlesig"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/fetchers"
@@ -229,8 +230,8 @@ func createAuthClient() (authentication.AuthClient, error) {
 	}
 
 	args := native.ArgsNativeAuthClient{
-		TxSigner:             blockchain.NewTxSigner(),
-		ExtraInfo:            nil,
+		Signer:               &singlesig.Ed25519Signer{},
+		ExtraInfo:            struct{}{},
 		Proxy:                proxy,
 		PrivateKey:           privateKey,
 		TokenExpiryInSeconds: 60 * 60 * 24,
