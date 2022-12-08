@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-crypto"
+	"github.com/ElrondNetwork/elrond-go/testscommon/cryptoMocks"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication/native/mock"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
@@ -21,12 +22,11 @@ import (
 func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 	t.Parallel()
 
-	expectedErr := errors.New("expected error")
 	t.Run("nil txsigner should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.TxSigner = nil
+		args.Signer = nil
 		client, err := NewNativeAuthClient(args)
 		require.Nil(t, client)
 		require.Equal(t, builders.ErrNilTxSigner, err)
@@ -48,20 +48,6 @@ func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 		client, err := NewNativeAuthClient(args)
 		require.Nil(t, client)
 		require.Equal(t, crypto.ErrNilPrivateKey, err)
-	})
-	t.Run("private key returns error for ToByteArray", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthClient()
-		args.PrivateKey = &testsCommon.PrivateKeyStub{
-			ToByteArrayCalled: func() ([]byte, error) {
-				return make([]byte, 0), expectedErr
-			}}
-		client, err := NewNativeAuthClient(args)
-
-		require.Nil(t, client)
-		assert.True(t, errors.Is(err, expectedErr))
-		assert.True(t, strings.Contains(err.Error(), "while getting skBytes from args.PrivateKey"))
 	})
 	t.Run("public key returns error for ToByteArray", func(t *testing.T) {
 		t.Parallel()
@@ -141,8 +127,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.TxSigner = &testsCommon.TxSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		args.Signer = &cryptoMocks.SignerStub{
+			SignCalled: func(private crypto.PrivateKey, msg []byte) ([]byte, error) {
 				return make([]byte, 0), expectedErr
 			},
 		}
@@ -176,8 +162,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.TxSigner = &testsCommon.TxSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		args.Signer = &cryptoMocks.SignerStub{
+			SignCalled: func(private crypto.PrivateKey, msg []byte) ([]byte, error) {
 				return []byte(expectedSignature), nil
 			},
 		}
@@ -218,8 +204,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.TxSigner = &testsCommon.TxSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		args.Signer = &cryptoMocks.SignerStub{
+			SignCalled: func(private crypto.PrivateKey, msg []byte) ([]byte, error) {
 				return []byte(expectedSignature), nil
 			},
 		}
@@ -260,8 +246,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.TxSigner = &testsCommon.TxSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		args.Signer = &cryptoMocks.SignerStub{
+			SignCalled: func(private crypto.PrivateKey, msg []byte) ([]byte, error) {
 				return []byte(expectedSignature), nil
 			},
 		}
@@ -283,8 +269,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 
 func createMockArgsNativeAuthClient() ArgsNativeAuthClient {
 	return ArgsNativeAuthClient{
-		TxSigner:             &testsCommon.TxSignerStub{},
-		ExtraInfo:            nil,
+		Signer:               &cryptoMocks.SignerStub{},
+		ExtraInfo:            struct{}{},
 		Proxy:                &testsCommon.ProxyStub{},
 		PrivateKey:           &testsCommon.PrivateKeyStub{},
 		TokenExpiryInSeconds: 0,

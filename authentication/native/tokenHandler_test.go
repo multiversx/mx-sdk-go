@@ -10,7 +10,6 @@ import (
 func TestNativeserver_Decode(t *testing.T) {
 	t.Parallel()
 
-	//
 	t.Run("decodeHandler errors for address should error", func(t *testing.T) {
 		t.Parallel()
 
@@ -41,7 +40,7 @@ func TestNativeserver_Decode(t *testing.T) {
 
 		handler := NewAuthTokenHandler()
 		handler.decodeHandler = func(s string) ([]byte, error) {
-			return []byte("host.blockHash.Ttl.ExtraInfo"), nil
+			return []byte("host.blockHash.ttl.extraInfo"), nil
 		}
 		token, err := handler.Decode("address.body.signature")
 		require.Nil(t, token)
@@ -52,7 +51,7 @@ func TestNativeserver_Decode(t *testing.T) {
 
 		handler := NewAuthTokenHandler()
 		handler.decodeHandler = func(s string) ([]byte, error) {
-			return []byte("host.blockHash.10.ExtraInfo"), nil
+			return []byte("host.blockHash.10.extraInfo"), nil
 		}
 		token, err := handler.Decode("address.body.signature")
 		require.NotNil(t, token)
@@ -63,21 +62,12 @@ func TestNativeserver_Decode(t *testing.T) {
 func TestNativeserver_Encode(t *testing.T) {
 	t.Parallel()
 
-	//
-	t.Run("decodeHandler errors for address should error", func(t *testing.T) {
-		t.Parallel()
-
-		handler := NewAuthTokenHandler()
-		token, err := handler.Encode(nil)
-		require.Equal(t, "", token)
-		require.Equal(t, authentication.ErrCannotConvertToken, err)
-	})
 	t.Run("nil signature should error", func(t *testing.T) {
 		t.Parallel()
 
 		handler := NewAuthTokenHandler()
-		token, err := handler.Encode(&NativeAuthToken{
-			Signature: nil,
+		token, err := handler.Encode(&AuthToken{
+			signature: nil,
 		})
 		require.Equal(t, "", token)
 		require.Equal(t, authentication.ErrNilSignature, err)
@@ -89,8 +79,8 @@ func TestNativeserver_Encode(t *testing.T) {
 		handler.encodeHandler = func(src []byte) string {
 			return ""
 		}
-		token, err := handler.Encode(&NativeAuthToken{
-			Signature: []byte("signature"),
+		token, err := handler.Encode(&AuthToken{
+			signature: []byte("signature"),
 		})
 		require.Equal(t, "", token)
 		require.Equal(t, authentication.ErrNilAddress, err)
@@ -105,34 +95,12 @@ func TestNativeserver_Encode(t *testing.T) {
 			}
 			return ""
 		}
-		token, err := handler.Encode(&NativeAuthToken{
-			Signature: []byte("signature"),
-			Address:   []byte("address"),
+		token, err := handler.Encode(&AuthToken{
+			signature: []byte("signature"),
+			address:   []byte("address"),
 		})
 		require.Equal(t, "", token)
 		require.Equal(t, authentication.ErrNilBody, err)
-	})
-	t.Run("encodeHandler return empty string for signature should error", func(t *testing.T) {
-		t.Parallel()
-
-		handler := NewAuthTokenHandler()
-		handler.encodeHandler = func(src []byte) string {
-			if string(src) == "address" ||
-				string(src) == "host.blockHash.10.extraInfo" {
-				return "addr"
-			}
-			return ""
-		}
-		token, err := handler.Encode(&NativeAuthToken{
-			Signature: []byte("signature"),
-			Address:   []byte("address"),
-			Host:      "host",
-			BlockHash: "blockHash",
-			Ttl:       10,
-			ExtraInfo: "extraInfo",
-		})
-		require.Equal(t, "", token)
-		require.Equal(t, authentication.ErrNilSignature, err)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
@@ -141,10 +109,10 @@ func TestNativeserver_Encode(t *testing.T) {
 		handler.encodeHandler = func(src []byte) string {
 			return "a"
 		}
-		token, err := handler.Encode(&NativeAuthToken{
-			Signature: []byte("signature"),
+		token, err := handler.Encode(&AuthToken{
+			signature: []byte("signature"),
 		})
-		require.Equal(t, "a.a.a", token)
+		require.Equal(t, "a.a.signature", token)
 		require.Nil(t, err)
 	})
 }

@@ -21,5 +21,10 @@ type AuthTokenHandler interface {
 
 // AuthToken defines the behavior of an authentication token
 type AuthToken interface {
-	Body() []byte
+	GetTtl() int64
+	GetAddress() []byte
+	GetHost() string
+	GetSignature() []byte
+	GetBlockHash() string
+	GetBody() []byte
 }

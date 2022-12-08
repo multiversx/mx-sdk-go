@@ -2,6 +2,7 @@ package native
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -16,8 +17,8 @@ import (
 
 // ArgsNativeAuthClient is the DTO used in the native auth client constructor
 type ArgsNativeAuthClient struct {
-	TxSigner             builders.TxSigner
-	ExtraInfo            interface{}
+	Signer               crypto.SingleSigner
+	ExtraInfo            struct{}
 	Proxy                workflows.ProxyHandler
 	PrivateKey           crypto.PrivateKey
 	TokenHandler         authentication.AuthTokenHandler
@@ -26,10 +27,10 @@ type ArgsNativeAuthClient struct {
 }
 
 type authClient struct {
-	txSigner             builders.TxSigner
+	signer               crypto.SingleSigner
 	extraInfo            string
 	proxy                workflows.ProxyHandler
-	skBytes              []byte
+	privateKey           crypto.PrivateKey
 	tokenExpiryInSeconds int64
 	address              []byte
 	host                 string
@@ -41,14 +42,15 @@ type authClient struct {
 
 // NewNativeAuthClient will create a new native client able to create authentication tokens
 func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
-	if check.IfNil(args.TxSigner) {
+	if check.IfNil(args.Signer) {
 		return nil, builders.ErrNilTxSigner
 	}
 
 	extraInfoBytes, err := json.Marshal(args.ExtraInfo)
 	if err != nil {
-		return nil, fmt.Errorf("%w while marshaling args.ExtraInfo", err)
+		return nil, fmt.Errorf("%w while marshaling args.extraInfo", err)
 	}
+	encodedExtraInfo := base64.StdEncoding.EncodeToString(extraInfoBytes)
 
 	if check.IfNil(args.Proxy) {
 		return nil, workflows.ErrNilProxy
@@ -62,11 +64,6 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 		return nil, crypto.ErrNilPrivateKey
 	}
 
-	skBytes, err := args.PrivateKey.ToByteArray()
-	if err != nil {
-		return nil, fmt.Errorf("%w while getting skBytes from args.PrivateKey", err)
-	}
-
 	publicKey := args.PrivateKey.GeneratePublic()
 	pkBytes, err := publicKey.ToByteArray()
 	if err != nil {
@@ -76,12 +73,12 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 	address := data.NewAddressFromBytes(pkBytes)
 
 	return &authClient{
-		txSigner:             args.TxSigner,
-		extraInfo:            string(extraInfoBytes),
+		signer:               args.Signer,
+		extraInfo:            encodedExtraInfo,
 		proxy:                args.Proxy,
-		skBytes:              skBytes,
+		privateKey:           args.PrivateKey,
 		host:                 args.Host,
-		address:              address.AddressBytes(),
+		address:              []byte(address.AddressAsBech32String()),
 		tokenHandler:         args.TokenHandler,
 		tokenExpiryInSeconds: args.TokenExpiryInSeconds,
 		getTimeHandler:       time.Now,
@@ -113,15 +110,15 @@ func (nac *authClient) createNewToken() error {
 		return err
 	}
 
-	token := &NativeAuthToken{
-		Ttl:       nac.tokenExpiryInSeconds,
-		Host:      nac.host,
-		ExtraInfo: nac.extraInfo,
-		BlockHash: lastHyperblock.Hash,
-		Address:   nac.address,
+	token := &AuthToken{
+		ttl:       nac.tokenExpiryInSeconds,
+		host:      nac.host,
+		extraInfo: nac.extraInfo,
+		blockHash: lastHyperblock.Hash,
+		address:   nac.address,
 	}
 
-	token.Signature, err = nac.txSigner.SignMessage(token.Body(), nac.skBytes)
+	token.signature, err = nac.signer.Sign(nac.privateKey, token.GetBody())
 	if err != nil {
 		return err
 	}
