@@ -51,7 +51,7 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 		return nil, fmt.Errorf("%w while marshaling args.extraInfo", err)
 	}
 	encodedExtraInfo := base64.StdEncoding.EncodeToString(extraInfoBytes)
-
+	encodedHost := base64.StdEncoding.EncodeToString([]byte(args.Host))
 	if check.IfNil(args.Proxy) {
 		return nil, workflows.ErrNilProxy
 	}
@@ -77,7 +77,7 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 		extraInfo:            encodedExtraInfo,
 		proxy:                args.Proxy,
 		privateKey:           args.PrivateKey,
-		host:                 args.Host,
+		host:                 encodedHost,
 		address:              []byte(address.AddressAsBech32String()),
 		tokenHandler:         args.TokenHandler,
 		tokenExpiryInSeconds: args.TokenExpiryInSeconds,

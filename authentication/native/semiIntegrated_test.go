@@ -2,6 +2,7 @@ package native
 
 import (
 	"context"
+	"encoding/base64"
 	"testing"
 	"time"
 
@@ -39,7 +40,7 @@ func TestNativeserver_ClientServer(t *testing.T) {
 		require.Equal(t, authentication.ErrHostNotAccepted, err)
 	})
 
-	t.Run("host accepted should error", func(t *testing.T) {
+	t.Run("host accepted should work", func(t *testing.T) {
 		t.Parallel()
 		lastHyperBlock := &data.HyperBlock{
 			Timestamp: uint64(time.Now().Unix()),
@@ -90,7 +91,8 @@ func createNativeServer(proxy workflows.ProxyHandler, tokenHandler authenticatio
 	acceptedHosts := make(map[string]struct{})
 
 	for _, acceptedHost := range acceptedHostsArray {
-		acceptedHosts[acceptedHost] = struct{}{}
+		encodedAcceptedHost := base64.StdEncoding.EncodeToString([]byte(acceptedHost))
+		acceptedHosts[encodedAcceptedHost] = struct{}{}
 	}
 
 	converter, _ := pubkeyConverter.NewBech32PubkeyConverter(32, logger.GetOrCreate("testscommon"))
