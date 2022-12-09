@@ -3,7 +3,7 @@ package authentication
 import "errors"
 
 // ErrNilAcceptedHosts signals that a nil or empty accepted hosts map has been provided
-var ErrNilAcceptedHosts = errors.New("nil token address")
+var ErrNilAcceptedHosts = errors.New("nil accepted hosts")
 
 // ErrNilTokenHandler signals that a nil token handler has been provided
 var ErrNilTokenHandler = errors.New("nil token handler")
