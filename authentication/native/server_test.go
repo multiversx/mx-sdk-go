@@ -109,8 +109,8 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 		server, _ := NewNativeAuthServer(args)
 
-		err := server.Validate("accessToken")
-
+		address, err := server.Validate("accessToken")
+		require.Nil(t, address)
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("host not accepted should error", func(t *testing.T) {
@@ -124,8 +124,8 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 		server, _ := NewNativeAuthServer(args)
 
-		err := server.Validate("accessToken")
-
+		address, err := server.Validate("accessToken")
+		require.Nil(t, address)
 		require.Equal(t, authentication.ErrHostNotAccepted, err)
 	})
 	t.Run("proxy returns error should error", func(t *testing.T) {
@@ -144,8 +144,8 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 		server, _ := NewNativeAuthServer(args)
 
-		err := server.Validate("accessToken")
-
+		address, err := server.Validate("accessToken")
+		require.Nil(t, address)
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("token expired should error", func(t *testing.T) {
@@ -172,8 +172,8 @@ func TestNativeserver_Validate(t *testing.T) {
 			return time.Unix(int64(hyperblockTimestamp+tokenTtl+1), 1)
 		}
 
-		err := server.Validate("accessToken")
-
+		address, err := server.Validate("accessToken")
+		require.Nil(t, address)
 		require.Equal(t, authentication.ErrTokenExpired, err)
 	})
 	t.Run("keyGenerator errors should error", func(t *testing.T) {
@@ -210,8 +210,8 @@ func TestNativeserver_Validate(t *testing.T) {
 			return time.Unix(int64(hyperblockTimestamp), 1)
 		}
 
-		err := server.Validate("accessToken")
-
+		address, err := server.Validate("accessToken")
+		require.Nil(t, address)
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("keyGenerator errors should error", func(t *testing.T) {
@@ -243,8 +243,8 @@ func TestNativeserver_Validate(t *testing.T) {
 			return time.Unix(int64(hyperblockTimestamp), 1)
 		}
 
-		err := server.Validate("accessToken")
-
+		address, err := server.Validate("accessToken")
+		require.Nil(t, address)
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("verification errors should error", func(t *testing.T) {
@@ -281,8 +281,8 @@ func TestNativeserver_Validate(t *testing.T) {
 			return time.Unix(int64(hyperblockTimestamp), 1)
 		}
 
-		err := server.Validate("accessToken")
-
+		address, err := server.Validate("accessToken")
+		require.Nil(t, address)
 		require.Equal(t, expectedErr, err)
 	})
 }

@@ -34,7 +34,8 @@ func TestNativeserver_ClientServer(t *testing.T) {
 
 		authToken, _ := client.GetAccessToken()
 
-		err := server.Validate(authToken)
+		address, err := server.Validate(authToken)
+		require.Nil(t, address)
 		require.Equal(t, authentication.ErrHostNotAccepted, err)
 	})
 
@@ -60,8 +61,9 @@ func TestNativeserver_ClientServer(t *testing.T) {
 
 		authToken, _ := alice.GetAccessToken()
 
-		err := server.Validate(authToken)
+		address, err := server.Validate(authToken)
 		require.Nil(t, err)
+		require.Equal(t, address.AddressAsBech32String(), string(alice.address))
 	})
 }
 
