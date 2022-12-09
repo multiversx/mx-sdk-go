@@ -87,14 +87,12 @@ func (rh *rawHeaderHandler) GetStartOfEpochMetaBlock(ctx context.Context, epoch 
 func (rh *rawHeaderHandler) GetValidatorsInfoPerEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, []byte, error) {
 	metaBlock, err := rh.GetStartOfEpochMetaBlock(ctx, epoch)
 	if err != nil {
-		log.Error("failed on getting start of epochs metaBlock")
 		return nil, nil, err
 	}
 	randomness := metaBlock.GetPrevRandSeed()
 
 	validatorsInfoPerEpoch, err := rh.proxy.GetValidatorsInfoByEpoch(ctx, epoch)
 	if err != nil {
-		log.Error("faileddddd on getting start of epochs metaBlock")
 		return nil, nil, err
 	}
 
