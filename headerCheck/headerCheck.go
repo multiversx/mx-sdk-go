@@ -75,7 +75,6 @@ func (hch *headerVerifier) VerifyHeaderByHash(ctx context.Context, shardId uint3
 
 	err = hch.headerSigVerifier.VerifySignature(header)
 	if err != nil {
-		log.Error("failed to verify signature")
 		return false, err
 	}
 
