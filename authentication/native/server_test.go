@@ -110,7 +110,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		server, _ := NewNativeAuthServer(args)
 
 		address, err := server.Validate("accessToken")
-		require.Nil(t, address)
+		require.Equal(t, "", address)
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("host not accepted should error", func(t *testing.T) {
@@ -125,7 +125,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		server, _ := NewNativeAuthServer(args)
 
 		address, err := server.Validate("accessToken")
-		require.Nil(t, address)
+		require.Equal(t, "", address)
 		require.Equal(t, authentication.ErrHostNotAccepted, err)
 	})
 	t.Run("proxy returns error should error", func(t *testing.T) {
@@ -145,7 +145,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		server, _ := NewNativeAuthServer(args)
 
 		address, err := server.Validate("accessToken")
-		require.Nil(t, address)
+		require.Equal(t, "", address)
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("token expired should error", func(t *testing.T) {
@@ -173,7 +173,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 
 		address, err := server.Validate("accessToken")
-		require.Nil(t, address)
+		require.Equal(t, "", address)
 		require.Equal(t, authentication.ErrTokenExpired, err)
 	})
 	t.Run("keyGenerator errors should error", func(t *testing.T) {
@@ -211,7 +211,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 
 		address, err := server.Validate("accessToken")
-		require.Nil(t, address)
+		require.Equal(t, "", address)
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("keyGenerator errors should error", func(t *testing.T) {
@@ -244,7 +244,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 
 		address, err := server.Validate("accessToken")
-		require.Nil(t, address)
+		require.Equal(t, "", address)
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("verification errors should error", func(t *testing.T) {
@@ -282,7 +282,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 
 		address, err := server.Validate("accessToken")
-		require.Nil(t, address)
+		require.Equal(t, "", address)
 		require.Equal(t, expectedErr, err)
 	})
 }

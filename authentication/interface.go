@@ -1,7 +1,5 @@
 package authentication
 
-import "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-
 // AuthClient defines the behavior of an authentication client
 type AuthClient interface {
 	GetAccessToken() (string, error)
@@ -10,7 +8,7 @@ type AuthClient interface {
 
 // AuthServer defines the behavior of an authentication server
 type AuthServer interface {
-	Validate(accessToken string) (core.AddressHandler, error)
+	Validate(accessToken string) (string, error)
 	IsInterfaceNil() bool
 }
 

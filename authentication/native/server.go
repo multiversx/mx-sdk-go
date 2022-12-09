@@ -8,8 +8,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
 )
 
@@ -72,20 +70,20 @@ func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
 }
 
 // Validate validates the given accessToken
-func (server *authServer) Validate(accessToken string) (core.AddressHandler, error) {
+func (server *authServer) Validate(accessToken string) (string, error) {
 	token, err := server.tokenHandler.Decode(accessToken)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	_, exists := server.acceptedHosts[token.GetHost()]
 	if !exists {
-		return nil, authentication.ErrHostNotAccepted
+		return "", authentication.ErrHostNotAccepted
 	}
 
 	hyperblock, err := server.proxy.GetHyperBlockByHash(context.Background(), token.GetBlockHash())
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	expires := int64(hyperblock.Timestamp) + token.GetTtl()
@@ -93,24 +91,24 @@ func (server *authServer) Validate(accessToken string) (core.AddressHandler, err
 	isTokenExpired := server.getTimeHandler().After(time.Unix(expires, 0))
 
 	if isTokenExpired {
-		return nil, authentication.ErrTokenExpired
+		return "", authentication.ErrTokenExpired
 	}
 	address, err := server.pubKeyConverter.Decode(string(token.GetAddress()))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	pubkey, err := server.keyGenerator.PublicKeyFromByteArray(address)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	err = server.signer.Verify(pubkey, token.GetBody(), token.GetSignature())
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return data.NewAddressFromBytes(address), nil
+	return string(token.GetAddress()), nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
