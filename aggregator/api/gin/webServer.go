@@ -10,9 +10,9 @@ import (
 	"github.com/ElrondNetwork/elrond-go/api/logs"
 	elrondShared "github.com/ElrondNetwork/elrond-go/api/shared"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/btcsuite/websocket"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 var log = logger.GetOrCreate("api")

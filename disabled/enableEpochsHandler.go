@@ -1,6 +1,6 @@
 package disabled
 
-// EnableEpochsHandler -
+// EnableEpochsHandler is a disabled implementation of enableEpochsHandler interface
 type EnableEpochsHandler struct {
 }
 
@@ -535,6 +535,16 @@ func (eeh *EnableEpochsHandler) IsFixAsyncCallBackArgsListFlagEnabled() bool {
 
 // IsFixOldTokenLiquidityEnabled -
 func (eeh *EnableEpochsHandler) IsFixOldTokenLiquidityEnabled() bool {
+	return false
+}
+
+// IsMaxBlockchainHookCountersFlagEnabled -
+func (eeh *EnableEpochsHandler) IsMaxBlockchainHookCountersFlagEnabled() bool {
+	return false
+}
+
+// IsRuntimeMemStoreLimitEnabled -
+func (eeh *EnableEpochsHandler) IsRuntimeMemStoreLimitEnabled() bool {
 	return false
 }
 
