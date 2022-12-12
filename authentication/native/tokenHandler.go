@@ -18,7 +18,7 @@ type authTokenHandler struct {
 // NewAuthTokenHandler returns a new instance of a native authentication token handler
 func NewAuthTokenHandler() *authTokenHandler {
 	return &authTokenHandler{
-		decodeHandler: base64.StdEncoding.DecodeString,
+		decodeHandler: decodeHandler,
 		encodeHandler: base64.StdEncoding.EncodeToString,
 	}
 }
@@ -67,6 +67,10 @@ func (th *authTokenHandler) Encode(authToken authentication.AuthToken) (string, 
 	}
 
 	return fmt.Sprintf("%s.%s.%s", encodedAddress, encodedToken, signature), nil
+}
+
+func decodeHandler(s string) ([]byte, error) {
+	return base64.RawURLEncoding.DecodeString(strings.TrimRight(s, "="))
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
