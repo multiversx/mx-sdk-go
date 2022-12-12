@@ -1,6 +1,6 @@
 package disabled
 
-// NodesCoordinatorCache is a disabled implementation of Cacher interface
+// NodesCoordinatorCache is a disabled implementation of nodesCoordinator interface
 type NodesCoordinatorCache struct {
 }
 

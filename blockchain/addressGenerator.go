@@ -36,6 +36,7 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 	}
 
 	builtInFuncs := &disabled.BuiltInFunctionContainer{}
+
 	var argsHook = hooks.ArgBlockChainHook{
 		Accounts:              &disabled.Accounts{},
 		PubkeyConv:            core.AddressPublicKeyConverter,
@@ -52,6 +53,8 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 		EpochNotifier:         &disabled.EpochNotifier{},
 		GlobalSettingsHandler: &disabled.GlobalSettingsHandler{},
 		EnableEpochsHandler:   &disabled.EnableEpochsHandler{},
+		GasSchedule:           &disabled.GasScheduleNotifier{},
+		Counter:               &disabled.BlockChainHookCounter{},
 	}
 	blockchainHook, err := hooks.NewBlockChainHookImpl(argsHook)
 	if err != nil {
