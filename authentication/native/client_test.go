@@ -142,7 +142,6 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.Host = "test.host"
 		args.TokenExpiryInSeconds = 120
 		expectedNonce := uint64(100)
 		expectedHash := "hash"
@@ -183,7 +182,6 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.Host = "test.host"
 		args.TokenExpiryInSeconds = 120
 		expectedNonce := uint64(100)
 		expectedHash := "hash"
@@ -226,7 +224,6 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.Host = "test.host"
 		args.TokenExpiryInSeconds = 120
 		expectedNonce := uint64(100)
 		expectedHash := "hash"
@@ -275,6 +272,5 @@ func createMockArgsNativeAuthClient() ArgsNativeAuthClient {
 		PrivateKey:           &testsCommon.PrivateKeyStub{},
 		TokenExpiryInSeconds: 0,
 		TokenHandler:         &mock.AuthTokenHandlerStub{},
-		Host:                 "",
 	}
 }

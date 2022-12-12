@@ -18,7 +18,6 @@ type ArgsNativeAuthServer struct {
 	Signer          crypto.SingleSigner
 	PubKeyConverter goCore.PubkeyConverter
 	KeyGenerator    crypto.KeyGenerator
-	AcceptedHosts   map[string]struct{}
 }
 
 type authServer struct {
@@ -27,7 +26,6 @@ type authServer struct {
 	signer          crypto.SingleSigner
 	keyGenerator    crypto.KeyGenerator
 	pubKeyConverter goCore.PubkeyConverter
-	acceptedHosts   map[string]struct{}
 	getTimeHandler  func() time.Time
 }
 
@@ -53,16 +51,11 @@ func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
 		return nil, authentication.ErrNilTokenHandler
 	}
 
-	if len(args.AcceptedHosts) == 0 {
-		return nil, authentication.ErrNilAcceptedHosts
-	}
-
 	return &authServer{
 		proxy:           args.Proxy,
 		tokenHandler:    args.TokenHandler,
 		signer:          args.Signer,
 		keyGenerator:    args.KeyGenerator,
-		acceptedHosts:   args.AcceptedHosts,
 		pubKeyConverter: args.PubKeyConverter,
 		getTimeHandler:  time.Now,
 	}, nil
@@ -74,11 +67,6 @@ func (server *authServer) Validate(accessToken string) (string, error) {
 	token, err := server.tokenHandler.Decode(accessToken)
 	if err != nil {
 		return "", err
-	}
-
-	_, exists := server.acceptedHosts[token.GetHost()]
-	if !exists {
-		return "", authentication.ErrHostNotAccepted
 	}
 
 	hyperblock, err := server.proxy.GetHyperBlockByHash(context.Background(), token.GetBlockHash())

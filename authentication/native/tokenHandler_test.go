@@ -51,7 +51,7 @@ func TestNativeserver_Decode(t *testing.T) {
 
 		handler := NewAuthTokenHandler()
 		handler.decodeHandler = func(s string) ([]byte, error) {
-			return []byte("host.blockHash.10.extraInfo"), nil
+			return []byte("blockHash.10.extraInfo"), nil
 		}
 		token, err := handler.Decode("address.body.signature")
 		require.NotNil(t, token)

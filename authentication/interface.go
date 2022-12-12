@@ -23,7 +23,6 @@ type AuthTokenHandler interface {
 type AuthToken interface {
 	GetTtl() int64
 	GetAddress() []byte
-	GetHost() string
 	GetSignature() []byte
 	GetBlockHash() string
 	GetBody() []byte

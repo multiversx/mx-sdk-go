@@ -38,13 +38,12 @@ func (th *authTokenHandler) Decode(accessToken string) (authentication.AuthToken
 	}
 	token.signature = []byte(strs[2])
 	strs = strings.Split(string(body), ".")
-	token.host = strs[0]
-	token.blockHash = strs[1]
-	token.ttl, err = strconv.ParseInt(strs[2], 10, 64)
+	token.blockHash = strs[0]
+	token.ttl, err = strconv.ParseInt(strs[1], 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	token.extraInfo = strs[3]
+	token.extraInfo = strs[2]
 
 	return token, nil
 }

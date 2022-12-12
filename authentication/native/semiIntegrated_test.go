@@ -2,7 +2,6 @@ package native
 
 import (
 	"context"
-	"encoding/base64"
 	"testing"
 	"time"
 
@@ -24,23 +23,7 @@ var keyGen = signing.NewKeyGenerator(ed25519.NewEd25519())
 
 func TestNativeserver_ClientServer(t *testing.T) {
 
-	t.Run("host not accepted should error", func(t *testing.T) {
-		t.Parallel()
-		proxy := &testsCommon.ProxyStub{}
-		tokenHandler := NewAuthTokenHandler()
-		acceptedHosts := make([]string, 1)
-		acceptedHosts = append(acceptedHosts, "acceptedHost")
-		server := createNativeServer(proxy, tokenHandler, acceptedHosts)
-		client := createNativeClient(examples.AlicePemContents, proxy, tokenHandler, "invalid")
-
-		authToken, _ := client.GetAccessToken()
-
-		address, err := server.Validate(authToken)
-		require.Equal(t, "", address)
-		require.Equal(t, authentication.ErrHostNotAccepted, err)
-	})
-
-	t.Run("host accepted should work", func(t *testing.T) {
+	t.Run("valid token", func(t *testing.T) {
 		t.Parallel()
 		lastHyperBlock := &data.HyperBlock{
 			Timestamp: uint64(time.Now().Unix()),
@@ -55,10 +38,8 @@ func TestNativeserver_ClientServer(t *testing.T) {
 			},
 		}
 		tokenHandler := NewAuthTokenHandler()
-		acceptedHosts := make([]string, 1)
-		acceptedHosts = append(acceptedHosts, "acceptedHost")
-		server := createNativeServer(proxy, tokenHandler, acceptedHosts)
-		alice := createNativeClient(examples.AlicePemContents, proxy, tokenHandler, "acceptedHost")
+		server := createNativeServer(proxy, tokenHandler)
+		alice := createNativeClient(examples.AlicePemContents, proxy, tokenHandler)
 
 		authToken, _ := alice.GetAccessToken()
 
@@ -68,7 +49,7 @@ func TestNativeserver_ClientServer(t *testing.T) {
 	})
 }
 
-func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler authentication.AuthTokenHandler, host string) *authClient {
+func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler authentication.AuthTokenHandler) *authClient {
 	w := interactors.NewWallet()
 	privateKeyBytes, _ := w.LoadPrivateKeyFromPemData([]byte(pem))
 	privateKey, _ := keyGen.PrivateKeyFromByteArray(privateKeyBytes)
@@ -80,21 +61,13 @@ func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler a
 		PrivateKey:           privateKey,
 		TokenExpiryInSeconds: 60 * 60 * 24,
 		TokenHandler:         tokenHandler,
-		Host:                 host,
 	}
 
 	client, _ := NewNativeAuthClient(clientArgs)
 	return client
 }
 
-func createNativeServer(proxy workflows.ProxyHandler, tokenHandler authentication.AuthTokenHandler, acceptedHostsArray []string) *authServer {
-	acceptedHosts := make(map[string]struct{})
-
-	for _, acceptedHost := range acceptedHostsArray {
-		encodedAcceptedHost := base64.StdEncoding.EncodeToString([]byte(acceptedHost))
-		acceptedHosts[encodedAcceptedHost] = struct{}{}
-	}
-
+func createNativeServer(proxy workflows.ProxyHandler, tokenHandler authentication.AuthTokenHandler) *authServer {
 	converter, _ := pubkeyConverter.NewBech32PubkeyConverter(32, logger.GetOrCreate("testscommon"))
 
 	serverArgs := ArgsNativeAuthServer{
@@ -102,7 +75,6 @@ func createNativeServer(proxy workflows.ProxyHandler, tokenHandler authenticatio
 		TokenHandler:    tokenHandler,
 		Signer:          &singlesig.Ed25519Signer{},
 		KeyGenerator:    keyGen,
-		AcceptedHosts:   acceptedHosts,
 		PubKeyConverter: converter,
 	}
 	server, _ := NewNativeAuthServer(serverArgs)

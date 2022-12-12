@@ -235,7 +235,6 @@ func createAuthClient() (authentication.AuthClient, error) {
 		Proxy:                proxy,
 		PrivateKey:           privateKey,
 		TokenExpiryInSeconds: 60 * 60 * 24,
-		Host:                 "oracle",
 	}
 
 	authClient, err := native.NewNativeAuthClient(args)

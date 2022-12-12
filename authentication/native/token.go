@@ -8,7 +8,6 @@ import (
 type AuthToken struct {
 	ttl       int64
 	address   []byte
-	host      string
 	extraInfo string
 	signature []byte
 	blockHash string
@@ -24,11 +23,6 @@ func (token AuthToken) GetAddress() []byte {
 	return token.address
 }
 
-// GetHost is the getter to host member
-func (token AuthToken) GetHost() string {
-	return token.host
-}
-
 // GetSignature is the getter to signature member
 func (token AuthToken) GetSignature() []byte {
 	return token.signature
@@ -41,5 +35,5 @@ func (token AuthToken) GetBlockHash() string {
 
 // GetBody returns the authentication token body as string
 func (token AuthToken) GetBody() []byte {
-	return []byte(fmt.Sprintf("%s.%s.%d.%s", token.host, token.blockHash, token.ttl, token.extraInfo))
+	return []byte(fmt.Sprintf("%s.%d.%s", token.blockHash, token.ttl, token.extraInfo))
 }

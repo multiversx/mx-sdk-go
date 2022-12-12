@@ -23,7 +23,6 @@ type ArgsNativeAuthClient struct {
 	PrivateKey           crypto.PrivateKey
 	TokenHandler         authentication.AuthTokenHandler
 	TokenExpiryInSeconds int64
-	Host                 string
 }
 
 type authClient struct {
@@ -33,7 +32,6 @@ type authClient struct {
 	privateKey           crypto.PrivateKey
 	tokenExpiryInSeconds int64
 	address              []byte
-	host                 string
 	token                string
 	tokenHandler         authentication.AuthTokenHandler
 	tokenExpire          time.Time
@@ -51,7 +49,6 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 		return nil, fmt.Errorf("%w while marshaling args.extraInfo", err)
 	}
 	encodedExtraInfo := base64.StdEncoding.EncodeToString(extraInfoBytes)
-	encodedHost := base64.StdEncoding.EncodeToString([]byte(args.Host))
 	if check.IfNil(args.Proxy) {
 		return nil, workflows.ErrNilProxy
 	}
@@ -77,7 +74,6 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 		extraInfo:            encodedExtraInfo,
 		proxy:                args.Proxy,
 		privateKey:           args.PrivateKey,
-		host:                 encodedHost,
 		address:              []byte(address.AddressAsBech32String()),
 		tokenHandler:         args.TokenHandler,
 		tokenExpiryInSeconds: args.TokenExpiryInSeconds,
@@ -112,7 +108,6 @@ func (nac *authClient) createNewToken() error {
 
 	token := &AuthToken{
 		ttl:       nac.tokenExpiryInSeconds,
-		host:      nac.host,
 		extraInfo: nac.extraInfo,
 		blockHash: lastHyperblock.Hash,
 		address:   nac.address,

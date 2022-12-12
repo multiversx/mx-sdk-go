@@ -32,24 +32,6 @@ func TestNativeserver_NewNativeAuthServer(t *testing.T) {
 		require.Nil(t, server)
 		require.Equal(t, workflows.ErrNilProxy, err)
 	})
-	t.Run("nil AcceptedHosts should error", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthServer()
-		args.AcceptedHosts = nil
-		server, err := NewNativeAuthServer(args)
-		require.Nil(t, server)
-		require.Equal(t, authentication.ErrNilAcceptedHosts, err)
-	})
-	t.Run("empty AcceptedHosts should error", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthServer()
-		args.AcceptedHosts = make(map[string]struct{})
-		server, err := NewNativeAuthServer(args)
-		require.Nil(t, server)
-		require.Equal(t, authentication.ErrNilAcceptedHosts, err)
-	})
 	t.Run("nil KeyGenerator should error", func(t *testing.T) {
 		t.Parallel()
 
@@ -113,28 +95,13 @@ func TestNativeserver_Validate(t *testing.T) {
 		require.Equal(t, "", address)
 		require.Equal(t, expectedErr, err)
 	})
-	t.Run("host not accepted should error", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthServer()
-		args.TokenHandler = &mock.AuthTokenHandlerStub{
-			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
-				return AuthToken{host: "invalidHost"}, nil
-			},
-		}
-		server, _ := NewNativeAuthServer(args)
-
-		address, err := server.Validate("accessToken")
-		require.Equal(t, "", address)
-		require.Equal(t, authentication.ErrHostNotAccepted, err)
-	})
 	t.Run("proxy returns error should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthServer()
 		args.TokenHandler = &mock.AuthTokenHandlerStub{
 			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
-				return AuthToken{host: "test.host"}, nil
+				return AuthToken{}, nil
 			},
 		}
 		args.Proxy = &testsCommon.ProxyStub{
@@ -157,8 +124,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		args.TokenHandler = &mock.AuthTokenHandlerStub{
 			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
 				return AuthToken{
-					host: "test.host",
-					ttl:  int64(tokenTtl),
+					ttl: int64(tokenTtl),
 				}, nil
 			},
 		}
@@ -185,8 +151,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		args.TokenHandler = &mock.AuthTokenHandlerStub{
 			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
 				return AuthToken{
-					host: "test.host",
-					ttl:  int64(tokenTtl),
+					ttl: int64(tokenTtl),
 				}, nil
 			},
 		}
@@ -223,8 +188,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		args.TokenHandler = &mock.AuthTokenHandlerStub{
 			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
 				return AuthToken{
-					host: "test.host",
-					ttl:  int64(tokenTtl),
+					ttl: int64(tokenTtl),
 				}, nil
 			},
 		}
@@ -256,8 +220,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		args.TokenHandler = &mock.AuthTokenHandlerStub{
 			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
 				return AuthToken{
-					host: "test.host",
-					ttl:  int64(tokenTtl),
+					ttl: int64(tokenTtl),
 				}, nil
 			},
 		}
@@ -288,14 +251,11 @@ func TestNativeserver_Validate(t *testing.T) {
 }
 
 func createMockArgsNativeAuthServer() ArgsNativeAuthServer {
-	acceptedHosts := make(map[string]struct{})
-	acceptedHosts["test.host"] = struct{}{}
 	return ArgsNativeAuthServer{
 		Proxy:           &testsCommon.ProxyStub{},
 		TokenHandler:    &mock.AuthTokenHandlerStub{},
 		Signer:          &cryptoMocks.SignerStub{},
 		KeyGenerator:    &genesisMock.KeyGeneratorStub{},
 		PubKeyConverter: &genesisMock.PubkeyConverterStub{},
-		AcceptedHosts:   acceptedHosts,
 	}
 }
