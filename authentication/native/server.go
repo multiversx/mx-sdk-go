@@ -29,7 +29,10 @@ type authServer struct {
 	getTimeHandler  func() time.Time
 }
 
-// NewNativeAuthServer returns a native authentication server
+// NewNativeAuthServer returns a native authentication server that verifies
+// authentication tokens:
+// 1. Checks whether the provided signature from tokens corresponds with the provided address for the provided body
+// 2. Checks the token expiration status
 func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
 	if check.IfNil(args.Proxy) {
 		return nil, workflows.ErrNilProxy
@@ -69,9 +72,23 @@ func (server *authServer) Validate(accessToken string) (string, error) {
 		return "", err
 	}
 
-	hyperblock, err := server.proxy.GetHyperBlockByHash(context.Background(), token.GetBlockHash())
+	err = server.validateExpiration(token)
 	if err != nil {
 		return "", err
+	}
+
+	err = server.validateSignature(token)
+	if err != nil {
+		return "", err
+	}
+
+	return string(token.GetAddress()), nil
+}
+
+func (server *authServer) validateExpiration(token authentication.AuthToken) error {
+	hyperblock, err := server.proxy.GetHyperBlockByHash(context.Background(), token.GetBlockHash())
+	if err != nil {
+		return err
 	}
 
 	expires := int64(hyperblock.Timestamp) + token.GetTtl()
@@ -79,24 +96,27 @@ func (server *authServer) Validate(accessToken string) (string, error) {
 	isTokenExpired := server.getTimeHandler().After(time.Unix(expires, 0))
 
 	if isTokenExpired {
-		return "", authentication.ErrTokenExpired
+		return authentication.ErrTokenExpired
 	}
+	return nil
+}
+
+func (server *authServer) validateSignature(token authentication.AuthToken) error {
 	address, err := server.pubKeyConverter.Decode(string(token.GetAddress()))
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	pubkey, err := server.keyGenerator.PublicKeyFromByteArray(address)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	err = server.signer.Verify(pubkey, token.GetBody(), token.GetSignature())
 	if err != nil {
-		return "", err
+		return err
 	}
-
-	return string(token.GetAddress()), nil
+	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
