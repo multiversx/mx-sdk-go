@@ -3,7 +3,6 @@ package disabled
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go/common"
 	"github.com/ElrondNetwork/elrond-go/state"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
@@ -11,6 +10,16 @@ import (
 
 // Accounts is a disabled implementation of the AccountAdapter interface
 type Accounts struct {
+}
+
+// SetSyncer returns nil
+func (a *Accounts) SetSyncer(_ state.AccountsDBSyncer) error {
+	return nil
+}
+
+// StartSnapshotIfNeeded returns nil
+func (a *Accounts) StartSnapshotIfNeeded() error {
+	return nil
 }
 
 // RecreateTrieFromEpoch returns nil
@@ -58,7 +67,7 @@ func (a *Accounts) SaveAccount(_ vmcommon.AccountHandler) error {
 }
 
 // GetAllLeaves returns nil
-func (a *Accounts) GetAllLeaves(_ chan core.KeyValueHolder, _ context.Context, _ []byte) error {
+func (a *Accounts) GetAllLeaves(_ *common.TrieIteratorChannels, _ context.Context, _ []byte) error {
 	return nil
 }
 

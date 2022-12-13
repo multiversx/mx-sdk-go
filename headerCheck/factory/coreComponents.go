@@ -7,10 +7,13 @@ import (
 	hasherFactory "github.com/ElrondNetwork/elrond-go-core/hashing/factory"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	marshalizerFactory "github.com/ElrondNetwork/elrond-go-core/marshal/factory"
+	"github.com/ElrondNetwork/elrond-go/common"
+	"github.com/ElrondNetwork/elrond-go/common/enablers"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/process/rating"
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
 )
 
 const (
@@ -20,16 +23,18 @@ const (
 )
 
 type coreComponents struct {
-	Marshaller      marshal.Marshalizer
-	Hasher          hashing.Hasher
-	Rater           nodesCoordinator.ChanceComputer
-	PubKeyConverter core.PubkeyConverter
+	Marshaller          marshal.Marshalizer
+	Hasher              hashing.Hasher
+	Rater               nodesCoordinator.ChanceComputer
+	PubKeyConverter     core.PubkeyConverter
+	EnableEpochsHandler common.EnableEpochsHandler
 }
 
 // CreateCoreComponents creates core components needed for header verification
 func CreateCoreComponents(
 	ratingsConfig *data.RatingsConfig,
 	networkConfig *data.NetworkConfig,
+	enableEpochsConfig *data.EnableEpochsConfig,
 ) (*coreComponents, error) {
 	marshalizer, err := marshalizerFactory.NewMarshalizer(marshalizerType)
 	if err != nil {
@@ -51,11 +56,28 @@ func CreateCoreComponents(
 		return nil, err
 	}
 
+	enableEpochsConfig.EnableEpochs.BLSMultiSignerEnableEpoch = []config.MultiSignerConfig{
+		{
+			EnableEpoch: 0,
+			Type:        "no-KOSK",
+		},
+		{
+			EnableEpoch: 3,
+			Type:        "KOSK",
+		},
+	}
+
+	enableEpochsHandler, err := enablers.NewEnableEpochsHandler(enableEpochsConfig.EnableEpochs, &disabled.EpochNotifier{})
+	if err != nil {
+		return nil, err
+	}
+
 	return &coreComponents{
-		Marshaller:      marshalizer,
-		Hasher:          hasher,
-		Rater:           rater,
-		PubKeyConverter: converter,
+		Marshaller:          marshalizer,
+		Hasher:              hasher,
+		Rater:               rater,
+		PubKeyConverter:     converter,
+		EnableEpochsHandler: enableEpochsHandler,
 	}, nil
 }
 

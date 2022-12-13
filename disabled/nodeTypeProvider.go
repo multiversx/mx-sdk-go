@@ -9,7 +9,7 @@ type NodeTypeProvider struct {
 }
 
 // SetType does nothing
-func (n *NodeTypeProvider) SetType(nodeType core.NodeType) {
+func (n *NodeTypeProvider) SetType(_ core.NodeType) {
 }
 
 // GetType returns empty string

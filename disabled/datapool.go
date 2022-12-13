@@ -69,8 +69,18 @@ func (dp *DataPool) SmartContracts() storage.Cacher {
 	return nil
 }
 
-// CurrentBlockTxs return nil
+// CurrentBlockTxs returns nil
 func (dp *DataPool) CurrentBlockTxs() dataRetriever.TransactionCacher {
+	return nil
+}
+
+// CurrentEpochValidatorInfo returns nil
+func (dp *DataPool) CurrentEpochValidatorInfo() dataRetriever.ValidatorInfoCacher {
+	return nil
+}
+
+// ValidatorsInfo returns nil
+func (dp *DataPool) ValidatorsInfo() dataRetriever.ShardedDataCacherNotifier {
 	return nil
 }
 

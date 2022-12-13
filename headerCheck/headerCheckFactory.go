@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go/factory/crypto"
 	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/factory"
@@ -32,12 +33,24 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		return nil, err
 	}
 
-	coreComp, err := factory.CreateCoreComponents(ratingsConfig, networkConfig)
+	coreComp, err := factory.CreateCoreComponents(ratingsConfig, networkConfig, enableEpochsConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	cryptoComp, err := factory.CreateCryptoComponents()
+	if err != nil {
+		return nil, err
+	}
+
+	args := crypto.MultiSigArgs{
+		MultiSigHasherType:   "blake2b",
+		BlSignKeyGen:         cryptoComp.KeyGen,
+		ConsensusType:        "bls",
+		ImportModeNoSigCheck: false,
+	}
+
+	multiSignerContainer, err := crypto.NewMultiSignerContainer(args, enableEpochsConfig.EnableEpochs.BLSMultiSignerEnableEpoch)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +75,7 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		Marshalizer:             coreComp.Marshaller,
 		Hasher:                  coreComp.Hasher,
 		NodesCoordinator:        nodesCoordinator,
-		MultiSigVerifier:        cryptoComp.MultiSig,
+		MultiSigContainer:       multiSignerContainer,
 		SingleSigVerifier:       cryptoComp.SingleSig,
 		KeyGen:                  cryptoComp.KeyGen,
 		FallbackHeaderValidator: &disabled.FallBackHeaderValidator{},
