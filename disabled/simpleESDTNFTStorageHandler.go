@@ -11,7 +11,7 @@ type SimpleESDTNFTStorageHandler struct {
 }
 
 // GetESDTNFTTokenOnDestination returns nil
-func (sns *SimpleESDTNFTStorageHandler) GetESDTNFTTokenOnDestination(_ vmcommon.UserAccountHandler, _ []byte, nonce uint64) (*esdt.ESDigitalToken, bool, error) {
+func (sns *SimpleESDTNFTStorageHandler) GetESDTNFTTokenOnDestination(_ vmcommon.UserAccountHandler, _ []byte, _ uint64) (*esdt.ESDigitalToken, bool, error) {
 	return nil, false, nil
 }
 

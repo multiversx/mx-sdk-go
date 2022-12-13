@@ -10,7 +10,7 @@ func (s *ShuffledOutHandler) Process(_ uint32) error {
 }
 
 // RegisterHandler does nothing
-func (s *ShuffledOutHandler) RegisterHandler(_ func(newShardID uint32)) {
+func (s *ShuffledOutHandler) RegisterHandler(_ func(uint32)) {
 }
 
 // CurrentShardID return zero
