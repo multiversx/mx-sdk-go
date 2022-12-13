@@ -2,7 +2,7 @@ package disabled
 
 import vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 
-// BlockChainHookCounter is a disabled implementation of blockChainHookCounter interface
+// BlockChainHookCounter is a disabled implementation of BlockChainHookCounter interface
 type BlockChainHookCounter struct {
 }
 
