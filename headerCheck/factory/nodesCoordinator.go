@@ -61,7 +61,7 @@ func CreateNodesCoordinator(
 		SelfPublicKey:           publicKeyBytes,
 		Epoch:                   initialEpoch,
 		StartEpoch:              0,
-		ConsensusGroupCache:     &disabled.NodesCoordinatorCache{},
+		ConsensusGroupCache:     &disabled.Cache{},
 		ShuffledOutHandler:      &disabled.ShuffledOutHandler{},
 		ChanStopNode:            make(chan endProcess.ArgEndProcess),
 		NodeTypeProvider:        &disabled.NodeTypeProvider{},

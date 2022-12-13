@@ -5,7 +5,7 @@ import (
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 )
 
-// EpochNotifier is a disabled implementation of epochNotifier interface
+// EpochNotifier is a disabled implementation of EpochNotifier interface
 type EpochNotifier struct {
 }
 

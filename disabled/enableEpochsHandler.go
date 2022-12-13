@@ -1,6 +1,6 @@
 package disabled
 
-// EnableEpochsHandler is a disabled implementation of enableEpochsHandler interface
+// EnableEpochsHandler is a disabled implementation of EnableEpochsHandler interface
 type EnableEpochsHandler struct {
 }
 
