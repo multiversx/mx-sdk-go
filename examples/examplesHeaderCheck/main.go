@@ -37,15 +37,17 @@ func main() {
 	}
 
 	// set enable epochs config based on the environment
-	enableEpochsConfig.EnableEpochs.BLSMultiSignerEnableEpoch = []config.MultiSignerConfig{
-		{
-			EnableEpoch: 0,
-			Type:        "no-KOSK",
-		},
-		{
-			EnableEpoch: 3,
-			Type:        "KOSK",
-		},
+	if len(enableEpochsConfig.EnableEpochs.BLSMultiSignerEnableEpoch) == 0 {
+		enableEpochsConfig.EnableEpochs.BLSMultiSignerEnableEpoch = []config.MultiSignerConfig{
+			{
+				EnableEpoch: 0,
+				Type:        "no-KOSK",
+			},
+			{
+				EnableEpoch: uint32(1000000),
+				Type:        "KOSK",
+			},
+		}
 	}
 
 	headerVerifier, err := headerCheck.NewHeaderCheckHandler(ep, enableEpochsConfig)
