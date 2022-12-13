@@ -22,6 +22,7 @@ type ArgsNativeAuthClient struct {
 	PrivateKey           crypto.PrivateKey
 	TokenHandler         authentication.AuthTokenHandler
 	TokenExpiryInSeconds int64
+	Host                 string
 }
 
 type authClient struct {
@@ -31,6 +32,7 @@ type authClient struct {
 	privateKey           []byte
 	tokenExpiryInSeconds int64
 	address              []byte
+	host                 []byte
 	token                string
 	tokenHandler         authentication.AuthTokenHandler
 	tokenExpire          time.Time
@@ -77,6 +79,7 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 		extraInfo:            extraInfoBytes,
 		proxy:                args.Proxy,
 		privateKey:           privateKeyBytes,
+		host:                 []byte(args.Host),
 		address:              []byte(address.AddressAsBech32String()),
 		tokenHandler:         args.TokenHandler,
 		tokenExpiryInSeconds: args.TokenExpiryInSeconds,
@@ -111,6 +114,7 @@ func (nac *authClient) createNewToken() error {
 
 	token := &AuthToken{
 		ttl:       nac.tokenExpiryInSeconds,
+		host:      nac.host,
 		extraInfo: nac.extraInfo,
 		blockHash: lastHyperblock.Hash,
 		address:   nac.address,

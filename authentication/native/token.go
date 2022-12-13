@@ -4,6 +4,7 @@ package native
 type AuthToken struct {
 	ttl       int64
 	address   []byte
+	host      []byte
 	extraInfo []byte
 	signature []byte
 	blockHash string
@@ -17,6 +18,11 @@ func (token AuthToken) GetTtl() int64 {
 // GetAddress is the getter to address member
 func (token AuthToken) GetAddress() []byte {
 	return token.address
+}
+
+// GetHost is the getter to host member
+func (token AuthToken) GetHost() []byte {
+	return token.host
 }
 
 // GetSignature is the getter to signature member

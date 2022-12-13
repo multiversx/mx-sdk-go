@@ -3,7 +3,6 @@ package native
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -45,12 +44,16 @@ func (th *authTokenHandler) Decode(accessToken string) (authentication.AuthToken
 		return nil, err
 	}
 	strs = strings.Split(string(body), ".")
-	token.blockHash = strs[0]
-	token.ttl, err = strconv.ParseInt(strs[1], 10, 64)
+	token.host, err = th.decodeHandler(strs[0])
 	if err != nil {
 		return nil, err
 	}
-	token.extraInfo, err = th.decodeHandler(strs[2])
+	token.blockHash = strs[1]
+	token.ttl, err = strconv.ParseInt(strs[2], 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	token.extraInfo, err = th.decodeHandler(strs[3])
 	if err != nil {
 		return nil, err
 	}
@@ -81,23 +84,15 @@ func (th *authTokenHandler) Encode(authToken authentication.AuthToken) (string, 
 // GetTokenBody returns the authentication token body as string
 func (th *authTokenHandler) GetTokenBody(token authentication.AuthToken) []byte {
 	encodedExtraInfo := th.encodeHandler(token.GetExtraInfo())
-	return []byte(fmt.Sprintf("%s.%d.%s", token.GetBlockHash(), token.GetTtl(), encodedExtraInfo))
+	encodedHost := th.encodeHandler(token.GetHost())
+	return []byte(fmt.Sprintf("%s.%s.%d.%s", encodedHost, token.GetBlockHash(), token.GetTtl(), encodedExtraInfo))
 }
 
 func decodeHandler(source string) ([]byte, error) {
-	switch len(source) % 4 {
-	case 0:
-		break
-	case 2:
-		source += "=="
-	case 3:
-		source += "="
-	default:
-		return nil, errors.New(base64.CorruptInputError.Error(1))
-	}
 	source = strings.ReplaceAll(source, "-", "+")
 	source = strings.ReplaceAll(source, "_", "/")
-	return base64.StdEncoding.DecodeString(source)
+	source = strings.TrimRight(source, "=")
+	return base64.RawStdEncoding.DecodeString(source)
 }
 
 func encodeHandler(source []byte) string {

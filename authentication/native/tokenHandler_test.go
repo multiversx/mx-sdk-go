@@ -51,7 +51,7 @@ func TestNativeserver_Decode(t *testing.T) {
 
 		handler := NewAuthTokenHandler()
 		handler.decodeHandler = func(s string) ([]byte, error) {
-			return []byte("blockHash.10.extraInfo"), nil
+			return []byte("host.blockHash.10.extraInfo"), nil
 		}
 		handler.hexDecodeHandler = func(s string) ([]byte, error) {
 			return []byte(s), nil
@@ -117,31 +117,5 @@ func TestNativeserver_Encode(t *testing.T) {
 		})
 		require.Equal(t, "a.a.7369676e6174757265", token)
 		require.Nil(t, err)
-	})
-}
-
-func TestNativeserver_decodeHandler(t *testing.T) {
-	t.Parallel()
-
-	handler := NewAuthTokenHandler()
-	t.Run("len % 4 == 0 should do nothing", func(t *testing.T) {
-		bytes, err := handler.decodeHandler("MTIz")
-		require.Nil(t, err)
-		require.Equal(t, "123", string(bytes))
-	})
-	t.Run("len % 4 == 1 should error", func(t *testing.T) {
-		bytes, err := handler.decodeHandler("e")
-		require.Nil(t, bytes)
-		require.Equal(t, "illegal base64 data at input byte 1", err.Error())
-	})
-	t.Run("len % 2 == 0 should work", func(t *testing.T) {
-		bytes, err := handler.decodeHandler("MQ")
-		require.Nil(t, err)
-		require.Equal(t, "1", string(bytes))
-	})
-	t.Run("len % 2 == 0 should work", func(t *testing.T) {
-		bytes, err := handler.decodeHandler("MTI")
-		require.Nil(t, err)
-		require.Equal(t, "12", string(bytes))
 	})
 }

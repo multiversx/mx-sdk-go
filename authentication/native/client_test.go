@@ -271,5 +271,6 @@ func createMockArgsNativeAuthClient() ArgsNativeAuthClient {
 		PrivateKey:           &testsCommon.PrivateKeyStub{},
 		TokenExpiryInSeconds: 0,
 		TokenHandler:         &mock.AuthTokenHandlerStub{},
+		Host:                 "",
 	}
 }

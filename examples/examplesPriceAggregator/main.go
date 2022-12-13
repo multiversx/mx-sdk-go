@@ -9,7 +9,6 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-crypto/signing"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519/singlesig"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/fetchers"
@@ -221,7 +220,7 @@ func createAuthClient() (authentication.AuthClient, error) {
 		FinalityCheck:       false,
 		AllowedDeltaToFinal: 1,
 		CacheExpirationTime: time.Second,
-		EntityType:          core.RestAPIEntityType("Proxy"),
+		EntityType:          core.Proxy,
 	}
 
 	proxy, err := blockchain.NewElrondProxy(argsProxy)
@@ -230,11 +229,13 @@ func createAuthClient() (authentication.AuthClient, error) {
 	}
 
 	args := native.ArgsNativeAuthClient{
-		Signer:               &singlesig.Ed25519Signer{},
+		Signer:               blockchain.NewTxSigner(),
 		ExtraInfo:            struct{}{},
 		Proxy:                proxy,
 		PrivateKey:           privateKey,
 		TokenExpiryInSeconds: 60 * 60 * 24,
+		TokenHandler:         native.NewAuthTokenHandler(),
+		Host:                 "oracle",
 	}
 
 	authClient, err := native.NewNativeAuthClient(args)

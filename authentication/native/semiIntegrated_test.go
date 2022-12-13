@@ -40,7 +40,7 @@ func TestNativeserver_ClientServer(t *testing.T) {
 		}
 		tokenHandler := NewAuthTokenHandler()
 		server := createNativeServer(proxy, tokenHandler)
-		alice := createNativeClient(examples.AlicePemContents, proxy, tokenHandler)
+		alice := createNativeClient(examples.AlicePemContents, proxy, tokenHandler, "host")
 
 		authToken, _ := alice.GetAccessToken()
 
@@ -50,7 +50,7 @@ func TestNativeserver_ClientServer(t *testing.T) {
 	})
 }
 
-func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler authentication.AuthTokenHandler) *authClient {
+func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler authentication.AuthTokenHandler, host string) *authClient {
 	w := interactors.NewWallet()
 	privateKeyBytes, _ := w.LoadPrivateKeyFromPemData([]byte(pem))
 	privateKey, _ := keyGen.PrivateKeyFromByteArray(privateKeyBytes)
@@ -62,6 +62,7 @@ func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler a
 		PrivateKey:           privateKey,
 		TokenExpiryInSeconds: 60 * 60 * 24,
 		TokenHandler:         tokenHandler,
+		Host:                 host,
 	}
 
 	client, _ := NewNativeAuthClient(clientArgs)
