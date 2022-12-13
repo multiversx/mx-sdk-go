@@ -9,11 +9,11 @@ type EpochStartNotifier struct {
 }
 
 // RegisterHandler does nothing
-func (esn *EpochStartNotifier) RegisterHandler(handler epochStart.ActionHandler) {
+func (esn *EpochStartNotifier) RegisterHandler(_ epochStart.ActionHandler) {
 }
 
 // UnregisterHandler does nothing
-func (esn *EpochStartNotifier) UnregisterHandler(handler epochStart.ActionHandler) {
+func (esn *EpochStartNotifier) UnregisterHandler(_ epochStart.ActionHandler) {
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

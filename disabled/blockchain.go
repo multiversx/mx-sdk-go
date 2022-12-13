@@ -9,7 +9,7 @@ type Blockchain struct {
 }
 
 // GetFinalBlockInfo return 0 and empty slices
-func (b *Blockchain) GetFinalBlockInfo() (nonce uint64, blockHash []byte, rootHash []byte) {
+func (b *Blockchain) GetFinalBlockInfo() (uint64, []byte, []byte) {
 	return 0, make([]byte, 0), make([]byte, 0)
 }
 

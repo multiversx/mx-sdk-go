@@ -71,7 +71,7 @@ func (s *Storer) Close() error {
 }
 
 // RangeKeys does nothing
-func (s *Storer) RangeKeys(_ func(key []byte, val []byte) bool) {
+func (s *Storer) RangeKeys(_ func(_ []byte, _ []byte) bool) {
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
