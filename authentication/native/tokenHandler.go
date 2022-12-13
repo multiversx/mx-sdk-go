@@ -2,6 +2,8 @@ package native
 
 import (
 	"encoding/base64"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,15 +13,17 @@ import (
 
 // authTokenHandler will handle encoding and decoding native authentication tokens
 type authTokenHandler struct {
-	decodeHandler func(s string) ([]byte, error)
-	encodeHandler func(src []byte) string
+	decodeHandler    func(s string) ([]byte, error)
+	hexDecodeHandler func(s string) ([]byte, error)
+	encodeHandler    func(src []byte) string
 }
 
 // NewAuthTokenHandler returns a new instance of a native authentication token handler
 func NewAuthTokenHandler() *authTokenHandler {
 	return &authTokenHandler{
-		decodeHandler: decodeHandler,
-		encodeHandler: base64.StdEncoding.EncodeToString,
+		decodeHandler:    decodeHandler,
+		hexDecodeHandler: hex.DecodeString,
+		encodeHandler:    encodeHandler,
 	}
 }
 
@@ -36,14 +40,20 @@ func (th *authTokenHandler) Decode(accessToken string) (authentication.AuthToken
 	if err != nil {
 		return nil, err
 	}
-	token.signature = []byte(strs[2])
+	token.signature, err = th.hexDecodeHandler(strs[2])
+	if err != nil {
+		return nil, err
+	}
 	strs = strings.Split(string(body), ".")
 	token.blockHash = strs[0]
 	token.ttl, err = strconv.ParseInt(strs[1], 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	token.extraInfo = strs[2]
+	token.extraInfo, err = th.decodeHandler(strs[2])
+	if err != nil {
+		return nil, err
+	}
 
 	return token, nil
 }
@@ -60,16 +70,42 @@ func (th *authTokenHandler) Encode(authToken authentication.AuthToken) (string, 
 		return "", authentication.ErrNilAddress
 	}
 
-	encodedToken := th.encodeHandler(authToken.GetBody())
+	encodedToken := th.encodeHandler(th.GetTokenBody(authToken))
 	if len(encodedToken) == 0 {
 		return "", authentication.ErrNilBody
 	}
 
-	return fmt.Sprintf("%s.%s.%s", encodedAddress, encodedToken, signature), nil
+	return fmt.Sprintf("%s.%s.%x", encodedAddress, encodedToken, signature), nil
 }
 
-func decodeHandler(s string) ([]byte, error) {
-	return base64.RawURLEncoding.DecodeString(strings.TrimRight(s, "="))
+// GetTokenBody returns the authentication token body as string
+func (th *authTokenHandler) GetTokenBody(token authentication.AuthToken) []byte {
+	encodedExtraInfo := th.encodeHandler(token.GetExtraInfo())
+	return []byte(fmt.Sprintf("%s.%d.%s", token.GetBlockHash(), token.GetTtl(), encodedExtraInfo))
+}
+
+func decodeHandler(source string) ([]byte, error) {
+	switch len(source) % 4 {
+	case 0:
+		break
+	case 2:
+		source += "=="
+	case 3:
+		source += "="
+	default:
+		return nil, errors.New(base64.CorruptInputError.Error(1))
+	}
+	source = strings.ReplaceAll(source, "-", "+")
+	source = strings.ReplaceAll(source, "_", "/")
+	return base64.StdEncoding.DecodeString(source)
+}
+
+func encodeHandler(source []byte) string {
+	encoded := base64.StdEncoding.EncodeToString(source)
+	encoded = strings.ReplaceAll(encoded, "+", "-")
+	encoded = strings.ReplaceAll(encoded, "/", "_")
+	encoded = strings.TrimRight(encoded, "=")
+	return encoded
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

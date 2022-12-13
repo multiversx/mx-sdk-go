@@ -11,6 +11,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519/singlesig"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
@@ -55,7 +56,7 @@ func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler a
 	privateKey, _ := keyGen.PrivateKeyFromByteArray(privateKeyBytes)
 
 	clientArgs := ArgsNativeAuthClient{
-		Signer:               &singlesig.Ed25519Signer{},
+		Signer:               blockchain.NewTxSigner(),
 		ExtraInfo:            struct{}{},
 		Proxy:                proxy,
 		PrivateKey:           privateKey,

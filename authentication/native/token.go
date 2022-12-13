@@ -1,14 +1,10 @@
 package native
 
-import (
-	"fmt"
-)
-
 // AuthToken is the native authentication token implementation
 type AuthToken struct {
 	ttl       int64
 	address   []byte
-	extraInfo string
+	extraInfo []byte
 	signature []byte
 	blockHash string
 }
@@ -33,7 +29,7 @@ func (token AuthToken) GetBlockHash() string {
 	return token.blockHash
 }
 
-// GetBody returns the authentication token body as string
-func (token AuthToken) GetBody() []byte {
-	return []byte(fmt.Sprintf("%s.%d.%s", token.blockHash, token.ttl, token.extraInfo))
+// GetExtraInfo is the getter to extraInfo member
+func (token AuthToken) GetExtraInfo() []byte {
+	return token.extraInfo
 }

@@ -2,7 +2,6 @@ package native
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -17,7 +16,7 @@ import (
 
 // ArgsNativeAuthClient is the DTO used in the native auth client constructor
 type ArgsNativeAuthClient struct {
-	Signer               crypto.SingleSigner
+	Signer               builders.TxSigner
 	ExtraInfo            struct{}
 	Proxy                workflows.ProxyHandler
 	PrivateKey           crypto.PrivateKey
@@ -26,10 +25,10 @@ type ArgsNativeAuthClient struct {
 }
 
 type authClient struct {
-	signer               crypto.SingleSigner
-	extraInfo            string
+	signer               builders.TxSigner
+	extraInfo            []byte
 	proxy                workflows.ProxyHandler
-	privateKey           crypto.PrivateKey
+	privateKey           []byte
 	tokenExpiryInSeconds int64
 	address              []byte
 	token                string
@@ -48,7 +47,7 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w while marshaling args.extraInfo", err)
 	}
-	encodedExtraInfo := base64.StdEncoding.EncodeToString(extraInfoBytes)
+
 	if check.IfNil(args.Proxy) {
 		return nil, workflows.ErrNilProxy
 	}
@@ -69,11 +68,15 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 
 	address := data.NewAddressFromBytes(pkBytes)
 
+	privateKeyBytes, err := args.PrivateKey.ToByteArray()
+	if err != nil {
+		return nil, err
+	}
 	return &authClient{
 		signer:               args.Signer,
-		extraInfo:            encodedExtraInfo,
+		extraInfo:            extraInfoBytes,
 		proxy:                args.Proxy,
-		privateKey:           args.PrivateKey,
+		privateKey:           privateKeyBytes,
 		address:              []byte(address.AddressAsBech32String()),
 		tokenHandler:         args.TokenHandler,
 		tokenExpiryInSeconds: args.TokenExpiryInSeconds,
@@ -113,7 +116,7 @@ func (nac *authClient) createNewToken() error {
 		address:   nac.address,
 	}
 
-	token.signature, err = nac.signer.Sign(nac.privateKey, token.GetBody())
+	token.signature, err = nac.signer.SignMessage(nac.tokenHandler.GetTokenBody(token), nac.privateKey)
 	if err != nil {
 		return err
 	}

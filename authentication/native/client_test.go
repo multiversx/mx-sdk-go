@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-go/testscommon/cryptoMocks"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication/native/mock"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
@@ -127,8 +126,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.Signer = &cryptoMocks.SignerStub{
-			SignCalled: func(private crypto.PrivateKey, msg []byte) ([]byte, error) {
+		args.Signer = &testsCommon.TxSignerStub{
+			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
 				return make([]byte, 0), expectedErr
 			},
 		}
@@ -161,8 +160,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.Signer = &cryptoMocks.SignerStub{
-			SignCalled: func(private crypto.PrivateKey, msg []byte) ([]byte, error) {
+		args.Signer = &testsCommon.TxSignerStub{
+			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
 				return []byte(expectedSignature), nil
 			},
 		}
@@ -202,8 +201,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.Signer = &cryptoMocks.SignerStub{
-			SignCalled: func(private crypto.PrivateKey, msg []byte) ([]byte, error) {
+		args.Signer = &testsCommon.TxSignerStub{
+			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
 				return []byte(expectedSignature), nil
 			},
 		}
@@ -243,8 +242,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.Signer = &cryptoMocks.SignerStub{
-			SignCalled: func(private crypto.PrivateKey, msg []byte) ([]byte, error) {
+		args.Signer = &testsCommon.TxSignerStub{
+			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
 				return []byte(expectedSignature), nil
 			},
 		}
@@ -266,7 +265,7 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 
 func createMockArgsNativeAuthClient() ArgsNativeAuthClient {
 	return ArgsNativeAuthClient{
-		Signer:               &cryptoMocks.SignerStub{},
+		Signer:               &testsCommon.TxSignerStub{},
 		ExtraInfo:            struct{}{},
 		Proxy:                &testsCommon.ProxyStub{},
 		PrivateKey:           &testsCommon.PrivateKeyStub{},

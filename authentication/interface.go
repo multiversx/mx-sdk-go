@@ -16,6 +16,7 @@ type AuthServer interface {
 type AuthTokenHandler interface {
 	Decode(accessToken string) (AuthToken, error)
 	Encode(authToken AuthToken) (string, error)
+	GetTokenBody(authToken AuthToken) []byte
 	IsInterfaceNil() bool
 }
 
@@ -25,5 +26,5 @@ type AuthToken interface {
 	GetAddress() []byte
 	GetSignature() []byte
 	GetBlockHash() string
-	GetBody() []byte
+	GetExtraInfo() []byte
 }

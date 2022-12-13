@@ -112,7 +112,7 @@ func (server *authServer) validateSignature(token authentication.AuthToken) erro
 		return err
 	}
 
-	err = server.signer.Verify(pubkey, token.GetBody(), token.GetSignature())
+	err = server.signer.Verify(pubkey, server.tokenHandler.GetTokenBody(token), token.GetSignature())
 	if err != nil {
 		return err
 	}
