@@ -11,12 +11,12 @@ type SimpleESDTNFTStorageHandler struct {
 }
 
 // GetESDTNFTTokenOnDestination returns nil
-func (sns *SimpleESDTNFTStorageHandler) GetESDTNFTTokenOnDestination(accnt vmcommon.UserAccountHandler, esdtTokenKey []byte, nonce uint64) (*esdt.ESDigitalToken, bool, error) {
+func (sns *SimpleESDTNFTStorageHandler) GetESDTNFTTokenOnDestination(_ vmcommon.UserAccountHandler, _ []byte, nonce uint64) (*esdt.ESDigitalToken, bool, error) {
 	return nil, false, nil
 }
 
 // SaveNFTMetaDataToSystemAccount returns nil
-func (sns *SimpleESDTNFTStorageHandler) SaveNFTMetaDataToSystemAccount(tx data.TransactionHandler) error {
+func (sns *SimpleESDTNFTStorageHandler) SaveNFTMetaDataToSystemAccount(_ data.TransactionHandler) error {
 	return nil
 }
 

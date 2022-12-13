@@ -9,11 +9,11 @@ func (c *Cache) Clear() {
 }
 
 // Put returns false
-func (c *Cache) Put(key []byte, value interface{}, sizeInBytes int) (evicted bool) {
+func (c *Cache) Put(_ []byte, _ interface{}, _ int) bool {
 	return false
 }
 
 // Get returns false
-func (c *Cache) Get(key []byte) (value interface{}, ok bool) {
+func (c *Cache) Get(_ []byte) (interface{}, bool) {
 	return nil, false
 }
