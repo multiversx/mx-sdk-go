@@ -16,7 +16,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -46,7 +46,7 @@ type bip32 struct {
 }
 
 var suite = ed25519.NewEd25519()
-var keyGenerator = signing.NewKeyGenerator(suite)
+var keyGenerator = crypto.NewKeyGenerator(suite)
 
 type encryptedKeyJSONV4 struct {
 	Address string `json:"address"`

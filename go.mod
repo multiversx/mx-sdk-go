@@ -3,9 +3,9 @@ module github.com/ElrondNetwork/elrond-sdk-erdgo
 go 1.17
 
 require (
-	github.com/ElrondNetwork/elrond-go v1.4.1-0.20221207122053-d632c10fe03e
+	github.com/ElrondNetwork/elrond-go v1.4.1-0.20221213081522-654f741e054b
 	github.com/ElrondNetwork/elrond-go-core v1.1.27-0.20221207113027-6add1889c6e8
-	github.com/ElrondNetwork/elrond-go-crypto v1.2.2
+	github.com/ElrondNetwork/elrond-go-crypto v1.2.4-0.20221212134904-9faa0161e5dc
 	github.com/ElrondNetwork/elrond-go-logger v1.0.10
 	github.com/ElrondNetwork/elrond-vm-common v1.3.29-0.20221207113405-6973ba06dc58
 	github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792
