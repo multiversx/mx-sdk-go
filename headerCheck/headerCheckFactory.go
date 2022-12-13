@@ -6,6 +6,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-go/factory/crypto"
 	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/factory"
 )
@@ -13,7 +14,10 @@ import (
 // NewHeaderCheckHandler will create all components needed for header
 // verification and returns the header verifier component. It behaves like a
 // main factory for header verification components
-func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
+func NewHeaderCheckHandler(
+	proxy Proxy,
+	enableEpochsConfig *data.EnableEpochsConfig,
+) (HeaderVerifier, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
 	}
@@ -24,11 +28,6 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 	}
 
 	ratingsConfig, err := proxy.GetRatingsConfig(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	enableEpochsConfig, err := proxy.GetEnableEpochsConfig(context.Background())
 	if err != nil {
 		return nil, err
 	}

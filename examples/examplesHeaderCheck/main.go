@@ -5,6 +5,7 @@ import (
 	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
@@ -29,7 +30,25 @@ func main() {
 		return
 	}
 
-	headerVerifier, err := headerCheck.NewHeaderCheckHandler(ep)
+	enableEpochsConfig, err := ep.GetEnableEpochsConfig(context.Background())
+	if err != nil {
+		log.Error("error getting enable epochs config from proxy", "error", err)
+		return
+	}
+
+	// set enable epochs config based on the environment
+	enableEpochsConfig.EnableEpochs.BLSMultiSignerEnableEpoch = []config.MultiSignerConfig{
+		{
+			EnableEpoch: 0,
+			Type:        "no-KOSK",
+		},
+		{
+			EnableEpoch: 3,
+			Type:        "KOSK",
+		},
+	}
+
+	headerVerifier, err := headerCheck.NewHeaderCheckHandler(ep, enableEpochsConfig)
 	if err != nil {
 		log.Error("error creating header check handler", "error", err)
 		return
