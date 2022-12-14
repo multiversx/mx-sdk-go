@@ -17,6 +17,7 @@ type AuthTokenHandler interface {
 	Decode(accessToken string) (AuthToken, error)
 	Encode(authToken AuthToken) (string, error)
 	GetUnsignedToken(authToken AuthToken) []byte
+	GetSignableMessage(address, unsignedToken []byte) []byte
 	IsInterfaceNil() bool
 }
 

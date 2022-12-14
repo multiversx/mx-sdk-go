@@ -108,7 +108,8 @@ func (server *authServer) validateSignature(token authentication.AuthToken) erro
 	}
 
 	unsignedToken := server.tokenHandler.GetUnsignedToken(token)
-	return server.signer.Verify(pubkey, unsignedToken, token.GetSignature())
+	signableMessage := server.tokenHandler.GetSignableMessage(token.GetAddress(), unsignedToken)
+	return server.signer.Verify(pubkey, signableMessage, token.GetSignature())
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

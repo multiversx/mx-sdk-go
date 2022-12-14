@@ -88,6 +88,11 @@ func (th *authTokenHandler) GetUnsignedToken(token authentication.AuthToken) []b
 	return []byte(fmt.Sprintf("%s.%s.%d.%s", encodedHost, token.GetBlockHash(), token.GetTtl(), encodedExtraInfo))
 }
 
+// GetSignableMessage returns a message to be signed
+func (th *authTokenHandler) GetSignableMessage(address, unsignedToken []byte) []byte {
+	return []byte(fmt.Sprintf("%s%s", address, unsignedToken))
+}
+
 func decodeHandler(source string) ([]byte, error) {
 	source = strings.ReplaceAll(source, "-", "+")
 	source = strings.ReplaceAll(source, "_", "/")
