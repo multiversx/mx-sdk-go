@@ -32,6 +32,15 @@ func TestNativeserver_NewNativeAuthServer(t *testing.T) {
 		require.Nil(t, server)
 		require.Equal(t, workflows.ErrNilProxy, err)
 	})
+	t.Run("nil signer should error", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsNativeAuthServer()
+		args.Signer = nil
+		server, err := NewNativeAuthServer(args)
+		require.Nil(t, server)
+		require.Equal(t, authentication.ErrNilSigner, err)
+	})
 	t.Run("nil KeyGenerator should error", func(t *testing.T) {
 		t.Parallel()
 
@@ -49,15 +58,6 @@ func TestNativeserver_NewNativeAuthServer(t *testing.T) {
 		server, err := NewNativeAuthServer(args)
 		require.Nil(t, server)
 		require.Equal(t, core.ErrNilPubkeyConverter, err)
-	})
-	t.Run("nil signer should error", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthServer()
-		args.Signer = nil
-		server, err := NewNativeAuthServer(args)
-		require.Nil(t, server)
-		require.Equal(t, authentication.ErrNilSigner, err)
 	})
 	t.Run("nil token handler should error", func(t *testing.T) {
 		t.Parallel()
@@ -80,30 +80,13 @@ func TestNativeserver_NewNativeAuthServer(t *testing.T) {
 }
 func TestNativeserver_Validate(t *testing.T) {
 	t.Parallel()
-	t.Run("decode errors should error", func(t *testing.T) {
-		t.Parallel()
 
-		args := createMockArgsNativeAuthServer()
-		args.TokenHandler = &mock.AuthTokenHandlerStub{
-			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
-				return nil, expectedErr
-			},
-		}
-		server, _ := NewNativeAuthServer(args)
-
-		address, err := server.Validate("accessToken")
-		require.Equal(t, "", address)
-		require.Equal(t, expectedErr, err)
-	})
+	tokenTtl := int64(20)
+	hyperblockTimestamp := int64(10)
 	t.Run("proxy returns error should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthServer()
-		args.TokenHandler = &mock.AuthTokenHandlerStub{
-			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
-				return AuthToken{}, nil
-			},
-		}
 		args.Proxy = &testsCommon.ProxyStub{
 			GetHyperBlockByHashCalled: func(ctx context.Context, hash string) (*data.HyperBlock, error) {
 				return nil, expectedErr
@@ -111,23 +94,15 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 		server, _ := NewNativeAuthServer(args)
 
-		address, err := server.Validate("accessToken")
-		require.Equal(t, "", address)
+		err := server.Validate(&AuthToken{
+			ttl: tokenTtl,
+		})
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("token expired should error", func(t *testing.T) {
 		t.Parallel()
 
-		hyperblockTimestamp := 10
-		tokenTtl := 20
 		args := createMockArgsNativeAuthServer()
-		args.TokenHandler = &mock.AuthTokenHandlerStub{
-			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
-				return AuthToken{
-					ttl: int64(tokenTtl),
-				}, nil
-			},
-		}
 		args.Proxy = &testsCommon.ProxyStub{
 			GetHyperBlockByHashCalled: func(ctx context.Context, hash string) (*data.HyperBlock, error) {
 				return &data.HyperBlock{Timestamp: uint64(hyperblockTimestamp)}, nil
@@ -135,26 +110,42 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 		server, _ := NewNativeAuthServer(args)
 		server.getTimeHandler = func() time.Time {
-			return time.Unix(int64(hyperblockTimestamp+tokenTtl+1), 1)
+			return time.Unix(hyperblockTimestamp+tokenTtl+1, 1)
 		}
 
-		address, err := server.Validate("accessToken")
-		require.Equal(t, "", address)
+		err := server.Validate(&AuthToken{
+			ttl: tokenTtl,
+		})
 		require.Equal(t, authentication.ErrTokenExpired, err)
+	})
+	t.Run("pubKeyConverter errors should error", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsNativeAuthServer()
+		args.Proxy = &testsCommon.ProxyStub{
+			GetHyperBlockByHashCalled: func(ctx context.Context, hash string) (*data.HyperBlock, error) {
+				return &data.HyperBlock{Timestamp: uint64(hyperblockTimestamp)}, nil
+			},
+		}
+		args.PubKeyConverter = &genesisMock.PubkeyConverterStub{
+			DecodeCalled: func(humanReadable string) ([]byte, error) {
+				return nil, expectedErr
+			},
+		}
+		server, _ := NewNativeAuthServer(args)
+		server.getTimeHandler = func() time.Time {
+			return time.Unix(hyperblockTimestamp, 1)
+		}
+
+		err := server.Validate(&AuthToken{
+			ttl: tokenTtl,
+		})
+		require.Equal(t, expectedErr, err)
 	})
 	t.Run("keyGenerator errors should error", func(t *testing.T) {
 		t.Parallel()
 
-		hyperblockTimestamp := 10
-		tokenTtl := 20
 		args := createMockArgsNativeAuthServer()
-		args.TokenHandler = &mock.AuthTokenHandlerStub{
-			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
-				return AuthToken{
-					ttl: int64(tokenTtl),
-				}, nil
-			},
-		}
 		args.Proxy = &testsCommon.ProxyStub{
 			GetHyperBlockByHashCalled: func(ctx context.Context, hash string) (*data.HyperBlock, error) {
 				return &data.HyperBlock{Timestamp: uint64(hyperblockTimestamp)}, nil
@@ -167,7 +158,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 		args.PubKeyConverter = &genesisMock.PubkeyConverterStub{
 			DecodeCalled: func(humanReadable string) ([]byte, error) {
-				return nil, expectedErr
+				return nil, nil
 			},
 		}
 		server, _ := NewNativeAuthServer(args)
@@ -175,53 +166,18 @@ func TestNativeserver_Validate(t *testing.T) {
 			return time.Unix(int64(hyperblockTimestamp), 1)
 		}
 
-		address, err := server.Validate("accessToken")
-		require.Equal(t, "", address)
-		require.Equal(t, expectedErr, err)
-	})
-	t.Run("keyGenerator errors should error", func(t *testing.T) {
-		t.Parallel()
-
-		hyperblockTimestamp := 10
-		tokenTtl := 20
-		args := createMockArgsNativeAuthServer()
-		args.TokenHandler = &mock.AuthTokenHandlerStub{
-			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
-				return AuthToken{
-					ttl: int64(tokenTtl),
-				}, nil
-			},
-		}
-		args.Proxy = &testsCommon.ProxyStub{
-			GetHyperBlockByHashCalled: func(ctx context.Context, hash string) (*data.HyperBlock, error) {
-				return &data.HyperBlock{Timestamp: uint64(hyperblockTimestamp)}, nil
-			},
-		}
-		args.KeyGenerator = &genesisMock.KeyGeneratorStub{
-			PublicKeyFromByteArrayCalled: func(b []byte) (crypto.PublicKey, error) {
-				return nil, expectedErr
-			},
-		}
-		server, _ := NewNativeAuthServer(args)
-		server.getTimeHandler = func() time.Time {
-			return time.Unix(int64(hyperblockTimestamp), 1)
-		}
-
-		address, err := server.Validate("accessToken")
-		require.Equal(t, "", address)
+		err := server.Validate(&AuthToken{
+			ttl: tokenTtl,
+		})
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("verification errors should error", func(t *testing.T) {
 		t.Parallel()
 
-		hyperblockTimestamp := 10
-		tokenTtl := 20
 		args := createMockArgsNativeAuthServer()
 		args.TokenHandler = &mock.AuthTokenHandlerStub{
-			DecodeCalled: func(accessToken string) (authentication.AuthToken, error) {
-				return AuthToken{
-					ttl: int64(tokenTtl),
-				}, nil
+			GetUnsignedTokenCalled: func(authToken authentication.AuthToken) []byte {
+				return []byte("token")
 			},
 		}
 		args.Proxy = &testsCommon.ProxyStub{
@@ -244,8 +200,9 @@ func TestNativeserver_Validate(t *testing.T) {
 			return time.Unix(int64(hyperblockTimestamp), 1)
 		}
 
-		address, err := server.Validate("accessToken")
-		require.Equal(t, "", address)
+		err := server.Validate(&AuthToken{
+			ttl: tokenTtl,
+		})
 		require.Equal(t, expectedErr, err)
 	})
 }

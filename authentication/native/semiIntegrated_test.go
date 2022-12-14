@@ -44,9 +44,10 @@ func TestNativeserver_ClientServer(t *testing.T) {
 
 		authToken, _ := alice.GetAccessToken()
 
-		address, err := server.Validate(authToken)
+		tokenDecoded, err := tokenHandler.Decode(authToken)
 		require.Nil(t, err)
-		require.Equal(t, address, string(alice.address))
+		err = server.Validate(tokenDecoded)
+		require.Nil(t, err)
 	})
 }
 

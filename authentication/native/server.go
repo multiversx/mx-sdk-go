@@ -66,23 +66,18 @@ func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
 }
 
 // Validate validates the given accessToken
-func (server *authServer) Validate(accessToken string) (string, error) {
-	token, err := server.tokenHandler.Decode(accessToken)
+func (server *authServer) Validate(authToken authentication.AuthToken) error {
+	err := server.validateExpiration(authToken)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	err = server.validateExpiration(token)
+	err = server.validateSignature(authToken)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	err = server.validateSignature(token)
-	if err != nil {
-		return "", err
-	}
-
-	return string(token.GetAddress()), nil
+	return nil
 }
 
 func (server *authServer) validateExpiration(token authentication.AuthToken) error {
@@ -112,11 +107,8 @@ func (server *authServer) validateSignature(token authentication.AuthToken) erro
 		return err
 	}
 
-	err = server.signer.Verify(pubkey, server.tokenHandler.GetTokenBody(token), token.GetSignature())
-	if err != nil {
-		return err
-	}
-	return nil
+	unsignedToken := server.tokenHandler.GetUnsignedToken(token)
+	return server.signer.Verify(pubkey, unsignedToken, token.GetSignature())
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

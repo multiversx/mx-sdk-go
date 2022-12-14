@@ -3,7 +3,9 @@ package native
 import (
 	"testing"
 
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,33 +34,79 @@ func TestNativeserver_Decode(t *testing.T) {
 			return make([]byte, 0), expectedErr
 		}
 		token, err := handler.Decode("address.body.signature")
-		require.Nil(t, token)
+		require.True(t, check.IfNil(token))
 		require.Equal(t, expectedErr, err)
 	})
-	t.Run("parseIntHandler errors should error", func(t *testing.T) {
+	t.Run("hexDecodeHandler errors should error", func(t *testing.T) {
 		t.Parallel()
 
 		handler := NewAuthTokenHandler()
 		handler.decodeHandler = func(s string) ([]byte, error) {
 			return []byte("host.blockHash.ttl.extraInfo"), nil
 		}
+		handler.hexDecodeHandler = func(s string) ([]byte, error) {
+			return nil, expectedErr
+		}
 		token, err := handler.Decode("address.body.signature")
 		require.Nil(t, token)
-		require.NotNil(t, err)
+		require.Equal(t, expectedErr, err)
 	})
-	t.Run("parseIntHandler errors should error", func(t *testing.T) {
+	t.Run("decodeHandler errors for host should error", func(t *testing.T) {
 		t.Parallel()
 
 		handler := NewAuthTokenHandler()
 		handler.decodeHandler = func(s string) ([]byte, error) {
-			return []byte("host.blockHash.10.extraInfo"), nil
+			if s == "body" {
+				return []byte("host.blockHash.ttl.extraInfo"), nil
+			}
+			if s == "host" {
+				return make([]byte, 0), expectedErr
+			}
+			return nil, nil
 		}
 		handler.hexDecodeHandler = func(s string) ([]byte, error) {
 			return []byte(s), nil
 		}
 		token, err := handler.Decode("address.body.signature")
-		require.NotNil(t, token)
-		require.Nil(t, err)
+		require.Nil(t, token)
+		require.Equal(t, expectedErr, err)
+	})
+	t.Run("ParseInt errors for ttl should error", func(t *testing.T) {
+		t.Parallel()
+
+		handler := NewAuthTokenHandler()
+		handler.decodeHandler = func(s string) ([]byte, error) {
+			if s == "body" {
+				return []byte("host.blockHash.ttl.extraInfo"), nil
+			}
+			return nil, nil
+		}
+		handler.hexDecodeHandler = func(s string) ([]byte, error) {
+			return []byte(s), nil
+		}
+		token, err := handler.Decode("address.body.signature")
+		require.Nil(t, token)
+		assert.Equal(t, "strconv.ParseInt: parsing \"ttl\": invalid syntax", err.Error())
+	})
+	t.Run("decodeHandler errors for extraInfo should error", func(t *testing.T) {
+		t.Parallel()
+
+		handler := NewAuthTokenHandler()
+		handler.decodeHandler = func(s string) ([]byte, error) {
+			if s == "body" {
+				return []byte("host.blockHash.1234.extraInfo"), nil
+			}
+			if s == "extraInfo" {
+				return make([]byte, 0), expectedErr
+			}
+			return nil, nil
+		}
+		handler.hexDecodeHandler = func(s string) ([]byte, error) {
+			return []byte(s), nil
+		}
+		token, err := handler.Decode("address.body.signature")
+		require.Nil(t, token)
+		require.Equal(t, expectedErr, err)
 	})
 }
 
@@ -117,5 +165,26 @@ func TestNativeserver_Encode(t *testing.T) {
 		})
 		require.Equal(t, "a.a.7369676e6174757265", token)
 		require.Nil(t, err)
+	})
+	t.Run("should work with real components", func(t *testing.T) {
+		t.Parallel()
+
+		authToken := &AuthToken{
+			ttl:       110,
+			address:   []byte("address"),
+			host:      []byte("host"),
+			extraInfo: []byte("extra info"),
+			signature: []byte("sig"),
+			blockHash: "block hash",
+		}
+		assert.False(t, check.IfNil(authToken))
+		handler := NewAuthTokenHandler()
+		token, err := handler.Encode(authToken)
+		assert.Nil(t, err)
+
+		recoveredToken, err := handler.Decode(token)
+		assert.Nil(t, err)
+
+		assert.Equal(t, authToken, recoveredToken)
 	})
 }

@@ -28,7 +28,7 @@ func NewAuthTokenHandler() *authTokenHandler {
 
 // Decode decodes the given access token
 func (th *authTokenHandler) Decode(accessToken string) (authentication.AuthToken, error) {
-	token := AuthToken{}
+	token := &AuthToken{}
 	var err error
 	strs := strings.Split(accessToken, ".")
 	token.address, err = th.decodeHandler(strs[0])
@@ -73,7 +73,7 @@ func (th *authTokenHandler) Encode(authToken authentication.AuthToken) (string, 
 		return "", authentication.ErrNilAddress
 	}
 
-	encodedToken := th.encodeHandler(th.GetTokenBody(authToken))
+	encodedToken := th.encodeHandler(th.GetUnsignedToken(authToken))
 	if len(encodedToken) == 0 {
 		return "", authentication.ErrNilBody
 	}
@@ -81,8 +81,8 @@ func (th *authTokenHandler) Encode(authToken authentication.AuthToken) (string, 
 	return fmt.Sprintf("%s.%s.%x", encodedAddress, encodedToken, signature), nil
 }
 
-// GetTokenBody returns the authentication token body as string
-func (th *authTokenHandler) GetTokenBody(token authentication.AuthToken) []byte {
+// GetUnsignedToken returns an unsigned authentication token
+func (th *authTokenHandler) GetUnsignedToken(token authentication.AuthToken) []byte {
 	encodedExtraInfo := th.encodeHandler(token.GetExtraInfo())
 	encodedHost := th.encodeHandler(token.GetHost())
 	return []byte(fmt.Sprintf("%s.%s.%d.%s", encodedHost, token.GetBlockHash(), token.GetTtl(), encodedExtraInfo))

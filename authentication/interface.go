@@ -8,7 +8,7 @@ type AuthClient interface {
 
 // AuthServer defines the behavior of an authentication server
 type AuthServer interface {
-	Validate(accessToken string) (string, error)
+	Validate(accessToken AuthToken) error
 	IsInterfaceNil() bool
 }
 
@@ -16,7 +16,7 @@ type AuthServer interface {
 type AuthTokenHandler interface {
 	Decode(accessToken string) (AuthToken, error)
 	Encode(authToken AuthToken) (string, error)
-	GetTokenBody(authToken AuthToken) []byte
+	GetUnsignedToken(authToken AuthToken) []byte
 	IsInterfaceNil() bool
 }
 
@@ -28,4 +28,5 @@ type AuthToken interface {
 	GetSignature() []byte
 	GetBlockHash() string
 	GetExtraInfo() []byte
+	IsInterfaceNil() bool
 }

@@ -4,9 +4,9 @@ import "github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 
 // AuthTokenHandlerStub -
 type AuthTokenHandlerStub struct {
-	DecodeCalled       func(accessToken string) (authentication.AuthToken, error)
-	EncodeCalled       func(authToken authentication.AuthToken) (string, error)
-	GetTokenBodyCalled func(authToken authentication.AuthToken) []byte
+	DecodeCalled           func(accessToken string) (authentication.AuthToken, error)
+	EncodeCalled           func(authToken authentication.AuthToken) (string, error)
+	GetUnsignedTokenCalled func(authToken authentication.AuthToken) []byte
 }
 
 // Decode -
@@ -26,9 +26,9 @@ func (stub *AuthTokenHandlerStub) Encode(authToken authentication.AuthToken) (st
 }
 
 // GetTokenBody -
-func (stub *AuthTokenHandlerStub) GetTokenBody(authToken authentication.AuthToken) []byte {
-	if stub.GetTokenBodyCalled != nil {
-		return stub.GetTokenBodyCalled(authToken)
+func (stub *AuthTokenHandlerStub) GetUnsignedToken(authToken authentication.AuthToken) []byte {
+	if stub.GetUnsignedTokenCalled != nil {
+		return stub.GetUnsignedTokenCalled(authToken)
 	}
 	return nil
 }

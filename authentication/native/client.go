@@ -120,7 +120,7 @@ func (nac *authClient) createNewToken() error {
 		address:   nac.address,
 	}
 
-	token.signature, err = nac.signer.SignMessage(nac.tokenHandler.GetTokenBody(token), nac.privateKey)
+	token.signature, err = nac.signer.SignMessage(nac.tokenHandler.GetUnsignedToken(token), nac.privateKey)
 	if err != nil {
 		return err
 	}

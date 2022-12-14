@@ -48,6 +48,19 @@ func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 		require.Nil(t, client)
 		require.Equal(t, crypto.ErrNilPrivateKey, err)
 	})
+	t.Run("private key returns error should error", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsNativeAuthClient()
+		args.PrivateKey = &testsCommon.PrivateKeyStub{
+			ToByteArrayCalled: func() ([]byte, error) {
+				return nil, expectedErr
+			},
+		}
+		client, err := NewNativeAuthClient(args)
+		require.Nil(t, client)
+		require.Equal(t, expectedErr, err)
+	})
 	t.Run("public key returns error for ToByteArray", func(t *testing.T) {
 		t.Parallel()
 
