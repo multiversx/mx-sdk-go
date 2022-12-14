@@ -10,6 +10,8 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 )
 
+const MESSAGE_PREFIX = "\u0017Elrond Signed Message:\n"
+
 // authTokenHandler will handle encoding and decoding native authentication tokens
 type authTokenHandler struct {
 	decodeHandler    func(s string) ([]byte, error)
@@ -90,7 +92,7 @@ func (th *authTokenHandler) GetUnsignedToken(token authentication.AuthToken) []b
 
 // GetSignableMessage returns a message to be signed
 func (th *authTokenHandler) GetSignableMessage(address, unsignedToken []byte) []byte {
-	return []byte(fmt.Sprintf("%s%s", address, unsignedToken))
+	return []byte(fmt.Sprintf("%s%s%s", MESSAGE_PREFIX, address, unsignedToken))
 }
 
 func decodeHandler(source string) ([]byte, error) {
