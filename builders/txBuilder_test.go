@@ -22,12 +22,12 @@ func TestNewTxBuilder(t *testing.T) {
 
 		tb, err := NewTxBuilder(nil)
 		assert.True(t, check.IfNil(tb))
-		assert.Equal(t, ErrNilTxSigner, err)
+		assert.Equal(t, ErrNilxSigner, err)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		tb, err := NewTxBuilder(&testsCommon.TxSignerStub{})
+		tb, err := NewTxBuilder(&testsCommon.XSignerStub{})
 		assert.False(t, check.IfNil(tb))
 		assert.Nil(t, err)
 	})
@@ -54,7 +54,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 
 		argsCopy := args
 		expectedErr := errors.New("expected error")
-		tb, _ := NewTxBuilder(&testsCommon.TxSignerStub{
+		tb, _ := NewTxBuilder(&testsCommon.XSignerStub{
 			GeneratePkBytesCalled: func(skBytes []byte) ([]byte, error) {
 				return nil, expectedErr
 			},
@@ -69,8 +69,8 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 
 		argsCopy := args
 		expectedErr := errors.New("expected error")
-		tb, _ := NewTxBuilder(&testsCommon.TxSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		tb, _ := NewTxBuilder(&testsCommon.XSignerStub{
+			SignTransactionCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
 				return nil, expectedErr
 			},
 		})
@@ -80,7 +80,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 		assert.Equal(t, expectedErr, errGenerate)
 	})
 
-	txSigner := blockchain.NewTxSigner()
+	txSigner := blockchain.NewXSigner()
 	tb, err := NewTxBuilder(txSigner)
 	require.Nil(t, err)
 
@@ -117,7 +117,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
 	t.Run("fails if the signature is missing", func(t *testing.T) {
 		t.Parallel()
 
-		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
+		tb, _ := NewTxBuilder(blockchain.NewXSigner())
 		txHash, errGenerate := tb.ComputeTxHash(&data.Transaction{})
 		assert.Nil(t, txHash)
 		assert.Equal(t, ErrMissingSignature, errGenerate)
@@ -139,7 +139,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
 			ChainID:  "T",
 			Version:  uint32(1),
 		}
-		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
+		tb, _ := NewTxBuilder(blockchain.NewXSigner())
 
 		tx, _ := tb.ApplySignatureAndGenerateTx(sk, args)
 		assert.Equal(t, "725c6aa7def724c60f02ee481734807038fef125e453242bf4dc570fc4a4f2ff1b78e996a2ec67ef8be03f9b98b0251d419cfc72c6e6c5c9e33f879af938f008", tx.Signature)

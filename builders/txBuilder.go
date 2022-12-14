@@ -23,17 +23,17 @@ var (
 )
 
 type txBuilder struct {
-	txSigner TxSigner
+	xSigner XSigner
 }
 
 // NewTxBuilder will create a new transaction builder able to build and correctly sign a transaction
-func NewTxBuilder(txSigner TxSigner) (*txBuilder, error) {
-	if check.IfNil(txSigner) {
-		return nil, ErrNilTxSigner
+func NewTxBuilder(xSigner XSigner) (*txBuilder, error) {
+	if check.IfNil(xSigner) {
+		return nil, ErrNilxSigner
 	}
 
 	return &txBuilder{
-		txSigner: txSigner,
+		xSigner: xSigner,
 	}, nil
 }
 
@@ -61,7 +61,7 @@ func (builder *txBuilder) ApplySignatureAndGenerateTx(
 	arg data.ArgCreateTransaction,
 ) (*data.Transaction, error) {
 
-	pkBytes, err := builder.txSigner.GeneratePkBytes(skBytes)
+	pkBytes, err := builder.xSigner.GeneratePkBytes(skBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (builder *txBuilder) ApplySignatureAndGenerateTx(
 		unsignedMessage = txHasher.Compute(string(unsignedMessage))
 	}
 
-	signature, err := builder.txSigner.SignMessage(unsignedMessage, skBytes)
+	signature, err := builder.xSigner.SignTransaction(unsignedMessage, skBytes)
 	if err != nil {
 		return nil, err
 	}

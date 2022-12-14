@@ -63,7 +63,7 @@ func main() {
 	transactionArguments.RcvAddr = address.AddressAsBech32String() // send to self
 	transactionArguments.Value = "1000000000000000000"             // 1EGLD
 
-	txBuilder, err := builders.NewTxBuilder(blockchain.NewTxSigner())
+	txBuilder, err := builders.NewTxBuilder(blockchain.NewXSigner())
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return

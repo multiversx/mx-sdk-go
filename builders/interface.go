@@ -40,9 +40,10 @@ type VMQueryBuilder interface {
 	IsInterfaceNil() bool
 }
 
-// TxSigner defines the method used by a struct used to create valid signatures
-type TxSigner interface {
+// XSigner defines the method used by a struct used to create valid signatures
+type XSigner interface {
 	SignMessage(msg []byte, skBytes []byte) ([]byte, error)
+	SignTransaction(tx []byte, skBytes []byte) ([]byte, error)
 	GeneratePkBytes(skBytes []byte) ([]byte, error)
 	IsInterfaceNil() bool
 }

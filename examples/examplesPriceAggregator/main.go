@@ -228,7 +228,7 @@ func createAuthClient() (authentication.AuthClient, error) {
 	}
 
 	args := authentication.ArgsNativeAuthClient{
-		TxSigner:             blockchain.NewTxSigner(),
+		XSigner:              blockchain.NewXSigner(),
 		ExtraInfo:            nil,
 		Proxy:                proxy,
 		PrivateKey:           privateKey,

@@ -85,7 +85,7 @@ func runApp() error {
 		return err
 	}
 
-	txBuilder, err := builders.NewTxBuilder(blockchain.NewTxSigner())
+	txBuilder, err := builders.NewTxBuilder(blockchain.NewXSigner())
 	if err != nil {
 		return err
 	}

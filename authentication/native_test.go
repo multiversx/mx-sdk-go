@@ -20,11 +20,11 @@ func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 	t.Parallel()
 
 	expectedErr := errors.New("expected error")
-	t.Run("nil txsigner should error", func(t *testing.T) {
+	t.Run("nil XSigner should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.TxSigner = nil
+		args.XSigner = nil
 		authClient, err := NewNativeAuthClient(args)
 		require.Nil(t, authClient)
 		require.Equal(t, ErrNilTxSigner, err)
@@ -126,11 +126,11 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		require.Equal(t, "", token)
 		require.Equal(t, expectedErr, err)
 	})
-	t.Run("txSigner errors when sign message", func(t *testing.T) {
+	t.Run("XSigner errors when sign message", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.TxSigner = &testsCommon.TxSignerStub{
+		args.XSigner = &testsCommon.XSignerStub{
 			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
 				return make([]byte, 0), expectedErr
 			},
@@ -165,7 +165,7 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.TxSigner = &testsCommon.TxSignerStub{
+		args.XSigner = &testsCommon.XSignerStub{
 			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
 				return []byte(expectedSignature), nil
 			},
@@ -207,7 +207,7 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.TxSigner = &testsCommon.TxSignerStub{
+		args.XSigner = &testsCommon.XSignerStub{
 			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
 				return []byte(expectedSignature), nil
 			},
@@ -230,7 +230,7 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 
 func createMockArgsNativeAuthClient() ArgsNativeAuthClient {
 	return ArgsNativeAuthClient{
-		TxSigner:             &testsCommon.TxSignerStub{},
+		XSigner:              &testsCommon.XSignerStub{},
 		ExtraInfo:            nil,
 		Proxy:                &testsCommon.ProxyStub{},
 		PrivateKey:           &testsCommon.PrivateKeyStub{},

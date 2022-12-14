@@ -16,7 +16,7 @@ import (
 
 // ArgsNativeAuthClient is the DTO used in the native auth client constructor
 type ArgsNativeAuthClient struct {
-	TxSigner             builders.TxSigner
+	XSigner              builders.XSigner
 	ExtraInfo            interface{}
 	Proxy                workflows.ProxyHandler
 	PrivateKey           crypto.PrivateKey
@@ -25,7 +25,7 @@ type ArgsNativeAuthClient struct {
 }
 
 type nativeAuthClient struct {
-	txSigner             builders.TxSigner
+	xSigner              builders.XSigner
 	encodedExtraInfo     string
 	proxy                workflows.ProxyHandler
 	skBytes              []byte
@@ -39,7 +39,7 @@ type nativeAuthClient struct {
 
 // NewNativeAuthClient will create a new native client able to create authentication tokens
 func NewNativeAuthClient(args ArgsNativeAuthClient) (*nativeAuthClient, error) {
-	if check.IfNil(args.TxSigner) {
+	if check.IfNil(args.XSigner) {
 		return nil, ErrNilTxSigner
 	}
 
@@ -74,7 +74,7 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*nativeAuthClient, error) {
 	encodedExtraInfo := base64.StdEncoding.EncodeToString(extraInfoBytes)
 
 	return &nativeAuthClient{
-		txSigner:             args.TxSigner,
+		xSigner:              args.XSigner,
 		encodedExtraInfo:     encodedExtraInfo,
 		proxy:                args.Proxy,
 		skBytes:              skBytes,
@@ -112,7 +112,7 @@ func (nac *nativeAuthClient) createNewToken() error {
 
 	token := fmt.Sprintf("%s.%s.%d.%s", nac.encodedHost, lastHyperblock.Hash, nac.tokenExpiryInSeconds, nac.encodedExtraInfo)
 
-	signature, err := nac.txSigner.SignMessage([]byte(token), nac.skBytes)
+	signature, err := nac.xSigner.SignMessage([]byte(token), nac.skBytes)
 	if err != nil {
 		return err
 	}

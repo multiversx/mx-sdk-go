@@ -26,7 +26,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 		},
 	}
 
-	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.XSignerStub{})
 
 	ti, err := NewTransactionInteractor(proxy, txBuilder)
 	assert.Nil(t, err, "Error on transaction interactor constructor")
@@ -65,7 +65,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 		},
 	}
 
-	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.XSignerStub{})
 
 	ti, err := NewTransactionInteractor(proxy, txBuilder)
 	assert.Nil(t, err, "Error on transaction interactor constructor")
@@ -108,7 +108,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 			return make([]string, len(txs)), nil
 		},
 	}
-	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.XSignerStub{})
 	ti, _ := NewTransactionInteractor(proxy, txBuilder)
 	ti.SetTimeBetweenBunches(time.Millisecond)
 

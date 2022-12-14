@@ -46,7 +46,7 @@ func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
 		},
 	}
 
-	txBuilder, _ := builders.NewTxBuilder(blockchain.NewTxSigner())
+	txBuilder, _ := builders.NewTxBuilder(blockchain.NewXSigner())
 	keyGen := signing.NewKeyGenerator(ed25519.NewEd25519())
 	skBytes, _ := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c40d248169f4dd7c90537f05be1c49772ddbf8f7948b507ed17fb23284cf218b7d")
 	sk, _ := keyGen.PrivateKeyFromByteArray(skBytes)
