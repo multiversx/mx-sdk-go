@@ -1,16 +1,18 @@
 package mock
 
+import "github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
+
 // AuthServerStub -
 type AuthServerStub struct {
-	ValidateCalled func(accessToken string) (string, error)
+	ValidateCalled func(accessToken authentication.AuthToken) error
 }
 
 // Validate -
-func (stub *AuthServerStub) Validate(accessToken string) (string, error) {
+func (stub *AuthServerStub) Validate(accessToken authentication.AuthToken) error {
 	if stub.ValidateCalled != nil {
 		return stub.ValidateCalled(accessToken)
 	}
-	return "", nil
+	return nil
 }
 
 // IsInterfaceNil -
