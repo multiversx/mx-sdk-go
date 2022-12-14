@@ -67,7 +67,7 @@ func TestNewHeaderVerifier(t *testing.T) {
 	})
 }
 
-func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldFail(t *testing.T) {
+func TestNewHeaderVerifier_VerifyHeaderSignatureByHash_ShouldFail(t *testing.T) {
 	t.Parallel()
 
 	rawHeaderHandler := &testsCommon.RawHeaderHandlerStub{
@@ -88,12 +88,12 @@ func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldFail(t *testing.T) {
 	hv, err := headerCheck.NewHeaderVerifier(args)
 	require.Nil(t, err)
 
-	status, err := hv.VerifyHeaderByHash(context.Background(), 0, "aaaa")
+	status, err := hv.VerifyHeaderSignatureByHash(context.Background(), 0, "aaaa")
 	assert.False(t, status)
 	assert.True(t, errors.Is(expectedErr, err))
 }
 
-func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldWork(t *testing.T) {
+func TestNewHeaderVerifier_VerifyHeaderSignatureByHash_ShouldWork(t *testing.T) {
 	t.Parallel()
 
 	rawHeaderHandler := &testsCommon.RawHeaderHandlerStub{
@@ -114,7 +114,7 @@ func TestNewHeaderVerifier_VerifyHeaderByHash_ShouldWork(t *testing.T) {
 	hv, err := headerCheck.NewHeaderVerifier(args)
 	require.Nil(t, err)
 
-	status, err := hv.VerifyHeaderByHash(context.Background(), 0, "aaaa")
+	status, err := hv.VerifyHeaderSignatureByHash(context.Background(), 0, "aaaa")
 	assert.Nil(t, err)
 	assert.True(t, status)
 }

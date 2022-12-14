@@ -56,17 +56,6 @@ func CreateCoreComponents(
 		return nil, err
 	}
 
-	enableEpochsConfig.EnableEpochs.BLSMultiSignerEnableEpoch = []config.MultiSignerConfig{
-		{
-			EnableEpoch: 0,
-			Type:        "no-KOSK",
-		},
-		{
-			EnableEpoch: 3,
-			Type:        "KOSK",
-		},
-	}
-
 	enableEpochsHandler, err := enablers.NewEnableEpochsHandler(enableEpochsConfig.EnableEpochs, &disabled.EpochNotifier{})
 	if err != nil {
 		return nil, err
