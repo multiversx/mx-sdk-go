@@ -5,26 +5,23 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 	t.Parallel()
 
-	expectedErr := errors.New("expected error")
 	t.Run("nil XSigner should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.XSigner = nil
+		args.Signer = nil
 		authClient, err := NewNativeAuthClient(args)
 		require.Nil(t, authClient)
 		require.Equal(t, ErrNilTxSigner, err)
@@ -38,50 +35,14 @@ func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 		require.Nil(t, authClient)
 		require.Equal(t, ErrNilProxy, err)
 	})
-	t.Run("nil private key should error", func(t *testing.T) {
+	t.Run("nil crypto components holder should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.PrivateKey = nil
+		args.CryptoComponentsHolder = nil
 		authClient, err := NewNativeAuthClient(args)
 		require.Nil(t, authClient)
-		require.Equal(t, ErrNilPrivateKey, err)
-	})
-	t.Run("private key returns error for ToByteArray", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthClient()
-		args.PrivateKey = &testsCommon.PrivateKeyStub{
-			ToByteArrayCalled: func() ([]byte, error) {
-				return make([]byte, 0), expectedErr
-			}}
-		authClient, err := NewNativeAuthClient(args)
-
-		require.Nil(t, authClient)
-		assert.True(t, errors.Is(err, expectedErr))
-		assert.True(t, strings.Contains(err.Error(), "while getting skBytes from args.PrivateKey"))
-	})
-	t.Run("public key returns error for ToByteArray", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthClient()
-		args.PrivateKey = &testsCommon.PrivateKeyStub{
-			ToByteArrayCalled: func() ([]byte, error) {
-				return []byte("privateKey"), nil
-			},
-			GeneratePublicCalled: func() crypto.PublicKey {
-				return &testsCommon.PublicKeyStub{
-					ToByteArrayCalled: func() ([]byte, error) {
-						return make([]byte, 0), expectedErr
-					},
-				}
-			},
-		}
-		authClient, err := NewNativeAuthClient(args)
-
-		require.Nil(t, authClient)
-		assert.True(t, errors.Is(err, expectedErr))
-		assert.True(t, strings.Contains(err.Error(), "while getting pkBytes from publicKey"))
+		require.Equal(t, ErrNilCryptoComponentsHolder, err)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
@@ -130,8 +91,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.XSigner = &testsCommon.XSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		args.Signer = &testsCommon.SignerStub{
+			SignMessageCalled: func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 				return make([]byte, 0), expectedErr
 			},
 		}
@@ -150,12 +111,7 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		expectedNonce := uint64(100)
 		expectedHash := "hash"
 		expectedSignature := "signature"
-		publicKeyBytes := []byte("publicKey")
-		args.PrivateKey = &testsCommon.PrivateKeyStub{GeneratePublicCalled: func() crypto.PublicKey {
-			return &testsCommon.PublicKeyStub{ToByteArrayCalled: func() ([]byte, error) {
-				return publicKeyBytes, nil
-			}}
-		}}
+		expectedAddr := "addr"
 		args.Proxy = &testsCommon.ProxyStub{
 			GetLatestHyperBlockNonceCalled: func(ctx context.Context) (uint64, error) {
 				return expectedNonce, nil
@@ -165,9 +121,14 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.XSigner = &testsCommon.XSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		args.Signer = &testsCommon.SignerStub{
+			SignMessageCalled: func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 				return []byte(expectedSignature), nil
+			},
+		}
+		args.CryptoComponentsHolder = &testsCommon.CryptoComponentsHolderStub{
+			GetBech32Called: func() string {
+				return expectedAddr
 			},
 		}
 		authClient, _ := NewNativeAuthClient(args)
@@ -177,7 +138,7 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		encodedExtraInfo := base64.StdEncoding.EncodeToString([]byte("null"))
 		internalToken := fmt.Sprintf("%s.%s.%d.%s", encodedHost, expectedHash, args.TokenExpiryInSeconds, encodedExtraInfo)
 		encodedInternalToken := base64.StdEncoding.EncodeToString([]byte(internalToken))
-		encodedAddress := base64.StdEncoding.EncodeToString(publicKeyBytes)
+		encodedAddress := base64.StdEncoding.EncodeToString([]byte(expectedAddr))
 		encodedSignature := base64.StdEncoding.EncodeToString([]byte(expectedSignature))
 		token, err := authClient.GetAccessToken()
 		require.Nil(t, err)
@@ -192,12 +153,6 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		expectedNonce := uint64(100)
 		expectedHash := "hash"
 		expectedSignature := "signature"
-		publicKeyBytes := []byte("publicKey")
-		args.PrivateKey = &testsCommon.PrivateKeyStub{GeneratePublicCalled: func() crypto.PublicKey {
-			return &testsCommon.PublicKeyStub{ToByteArrayCalled: func() ([]byte, error) {
-				return publicKeyBytes, nil
-			}}
-		}}
 		args.Proxy = &testsCommon.ProxyStub{
 			GetLatestHyperBlockNonceCalled: func(ctx context.Context) (uint64, error) {
 				return expectedNonce, nil
@@ -207,8 +162,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.XSigner = &testsCommon.XSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		args.Signer = &testsCommon.SignerStub{
+			SignMessageCalled: func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 				return []byte(expectedSignature), nil
 			},
 		}
@@ -230,11 +185,11 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 
 func createMockArgsNativeAuthClient() ArgsNativeAuthClient {
 	return ArgsNativeAuthClient{
-		XSigner:              &testsCommon.XSignerStub{},
-		ExtraInfo:            nil,
-		Proxy:                &testsCommon.ProxyStub{},
-		PrivateKey:           &testsCommon.PrivateKeyStub{},
-		TokenExpiryInSeconds: 0,
-		Host:                 "",
+		Signer:                 &testsCommon.SignerStub{},
+		ExtraInfo:              nil,
+		Proxy:                  &testsCommon.ProxyStub{},
+		CryptoComponentsHolder: &testsCommon.CryptoComponentsHolderStub{},
+		TokenExpiryInSeconds:   0,
+		Host:                   "",
 	}
 }

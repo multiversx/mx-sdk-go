@@ -10,11 +10,8 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -29,7 +26,7 @@ func createMockArgsElrondNotifee() ArgsElrondNotifee {
 		TxBuilder:       &testsCommon.TxBuilderStub{},
 		TxNonceHandler:  &testsCommon.TxNonceHandlerV2Stub{},
 		ContractAddress: data.NewAddressFromBytes(bytes.Repeat([]byte{1}, 32)),
-		PrivateKey:      &testsCommon.PrivateKeyStub{},
+		CryptoHolder:    &testsCommon.CryptoComponentsHolderStub{},
 		BaseGasLimit:    1,
 		GasLimitForEach: 1,
 	}
@@ -46,17 +43,16 @@ func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
 		},
 	}
 
-	txBuilder, _ := builders.NewTxBuilder(blockchain.NewXSigner())
-	keyGen := signing.NewKeyGenerator(ed25519.NewEd25519())
 	skBytes, _ := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c40d248169f4dd7c90537f05be1c49772ddbf8f7948b507ed17fb23284cf218b7d")
-	sk, _ := keyGen.PrivateKeyFromByteArray(skBytes)
+	holder, _ := cryptoProvider.NewCryptoComponentsHolder(skBytes)
+	txBuilder, _ := builders.NewTxBuilder(cryptoProvider.NewXSigner())
 
 	return ArgsElrondNotifee{
 		Proxy:           proxy,
 		TxBuilder:       txBuilder,
 		TxNonceHandler:  &testsCommon.TxNonceHandlerV2Stub{},
 		ContractAddress: data.NewAddressFromBytes(bytes.Repeat([]byte{1}, 32)),
-		PrivateKey:      sk,
+		CryptoHolder:    holder,
 		BaseGasLimit:    2000,
 		GasLimitForEach: 30,
 	}
@@ -134,15 +130,15 @@ func TestNewElrondNotifee(t *testing.T) {
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errInvalidContractAddress, err)
 	})
-	t.Run("nil private key should error", func(t *testing.T) {
+	t.Run("nil cryptoHlder should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsElrondNotifee()
-		args.PrivateKey = nil
+		args.CryptoHolder = nil
 		en, err := NewElrondNotifee(args)
 
 		assert.True(t, check.IfNil(en))
-		assert.Equal(t, errNilPrivateKey, err)
+		assert.Equal(t, builders.ErrNilCryptoComponentsHolder, err)
 	})
 	t.Run("invalid base gas limit should error", func(t *testing.T) {
 		t.Parallel()
@@ -163,40 +159,6 @@ func TestNewElrondNotifee(t *testing.T) {
 
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errInvalidGasLimitForEach, err)
-	})
-	t.Run("private key to byte array errors should error", func(t *testing.T) {
-		t.Parallel()
-
-		expectedErr := errors.New("expected error")
-		args := createMockArgsElrondNotifee()
-		args.PrivateKey = &testsCommon.PrivateKeyStub{
-			ToByteArrayCalled: func() ([]byte, error) {
-				return nil, expectedErr
-			},
-		}
-		en, err := NewElrondNotifee(args)
-
-		assert.True(t, check.IfNil(en))
-		assert.Equal(t, expectedErr, err)
-	})
-	t.Run("public key to byte array errors should error", func(t *testing.T) {
-		t.Parallel()
-
-		expectedErr := errors.New("expected error")
-		args := createMockArgsElrondNotifee()
-		args.PrivateKey = &testsCommon.PrivateKeyStub{
-			GeneratePublicCalled: func() crypto.PublicKey {
-				return &testsCommon.PublicKeyStub{
-					ToByteArrayCalled: func() ([]byte, error) {
-						return nil, expectedErr
-					},
-				}
-			},
-		}
-		en, err := NewElrondNotifee(args)
-
-		assert.True(t, check.IfNil(en))
-		assert.Equal(t, expectedErr, err)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
@@ -301,7 +263,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 		args.TxBuilder = &testsCommon.TxBuilderStub{
-			ApplySignatureAndGenerateTxCalled: func(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error) {
+			ApplySignatureAndGenerateTxCalled: func(cryptoHolder cryptoProvider.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error) {
 				return nil, expectedErr
 			},
 		}

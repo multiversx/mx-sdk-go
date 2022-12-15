@@ -2,34 +2,30 @@ package builders
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"math/big"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/blake2b"
-	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
 var (
-	log                    = logger.GetOrCreate("elrond-sdk-erdgo/builders")
-	txHasher               = keccak.NewKeccak()
 	blake2bHasher          = blake2b.NewBlake2b()
 	nodeInternalMarshaller = &marshal.GogoProtoMarshalizer{}
 )
 
 type txBuilder struct {
-	xSigner XSigner
+	xSigner Signer
 }
 
 // NewTxBuilder will create a new transaction builder able to build and correctly sign a transaction
-func NewTxBuilder(xSigner XSigner) (*txBuilder, error) {
+func NewTxBuilder(xSigner Signer) (*txBuilder, error) {
 	if check.IfNil(xSigner) {
-		return nil, ErrNilxSigner
+		return nil, ErrNilSigner
 	}
 
 	return &txBuilder{
@@ -57,28 +53,16 @@ func (builder *txBuilder) createTransaction(arg data.ArgCreateTransaction) *data
 // ApplySignatureAndGenerateTx will apply the corresponding sender and compute the signature field and
 // generate the transaction instance
 func (builder *txBuilder) ApplySignatureAndGenerateTx(
-	skBytes []byte,
+	cryptoHolder cryptoProvider.CryptoComponentsHolder,
 	arg data.ArgCreateTransaction,
 ) (*data.Transaction, error) {
-
-	pkBytes, err := builder.xSigner.GeneratePkBytes(skBytes)
+	arg.SndAddr = cryptoHolder.GetBech32()
+	unsignedMessage, err := builder.createUnsignedTx(arg)
 	if err != nil {
 		return nil, err
 	}
 
-	arg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
-	unsignedMessage, err := builder.createUnsignedMessage(arg)
-	if err != nil {
-		return nil, err
-	}
-
-	shouldSignOnTxHash := arg.Version >= 2 && arg.Options&1 > 0
-	if shouldSignOnTxHash {
-		log.Debug("signing the transaction using the hash of the message")
-		unsignedMessage = txHasher.Compute(string(unsignedMessage))
-	}
-
-	signature, err := builder.xSigner.SignTransaction(unsignedMessage, skBytes)
+	signature, err := builder.xSigner.SignTransaction(unsignedMessage, cryptoHolder.GetPrivateKey())
 	if err != nil {
 		return nil, err
 	}
@@ -146,11 +130,11 @@ func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transactio
 	}, nil
 }
 
-func (builder *txBuilder) createUnsignedMessage(arg data.ArgCreateTransaction) ([]byte, error) {
+func (builder *txBuilder) createUnsignedTx(arg data.ArgCreateTransaction) (*data.Transaction, error) {
 	arg.Signature = ""
 	tx := builder.createTransaction(arg)
 
-	return json.Marshal(tx)
+	return tx, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

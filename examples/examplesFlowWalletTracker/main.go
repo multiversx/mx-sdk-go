@@ -11,6 +11,7 @@ import (
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
@@ -85,7 +86,7 @@ func runApp() error {
 		return err
 	}
 
-	txBuilder, err := builders.NewTxBuilder(blockchain.NewXSigner())
+	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewXSigner())
 	if err != nil {
 		return err
 	}

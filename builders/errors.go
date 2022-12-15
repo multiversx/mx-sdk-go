@@ -15,7 +15,10 @@ var ErrNilAddress = errors.New("nil address handler")
 var ErrInvalidAddress = errors.New("invalid address handler")
 
 // ErrNilxSigner signals that a nil transaction signer was provided
-var ErrNilxSigner = errors.New("nil XSigner")
+var ErrNilSigner = errors.New("nil signer")
+
+// ErrNilCryptoComponentsHolder signals that a nil crypto components holder was provided
+var ErrNilCryptoComponentsHolder = errors.New("nil crypto components holder")
 
 // ErrMissingSignature signals that a transaction's signature is empty when trying to compute it's hash
 var ErrMissingSignature = errors.New("missing signature when computing the transaction's hash")

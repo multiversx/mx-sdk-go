@@ -3,6 +3,7 @@ package workflows
 import (
 	"context"
 
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -34,6 +35,6 @@ type ProxyHandler interface {
 // TransactionInteractor defines the transaction interactor behavior used in workflows
 type TransactionInteractor interface {
 	AddTransaction(tx *data.Transaction)
-	ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	ApplySignatureAndGenerateTx(cryptoHolder cryptoProvider.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error)
 	IsInterfaceNil() bool
 }

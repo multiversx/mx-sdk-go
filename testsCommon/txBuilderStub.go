@@ -1,16 +1,19 @@
 package testsCommon
 
-import "github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+import (
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+)
 
 // TxBuilderStub -
 type TxBuilderStub struct {
-	ApplySignatureAndGenerateTxCalled func(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	ApplySignatureAndGenerateTxCalled func(cryptoHolder cryptoProvider.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error)
 }
 
 // ApplySignatureAndGenerateTx -
-func (stub *TxBuilderStub) ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error) {
+func (stub *TxBuilderStub) ApplySignatureAndGenerateTx(cryptoHolder cryptoProvider.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error) {
 	if stub.ApplySignatureAndGenerateTxCalled != nil {
-		return stub.ApplySignatureAndGenerateTxCalled(skBytes, arg)
+		return stub.ApplySignatureAndGenerateTxCalled(cryptoHolder, arg)
 	}
 
 	return &data.Transaction{}, nil
