@@ -263,7 +263,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 		args.TxBuilder = &testsCommon.TxBuilderStub{
-			ApplySignatureAndGenerateTxCalled: func(cryptoHolder cryptoProvider.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error) {
+			ApplySignatureAndGenerateTxCalled: func(cryptoHolder core.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error) {
 				return nil, expectedErr
 			},
 		}

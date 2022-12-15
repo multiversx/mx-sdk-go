@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
 )
 
@@ -18,7 +18,7 @@ type ArgsNativeAuthClient struct {
 	Signer                 builders.Signer
 	ExtraInfo              interface{}
 	Proxy                  workflows.ProxyHandler
-	CryptoComponentsHolder cryptoProvider.CryptoComponentsHolder
+	CryptoComponentsHolder core.CryptoComponentsHolder
 	TokenExpiryInSeconds   uint64
 	Host                   string
 }
@@ -28,7 +28,7 @@ type nativeAuthClient struct {
 	encodedExtraInfo       string
 	proxy                  workflows.ProxyHandler
 	tokenExpiryInSeconds   uint64
-	cryptoComponentsHolder cryptoProvider.CryptoComponentsHolder
+	cryptoComponentsHolder core.CryptoComponentsHolder
 	encodedHost            string
 	token                  string
 	tokenExpire            time.Time

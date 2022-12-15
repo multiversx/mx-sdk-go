@@ -8,7 +8,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/blake2b"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -53,7 +52,7 @@ func (builder *txBuilder) createTransaction(arg data.ArgCreateTransaction) *data
 // ApplySignatureAndGenerateTx will apply the corresponding sender and compute the signature field and
 // generate the transaction instance
 func (builder *txBuilder) ApplySignatureAndGenerateTx(
-	cryptoHolder cryptoProvider.CryptoComponentsHolder,
+	cryptoHolder core.CryptoComponentsHolder,
 	arg data.ArgCreateTransaction,
 ) (*data.Transaction, error) {
 	arg.SndAddr = cryptoHolder.GetBech32()

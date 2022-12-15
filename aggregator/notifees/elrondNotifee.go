@@ -6,7 +6,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -25,7 +24,7 @@ type ArgsElrondNotifee struct {
 	TxBuilder       TxBuilder
 	TxNonceHandler  TransactionNonceHandler
 	ContractAddress core.AddressHandler
-	CryptoHolder    cryptoProvider.CryptoComponentsHolder
+	CryptoHolder    core.CryptoComponentsHolder
 	BaseGasLimit    uint64
 	GasLimitForEach uint64
 }
@@ -37,7 +36,7 @@ type elrondNotifee struct {
 	contractAddress core.AddressHandler
 	baseGasLimit    uint64
 	gasLimitForEach uint64
-	cryptoHolder    cryptoProvider.CryptoComponentsHolder
+	cryptoHolder    core.CryptoComponentsHolder
 }
 
 // NewElrondNotifee will create a new instance of elrondNotifee
