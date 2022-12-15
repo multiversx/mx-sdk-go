@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
-	state "github.com/ElrondNetwork/elrond-go/state"
+	"github.com/ElrondNetwork/elrond-go/state"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )

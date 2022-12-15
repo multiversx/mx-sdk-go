@@ -76,9 +76,9 @@ func createRater(rc *data.RatingsConfig, nc *data.NetworkConfig) (nodesCoordinat
 	ratingDataArgs := rating.RatingsDataArg{
 		Config:                   ratingsConfig,
 		ShardConsensusSize:       uint32(nc.ShardConsensusGroupSize),
-		MetaConsensusSize:        uint32(nc.MetaConsensusGroup),
-		ShardMinNodes:            uint32(nc.NumNodesInShard),
-		MetaMinNodes:             uint32(nc.NumMetachainNodes),
+		MetaConsensusSize:        nc.MetaConsensusGroup,
+		ShardMinNodes:            nc.NumNodesInShard,
+		MetaMinNodes:             nc.NumMetachainNodes,
 		RoundDurationMiliseconds: uint64(nc.RoundDuration),
 	}
 

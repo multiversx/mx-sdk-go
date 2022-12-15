@@ -3,7 +3,6 @@ package interactors
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -20,7 +19,7 @@ type Proxy interface {
 
 // TxBuilder defines the component able to build & sign a transaction
 type TxBuilder interface {
-	ApplySignatureAndGenerateTx(cryptoHolder cryptoProvider.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	ApplySignatureAndGenerateTx(cryptoHolder core.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error)
 	IsInterfaceNil() bool
 }
 

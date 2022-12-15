@@ -14,7 +14,7 @@ var ErrNilAddress = errors.New("nil address handler")
 // ErrInvalidAddress signals that an invalid address was provided
 var ErrInvalidAddress = errors.New("invalid address handler")
 
-// ErrNilxSigner signals that a nil transaction signer was provided
+// ErrNilSigner signals that a nil transaction signer was provided
 var ErrNilSigner = errors.New("nil signer")
 
 // ErrNilCryptoComponentsHolder signals that a nil crypto components holder was provided
