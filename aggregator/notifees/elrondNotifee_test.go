@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
@@ -18,6 +20,11 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+var (
+	suite  = ed25519.NewEd25519()
+	keyGen = signing.NewKeyGenerator(suite)
 )
 
 func createMockArgsElrondNotifee() ArgsElrondNotifee {
@@ -44,8 +51,8 @@ func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
 	}
 
 	skBytes, _ := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c40d248169f4dd7c90537f05be1c49772ddbf8f7948b507ed17fb23284cf218b7d")
-	holder, _ := cryptoProvider.NewCryptoComponentsHolder(skBytes)
-	txBuilder, _ := builders.NewTxBuilder(cryptoProvider.NewXSigner())
+	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, skBytes)
+	txBuilder, _ := builders.NewTxBuilder(cryptoProvider.NewSigner())
 
 	return ArgsElrondNotifee{
 		Proxy:           proxy,

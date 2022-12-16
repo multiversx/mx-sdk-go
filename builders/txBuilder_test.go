@@ -8,6 +8,8 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
@@ -15,10 +17,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	suite  = ed25519.NewEd25519()
+	keyGen = signing.NewKeyGenerator(suite)
+)
+
 func TestNewTxBuilder(t *testing.T) {
 	t.Parallel()
 
-	t.Run("nil txSigner should error", func(t *testing.T) {
+	t.Run("nil signer should error", func(t *testing.T) {
 		t.Parallel()
 
 		tb, err := NewTxBuilder(nil)
@@ -39,7 +46,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 
 	sk, err := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c40d248169f4dd7c90537f05be1c49772ddbf8f7948b507ed17fb23284cf218b7d")
 	require.Nil(t, err)
-	cryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(sk)
+	cryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
 	require.Nil(t, err)
 	value := big.NewInt(999)
 	args := data.ArgCreateTransaction{
@@ -68,8 +75,8 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 		assert.Equal(t, expectedErr, errGenerate)
 	})
 
-	txSigner := cryptoProvider.NewXSigner()
-	tb, err := NewTxBuilder(txSigner)
+	signer := cryptoProvider.NewSigner()
+	tb, err := NewTxBuilder(signer)
 	require.Nil(t, err)
 
 	t.Run("sign on all tx bytes should work", func(t *testing.T) {
@@ -104,13 +111,13 @@ func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
 
 	sk, err := hex.DecodeString("28654d9264f55f18d810bb88617e22c117df94fa684dfe341a511a72dfbf2b68")
 	require.Nil(t, err)
-	cryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(sk)
+	cryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
 	require.Nil(t, err)
 
 	t.Run("fails if the signature is missing", func(t *testing.T) {
 		t.Parallel()
 
-		tb, _ := NewTxBuilder(cryptoProvider.NewXSigner())
+		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
 		txHash, errGenerate := tb.ComputeTxHash(&data.Transaction{})
 		assert.Nil(t, txHash)
 		assert.Equal(t, ErrMissingSignature, errGenerate)
@@ -129,7 +136,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
 			ChainID:  "T",
 			Version:  uint32(1),
 		}
-		tb, _ := NewTxBuilder(cryptoProvider.NewXSigner())
+		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
 
 		tx, _ := tb.ApplySignatureAndGenerateTx(cryptoHolder, args)
 		assert.Equal(t, "725c6aa7def724c60f02ee481734807038fef125e453242bf4dc570fc4a4f2ff1b78e996a2ec67ef8be03f9b98b0251d419cfc72c6e6c5c9e33f879af938f008", tx.Signature)

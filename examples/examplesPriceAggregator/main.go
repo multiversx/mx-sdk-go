@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/fetchers"
@@ -32,6 +34,11 @@ const pollInterval = time.Second * 2
 const autoSendInterval = time.Second * 10
 
 const networkAddress = "https://testnet-gateway.elrond.com"
+
+var (
+	suite  = ed25519.NewEd25519()
+	keyGen = signing.NewKeyGenerator(suite)
+)
 
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
@@ -219,9 +226,9 @@ func createAuthClient() (authentication.AuthClient, error) {
 		return nil, err
 	}
 
-	holder, _ := cryptoProvider.NewCryptoComponentsHolder(privateKeyBytes)
+	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, privateKeyBytes)
 	args := authentication.ArgsNativeAuthClient{
-		Signer:                 cryptoProvider.NewXSigner(),
+		Signer:                 cryptoProvider.NewSigner(),
 		ExtraInfo:              nil,
 		Proxy:                  proxy,
 		CryptoComponentsHolder: holder,

@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
@@ -13,7 +15,11 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesTransaction")
+var (
+	suite  = ed25519.NewEd25519()
+	keyGen = signing.NewKeyGenerator(suite)
+	log    = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesTransaction")
+)
 
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
@@ -64,8 +70,8 @@ func main() {
 	transactionArguments.RcvAddr = address.AddressAsBech32String() // send to self
 	transactionArguments.Value = "1000000000000000000"             // 1EGLD
 
-	holder, _ := cryptoProvider.NewCryptoComponentsHolder(privateKey)
-	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewXSigner())
+	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, privateKey)
+	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewSigner())
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return

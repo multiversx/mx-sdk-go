@@ -18,17 +18,17 @@ var (
 )
 
 type txBuilder struct {
-	xSigner Signer
+	signer Signer
 }
 
 // NewTxBuilder will create a new transaction builder able to build and correctly sign a transaction
-func NewTxBuilder(xSigner Signer) (*txBuilder, error) {
-	if check.IfNil(xSigner) {
+func NewTxBuilder(signer Signer) (*txBuilder, error) {
+	if check.IfNil(signer) {
 		return nil, ErrNilSigner
 	}
 
 	return &txBuilder{
-		xSigner: xSigner,
+		signer: signer,
 	}, nil
 }
 
@@ -56,12 +56,9 @@ func (builder *txBuilder) ApplySignatureAndGenerateTx(
 	arg data.ArgCreateTransaction,
 ) (*data.Transaction, error) {
 	arg.SndAddr = cryptoHolder.GetBech32()
-	unsignedMessage, err := builder.createUnsignedTx(arg)
-	if err != nil {
-		return nil, err
-	}
+	unsignedMessage := builder.createUnsignedTx(arg)
 
-	signature, err := builder.xSigner.SignTransaction(unsignedMessage, cryptoHolder.GetPrivateKey())
+	signature, err := builder.signer.SignTransaction(unsignedMessage, cryptoHolder.GetPrivateKey())
 	if err != nil {
 		return nil, err
 	}
@@ -129,11 +126,11 @@ func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transactio
 	}, nil
 }
 
-func (builder *txBuilder) createUnsignedTx(arg data.ArgCreateTransaction) (*data.Transaction, error) {
+func (builder *txBuilder) createUnsignedTx(arg data.ArgCreateTransaction) *data.Transaction {
 	arg.Signature = ""
 	tx := builder.createTransaction(arg)
 
-	return tx, nil
+	return tx
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

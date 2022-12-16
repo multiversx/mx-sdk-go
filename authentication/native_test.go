@@ -17,7 +17,7 @@ import (
 func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 	t.Parallel()
 
-	t.Run("nil XSigner should error", func(t *testing.T) {
+	t.Run("nil signer should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
@@ -87,7 +87,7 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		require.Equal(t, "", token)
 		require.Equal(t, expectedErr, err)
 	})
-	t.Run("XSigner errors when sign message", func(t *testing.T) {
+	t.Run("signer errors when sign message", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()

@@ -19,27 +19,31 @@ var (
 )
 
 // signer contains the primitives used to correctly sign a transaction
-type signer struct{}
+type signer struct {
+	serializeForSigningHandle func(msg []byte) ([]byte, error)
+}
 
-// NewXSigner will create a new instance of signer
-func NewXSigner() *signer {
-	return &signer{}
+// NewSigner will create a new instance of signer
+func NewSigner() *signer {
+	return &signer{
+		serializeForSigningHandle: serializeForSigning,
+	}
 }
 
 // SignMessage will generate the signature providing the private key bytes and the message bytes
 // prepending the standard messagePrefix
 func (xs *signer) SignMessage(msg []byte, privateKey crypto.PrivateKey) ([]byte, error) {
-	serializedMessage, err := xs.serializeForSigning(msg)
+	serializedMessage, err := xs.serializeForSigningHandle(msg)
 	if err != nil {
 		return nil, err
 	}
 
-	return singleSigner.Sign(privateKey, serializedMessage)
+	return xs.SignByteSlice(serializedMessage, privateKey)
 }
 
 // VerifyMessage will verify the signature providing the public key bytes and the message bytes
 func (xs *signer) VerifyMessage(msg []byte, publicKey crypto.PublicKey, sig []byte) error {
-	serializedMessage, err := xs.serializeForSigning(msg)
+	serializedMessage, err := xs.serializeForSigningHandle(msg)
 	if err != nil {
 		return err
 	}
@@ -69,10 +73,10 @@ func (xs *signer) SignTransaction(tx *data.Transaction, privateKey crypto.Privat
 		txBytes = hasher.Compute(string(txBytes))
 	}
 
-	return singleSigner.Sign(privateKey, txBytes)
+	return xs.SignByteSlice(txBytes, privateKey)
 }
 
-func (xs *signer) serializeForSigning(msg []byte) ([]byte, error) {
+func serializeForSigning(msg []byte) ([]byte, error) {
 	msgSize := strconv.FormatInt(int64(len(msg)), 10)
 	msg = append([]byte(msgSize), msg...)
 	msg = append(messagePrefix, msg...)
