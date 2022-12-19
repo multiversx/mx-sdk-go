@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519/singlesig"
 )
@@ -18,7 +17,7 @@ type txSigner struct {
 // NewTxSigner will create a new instance of txSigner
 func NewTxSigner() *txSigner {
 	return &txSigner{
-		keyGen: signing.NewKeyGenerator(suite),
+		keyGen: crypto.NewKeyGenerator(suite),
 	}
 }
 

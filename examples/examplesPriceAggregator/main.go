@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
@@ -35,7 +35,7 @@ const autoSendInterval = time.Second * 10
 const networkAddress = "https://testnet-gateway.elrond.com"
 
 var suite = ed25519.NewEd25519()
-var keyGen = signing.NewKeyGenerator(suite)
+var keyGen = crypto.NewKeyGenerator(suite)
 
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
