@@ -56,6 +56,11 @@ func (xs *signer) SignByteSlice(msg []byte, privateKey crypto.PrivateKey) ([]byt
 	return singleSigner.Sign(privateKey, msg)
 }
 
+// VerifyByteSlice will verify the signature providing the public key bytes and the message bytes
+func (xs *signer) VerifyByteSlice(msg []byte, publicKey crypto.PublicKey, sig []byte) error {
+	return singleSigner.Verify(publicKey, msg, sig)
+}
+
 // SignTransaction will generate the signature providing the private key bytes and the serialized form of the transaction
 func (xs *signer) SignTransaction(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error) {
 	if len(tx.Signature) > 0 {

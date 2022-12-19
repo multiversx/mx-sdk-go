@@ -60,6 +60,25 @@ func TestSigner_VerifyMessage(t *testing.T) {
 	})
 }
 
+func TestSigner_VerifyByteSlice(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		msg := []byte("msg")
+		signer := NewSigner()
+		sk, _ := hex.DecodeString("45f72e8b6e8d10086bacd2fc8fa1340f82a3f5d4ef31953b463ea03c606533a6")
+		privateKey, err := keyGen.PrivateKeyFromByteArray(sk)
+		sig, err := signer.SignByteSlice(msg, privateKey)
+		require.Nil(t, err)
+
+		publicKey := privateKey.GeneratePublic()
+		err = signer.VerifyByteSlice(msg, publicKey, sig)
+		require.Nil(t, err)
+	})
+}
+
 func TestSigner_SignTransaction(t *testing.T) {
 	t.Parallel()
 
