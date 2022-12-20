@@ -34,6 +34,8 @@ VERSION:
    {{.Version}}
    {{end}}
 `
+	setGuardianUID = "serviceUID"
+
 	guardedTxBy = cli.StringFlag{
 		Name:        "guardedTxBy",
 		Usage:       "If used, will set the guardian to the given one. Options: alice, bob, eve, charlie",
@@ -378,7 +380,7 @@ func treatDataIfNeeded(options *selectedOptions, config *data.NetworkConfig) err
 
 func createSetGuardianData(guardianAddress core.AddressHandler) ([]byte, error) {
 	builder := builders.NewTxDataBuilder()
-	builder.Function("SetGuardian").ArgAddress(guardianAddress)
+	builder.Function("SetGuardian").ArgAddress(guardianAddress).ArgBytes([]byte(setGuardianUID))
 	return builder.ToDataBytes()
 }
 

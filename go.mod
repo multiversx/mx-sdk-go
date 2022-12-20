@@ -3,14 +3,14 @@ module github.com/ElrondNetwork/elrond-sdk-erdgo
 go 1.17
 
 require (
-	github.com/ElrondNetwork/elrond-go v1.4.1-0.20221213081522-654f741e054b
-	github.com/ElrondNetwork/elrond-go-core v1.1.27-0.20221207113027-6add1889c6e8
-	github.com/ElrondNetwork/elrond-go-crypto v1.2.4-0.20221212134904-9faa0161e5dc
+	github.com/ElrondNetwork/elrond-go v1.4.1-0.20221220094907-fb798ededa12
+	github.com/ElrondNetwork/elrond-go-core v1.1.27-0.20221219143439-1bc10dae0ea9
+	github.com/ElrondNetwork/elrond-go-crypto v1.2.4-0.20221213102512-0180dd3e00ce
 	github.com/ElrondNetwork/elrond-go-logger v1.0.10
-	github.com/ElrondNetwork/elrond-vm-common v1.3.29-0.20221207113405-6973ba06dc58
-	github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792
+	github.com/ElrondNetwork/elrond-vm-common v1.3.29-0.20221219143644-8d3505605a6d
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
+	github.com/gorilla/websocket v1.5.0
 	github.com/pborman/uuid v1.2.1
 	github.com/stretchr/testify v1.8.0
 	github.com/tyler-smith/go-bip39 v1.1.0
@@ -54,7 +54,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
