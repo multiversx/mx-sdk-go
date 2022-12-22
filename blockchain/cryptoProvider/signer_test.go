@@ -113,6 +113,7 @@ func TestSigner_SignTransaction(t *testing.T) {
 		privateKey, err := w.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))
 		require.Nil(t, err)
 		holder, err := NewCryptoComponentsHolder(keyGen, privateKey)
+		require.Nil(t, err)
 		msg := []byte("message")
 		sig, _ := hex.DecodeString("546c6b6d6487852f54571ab2da81b48ff8f09bef71ba07b116fcf7203538cd64ea5f9bffcc13a0279a75ca3b1b0a1e478d23e1771d381011f8135e4372a9dd00")
 		err = signer.VerifyMessage(msg, holder.GetPublicKey(), sig)
