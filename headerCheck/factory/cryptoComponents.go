@@ -2,8 +2,7 @@ package factory
 
 import (
 	"github.com/ElrondNetwork/elrond-go-core/hashing/blake2b"
-	crypto "github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto"
 	disabledSig "github.com/ElrondNetwork/elrond-go-crypto/signing/disabled/singlesig"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/mcl"
 	mclMultiSig "github.com/ElrondNetwork/elrond-go-crypto/signing/mcl/multisig"
@@ -19,7 +18,7 @@ type cryptoComponents struct {
 
 // CreateCryptoComponents creates crypto components needed for header verification
 func CreateCryptoComponents() (*cryptoComponents, error) {
-	blockSignKeyGen := signing.NewKeyGenerator(mcl.NewSuiteBLS12())
+	blockSignKeyGen := crypto.NewKeyGenerator(mcl.NewSuiteBLS12())
 
 	interceptSingleSigner := &disabledSig.DisabledSingleSig{}
 
