@@ -26,7 +26,13 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 		},
 	}
 
-	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
+	holder := &testsCommon.CryptoComponentsHolderStub{
+		GetBech32Called: func() string {
+			return "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq"
+		},
+	}
+
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.SignerStub{})
 
 	ti, err := NewTransactionInteractor(proxy, txBuilder)
 	assert.Nil(t, err, "Error on transaction interactor constructor")
@@ -35,7 +41,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 	args := data.ArgCreateTransaction{
 		Value:     value.String(),
 		RcvAddr:   "erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
-		SndAddr:   "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
+		SndAddr:   holder.GetBech32(),
 		GasPrice:  10,
 		GasLimit:  100000,
 		Data:      []byte(""),
@@ -43,7 +49,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 		ChainID:   "integration test chain id",
 		Version:   uint32(1),
 	}
-	tx, err := ti.ApplyUserSignatureAndGenerateTx(make([]byte, 0), args)
+	tx, err := ti.ApplyUserSignatureAndGenerateTx(holder, args)
 	require.Nil(t, err)
 	ti.AddTransaction(tx)
 
@@ -65,7 +71,13 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 		},
 	}
 
-	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
+	holder := &testsCommon.CryptoComponentsHolderStub{
+		GetBech32Called: func() string {
+			return "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq"
+		},
+	}
+
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.SignerStub{})
 
 	ti, err := NewTransactionInteractor(proxy, txBuilder)
 	assert.Nil(t, err, "Error on transaction interactor constructor")
@@ -86,7 +98,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 			ChainID:   "integration test chain id",
 			Version:   uint32(1),
 		}
-		tx, errGenerate := ti.ApplyUserSignatureAndGenerateTx(make([]byte, 0), args)
+		tx, errGenerate := ti.ApplyUserSignatureAndGenerateTx(holder, args)
 		require.Nil(t, errGenerate)
 		ti.AddTransaction(tx)
 		nonce++
@@ -108,7 +120,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 			return make([]string, len(txs)), nil
 		},
 	}
-	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.SignerStub{})
 	ti, _ := NewTransactionInteractor(proxy, txBuilder)
 	ti.SetTimeBetweenBunches(time.Millisecond)
 

@@ -10,26 +10,26 @@ import (
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
 )
 
 // ArgsNativeAuthClient is the DTO used in the native auth client constructor
 type ArgsNativeAuthClient struct {
-	Signer               builders.TxSigner
-	ExtraInfo            struct{}
-	Proxy                workflows.ProxyHandler
-	PrivateKey           crypto.PrivateKey
+	Signer               builders.Signer
+	ExtraInfo              struct{}
+	Proxy                  workflows.ProxyHandler
+	CryptoComponentsHolder core.CryptoComponentsHolder
 	TokenHandler         authentication.AuthTokenHandler
 	TokenExpiryInSeconds int64
-	Host                 string
+	Host                   string
 }
 
-type authClient struct {
-	signer               builders.TxSigner
+type nativeAuthClient struct {
+	signer               builders.Signer
 	extraInfo            []byte
 	proxy                workflows.ProxyHandler
-	privateKey           []byte
+	cryptoComponentsHolder core.CryptoComponentsHolder
 	tokenExpiryInSeconds int64
 	address              []byte
 	host                 []byte
@@ -58,29 +58,16 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 		return nil, authentication.ErrNilTokenHandler
 	}
 
-	if check.IfNil(args.PrivateKey) {
-		return nil, crypto.ErrNilPrivateKey
+	if check.IfNil(args.CryptoComponentsHolder) {
+		return nil, ErrNilCryptoComponentsHolder
 	}
 
-	publicKey := args.PrivateKey.GeneratePublic()
-	pkBytes, err := publicKey.ToByteArray()
-	if err != nil {
-		return nil, fmt.Errorf("%w while getting pkBytes from publicKey", err)
-	}
-
-	address := data.NewAddressFromBytes(pkBytes)
-
-	privateKeyBytes, err := args.PrivateKey.ToByteArray()
-	if err != nil {
-		return nil, err
-	}
-	return &authClient{
+	return &nativeAuthClient{
 		signer:               args.Signer,
 		extraInfo:            extraInfoBytes,
 		proxy:                args.Proxy,
-		privateKey:           privateKeyBytes,
+		cryptoComponentsHolder: args.CryptoComponentsHolder,
 		host:                 []byte(args.Host),
-		address:              []byte(address.AddressAsBech32String()),
 		tokenHandler:         args.TokenHandler,
 		tokenExpiryInSeconds: args.TokenExpiryInSeconds,
 		getTimeHandler:       time.Now,
@@ -117,12 +104,12 @@ func (nac *authClient) createNewToken() error {
 		host:      nac.host,
 		extraInfo: nac.extraInfo,
 		blockHash: lastHyperblock.Hash,
-		address:   nac.address,
+		address:   nac.cryptoComponentsHolder.GetBech32(),
 	}
 
 	unsignedToken := nac.tokenHandler.GetUnsignedToken(token)
 	signableMessage := nac.tokenHandler.GetSignableMessage(token.GetAddress(), unsignedToken)
-	token.signature, err = nac.signer.SignMessage(signableMessage, nac.privateKey)
+	token.signature, err = nac.signer.SignMessage(signableMessage, nac.cryptoComponentsHolder.GetPrivateKey())
 	if err != nil {
 		return err
 	}

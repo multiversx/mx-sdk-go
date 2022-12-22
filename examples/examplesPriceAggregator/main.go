@@ -16,6 +16,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication/native"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core/polling"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
@@ -35,8 +36,10 @@ const autoSendInterval = time.Second * 10
 
 const networkAddress = "https://testnet-gateway.elrond.com"
 
-var suite = ed25519.NewEd25519()
-var keyGen = crypto.NewKeyGenerator(suite)
+var (
+	suite  = ed25519.NewEd25519()
+	keyGen = crypto.NewKeyGenerator(suite)
+)
 
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
@@ -208,10 +211,6 @@ func createAuthClient() (authentication.AuthClient, error) {
 		log.Error("unable to load alice.pem", "error", err)
 		return nil, err
 	}
-	privateKey, err := keyGen.PrivateKeyFromByteArray(privateKeyBytes)
-	if err != nil {
-		return nil, err
-	}
 
 	argsProxy := blockchain.ArgsElrondProxy{
 		ProxyURL:            networkAddress,
@@ -228,14 +227,15 @@ func createAuthClient() (authentication.AuthClient, error) {
 		return nil, err
 	}
 
+	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, privateKeyBytes)
 	args := native.ArgsNativeAuthClient{
-		Signer:               blockchain.NewTxSigner(),
-		ExtraInfo:            struct{}{},
-		Proxy:                proxy,
-		PrivateKey:           privateKey,
-		TokenExpiryInSeconds: 60 * 60 * 24,
-		TokenHandler:         native.NewAuthTokenHandler(),
-		Host:                 "oracle",
+		Signer:                 cryptoProvider.NewSigner(),
+		ExtraInfo:              struct{}{},
+		Proxy:                  proxy,
+		CryptoComponentsHolder: holder,
+		TokenExpiryInSeconds:   60 * 60 * 24,
+		TokenHandler:           native.NewAuthTokenHandler(),
+		Host:                   "oracle",
 	}
 
 	authClient, err := native.NewNativeAuthClient(args)

@@ -118,7 +118,7 @@ func (w *wallet) GetPrivateKeyFromSeed(seed []byte, account, addressIndex uint32
 	return keyData.Key
 }
 
-// GetSeedFromMnemonic creates a seed for a given mnemonic
+// CreateSeedFromMnemonic creates a seed for a given mnemonic
 func (w *wallet) CreateSeedFromMnemonic(mnemonic data.Mnemonic) []byte {
 	seed := bip39.NewSeed(string(mnemonic), "")
 	return seed

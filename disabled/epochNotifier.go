@@ -10,14 +10,16 @@ type EpochNotifier struct {
 }
 
 // RegisterNotifyHandler does nothing
-func (en *EpochNotifier) RegisterNotifyHandler(handler vmcommon.EpochSubscriberHandler) {
+func (en *EpochNotifier) RegisterNotifyHandler(_ vmcommon.EpochSubscriberHandler) {
 }
 
+// CurrentEpoch returns 0
 func (en *EpochNotifier) CurrentEpoch() uint32 {
 	return 0
 }
 
-func (en *EpochNotifier) CheckEpoch(header data.HeaderHandler) {
+// CheckEpoch does nothing
+func (en *EpochNotifier) CheckEpoch(_ data.HeaderHandler) {
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

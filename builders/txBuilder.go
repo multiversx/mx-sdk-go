@@ -3,38 +3,33 @@ package builders
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"math/big"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/blake2b"
-	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
 var (
-	log                    = logger.GetOrCreate("elrond-sdk-erdgo/builders")
-	txHasher               = keccak.NewKeccak()
 	blake2bHasher          = blake2b.NewBlake2b()
 	nodeInternalMarshaller = &marshal.GogoProtoMarshalizer{}
 )
 
 type txBuilder struct {
-	txSigner TxSigner
+	signer Signer
 }
 
 // NewTxBuilder will create a new transaction builder able to build and correctly sign a transaction
-func NewTxBuilder(txSigner TxSigner) (*txBuilder, error) {
-	if check.IfNil(txSigner) {
-		return nil, ErrNilTxSigner
+func NewTxBuilder(signer Signer) (*txBuilder, error) {
+	if check.IfNil(signer) {
+		return nil, ErrNilSigner
 	}
 
 	return &txBuilder{
-		txSigner: txSigner,
+		signer: signer,
 	}, nil
 }
 
@@ -60,13 +55,11 @@ func (builder *txBuilder) createTransaction(arg data.ArgCreateTransaction) *data
 // ApplyUserSignatureAndGenerateTx will apply the corresponding sender and compute the signature field and
 // generate the transaction instance
 func (builder *txBuilder) ApplyUserSignatureAndGenerateTx(
-	skBytes []byte,
+	cryptoHolder core.CryptoComponentsHolder,
 	arg data.ArgCreateTransaction,
 ) (*data.Transaction, error) {
-	pkBytes, err := builder.txSigner.GeneratePkBytes(skBytes)
-	if err != nil {
-		return nil, err
-	}
+	arg.SndAddr = cryptoHolder.GetBech32()
+	unsignedMessage := builder.createUnsignedTx(arg)
 
 	arg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
 	unsignedTx, err := builder.CreateUnsignedTransaction(arg)

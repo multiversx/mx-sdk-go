@@ -25,3 +25,6 @@ var ErrHostNotAccepted = errors.New("host not accepted")
 
 // ErrTokenExpired signals that the provided token is expired
 var ErrTokenExpired = errors.New("token expired")
+
+// ErrNilCryptoComponentsHolder signals that a nil cryptoComponentsHolder has been provided
+var ErrNilCryptoComponentsHolder = errors.New("nil cryptoComponentsHolder")

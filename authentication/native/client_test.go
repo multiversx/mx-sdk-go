@@ -21,7 +21,7 @@ import (
 func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 	t.Parallel()
 
-	t.Run("nil txsigner should error", func(t *testing.T) {
+	t.Run("nil signer should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
@@ -39,49 +39,14 @@ func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 		require.Nil(t, client)
 		require.Equal(t, workflows.ErrNilProxy, err)
 	})
-	t.Run("nil private key should error", func(t *testing.T) {
+	t.Run("nil crypto components holder should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.PrivateKey = nil
+		args.CryptoComponentsHolder = nil
 		client, err := NewNativeAuthClient(args)
 		require.Nil(t, client)
-		require.Equal(t, crypto.ErrNilPrivateKey, err)
-	})
-	t.Run("private key returns error should error", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthClient()
-		args.PrivateKey = &testsCommon.PrivateKeyStub{
-			ToByteArrayCalled: func() ([]byte, error) {
-				return nil, expectedErr
-			},
-		}
-		client, err := NewNativeAuthClient(args)
-		require.Nil(t, client)
-		require.Equal(t, expectedErr, err)
-	})
-	t.Run("public key returns error for ToByteArray", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthClient()
-		args.PrivateKey = &testsCommon.PrivateKeyStub{
-			ToByteArrayCalled: func() ([]byte, error) {
-				return []byte("privateKey"), nil
-			},
-			GeneratePublicCalled: func() crypto.PublicKey {
-				return &testsCommon.PublicKeyStub{
-					ToByteArrayCalled: func() ([]byte, error) {
-						return make([]byte, 0), expectedErr
-					},
-				}
-			},
-		}
-		client, err := NewNativeAuthClient(args)
-
-		require.Nil(t, client)
-		assert.True(t, errors.Is(err, expectedErr))
-		assert.True(t, strings.Contains(err.Error(), "while getting pkBytes from publicKey"))
+		require.Equal(t, ErrNilCryptoComponentsHolder, err)
 	})
 	t.Run("nil token handler should error", func(t *testing.T) {
 		t.Parallel()
@@ -135,12 +100,12 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		require.Equal(t, "", token)
 		require.Equal(t, expectedErr, err)
 	})
-	t.Run("txSigner errors when sign message", func(t *testing.T) {
+	t.Run("signer errors when sign message", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthClient()
-		args.Signer = &testsCommon.TxSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		args.Signer = &testsCommon.SignerStub{
+			SignMessageCalled: func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 				return make([]byte, 0), expectedErr
 			},
 		}
@@ -198,13 +163,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		expectedNonce := uint64(100)
 		expectedHash := "hash"
 		expectedSignature := "signature"
-		publicKeyBytes := []byte("publicKey")
+		expectedAddr := "addr"
 		expectedToken := "token"
-		args.PrivateKey = &testsCommon.PrivateKeyStub{GeneratePublicCalled: func() crypto.PublicKey {
-			return &testsCommon.PublicKeyStub{ToByteArrayCalled: func() ([]byte, error) {
-				return publicKeyBytes, nil
-			}}
-		}}
 		args.Proxy = &testsCommon.ProxyStub{
 			GetLatestHyperBlockNonceCalled: func(ctx context.Context) (uint64, error) {
 				return expectedNonce, nil
@@ -214,9 +174,14 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.Signer = &testsCommon.TxSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		args.Signer = &testsCommon.SignerStub{
+			SignMessageCalled: func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 				return []byte(expectedSignature), nil
+			},
+		}
+		args.CryptoComponentsHolder = &testsCommon.CryptoComponentsHolderStub{
+			GetBech32Called: func() string {
+				return expectedAddr
 			},
 		}
 		args.TokenHandler = &mock.AuthTokenHandlerStub{
@@ -240,12 +205,6 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		expectedNonce := uint64(100)
 		expectedHash := "hash"
 		expectedSignature := "signature"
-		publicKeyBytes := []byte("publicKey")
-		args.PrivateKey = &testsCommon.PrivateKeyStub{GeneratePublicCalled: func() crypto.PublicKey {
-			return &testsCommon.PublicKeyStub{ToByteArrayCalled: func() ([]byte, error) {
-				return publicKeyBytes, nil
-			}}
-		}}
 		args.Proxy = &testsCommon.ProxyStub{
 			GetLatestHyperBlockNonceCalled: func(ctx context.Context) (uint64, error) {
 				return expectedNonce, nil
@@ -255,8 +214,8 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 				return &data.HyperBlock{Hash: expectedHash}, nil
 			},
 		}
-		args.Signer = &testsCommon.TxSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		args.Signer = &testsCommon.SignerStub{
+			SignMessageCalled: func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 				return []byte(expectedSignature), nil
 			},
 		}
@@ -278,12 +237,12 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 
 func createMockArgsNativeAuthClient() ArgsNativeAuthClient {
 	return ArgsNativeAuthClient{
-		Signer:               &testsCommon.TxSignerStub{},
-		ExtraInfo:            struct{}{},
-		Proxy:                &testsCommon.ProxyStub{},
-		PrivateKey:           &testsCommon.PrivateKeyStub{},
-		TokenExpiryInSeconds: 0,
-		TokenHandler:         &mock.AuthTokenHandlerStub{},
-		Host:                 "",
+		Signer:                 &testsCommon.SignerStub{},
+		ExtraInfo:              struct{}{},
+		Proxy:                  &testsCommon.ProxyStub{},
+		CryptoComponentsHolder: &testsCommon.CryptoComponentsHolderStub{},
+		TokenExpiryInSeconds:   0,
+		TokenHandler:           &mock.AuthTokenHandlerStub{},
+		Host:                   "",
 	}
 }

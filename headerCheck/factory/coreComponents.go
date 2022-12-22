@@ -56,17 +56,6 @@ func CreateCoreComponents(
 		return nil, err
 	}
 
-	enableEpochsConfig.EnableEpochs.BLSMultiSignerEnableEpoch = []config.MultiSignerConfig{
-		{
-			EnableEpoch: 0,
-			Type:        "no-KOSK",
-		},
-		{
-			EnableEpoch: 3,
-			Type:        "KOSK",
-		},
-	}
-
 	enableEpochsHandler, err := enablers.NewEnableEpochsHandler(enableEpochsConfig.EnableEpochs, &disabled.EpochNotifier{})
 	if err != nil {
 		return nil, err
@@ -87,9 +76,9 @@ func createRater(rc *data.RatingsConfig, nc *data.NetworkConfig) (nodesCoordinat
 	ratingDataArgs := rating.RatingsDataArg{
 		Config:                   ratingsConfig,
 		ShardConsensusSize:       uint32(nc.ShardConsensusGroupSize),
-		MetaConsensusSize:        uint32(nc.MetaConsensusGroup),
-		ShardMinNodes:            uint32(nc.NumNodesInShard),
-		MetaMinNodes:             uint32(nc.NumMetachainNodes),
+		MetaConsensusSize:        nc.MetaConsensusGroup,
+		ShardMinNodes:            nc.NumNodesInShard,
+		MetaMinNodes:             nc.NumMetachainNodes,
 		RoundDurationMiliseconds: uint64(nc.RoundDuration),
 	}
 
