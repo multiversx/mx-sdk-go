@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -16,7 +16,7 @@ import (
 
 var (
 	suite  = ed25519.NewEd25519()
-	keyGen = signing.NewKeyGenerator(suite)
+	keyGen = crypto.NewKeyGenerator(suite)
 )
 
 // MoveBalanceHandlerArgs is the argument DTO for the NewMoveBalanceHandler constructor function

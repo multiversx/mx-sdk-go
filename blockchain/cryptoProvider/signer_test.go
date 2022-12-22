@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
@@ -16,7 +16,7 @@ import (
 
 var (
 	suite         = ed25519.NewEd25519()
-	keyGen        = signing.NewKeyGenerator(suite)
+	keyGen        = crypto.NewKeyGenerator(suite)
 	expectedError = errors.New("expected error")
 )
 

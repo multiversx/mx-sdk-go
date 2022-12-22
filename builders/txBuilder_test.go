@@ -7,10 +7,9 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	crypto "github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
+	crypto "github.com/ElrondNetwork/elrond-go-crypto"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
@@ -20,7 +19,7 @@ import (
 
 var (
 	suite  = ed25519.NewEd25519()
-	keyGen = signing.NewKeyGenerator(suite)
+	keyGen = crypto.NewKeyGenerator(suite)
 )
 
 func TestNewTxBuilder(t *testing.T) {
@@ -158,6 +157,8 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 	senderAddress := "erd1lta2vgd0tkeqqadkvgef73y0efs6n3xe5ss589ufhvmt6tcur8kq34qkwr"
 	sk, err := hex.DecodeString("28654d9264f55f18d810bb88617e22c117df94fa684dfe341a511a72dfbf2b68")
 	require.Nil(t, err)
+	cryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
+	require.Nil(t, err)
 
 	args := data.ArgCreateTransaction{
 		Nonce:        1,
@@ -176,7 +177,7 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 		args := args
 		args.Options = 0
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
-		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
 
 		err = tb.ApplyGuardianSignature(skGuardian, tx)
 		require.Equal(t, ErrMissingGuardianOption, err)
@@ -186,7 +187,7 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 		args := args
 		args.GuardianAddr = ""
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
-		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
 
 		err = tb.ApplyGuardianSignature(skGuardian, tx)
 		require.NotNil(t, err)
@@ -195,16 +196,16 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 	t.Run("different guardian address should fail", func(t *testing.T) {
 		args := args
 		args.GuardianAddr = senderAddress
-		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
-		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
+		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
 
 		err = tb.ApplyGuardianSignature(skGuardian, tx)
 		require.Equal(t, ErrGuardianDoesNotMatch, err)
 	})
 	t.Run("correct guardian ok", func(t *testing.T) {
 		args := args
-		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
-		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
+		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
 
 		err = tb.ApplyGuardianSignature(skGuardian, tx)
 		require.Nil(t, err)
@@ -212,8 +213,8 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 	t.Run("correct guardian and sign with hash ok", func(t *testing.T) {
 		args := args
 		args.Options |= transaction.MaskSignedWithHash
-		tb, _ := NewTxBuilder(blockchain.NewTxSigner())
-		tx, _ := tb.ApplyUserSignatureAndGenerateTx(sk, args)
+		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
+		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
 
 		err = tb.ApplyGuardianSignature(skGuardian, tx)
 		require.Nil(t, err)

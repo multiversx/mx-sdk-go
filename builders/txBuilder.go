@@ -11,6 +11,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/google/martian/log"
 )
 
 var (
@@ -59,7 +60,7 @@ func (builder *txBuilder) ApplyUserSignatureAndGenerateTx(
 	arg data.ArgCreateTransaction,
 ) (*data.Transaction, error) {
 	arg.SndAddr = cryptoHolder.GetBech32()
-	unsignedMessage := builder.createUnsignedTx(arg)
+	unsignedMessage := builder.CreateUnsignedTransaction(arg)
 
 	arg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
 	unsignedTx, err := builder.CreateUnsignedTransaction(arg)

@@ -10,6 +10,7 @@ require (
 	github.com/ElrondNetwork/elrond-vm-common v1.3.29-0.20221219143644-8d3505605a6d
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
+	github.com/google/martian v2.1.0+incompatible
 	github.com/gorilla/websocket v1.5.0
 	github.com/pborman/uuid v1.2.1
 	github.com/stretchr/testify v1.8.0

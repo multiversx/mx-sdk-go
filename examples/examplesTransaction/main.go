@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
@@ -17,7 +17,7 @@ import (
 
 var (
 	suite  = ed25519.NewEd25519()
-	keyGen = signing.NewKeyGenerator(suite)
+	keyGen = crypto.NewKeyGenerator(suite)
 	log    = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesTransaction")
 )
 
