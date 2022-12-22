@@ -24,7 +24,7 @@ import (
 
 var (
 	suite  = ed25519.NewEd25519()
-	keyGen = signing.NewKeyGenerator(suite)
+	keyGen = crypto.NewKeyGenerator(suite)
 )
 
 func createMockArgsElrondNotifee() ArgsElrondNotifee {

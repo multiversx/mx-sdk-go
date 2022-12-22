@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	crypto "github.com/ElrondNetwork/elrond-go-crypto"
+	"github.com/ElrondNetwork/elrond-go/errors"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
@@ -16,33 +16,33 @@ import (
 
 // ArgsNativeAuthClient is the DTO used in the native auth client constructor
 type ArgsNativeAuthClient struct {
-	Signer               builders.Signer
+	Signer                 builders.Signer
 	ExtraInfo              struct{}
 	Proxy                  workflows.ProxyHandler
 	CryptoComponentsHolder core.CryptoComponentsHolder
-	TokenHandler         authentication.AuthTokenHandler
-	TokenExpiryInSeconds int64
+	TokenHandler           authentication.AuthTokenHandler
+	TokenExpiryInSeconds   int64
 	Host                   string
 }
 
-type nativeAuthClient struct {
-	signer               builders.Signer
-	extraInfo            []byte
-	proxy                workflows.ProxyHandler
+type authClient struct {
+	signer                 builders.Signer
+	extraInfo              []byte
+	proxy                  workflows.ProxyHandler
 	cryptoComponentsHolder core.CryptoComponentsHolder
-	tokenExpiryInSeconds int64
-	address              []byte
-	host                 []byte
-	token                string
-	tokenHandler         authentication.AuthTokenHandler
-	tokenExpire          time.Time
-	getTimeHandler       func() time.Time
+	tokenExpiryInSeconds   int64
+	address                []byte
+	host                   []byte
+	token                  string
+	tokenHandler           authentication.AuthTokenHandler
+	tokenExpire            time.Time
+	getTimeHandler         func() time.Time
 }
 
 // NewNativeAuthClient will create a new native client able to create authentication tokens
 func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 	if check.IfNil(args.Signer) {
-		return nil, builders.ErrNilTxSigner
+		return nil, errors.ErrNilTxSigner
 	}
 
 	extraInfoBytes, err := json.Marshal(args.ExtraInfo)
@@ -59,18 +59,18 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 	}
 
 	if check.IfNil(args.CryptoComponentsHolder) {
-		return nil, ErrNilCryptoComponentsHolder
+		return nil, authentication.ErrNilCryptoComponentsHolder
 	}
 
-	return &nativeAuthClient{
-		signer:               args.Signer,
-		extraInfo:            extraInfoBytes,
-		proxy:                args.Proxy,
+	return &authClient{
+		signer:                 args.Signer,
+		extraInfo:              extraInfoBytes,
+		proxy:                  args.Proxy,
 		cryptoComponentsHolder: args.CryptoComponentsHolder,
-		host:                 []byte(args.Host),
-		tokenHandler:         args.TokenHandler,
-		tokenExpiryInSeconds: args.TokenExpiryInSeconds,
-		getTimeHandler:       time.Now,
+		host:                   []byte(args.Host),
+		tokenHandler:           args.TokenHandler,
+		tokenExpiryInSeconds:   args.TokenExpiryInSeconds,
+		getTimeHandler:         time.Now,
 	}, nil
 }
 
@@ -104,7 +104,7 @@ func (nac *authClient) createNewToken() error {
 		host:      nac.host,
 		extraInfo: nac.extraInfo,
 		blockHash: lastHyperblock.Hash,
-		address:   nac.cryptoComponentsHolder.GetBech32(),
+		address:   []byte(nac.cryptoComponentsHolder.GetBech32()),
 	}
 
 	unsignedToken := nac.tokenHandler.GetUnsignedToken(token)

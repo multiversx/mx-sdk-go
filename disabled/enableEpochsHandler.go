@@ -4,11 +4,6 @@ package disabled
 type EnableEpochsHandler struct {
 }
 
-// IsRuntimeMemStoreLimitEnabled returns false
-func (eeh *EnableEpochsHandler) IsRuntimeMemStoreLimitEnabled() bool {
-	return false
-}
-
 // IsGuardAccountEnabled returns false
 func (eeh *EnableEpochsHandler) IsGuardAccountEnabled() bool {
 	return false
