@@ -20,7 +20,10 @@ func NewCryptoComponentsHolder(keyGen crypto.KeyGenerator, skBytes []byte) (*cry
 		return nil, err
 	}
 	publicKey := privateKey.GeneratePublic()
-	publicKeyBytes, _ := publicKey.ToByteArray()
+	publicKeyBytes, err := publicKey.ToByteArray()
+	if err != nil {
+		return nil, err
+	}
 	addressHandler := data.NewAddressFromBytes(publicKeyBytes)
 	bech32Address := addressHandler.AddressAsBech32String()
 

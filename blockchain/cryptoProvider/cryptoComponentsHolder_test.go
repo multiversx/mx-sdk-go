@@ -26,6 +26,27 @@ func TestNewCryptoComponentsHolder(t *testing.T) {
 		require.Nil(t, holder)
 		require.Equal(t, expectedError, err)
 	})
+	t.Run("invalid publicKey bytes", func(t *testing.T) {
+		t.Parallel()
+
+		publicKey := &testsCommon.PublicKeyStub{
+			ToByteArrayCalled: func() ([]byte, error) {
+				return nil, expectedError
+			},
+		}
+		privateKey := &testsCommon.PrivateKeyStub{
+			GeneratePublicCalled: func() crypto.PublicKey {
+				return publicKey
+			}}
+		keyGen := &cryptoMocks.KeyGenStub{
+			PrivateKeyFromByteArrayStub: func(b []byte) (crypto.PrivateKey, error) {
+				return privateKey, nil
+			},
+		}
+		holder, err := NewCryptoComponentsHolder(keyGen, []byte(""))
+		require.Nil(t, holder)
+		require.Equal(t, expectedError, err)
+	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
