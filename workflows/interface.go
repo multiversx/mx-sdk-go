@@ -26,6 +26,7 @@ type LastProcessedNonceHandler interface {
 type ProxyHandler interface {
 	GetLatestHyperBlockNonce(ctx context.Context) (uint64, error)
 	GetHyperBlockByNonce(ctx context.Context, nonce uint64) (*data.HyperBlock, error)
+	GetHyperBlockByHash(ctx context.Context, hash string) (*data.HyperBlock, error)
 	GetDefaultTransactionArguments(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (data.ArgCreateTransaction, error)
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
 	IsInterfaceNil() bool

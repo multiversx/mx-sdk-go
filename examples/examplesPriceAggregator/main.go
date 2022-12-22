@@ -14,6 +14,7 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/fetchers"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/mock"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication/native"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core/polling"
@@ -219,7 +220,7 @@ func createAuthClient() (authentication.AuthClient, error) {
 		FinalityCheck:       false,
 		AllowedDeltaToFinal: 1,
 		CacheExpirationTime: time.Second,
-		EntityType:          core.RestAPIEntityType("Proxy"),
+		EntityType:          core.Proxy,
 	}
 
 	proxy, err := blockchain.NewElrondProxy(argsProxy)
@@ -227,16 +228,17 @@ func createAuthClient() (authentication.AuthClient, error) {
 		return nil, err
 	}
 
-	args := authentication.ArgsNativeAuthClient{
-		TxSigner:             blockchain.NewTxSigner(),
-		ExtraInfo:            nil,
+	args := native.ArgsNativeAuthClient{
+		Signer:               blockchain.NewTxSigner(),
+		ExtraInfo:            struct{}{},
 		Proxy:                proxy,
 		PrivateKey:           privateKey,
 		TokenExpiryInSeconds: 60 * 60 * 24,
+		TokenHandler:         native.NewAuthTokenHandler(),
 		Host:                 "oracle",
 	}
 
-	authClient, err := authentication.NewNativeAuthClient(args)
+	authClient, err := native.NewNativeAuthClient(args)
 	if err != nil {
 		return nil, err
 	}

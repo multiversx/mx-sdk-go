@@ -2,11 +2,26 @@ package authentication
 
 import "errors"
 
-// ErrNilTxSigner signals that a nil transaction signer was provided
-var ErrNilTxSigner = errors.New("nil transaction signer")
+// ErrNilAcceptedHosts signals that a nil or empty accepted hosts map has been provided
+var ErrNilAcceptedHosts = errors.New("nil accepted hosts")
 
-// ErrNilProxy signals that a nil proxy was provided
-var ErrNilProxy = errors.New("nil proxy")
+// ErrNilTokenHandler signals that a nil token handler has been provided
+var ErrNilTokenHandler = errors.New("nil token handler")
 
-// ErrNilPrivateKey signals that a nil private key was provided
-var ErrNilPrivateKey = errors.New("nil private key")
+// ErrNilSigner signals that a nil signer has been provided
+var ErrNilSigner = errors.New("nil signer")
+
+// ErrNilSignature signals that the token has a nil signature
+var ErrNilSignature = errors.New("nil token signature")
+
+// ErrNilAddress signals that the token has a nil address
+var ErrNilAddress = errors.New("nil token address")
+
+// ErrNilBody signals that the token has a nil body
+var ErrNilBody = errors.New("nil token body")
+
+// ErrHostNotAccepted signals that the given host is not accepted
+var ErrHostNotAccepted = errors.New("host not accepted")
+
+// ErrTokenExpired signals that the provided token is expired
+var ErrTokenExpired = errors.New("token expired")
