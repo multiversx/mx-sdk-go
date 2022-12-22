@@ -9,6 +9,8 @@ import (
 	"github.com/ElrondNetwork/elrond-go-crypto/signing"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -93,6 +95,27 @@ func TestSigner_SignTransaction(t *testing.T) {
 		tx := &data.Transaction{Version: 2, Options: 1}
 		sig, err := signer.SignTransaction(tx, privateKey)
 		require.NotNil(t, sig)
+		require.Nil(t, err)
+	})
+	// {
+	// 	 "address":"erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th", //alice
+	//	 "message":"0x6d657373616765",
+	//	 "signature":"0x546c6b6d6487852f54571ab2da81b48ff8f09bef71ba07b116fcf7203538cd64ea5f9bffcc13a0279a75ca3b1b0a1e478d23e1771d381011f8135e4372a9dd00",
+	//	 "version":1,
+	//	 "signer":"ErdJS"
+	// }
+	t.Run("should work if only txHash is signed", func(t *testing.T) {
+		t.Parallel()
+
+		signer := NewSigner()
+
+		w := interactors.NewWallet()
+		privateKey, err := w.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))
+		require.Nil(t, err)
+		holder, err := NewCryptoComponentsHolder(keyGen, privateKey)
+		msg := []byte("message")
+		sig, _ := hex.DecodeString("546c6b6d6487852f54571ab2da81b48ff8f09bef71ba07b116fcf7203538cd64ea5f9bffcc13a0279a75ca3b1b0a1e478d23e1771d381011f8135e4372a9dd00")
+		err = signer.VerifyMessage(msg, holder.GetPublicKey(), sig)
 		require.Nil(t, err)
 	})
 }
