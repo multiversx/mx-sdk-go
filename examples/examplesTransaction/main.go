@@ -4,15 +4,22 @@ import (
 	"context"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesTransaction")
+var (
+	suite  = ed25519.NewEd25519()
+	keyGen = signing.NewKeyGenerator(suite)
+	log    = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesTransaction")
+)
 
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
@@ -63,7 +70,8 @@ func main() {
 	transactionArguments.RcvAddr = address.AddressAsBech32String() // send to self
 	transactionArguments.Value = "1000000000000000000"             // 1EGLD
 
-	txBuilder, err := builders.NewTxBuilder(blockchain.NewTxSigner())
+	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, privateKey)
+	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewSigner())
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return
@@ -75,7 +83,7 @@ func main() {
 		return
 	}
 
-	tx, err := ti.ApplySignatureAndGenerateTx(privateKey, transactionArguments)
+	tx, err := ti.ApplySignatureAndGenerateTx(holder, transactionArguments)
 	if err != nil {
 		log.Error("error creating transaction", "error", err)
 		return
@@ -88,7 +96,7 @@ func main() {
 	transactionArguments.Options = 1
 	transactionArguments.Nonce++ // do not forget to increment the nonce, otherwise you will get 2 transactions
 	// with the same nonce (only one of them will get executed)
-	txSigOnHash, err := ti.ApplySignatureAndGenerateTx(privateKey, transactionArguments)
+	txSigOnHash, err := ti.ApplySignatureAndGenerateTx(holder, transactionArguments)
 	if err != nil {
 		log.Error("error creating transaction", "error", err)
 		return

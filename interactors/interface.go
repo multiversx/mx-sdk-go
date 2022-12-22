@@ -19,7 +19,7 @@ type Proxy interface {
 
 // TxBuilder defines the component able to build & sign a transaction
 type TxBuilder interface {
-	ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	ApplySignatureAndGenerateTx(cryptoHolder core.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error)
 	IsInterfaceNil() bool
 }
 
