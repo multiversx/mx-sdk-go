@@ -104,7 +104,7 @@ func TestSigner_SignTransaction(t *testing.T) {
 	//	 "version":1,
 	//	 "signer":"ErdJS"
 	// }
-	t.Run("should work if only txHash is signed", func(t *testing.T) {
+	t.Run("should work with signature generated using erdjs", func(t *testing.T) {
 		t.Parallel()
 
 		signer := NewSigner()
