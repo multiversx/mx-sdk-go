@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/pubkeyConverter"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519/singlesig"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var keyGen = signing.NewKeyGenerator(ed25519.NewEd25519())
+var keyGen = crypto.NewKeyGenerator(ed25519.NewEd25519())
 
 func TestNativeserver_ClientServer(t *testing.T) {
 
