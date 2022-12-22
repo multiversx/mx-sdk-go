@@ -1,14 +1,14 @@
-package authentication
+package native
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
@@ -16,49 +16,50 @@ import (
 
 // ArgsNativeAuthClient is the DTO used in the native auth client constructor
 type ArgsNativeAuthClient struct {
-	TxSigner             builders.TxSigner
-	ExtraInfo            interface{}
+	Signer               builders.TxSigner
+	ExtraInfo            struct{}
 	Proxy                workflows.ProxyHandler
 	PrivateKey           crypto.PrivateKey
-	TokenExpiryInSeconds uint64
+	TokenHandler         authentication.AuthTokenHandler
+	TokenExpiryInSeconds int64
 	Host                 string
 }
 
-type nativeAuthClient struct {
-	txSigner             builders.TxSigner
-	encodedExtraInfo     string
+type authClient struct {
+	signer               builders.TxSigner
+	extraInfo            []byte
 	proxy                workflows.ProxyHandler
-	skBytes              []byte
-	tokenExpiryInSeconds uint64
-	encodedAddress       string
-	encodedHost          string
+	privateKey           []byte
+	tokenExpiryInSeconds int64
+	address              []byte
+	host                 []byte
 	token                string
+	tokenHandler         authentication.AuthTokenHandler
 	tokenExpire          time.Time
 	getTimeHandler       func() time.Time
 }
 
 // NewNativeAuthClient will create a new native client able to create authentication tokens
-func NewNativeAuthClient(args ArgsNativeAuthClient) (*nativeAuthClient, error) {
-	if check.IfNil(args.TxSigner) {
-		return nil, ErrNilTxSigner
+func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
+	if check.IfNil(args.Signer) {
+		return nil, builders.ErrNilTxSigner
 	}
 
 	extraInfoBytes, err := json.Marshal(args.ExtraInfo)
 	if err != nil {
-		return nil, fmt.Errorf("%w while marshaling args.ExtraInfo", err)
+		return nil, fmt.Errorf("%w while marshaling args.extraInfo", err)
 	}
 
 	if check.IfNil(args.Proxy) {
-		return nil, ErrNilProxy
+		return nil, workflows.ErrNilProxy
+	}
+
+	if check.IfNil(args.TokenHandler) {
+		return nil, authentication.ErrNilTokenHandler
 	}
 
 	if check.IfNil(args.PrivateKey) {
-		return nil, ErrNilPrivateKey
-	}
-
-	skBytes, err := args.PrivateKey.ToByteArray()
-	if err != nil {
-		return nil, fmt.Errorf("%w while getting skBytes from args.PrivateKey", err)
+		return nil, crypto.ErrNilPrivateKey
 	}
 
 	publicKey := args.PrivateKey.GeneratePublic()
@@ -69,24 +70,25 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*nativeAuthClient, error) {
 
 	address := data.NewAddressFromBytes(pkBytes)
 
-	encodedAddress := base64.StdEncoding.EncodeToString(address.AddressBytes())
-	encodedHost := base64.StdEncoding.EncodeToString([]byte(args.Host))
-	encodedExtraInfo := base64.StdEncoding.EncodeToString(extraInfoBytes)
-
-	return &nativeAuthClient{
-		txSigner:             args.TxSigner,
-		encodedExtraInfo:     encodedExtraInfo,
+	privateKeyBytes, err := args.PrivateKey.ToByteArray()
+	if err != nil {
+		return nil, err
+	}
+	return &authClient{
+		signer:               args.Signer,
+		extraInfo:            extraInfoBytes,
 		proxy:                args.Proxy,
-		skBytes:              skBytes,
-		encodedHost:          encodedHost,
-		encodedAddress:       encodedAddress,
+		privateKey:           privateKeyBytes,
+		host:                 []byte(args.Host),
+		address:              []byte(address.AddressAsBech32String()),
+		tokenHandler:         args.TokenHandler,
 		tokenExpiryInSeconds: args.TokenExpiryInSeconds,
 		getTimeHandler:       time.Now,
 	}, nil
 }
 
 // GetAccessToken returns an access token used for authentication into different elrond services
-func (nac *nativeAuthClient) GetAccessToken() (string, error) {
+func (nac *authClient) GetAccessToken() (string, error) {
 	now := nac.getTimeHandler()
 	noToken := nac.tokenExpire.IsZero()
 	tokenExpired := now.After(nac.tokenExpire)
@@ -99,7 +101,7 @@ func (nac *nativeAuthClient) GetAccessToken() (string, error) {
 	return nac.token, nil
 }
 
-func (nac *nativeAuthClient) createNewToken() error {
+func (nac *authClient) createNewToken() error {
 	nonce, err := nac.proxy.GetLatestHyperBlockNonce(context.Background())
 	if err != nil {
 		return err
@@ -110,23 +112,30 @@ func (nac *nativeAuthClient) createNewToken() error {
 		return err
 	}
 
-	token := fmt.Sprintf("%s.%s.%d.%s", nac.encodedHost, lastHyperblock.Hash, nac.tokenExpiryInSeconds, nac.encodedExtraInfo)
+	token := &AuthToken{
+		ttl:       nac.tokenExpiryInSeconds,
+		host:      nac.host,
+		extraInfo: nac.extraInfo,
+		blockHash: lastHyperblock.Hash,
+		address:   nac.address,
+	}
 
-	signature, err := nac.txSigner.SignMessage([]byte(token), nac.skBytes)
+	unsignedToken := nac.tokenHandler.GetUnsignedToken(token)
+	signableMessage := nac.tokenHandler.GetSignableMessage(token.GetAddress(), unsignedToken)
+	token.signature, err = nac.signer.SignMessage(signableMessage, nac.privateKey)
 	if err != nil {
 		return err
 	}
 
-	encodedToken := base64.StdEncoding.EncodeToString([]byte(token))
-
-	encodedSignature := base64.StdEncoding.EncodeToString(signature)
-
-	nac.token = fmt.Sprintf("%s.%s.%s", nac.encodedAddress, encodedToken, encodedSignature)
+	nac.token, err = nac.tokenHandler.Encode(token)
+	if err != nil {
+		return err
+	}
 	nac.tokenExpire = nac.getTimeHandler().Add(time.Duration(nac.tokenExpiryInSeconds))
 	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (nac *nativeAuthClient) IsInterfaceNil() bool {
+func (nac *authClient) IsInterfaceNil() bool {
 	return nac == nil
 }
