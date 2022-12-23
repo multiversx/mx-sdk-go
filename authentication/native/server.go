@@ -8,6 +8,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
 )
 
@@ -15,7 +16,7 @@ import (
 type ArgsNativeAuthServer struct {
 	Proxy           workflows.ProxyHandler
 	TokenHandler    authentication.AuthTokenHandler
-	Signer          crypto.SingleSigner
+	Signer          builders.Signer
 	PubKeyConverter goCore.PubkeyConverter
 	KeyGenerator    crypto.KeyGenerator
 }
@@ -23,7 +24,7 @@ type ArgsNativeAuthServer struct {
 type authServer struct {
 	proxy           workflows.ProxyHandler
 	tokenHandler    authentication.AuthTokenHandler
-	signer          crypto.SingleSigner
+	signer          builders.Signer
 	keyGenerator    crypto.KeyGenerator
 	pubKeyConverter goCore.PubkeyConverter
 	getTimeHandler  func() time.Time
@@ -109,7 +110,7 @@ func (server *authServer) validateSignature(token authentication.AuthToken) erro
 
 	unsignedToken := server.tokenHandler.GetUnsignedToken(token)
 	signableMessage := server.tokenHandler.GetSignableMessage(token.GetAddress(), unsignedToken)
-	return server.signer.Verify(pubkey, signableMessage, token.GetSignature())
+	return server.signer.VerifyMessage(signableMessage, pubkey, token.GetSignature())
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
