@@ -30,7 +30,6 @@ type authClient struct {
 	proxy                  workflows.ProxyHandler
 	cryptoComponentsHolder core.CryptoComponentsHolder
 	tokenExpiryInSeconds   int64
-	address                []byte
 	host                   []byte
 	token                  string
 	tokenHandler           authentication.AuthTokenHandler
