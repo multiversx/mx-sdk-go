@@ -3,14 +3,13 @@ module github.com/ElrondNetwork/elrond-sdk-erdgo
 go 1.17
 
 require (
-	github.com/ElrondNetwork/elrond-go v1.4.1-0.20221220094907-fb798ededa12
-	github.com/ElrondNetwork/elrond-go-core v1.1.27-0.20221219143439-1bc10dae0ea9
+	github.com/ElrondNetwork/elrond-go v1.4.1-0.20221223125954-fad91096e0a8
+	github.com/ElrondNetwork/elrond-go-core v1.1.29-0.20221223124225-1a71b43f8eec
 	github.com/ElrondNetwork/elrond-go-crypto v1.2.4-0.20221213102512-0180dd3e00ce
 	github.com/ElrondNetwork/elrond-go-logger v1.0.10
-	github.com/ElrondNetwork/elrond-vm-common v1.3.29-0.20221219143644-8d3505605a6d
+	github.com/ElrondNetwork/elrond-vm-common v1.3.32-0.20221223125018-8a38e6d8fe79
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
-	github.com/google/martian v2.1.0+incompatible
 	github.com/gorilla/websocket v1.5.0
 	github.com/pborman/uuid v1.2.1
 	github.com/stretchr/testify v1.8.0
@@ -22,7 +21,7 @@ require (
 
 require (
 	github.com/ElrondNetwork/concurrent-map v0.1.3 // indirect
-	github.com/ElrondNetwork/elrond-go-p2p v1.0.5 // indirect
+	github.com/ElrondNetwork/elrond-go-p2p v1.0.9-0.20221223122528-ab465a5d26d9 // indirect
 	github.com/ElrondNetwork/elrond-go-storage v1.0.4 // indirect
 	github.com/beevik/ntp v0.3.0 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect

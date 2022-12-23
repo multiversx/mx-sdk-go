@@ -26,7 +26,7 @@ type TxBuilder interface {
 // GuardedTxBuilder defines the component able to build and sign a guarded transaction
 type GuardedTxBuilder interface {
 	ApplyUserSignatureAndGenerateTx(cryptoHolder core.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error)
-	ApplyGuardianSignature(skGuardianBytes []byte, tx *data.Transaction) error
+	ApplyGuardianSignature(cryptoHolderGuardian core.CryptoComponentsHolder, tx *data.Transaction) error
 	IsInterfaceNil() bool
 }
 

@@ -2,19 +2,15 @@ package native
 
 import (
 	"context"
-	"errors"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication/native/mock"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +24,7 @@ func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 		args.Signer = nil
 		client, err := NewNativeAuthClient(args)
 		require.Nil(t, client)
-		require.Equal(t, builders.ErrNilTxSigner, err)
+		require.Equal(t, authentication.ErrNilSigner, err)
 	})
 	t.Run("nil proxy should error", func(t *testing.T) {
 		t.Parallel()
@@ -46,7 +42,7 @@ func TestNativeAuthClient_NewNativeAuthClient(t *testing.T) {
 		args.CryptoComponentsHolder = nil
 		client, err := NewNativeAuthClient(args)
 		require.Nil(t, client)
-		require.Equal(t, ErrNilCryptoComponentsHolder, err)
+		require.Equal(t, authentication.ErrNilCryptoComponentsHolder, err)
 	})
 	t.Run("nil token handler should error", func(t *testing.T) {
 		t.Parallel()
@@ -123,12 +119,17 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 		expectedNonce := uint64(100)
 		expectedHash := "hash"
 		expectedSignature := "signature"
-		publicKeyBytes := []byte("publicKey")
-		args.PrivateKey = &testsCommon.PrivateKeyStub{GeneratePublicCalled: func() crypto.PublicKey {
-			return &testsCommon.PublicKeyStub{ToByteArrayCalled: func() ([]byte, error) {
-				return publicKeyBytes, nil
-			}}
-		}}
+		expectedAddr := "addr"
+		args.Signer = &testsCommon.SignerStub{
+			SignMessageCalled: func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error) {
+				return []byte(expectedSignature), nil
+			},
+		}
+		args.CryptoComponentsHolder = &testsCommon.CryptoComponentsHolderStub{
+			GetBech32Called: func() string {
+				return expectedAddr
+			},
+		}
 		args.Proxy = &testsCommon.ProxyStub{
 			GetLatestHyperBlockNonceCalled: func(ctx context.Context) (uint64, error) {
 				return expectedNonce, nil
@@ -136,11 +137,6 @@ func TestNativeAuthClient_GetAccessToken(t *testing.T) {
 			GetHyperBlockByNonceCalled: func(ctx context.Context, nonce uint64) (*data.HyperBlock, error) {
 				require.Equal(t, expectedNonce, nonce)
 				return &data.HyperBlock{Hash: expectedHash}, nil
-			},
-		}
-		args.Signer = &testsCommon.TxSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
-				return []byte(expectedSignature), nil
 			},
 		}
 		args.TokenHandler = &mock.AuthTokenHandlerStub{

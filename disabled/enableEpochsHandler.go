@@ -14,6 +14,11 @@ func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
 	return false
 }
 
+// IsWipeSingleNFTLiquidityDecreaseEnabled returns false
+func (eeh *EnableEpochsHandler) IsWipeSingleNFTLiquidityDecreaseEnabled() bool {
+	return false
+}
+
 // BlockGasAndFeesReCheckEnableEpoch returns 0
 func (eeh *EnableEpochsHandler) BlockGasAndFeesReCheckEnableEpoch() uint32 {
 	return 0

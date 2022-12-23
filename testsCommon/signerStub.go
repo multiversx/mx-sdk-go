@@ -8,6 +8,7 @@ import (
 // SignerStub -
 type SignerStub struct {
 	SignTransactionCalled func(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error)
+	SignTransactionBufferCalled func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
 	SignMessageCalled     func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
 	VerifyMessageCalled   func(msg []byte, publicKey crypto.PublicKey, sig []byte) error
 	SignByteSliceCalled   func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)

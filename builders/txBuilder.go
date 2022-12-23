@@ -9,14 +9,18 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/blake2b"
+	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
 var (
+	log                    = logger.GetOrCreate("elrond-sdk-erdgo/builders")
 	blake2bHasher          = blake2b.NewBlake2b()
 	nodeInternalMarshaller = &marshal.GogoProtoMarshalizer{}
+	hashSigningTxHasher    = keccak.NewKeccak()
 )
 
 type txBuilder struct {
@@ -61,7 +65,7 @@ func (builder *txBuilder) ApplyUserSignatureAndGenerateTx(
 ) (*data.Transaction, error) {
 	arg.SndAddr = cryptoHolder.GetBech32()
 	unsignedTx, err := builder.CreateUnsignedTransaction(arg)
-	if err!= nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -84,11 +88,11 @@ func (builder *txBuilder) signTx(unsignedTx *data.Transaction, userCryptoHolder 
 
 	shouldSignOnTxHash := unsignedTx.Version >= 2 && unsignedTx.Options&1 > 0
 	if shouldSignOnTxHash {
-		//log.Debug("signing the transaction using the hash of the message")
-		unsignedMessage = blake2bHasher.Compute(string(unsignedMessage))
+		log.Debug("signing the transaction using the hash of the message")
+		unsignedMessage = hashSigningTxHasher.Compute(string(unsignedMessage))
 	}
 
-	return builder.signer.SignMessage(unsignedMessage, userCryptoHolder.GetPrivateKey())
+	return builder.signer.SignByteSlice(unsignedMessage, userCryptoHolder.GetPrivateKey())
 }
 
 // ApplyGuardianSignature applies the guardian signature over the transaction.
@@ -112,7 +116,7 @@ func (builder *txBuilder) ApplyGuardianSignature(
 	}
 
 	guardianPubKeyBytes, err := guardianCryptoHolder.GetPublicKey().ToByteArray()
-	if err!= nil {
+	if err != nil {
 		return err
 	}
 

@@ -24,6 +24,11 @@ func (bhc *BlockChainHookCounter) ResetCounters() {
 func (bhc *BlockChainHookCounter) SetMaximumValues(_ map[string]uint64) {
 }
 
+// GetCounterValues returns nil
+func (bhc *BlockChainHookCounter) GetCounterValues() map[string]uint64 {
+	return nil
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (bhc *BlockChainHookCounter) IsInterfaceNil() bool {
 	return bhc == nil

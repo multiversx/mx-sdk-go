@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go/errors"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
@@ -42,7 +41,7 @@ type authClient struct {
 // NewNativeAuthClient will create a new native client able to create authentication tokens
 func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 	if check.IfNil(args.Signer) {
-		return nil, errors.ErrNilTxSigner
+		return nil, authentication.ErrNilSigner
 	}
 
 	extraInfoBytes, err := json.Marshal(args.ExtraInfo)

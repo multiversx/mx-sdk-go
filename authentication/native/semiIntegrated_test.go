@@ -11,7 +11,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519/singlesig"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
@@ -54,16 +54,16 @@ func TestNativeserver_ClientServer(t *testing.T) {
 func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler authentication.AuthTokenHandler, host string) *authClient {
 	w := interactors.NewWallet()
 	privateKeyBytes, _ := w.LoadPrivateKeyFromPemData([]byte(pem))
-	privateKey, _ := keyGen.PrivateKeyFromByteArray(privateKeyBytes)
+	cryptoCompHolder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, privateKeyBytes)
 
 	clientArgs := ArgsNativeAuthClient{
-		Signer:               blockchain.NewTxSigner(),
-		ExtraInfo:            struct{}{},
-		Proxy:                proxy,
-		PrivateKey:           privateKey,
-		TokenExpiryInSeconds: 60 * 60 * 24,
-		TokenHandler:         tokenHandler,
-		Host:                 host,
+		Signer:                 cryptoProvider.NewSigner(),
+		ExtraInfo:              struct{}{},
+		Proxy:                  proxy,
+		CryptoComponentsHolder: cryptoCompHolder,
+		TokenExpiryInSeconds:   60 * 60 * 24,
+		TokenHandler:           tokenHandler,
+		Host:                   host,
 	}
 
 	client, _ := NewNativeAuthClient(clientArgs)

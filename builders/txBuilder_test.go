@@ -65,7 +65,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 		argsCopy := args
 		expectedErr := errors.New("expected error")
 		tb, _ := NewTxBuilder(&testsCommon.SignerStub{
-			SignTransactionCalled: func(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error) {
+			SignByteSliceCalled: func(_ []byte, _ crypto.PrivateKey) ([]byte, error) {
 				return nil, expectedErr
 			},
 		})
@@ -153,6 +153,8 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 	guardianAddress := "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x"
 	skGuardian, err := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c40d248169f4dd7c90537f05be1c49772ddbf8f7948b507ed17fb23284cf218b7d")
 	require.Nil(t, err)
+	cryptoHolderGuardian, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, skGuardian)
+	require.Nil(t, err)
 
 	senderAddress := "erd1lta2vgd0tkeqqadkvgef73y0efs6n3xe5ss589ufhvmt6tcur8kq34qkwr"
 	sk, err := hex.DecodeString("28654d9264f55f18d810bb88617e22c117df94fa684dfe341a511a72dfbf2b68")
@@ -179,7 +181,7 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
 		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
 
-		err = tb.ApplyGuardianSignature(skGuardian, tx)
+		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, tx)
 		require.Equal(t, ErrMissingGuardianOption, err)
 	})
 
@@ -189,7 +191,7 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
 		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
 
-		err = tb.ApplyGuardianSignature(skGuardian, tx)
+		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, tx)
 		require.NotNil(t, err)
 	})
 
@@ -199,7 +201,7 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
 		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
 
-		err = tb.ApplyGuardianSignature(skGuardian, tx)
+		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, tx)
 		require.Equal(t, ErrGuardianDoesNotMatch, err)
 	})
 	t.Run("correct guardian ok", func(t *testing.T) {
@@ -207,7 +209,7 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
 		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
 
-		err = tb.ApplyGuardianSignature(skGuardian, tx)
+		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, tx)
 		require.Nil(t, err)
 	})
 	t.Run("correct guardian and sign with hash ok", func(t *testing.T) {
@@ -216,7 +218,7 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
 		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
 
-		err = tb.ApplyGuardianSignature(skGuardian, tx)
+		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, tx)
 		require.Nil(t, err)
 	})
 }
