@@ -8,7 +8,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/pubkeyConverter"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519/singlesig"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
@@ -76,7 +75,7 @@ func createNativeServer(proxy workflows.ProxyHandler, tokenHandler authenticatio
 	serverArgs := ArgsNativeAuthServer{
 		Proxy:           proxy,
 		TokenHandler:    tokenHandler,
-		Signer:          &singlesig.Ed25519Signer{},
+		Signer:          &testsCommon.SignerStub{},
 		KeyGenerator:    keyGen,
 		PubKeyConverter: converter,
 	}
