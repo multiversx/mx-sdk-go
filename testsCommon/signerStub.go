@@ -7,11 +7,12 @@ import (
 
 // SignerStub -
 type SignerStub struct {
-	SignTransactionCalled func(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error)
+	SignTransactionCalled       func(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error)
 	SignTransactionBufferCalled func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
-	SignMessageCalled     func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
-	VerifyMessageCalled   func(msg []byte, publicKey crypto.PublicKey, sig []byte) error
-	SignByteSliceCalled   func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
+	SignMessageCalled           func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
+	VerifyMessageCalled         func(msg []byte, publicKey crypto.PublicKey, sig []byte) error
+	SignByteSliceCalled         func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
+	VerifyByteSliceCalled       func(msg []byte, publicKey crypto.PublicKey, sig []byte) error
 }
 
 // SignTransaction -
@@ -36,6 +37,15 @@ func (stub *SignerStub) SignMessage(msg []byte, privateKey crypto.PrivateKey) ([
 func (stub *SignerStub) VerifyMessage(msg []byte, publicKey crypto.PublicKey, sig []byte) error {
 	if stub.VerifyMessageCalled != nil {
 		return stub.VerifyMessageCalled(msg, publicKey, sig)
+	}
+
+	return nil
+}
+
+// VerifyByteSlice -
+func (stub *SignerStub) VerifyByteSlice(msg []byte, publicKey crypto.PublicKey, sig []byte) error {
+	if stub.VerifyByteSliceCalled != nil {
+		return stub.VerifyByteSliceCalled(msg, publicKey, sig)
 	}
 
 	return nil

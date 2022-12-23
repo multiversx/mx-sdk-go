@@ -47,11 +47,6 @@ type Signer interface {
 	VerifyMessage(msg []byte, publicKey crypto.PublicKey, sig []byte) error
 	SignTransaction(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error)
 	SignByteSlice(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
-	IsInterfaceNil() bool
-}
-
-// TxSigVerifier defines the methods available for a transaction signature verifiers
-type TxSigVerifier interface {
-	Verify(pk []byte, msg []byte, sigBytes []byte) error
+	VerifyByteSlice(msg []byte, publicKey crypto.PublicKey, sig []byte) error
 	IsInterfaceNil() bool
 }

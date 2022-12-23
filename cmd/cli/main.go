@@ -7,8 +7,11 @@ import (
 	"os"
 	"time"
 
+	crypto "github.com/ElrondNetwork/elrond-go-crypto"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -108,6 +111,8 @@ VERSION:
 
 var HOME = os.Getenv("HOME")
 var pathGeneratedWallets = HOME + "/Elrond/testnet/filegen/output/walletKey.pem"
+var suite = ed25519.NewEd25519()
+var keyGen = crypto.NewKeyGenerator(suite)
 
 const (
 	alice              = "alice"
@@ -136,8 +141,9 @@ type cfg struct {
 }
 
 type selectedOptions struct {
-	skSender        []byte
-	skGuardian      []byte
+	senderCryptoHolder   core.CryptoComponentsHolder
+	guardianCryptoHolder core.CryptoComponentsHolder
+
 	guardianAddress core.AddressHandler
 	txArguments     data.ArgCreateTransaction
 }
@@ -263,7 +269,10 @@ func setSenderOption(td *testData, options *selectedOptions) error {
 
 	if selectedAddress != nil {
 		options.txArguments.SndAddr = selectedAddress.AddressAsBech32String()
-		options.skSender = sk
+		options.senderCryptoHolder, err = cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -302,7 +311,10 @@ func setGuardedTxByOption(td *testData, options *selectedOptions) error {
 
 	if selectedAddress != nil {
 		options.txArguments.GuardianAddr = selectedAddress.AddressAsBech32String()
-		options.skGuardian = sk
+		options.guardianCryptoHolder, err = cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
+		if err != nil {
+			return err
+		}
 		options.txArguments.Options = maskGuardedTx
 	}
 
@@ -393,16 +405,19 @@ func getDefaultOptions(td *testData, ep workflows.ProxyHandler, netConfigs *data
 	transactionArguments.Value = "0"
 	transactionArguments.RcvAddr = td.addressBob.AddressAsBech32String()
 
+	aliceCryptoHolder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skAlice)
+	bobCryptoHolder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skBob)
+
 	return &selectedOptions{
-		skSender:        td.skAlice, // default if nothing provided
-		skGuardian:      td.skBob,   // default if nothing provided
-		txArguments:     transactionArguments,
-		guardianAddress: td.addressBob,
+		senderCryptoHolder:   aliceCryptoHolder, // default if nothing provided
+		guardianCryptoHolder: bobCryptoHolder,   // default if nothing provided
+		txArguments:          transactionArguments,
+		guardianAddress:      td.addressBob,
 	}, nil
 }
 
 func generateAndSendTransaction(options *selectedOptions, proxy interactors.Proxy) error {
-	txBuilder, err := builders.NewTxBuilder(blockchain.NewTxSigner())
+	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewSigner())
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return err
@@ -413,14 +428,14 @@ func generateAndSendTransaction(options *selectedOptions, proxy interactors.Prox
 		return err
 	}
 
-	tx, err := ti.ApplyUserSignatureAndGenerateTx(options.skSender, options.txArguments)
+	tx, err := ti.ApplyUserSignatureAndGenerateTx(options.senderCryptoHolder, options.txArguments)
 	if err != nil {
 		log.Error("error creating transaction", "error", err)
 		return err
 	}
 
 	if len(argsConfig.guardedTxBy) > 0 && argsConfig.guardianSigned {
-		err = ti.ApplyGuardianSignature(options.skGuardian, tx)
+		err = ti.ApplyGuardianSignature(options.guardianCryptoHolder, tx)
 		if err != nil {
 			log.Error("error applying guardian signature", "error", err)
 			return err
@@ -465,7 +480,7 @@ func fundWallets(td *testData, proxy workflows.ProxyHandler, netConfigs *data.Ne
 }
 
 func sendFundWalletsTxs(td *testData, proxy workflows.ProxyHandler, txArgs data.ArgCreateTransaction, receivers []core.AddressHandler) error {
-	txBuilder, err := builders.NewTxBuilder(blockchain.NewTxSigner())
+	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewSigner())
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return err
@@ -488,7 +503,11 @@ func sendFundWalletsTxs(td *testData, proxy workflows.ProxyHandler, txArgs data.
 	txArgs.Value = "10000000000000000000" // 10EGLD
 	for _, addressHandler := range receivers {
 		txArgs.RcvAddr = addressHandler.AddressAsBech32String()
-		tx, err = ti.ApplyUserSignatureAndGenerateTx(td.skFunding, txArgs)
+		fundingWalletCryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skFunding)
+		if err != nil {
+			return err
+		}
+		tx, err = ti.ApplyUserSignatureAndGenerateTx(fundingWalletCryptoHolder, txArgs)
 		if err != nil {
 			log.Error("error creating transaction", "error", err)
 			return err
