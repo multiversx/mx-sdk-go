@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewCryptoComponentsHolder(t *testing.T) {
+func Test_NewCryptoComponentsHolder(t *testing.T) {
 	t.Parallel()
 
 	t.Run("invalid privateKey bytes", func(t *testing.T) {
@@ -79,6 +79,60 @@ func TestNewCryptoComponentsHolder(t *testing.T) {
 		privateKey := holder.GetPrivateKey()
 		require.False(t, check.IfNil(publicKey))
 		require.False(t, check.IfNil(privateKey))
+
+		bech32Address := holder.GetBech32()
+		addressHandler := holder.GetAddressHandler()
+		require.Equal(t, addressHandler.AddressAsBech32String(), bech32Address)
+		require.Equal(t, "erd1j84k44nsqsme8r6e5aawutx0z2cd6cyx3wprkzdh73x2cf0kqvksa3snnq", bech32Address)
+	})
+}
+
+func Test_NewCryptoComponentsHolderFromPrivateKey(t *testing.T) {
+	t.Run("invalid publicKey bytes", func(t *testing.T) {
+		t.Parallel()
+
+		publicKey := &testsCommon.PublicKeyStub{
+			ToByteArrayCalled: func() ([]byte, error) {
+				return nil, expectedError
+			},
+		}
+		privateKey := &testsCommon.PrivateKeyStub{
+			GeneratePublicCalled: func() crypto.PublicKey {
+				return publicKey
+			},
+		}
+		holder, err := NewCryptoComponentsHolderFromPrivateKey(privateKey)
+		require.Nil(t, holder)
+		require.Equal(t, expectedError, err)
+	})
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		privateKey := &testsCommon.PrivateKeyStub{
+			GeneratePublicCalled: func() crypto.PublicKey {
+				return &testsCommon.PublicKeyStub{}
+			},
+		}
+
+		holder, err := NewCryptoComponentsHolderFromPrivateKey(privateKey)
+		require.False(t, check.IfNil(holder))
+		require.Nil(t, err)
+		_ = holder.GetPublicKey()
+		_ = holder.GetPrivateKey()
+		_ = holder.GetBech32()
+		_ = holder.GetAddressHandler()
+	})
+	t.Run("should work with real components", func(t *testing.T) {
+		t.Parallel()
+
+		sk, _ := hex.DecodeString("45f72e8b6e8d10086bacd2fc8fa1340f82a3f5d4ef31953b463ea03c606533a6")
+		privateKey, err := keyGen.PrivateKeyFromByteArray(sk)
+		require.Nil(t, err)
+		holder, err := NewCryptoComponentsHolderFromPrivateKey(privateKey)
+		require.False(t, check.IfNil(holder))
+		require.Nil(t, err)
+		publicKey := holder.GetPublicKey()
+		require.False(t, check.IfNil(publicKey))
 
 		bech32Address := holder.GetBech32()
 		addressHandler := holder.GetAddressHandler()

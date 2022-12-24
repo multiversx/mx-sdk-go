@@ -35,6 +35,24 @@ func NewCryptoComponentsHolder(keyGen crypto.KeyGenerator, skBytes []byte) (*cry
 	}, nil
 }
 
+// NewCryptoComponentsHolderFromPrivateKey returns a new cryptoComponentsHolder instance
+func NewCryptoComponentsHolderFromPrivateKey(privateKey crypto.PrivateKey) (*cryptoComponentsHolder, error) {
+	publicKey := privateKey.GeneratePublic()
+	publicKeyBytes, err := publicKey.ToByteArray()
+	if err != nil {
+		return nil, err
+	}
+	addressHandler := data.NewAddressFromBytes(publicKeyBytes)
+	bech32Address := addressHandler.AddressAsBech32String()
+
+	return &cryptoComponentsHolder{
+		privateKey:     privateKey,
+		publicKey:      publicKey,
+		addressHandler: addressHandler,
+		bech32Address:  bech32Address,
+	}, nil
+}
+
 // GetPublicKey returns the held publicKey
 func (holder *cryptoComponentsHolder) GetPublicKey() crypto.PublicKey {
 	return holder.publicKey
