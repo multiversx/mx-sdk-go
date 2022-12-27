@@ -176,9 +176,10 @@ func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 
 	expectedRandomness := []byte("prev rand seed")
 
+	expEpoch := uint32(1)
 	metaBlock := &block.MetaBlock{
 		Nonce:            1,
-		Epoch:            1,
+		Epoch:            expEpoch,
 		PrevRandSeed:     expectedRandomness,
 		MiniBlockHeaders: miniBlockHeaders,
 	}
@@ -188,24 +189,16 @@ func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 		PublicKey: []byte("public key 1"),
 		ShardId:   0,
 	}
-	vidBytes, _ := json.Marshal(vid)
 
 	expectedValidatorsInfo := []*state.ShardValidatorInfo{vid}
 
-	miniBlock := &block.MiniBlock{
-		TxHashes:        [][]byte{vidBytes},
-		ReceiverShardID: 0,
-		SenderShardID:   0,
-		Type:            block.PeerBlock,
-	}
-	miniBlockBytes, _ := json.Marshal(miniBlock)
-
 	proxy := &testsCommon.ProxyStub{
-		GetRawMiniBlockByHashCalled: func(shardId uint32, hash string, epoch uint32) ([]byte, error) {
-			return miniBlockBytes, nil
-		},
 		GetRawStartOfEpochMetaBlockCalled: func(epoch uint32) ([]byte, error) {
 			return metaBlockBytes, nil
+		},
+		GetValidatorsInfoByEpochCalled: func(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error) {
+			assert.Equal(t, expEpoch, epoch)
+			return expectedValidatorsInfo, nil
 		},
 	}
 

@@ -1,12 +1,7 @@
 package disabled
 
-// EnableEpochsHandler -
+// EnableEpochsHandler is a disabled implementation of EnableEpochsHandler interface
 type EnableEpochsHandler struct {
-}
-
-// IsRuntimeMemStoreLimitEnabled returns false
-func (eeh *EnableEpochsHandler) IsRuntimeMemStoreLimitEnabled() bool {
-	return false
 }
 
 // IsGuardAccountEnabled returns false
@@ -16,6 +11,11 @@ func (eeh *EnableEpochsHandler) IsGuardAccountEnabled() bool {
 
 // IsSetGuardianEnabled returns false
 func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
+	return false
+}
+
+// IsWipeSingleNFTLiquidityDecreaseEnabled returns false
+func (eeh *EnableEpochsHandler) IsWipeSingleNFTLiquidityDecreaseEnabled() bool {
 	return false
 }
 
@@ -550,6 +550,16 @@ func (eeh *EnableEpochsHandler) IsFixAsyncCallBackArgsListFlagEnabled() bool {
 
 // IsFixOldTokenLiquidityEnabled -
 func (eeh *EnableEpochsHandler) IsFixOldTokenLiquidityEnabled() bool {
+	return false
+}
+
+// IsMaxBlockchainHookCountersFlagEnabled -
+func (eeh *EnableEpochsHandler) IsMaxBlockchainHookCountersFlagEnabled() bool {
+	return false
+}
+
+// IsRuntimeMemStoreLimitEnabled -
+func (eeh *EnableEpochsHandler) IsRuntimeMemStoreLimitEnabled() bool {
 	return false
 }
 

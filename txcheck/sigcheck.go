@@ -4,6 +4,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	coreData "github.com/ElrondNetwork/elrond-go-core/data"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
+	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -11,9 +12,9 @@ import (
 // VerifyTransactionSignature handles the signature verification for a given transaction
 func VerifyTransactionSignature(
 	tx *data.Transaction,
-	pk []byte,
+	pk crypto.PublicKey,
 	signature []byte,
-	verifier builders.TxSigVerifier,
+	verifier builders.Signer,
 	marshaller coreData.Marshaller,
 	hasher coreData.Hasher,
 ) error {
@@ -33,25 +34,25 @@ func VerifyTransactionSignature(
 		unsignedMessage = hasher.Compute(string(unsignedMessage))
 	}
 
-	return verifier.Verify(pk, unsignedMessage, signature)
+	return verifier.VerifyByteSlice(unsignedMessage, pk, signature)
 }
 
 func checkParams(
 	tx *data.Transaction,
-	pk []byte,
+	pk crypto.PublicKey,
 	signature []byte,
-	verifier builders.TxSigVerifier,
+	verifier builders.Signer,
 	marshaller coreData.Marshaller,
 	hasher coreData.Hasher,
 ) error {
 	if tx == nil {
 		return ErrNilTransaction
 	}
-	if len(pk) == 0 {
-		return ErrNilPubKey
-	}
 	if len(signature) == 0 {
 		return ErrNilSignature
+	}
+	if check.IfNil(pk) {
+		return ErrNilPubKey
 	}
 	if check.IfNil(verifier) {
 		return ErrNilSignatureVerifier

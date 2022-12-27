@@ -25,7 +25,7 @@ type VmValueRequest struct {
 	Args       []string `json:"args"`
 }
 
-// VmValueRequest defines the request struct for values available in a VM
+// VmValueRequestWithOptionalParameters defines the request struct for values available in a VM
 type VmValueRequestWithOptionalParameters struct {
 	*VmValueRequest
 	SameScState    bool `json:"sameScState"`

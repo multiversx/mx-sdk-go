@@ -2,7 +2,7 @@ package testsCommon
 
 import (
 	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
-	state "github.com/ElrondNetwork/elrond-go/state"
+	"github.com/ElrondNetwork/elrond-go/state"
 )
 
 // NodesCoordinatorStub -

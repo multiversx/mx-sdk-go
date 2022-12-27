@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ElrondNetwork/elrond-go-core/data"
-	state "github.com/ElrondNetwork/elrond-go/state"
+	"github.com/ElrondNetwork/elrond-go/state"
 )
 
 // RawHeaderHandlerStub -

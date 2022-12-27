@@ -17,6 +17,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-go-core/data/api"
 	"github.com/ElrondNetwork/elrond-go/config"
+	"github.com/ElrondNetwork/elrond-go/state"
 	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	erdgoHttp "github.com/ElrondNetwork/elrond-sdk-erdgo/core/http"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -629,6 +630,34 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 	require.Nil(t, err)
 
 	require.Equal(t, expectedGenesisNodes, response)
+}
+
+func TestElrondProxy_GetValidatorsInfoByEpoch(t *testing.T) {
+	t.Parallel()
+
+	expectedValidatorsInfo := []*state.ShardValidatorInfo{
+		{
+			PublicKey: []byte("pubkey1"),
+			ShardId:   1,
+		},
+	}
+	validatorsInfoResponse := &data.ValidatorsInfoResponse{
+		Data: struct {
+			ValidatorsInfo []*state.ShardValidatorInfo "json:\"validators\""
+		}{
+			ValidatorsInfo: expectedValidatorsInfo,
+		},
+	}
+	validatorsInfoResponseBytes, _ := json.Marshal(validatorsInfoResponse)
+
+	httpClient := createMockClientRespondingBytes(validatorsInfoResponseBytes)
+	args := createMockArgsElrondProxy(httpClient)
+	ep, _ := NewElrondProxy(args)
+
+	response, err := ep.GetValidatorsInfoByEpoch(context.Background(), 1)
+	require.Nil(t, err)
+
+	require.Equal(t, expectedValidatorsInfo, response)
 }
 
 func TestElrondProxy_GetGuardianData(t *testing.T) {

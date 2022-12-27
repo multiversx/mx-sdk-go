@@ -3,6 +3,7 @@ package builders
 import (
 	"math/big"
 
+	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
@@ -40,15 +41,12 @@ type VMQueryBuilder interface {
 	IsInterfaceNil() bool
 }
 
-// TxSigner defines the method used by a struct used to create valid signatures
-type TxSigner interface {
-	SignMessage(msg []byte, skBytes []byte) ([]byte, error)
-	GeneratePkBytes(skBytes []byte) ([]byte, error)
-	IsInterfaceNil() bool
-}
-
-// TxSigVerifier defines the methods available for a transaction signature verifiers
-type TxSigVerifier interface {
-	Verify(pk []byte, msg []byte, sigBytes []byte) error
+// Signer defines the method used by a struct used to create valid signatures
+type Signer interface {
+	SignMessage(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
+	VerifyMessage(msg []byte, publicKey crypto.PublicKey, sig []byte) error
+	SignTransaction(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error)
+	SignByteSlice(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
+	VerifyByteSlice(msg []byte, publicKey crypto.PublicKey, sig []byte) error
 	IsInterfaceNil() bool
 }

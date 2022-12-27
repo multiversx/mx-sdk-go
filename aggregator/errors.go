@@ -23,9 +23,9 @@ var (
 	ErrInvalidNumOfElementsToComputeMedian = errors.New("invalid number of elements to compute the median")
 	// ErrInvalidDecimals signals that an invalid number of decimals was provided
 	ErrInvalidDecimals = errors.New("invalid decimals")
-	// ErrInvalidBaseName signals that an invalid base name was provided
+	// ErrNilBaseName signals that an invalid base name was provided
 	ErrNilBaseName = errors.New("nil base name")
-	// ErrInvalidQuoteName signals that an invalid quote name was provided
+	// ErrNilQuoteName signals that an invalid quote name was provided
 	ErrNilQuoteName = errors.New("nil quote name")
 	//ErrNilExchanges signals that an nil exchanges map was provided
 	ErrNilExchanges = errors.New("nil exchanges map")

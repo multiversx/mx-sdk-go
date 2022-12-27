@@ -9,7 +9,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	genesisMock "github.com/ElrondNetwork/elrond-go/genesis/mock"
-	"github.com/ElrondNetwork/elrond-go/testscommon/cryptoMocks"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication/native/mock"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -190,8 +189,8 @@ func TestNativeserver_Validate(t *testing.T) {
 				return nil, nil
 			},
 		}
-		args.Signer = &cryptoMocks.SignerStub{
-			VerifyCalled: func(public crypto.PublicKey, msg []byte, sig []byte) error {
+		args.Signer = &testsCommon.SignerStub{
+			VerifyMessageCalled: func(msg []byte, publicKey crypto.PublicKey, sig []byte) error {
 				return expectedErr
 			},
 		}
@@ -211,7 +210,7 @@ func createMockArgsNativeAuthServer() ArgsNativeAuthServer {
 	return ArgsNativeAuthServer{
 		Proxy:           &testsCommon.ProxyStub{},
 		TokenHandler:    &mock.AuthTokenHandlerStub{},
-		Signer:          &cryptoMocks.SignerStub{},
+		Signer:          &testsCommon.SignerStub{},
 		KeyGenerator:    &genesisMock.KeyGeneratorStub{},
 		PubKeyConverter: &genesisMock.PubkeyConverterStub{},
 	}

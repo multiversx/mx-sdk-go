@@ -18,23 +18,23 @@ import (
 
 var (
 	log                    = logger.GetOrCreate("elrond-sdk-erdgo/builders")
-	txHasher               = keccak.NewKeccak()
 	blake2bHasher          = blake2b.NewBlake2b()
 	nodeInternalMarshaller = &marshal.GogoProtoMarshalizer{}
+	hashSigningTxHasher    = keccak.NewKeccak()
 )
 
 type txBuilder struct {
-	txSigner TxSigner
+	signer Signer
 }
 
 // NewTxBuilder will create a new transaction builder able to build and correctly sign a transaction
-func NewTxBuilder(txSigner TxSigner) (*txBuilder, error) {
-	if check.IfNil(txSigner) {
-		return nil, ErrNilTxSigner
+func NewTxBuilder(signer Signer) (*txBuilder, error) {
+	if check.IfNil(signer) {
+		return nil, ErrNilSigner
 	}
 
 	return &txBuilder{
-		txSigner: txSigner,
+		signer: signer,
 	}, nil
 }
 
@@ -60,21 +60,16 @@ func (builder *txBuilder) createTransaction(arg data.ArgCreateTransaction) *data
 // ApplyUserSignatureAndGenerateTx will apply the corresponding sender and compute the signature field and
 // generate the transaction instance
 func (builder *txBuilder) ApplyUserSignatureAndGenerateTx(
-	skBytes []byte,
+	cryptoHolder core.CryptoComponentsHolder,
 	arg data.ArgCreateTransaction,
 ) (*data.Transaction, error) {
-	pkBytes, err := builder.txSigner.GeneratePkBytes(skBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	arg.SndAddr = core.AddressPublicKeyConverter.Encode(pkBytes)
+	arg.SndAddr = cryptoHolder.GetBech32()
 	unsignedTx, err := builder.CreateUnsignedTransaction(arg)
 	if err != nil {
 		return nil, err
 	}
 
-	signature, err := builder.signTx(unsignedTx, skBytes)
+	signature, err := builder.signTx(unsignedTx, cryptoHolder)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +79,7 @@ func (builder *txBuilder) ApplyUserSignatureAndGenerateTx(
 	return builder.createTransaction(arg), nil
 }
 
-func (builder *txBuilder) signTx(unsignedTx *data.Transaction, skBytes []byte) ([]byte, error) {
+func (builder *txBuilder) signTx(unsignedTx *data.Transaction, userCryptoHolder core.CryptoComponentsHolder) ([]byte, error) {
 	// TODO: refactor to use Transaction from core so that GetDataForSigning can be used (this logic is duplicated in core)
 	unsignedMessage, err := json.Marshal(unsignedTx)
 	if err != nil {
@@ -94,16 +89,16 @@ func (builder *txBuilder) signTx(unsignedTx *data.Transaction, skBytes []byte) (
 	shouldSignOnTxHash := unsignedTx.Version >= 2 && unsignedTx.Options&1 > 0
 	if shouldSignOnTxHash {
 		log.Debug("signing the transaction using the hash of the message")
-		unsignedMessage = txHasher.Compute(string(unsignedMessage))
+		unsignedMessage = hashSigningTxHasher.Compute(string(unsignedMessage))
 	}
 
-	return builder.txSigner.SignMessage(unsignedMessage, skBytes)
+	return builder.signer.SignByteSlice(unsignedMessage, userCryptoHolder.GetPrivateKey())
 }
 
 // ApplyGuardianSignature applies the guardian signature over the transaction.
 // Does a basic check for the transaction options and guardian address.
 func (builder *txBuilder) ApplyGuardianSignature(
-	skGuardianBytes []byte,
+	guardianCryptoHolder core.CryptoComponentsHolder,
 	tx *data.Transaction,
 ) error {
 	nodeTx, err := transactionToNodeTransaction(tx)
@@ -115,22 +110,22 @@ func (builder *txBuilder) ApplyGuardianSignature(
 		return ErrMissingGuardianOption
 	}
 
-	pkGuardianBytes, err := builder.txSigner.GeneratePkBytes(skGuardianBytes)
-	if err != nil {
-		return err
-	}
-
 	txGuardianAddrBytes, err := core.AddressPublicKeyConverter.Decode(tx.GuardianAddr)
 	if err != nil {
 		return err
 	}
 
-	if !bytes.Equal(txGuardianAddrBytes, pkGuardianBytes) {
+	guardianPubKeyBytes, err := guardianCryptoHolder.GetPublicKey().ToByteArray()
+	if err != nil {
+		return err
+	}
+
+	if !bytes.Equal(txGuardianAddrBytes, guardianPubKeyBytes) {
 		return ErrGuardianDoesNotMatch
 	}
 
 	unsignedTx := TransactionToUnsignedTx(tx)
-	guardianSignature, err := builder.signTx(unsignedTx, skGuardianBytes)
+	guardianSignature, err := builder.signTx(unsignedTx, guardianCryptoHolder)
 	if err != nil {
 		return err
 	}

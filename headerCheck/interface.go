@@ -21,6 +21,7 @@ type Proxy interface {
 	GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
 	GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error)
 	GetGenesisNodesPubKeys(ctx context.Context) (*data.GenesisNodes, error)
+	GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
 	GetGuardianData(ctx context.Context, address erdgoCore.AddressHandler) (*api.GuardianData, error)
 	IsInterfaceNil() bool
 }
@@ -35,7 +36,7 @@ type RawHeaderHandler interface {
 
 // HeaderVerifier defines the functions needed for verifying headers
 type HeaderVerifier interface {
-	VerifyHeaderByHash(ctx context.Context, shardId uint32, hash string) (bool, error)
+	VerifyHeaderSignatureByHash(ctx context.Context, shardId uint32, hash string) (bool, error)
 	IsInterfaceNil() bool
 }
 

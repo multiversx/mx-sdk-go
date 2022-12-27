@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	crypto "github.com/ElrondNetwork/elrond-go-crypto"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
@@ -25,7 +24,7 @@ type ArgsElrondNotifee struct {
 	TxBuilder       TxBuilder
 	TxNonceHandler  TransactionNonceHandler
 	ContractAddress core.AddressHandler
-	PrivateKey      crypto.PrivateKey
+	CryptoHolder    core.CryptoComponentsHolder
 	BaseGasLimit    uint64
 	GasLimitForEach uint64
 }
@@ -34,11 +33,10 @@ type elrondNotifee struct {
 	proxy           Proxy
 	txBuilder       TxBuilder
 	txNonceHandler  TransactionNonceHandler
-	selfAddress     core.AddressHandler
 	contractAddress core.AddressHandler
 	baseGasLimit    uint64
 	gasLimitForEach uint64
-	skBytes         []byte
+	cryptoHolder    core.CryptoComponentsHolder
 }
 
 // NewElrondNotifee will create a new instance of elrondNotifee
@@ -55,20 +53,8 @@ func NewElrondNotifee(args ArgsElrondNotifee) (*elrondNotifee, error) {
 		contractAddress: args.ContractAddress,
 		baseGasLimit:    args.BaseGasLimit,
 		gasLimitForEach: args.GasLimitForEach,
+		cryptoHolder:    args.CryptoHolder,
 	}
-
-	notifee.skBytes, err = args.PrivateKey.ToByteArray()
-	if err != nil {
-		return nil, err
-	}
-
-	pk := args.PrivateKey.GeneratePublic()
-	pkAddress, err := pk.ToByteArray()
-	if err != nil {
-		return nil, err
-	}
-
-	notifee.selfAddress = data.NewAddressFromBytes(pkAddress)
 
 	return notifee, nil
 }
@@ -89,8 +75,8 @@ func checkArgsElrondNotifee(args ArgsElrondNotifee) error {
 	if !args.ContractAddress.IsValid() {
 		return errInvalidContractAddress
 	}
-	if check.IfNil(args.PrivateKey) {
-		return errNilPrivateKey
+	if check.IfNil(args.CryptoHolder) {
+		return builders.ErrNilCryptoComponentsHolder
 	}
 	if args.BaseGasLimit < minGasLimit {
 		return errInvalidBaseGasLimit
@@ -126,12 +112,12 @@ func (en *elrondNotifee) PriceChanged(ctx context.Context, priceChanges []*aggre
 		Version:  txVersion,
 	}
 
-	err = en.txNonceHandler.ApplyNonceAndGasPrice(ctx, en.selfAddress, &txArgs)
+	err = en.txNonceHandler.ApplyNonceAndGasPrice(ctx, en.cryptoHolder.GetAddressHandler(), &txArgs)
 	if err != nil {
 		return err
 	}
 
-	tx, err := en.txBuilder.ApplyUserSignatureAndGenerateTx(en.skBytes, txArgs)
+	tx, err := en.txBuilder.ApplyUserSignatureAndGenerateTx(en.cryptoHolder, txArgs)
 	if err != nil {
 		return err
 	}

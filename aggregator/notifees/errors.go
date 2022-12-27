@@ -10,5 +10,4 @@ var (
 	errInvalidContractAddress    = errors.New("invalid contract address")
 	errInvalidBaseGasLimit       = errors.New("invalid base gas limit")
 	errInvalidGasLimitForEach    = errors.New("invalid gas limit for each price change")
-	errNilPrivateKey             = errors.New("nil private key")
 )
