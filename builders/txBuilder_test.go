@@ -7,27 +7,35 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	crypto "github.com/ElrondNetwork/elrond-go-crypto"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	suite  = ed25519.NewEd25519()
+	keyGen = signing.NewKeyGenerator(suite)
+)
+
 func TestNewTxBuilder(t *testing.T) {
 	t.Parallel()
 
-	t.Run("nil txSigner should error", func(t *testing.T) {
+	t.Run("nil signer should error", func(t *testing.T) {
 		t.Parallel()
 
 		tb, err := NewTxBuilder(nil)
 		assert.True(t, check.IfNil(tb))
-		assert.Equal(t, ErrNilTxSigner, err)
+		assert.Equal(t, ErrNilSigner, err)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		tb, err := NewTxBuilder(&testsCommon.TxSignerStub{})
+		tb, err := NewTxBuilder(&testsCommon.SignerStub{})
 		assert.False(t, check.IfNil(tb))
 		assert.Nil(t, err)
 	})
@@ -37,6 +45,8 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 	t.Parallel()
 
 	sk, err := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c40d248169f4dd7c90537f05be1c49772ddbf8f7948b507ed17fb23284cf218b7d")
+	require.Nil(t, err)
+	cryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
 	require.Nil(t, err)
 	value := big.NewInt(999)
 	args := data.ArgCreateTransaction{
@@ -49,46 +59,31 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 		Version:  uint32(1),
 	}
 
-	t.Run("tx signer errors when generating public key should error", func(t *testing.T) {
-		t.Parallel()
-
-		argsCopy := args
-		expectedErr := errors.New("expected error")
-		tb, _ := NewTxBuilder(&testsCommon.TxSignerStub{
-			GeneratePkBytesCalled: func(skBytes []byte) ([]byte, error) {
-				return nil, expectedErr
-			},
-		})
-
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
-		assert.Nil(t, tx)
-		assert.Equal(t, expectedErr, errGenerate)
-	})
 	t.Run("tx signer errors when signing should error", func(t *testing.T) {
 		t.Parallel()
 
 		argsCopy := args
 		expectedErr := errors.New("expected error")
-		tb, _ := NewTxBuilder(&testsCommon.TxSignerStub{
-			SignMessageCalled: func(msg []byte, skBytes []byte) ([]byte, error) {
+		tb, _ := NewTxBuilder(&testsCommon.SignerStub{
+			SignTransactionCalled: func(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error) {
 				return nil, expectedErr
 			},
 		})
 
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplySignatureAndGenerateTx(cryptoHolder, argsCopy)
 		assert.Nil(t, tx)
 		assert.Equal(t, expectedErr, errGenerate)
 	})
 
-	txSigner := blockchain.NewTxSigner()
-	tb, err := NewTxBuilder(txSigner)
+	signer := cryptoProvider.NewSigner()
+	tb, err := NewTxBuilder(signer)
 	require.Nil(t, err)
 
 	t.Run("sign on all tx bytes should work", func(t *testing.T) {
 		t.Parallel()
 
 		argsCopy := args
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplySignatureAndGenerateTx(cryptoHolder, argsCopy)
 		require.Nil(t, errGenerate)
 
 		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
@@ -102,11 +97,52 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 		argsCopy.Version = 2
 		argsCopy.Options = 1
 
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(sk, argsCopy)
+		tx, errGenerate := tb.ApplySignatureAndGenerateTx(cryptoHolder, argsCopy)
 		require.Nil(t, errGenerate)
 
 		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
 		assert.Equal(t, "1761bcac651a65839b53e89f6b0738e0956cb12e8624826b98bfc577c9f8d5e36a2544a9c5445ce7d5059972b2c5f42e25f3ad9f59255465a2ba128f0764b90e",
 			tx.Signature)
+	})
+}
+
+func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
+	t.Parallel()
+
+	sk, err := hex.DecodeString("28654d9264f55f18d810bb88617e22c117df94fa684dfe341a511a72dfbf2b68")
+	require.Nil(t, err)
+	cryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
+	require.Nil(t, err)
+
+	t.Run("fails if the signature is missing", func(t *testing.T) {
+		t.Parallel()
+
+		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
+		txHash, errGenerate := tb.ComputeTxHash(&data.Transaction{})
+		assert.Nil(t, txHash)
+		assert.Equal(t, ErrMissingSignature, errGenerate)
+	})
+
+	t.Run("should generate tx hash", func(t *testing.T) {
+		t.Parallel()
+
+		args := data.ArgCreateTransaction{
+			Nonce:    1,
+			Value:    "11500313000000000000",
+			RcvAddr:  "erd1p72ru5zcdsvgkkcm9swtvw2zy5epylwgv8vwquptkw7ga7pfvk7qz7snzw",
+			GasPrice: 1000000000,
+			GasLimit: 60000,
+			Data:     []byte(""),
+			ChainID:  "T",
+			Version:  uint32(1),
+		}
+		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
+
+		tx, _ := tb.ApplySignatureAndGenerateTx(cryptoHolder, args)
+		assert.Equal(t, "725c6aa7def724c60f02ee481734807038fef125e453242bf4dc570fc4a4f2ff1b78e996a2ec67ef8be03f9b98b0251d419cfc72c6e6c5c9e33f879af938f008", tx.Signature)
+
+		txHash, errGenerate := tb.ComputeTxHash(tx)
+		assert.Nil(t, errGenerate)
+		assert.Equal(t, "8bbb2b7474deb2e67fa8f9db1eccef57ec14aa93710452a5de5ff52e5a369144", hex.EncodeToString(txHash))
 	})
 }

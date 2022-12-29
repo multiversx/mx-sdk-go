@@ -7,8 +7,8 @@ import (
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 )
 
-// TxNonceHandlerStub -
-type TxNonceHandlerStub struct {
+// TxNonceHandlerV1Stub -
+type TxNonceHandlerV1Stub struct {
 	GetNonceCalled          func(ctx context.Context, address core.AddressHandler) (uint64, error)
 	SendTransactionCalled   func(ctx context.Context, tx *data.Transaction) (string, error)
 	ForceNonceReFetchCalled func(address core.AddressHandler) error
@@ -16,7 +16,7 @@ type TxNonceHandlerStub struct {
 }
 
 // GetNonce -
-func (stub *TxNonceHandlerStub) GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error) {
+func (stub *TxNonceHandlerV1Stub) GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error) {
 	if stub.GetNonceCalled != nil {
 		return stub.GetNonceCalled(ctx, address)
 	}
@@ -25,7 +25,7 @@ func (stub *TxNonceHandlerStub) GetNonce(ctx context.Context, address core.Addre
 }
 
 // SendTransaction -
-func (stub *TxNonceHandlerStub) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (stub *TxNonceHandlerV1Stub) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
 	if stub.SendTransactionCalled != nil {
 		return stub.SendTransactionCalled(ctx, tx)
 	}
@@ -34,7 +34,7 @@ func (stub *TxNonceHandlerStub) SendTransaction(ctx context.Context, tx *data.Tr
 }
 
 // ForceNonceReFetch -
-func (stub *TxNonceHandlerStub) ForceNonceReFetch(address core.AddressHandler) error {
+func (stub *TxNonceHandlerV1Stub) ForceNonceReFetch(address core.AddressHandler) error {
 	if stub.ForceNonceReFetchCalled != nil {
 		return stub.ForceNonceReFetchCalled(address)
 	}
@@ -43,7 +43,7 @@ func (stub *TxNonceHandlerStub) ForceNonceReFetch(address core.AddressHandler) e
 }
 
 // Close -
-func (stub *TxNonceHandlerStub) Close() error {
+func (stub *TxNonceHandlerV1Stub) Close() error {
 	if stub.CloseCalled != nil {
 		return stub.CloseCalled()
 	}
@@ -52,6 +52,6 @@ func (stub *TxNonceHandlerStub) Close() error {
 }
 
 // IsInterfaceNil -
-func (stub *TxNonceHandlerStub) IsInterfaceNil() bool {
+func (stub *TxNonceHandlerV1Stub) IsInterfaceNil() bool {
 	return stub == nil
 }

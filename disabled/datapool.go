@@ -9,6 +9,21 @@ import (
 type DataPool struct {
 }
 
+// PeerAuthentications returns nil
+func (dp *DataPool) PeerAuthentications() storage.Cacher {
+	return nil
+}
+
+// Heartbeats returns nil
+func (dp *DataPool) Heartbeats() storage.Cacher {
+	return nil
+}
+
+// Close returns nil
+func (dp *DataPool) Close() error {
+	return nil
+}
+
 // TrieNodesChunks returns nil
 func (dp *DataPool) TrieNodesChunks() storage.Cacher {
 	return nil
@@ -54,8 +69,18 @@ func (dp *DataPool) SmartContracts() storage.Cacher {
 	return nil
 }
 
-// CurrentBlockTxs return nil
+// CurrentBlockTxs returns nil
 func (dp *DataPool) CurrentBlockTxs() dataRetriever.TransactionCacher {
+	return nil
+}
+
+// CurrentEpochValidatorInfo returns nil
+func (dp *DataPool) CurrentEpochValidatorInfo() dataRetriever.ValidatorInfoCacher {
+	return nil
+}
+
+// ValidatorsInfo returns nil
+func (dp *DataPool) ValidatorsInfo() dataRetriever.ShardedDataCacherNotifier {
 	return nil
 }
 

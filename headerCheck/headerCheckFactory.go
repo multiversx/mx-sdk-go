@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go/factory/crypto"
 	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/factory"
 )
@@ -12,7 +14,10 @@ import (
 // NewHeaderCheckHandler will create all components needed for header
 // verification and returns the header verifier component. It behaves like a
 // main factory for header verification components
-func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
+func NewHeaderCheckHandler(
+	proxy Proxy,
+	enableEpochsConfig *data.EnableEpochsConfig,
+) (HeaderVerifier, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
 	}
@@ -27,17 +32,24 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		return nil, err
 	}
 
-	enableEpochsConfig, err := proxy.GetEnableEpochsConfig(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	coreComp, err := factory.CreateCoreComponents(ratingsConfig, networkConfig)
+	coreComp, err := factory.CreateCoreComponents(ratingsConfig, networkConfig, enableEpochsConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	cryptoComp, err := factory.CreateCryptoComponents()
+	if err != nil {
+		return nil, err
+	}
+
+	args := crypto.MultiSigArgs{
+		MultiSigHasherType:   "blake2b",
+		BlSignKeyGen:         cryptoComp.KeyGen,
+		ConsensusType:        "bls",
+		ImportModeNoSigCheck: false,
+	}
+
+	multiSignerContainer, err := crypto.NewMultiSignerContainer(args, enableEpochsConfig.EnableEpochs.BLSMultiSignerEnableEpoch)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +74,7 @@ func NewHeaderCheckHandler(proxy Proxy) (HeaderVerifier, error) {
 		Marshalizer:             coreComp.Marshaller,
 		Hasher:                  coreComp.Hasher,
 		NodesCoordinator:        nodesCoordinator,
-		MultiSigVerifier:        cryptoComp.MultiSig,
+		MultiSigContainer:       multiSignerContainer,
 		SingleSigVerifier:       cryptoComp.SingleSig,
 		KeyGen:                  cryptoComp.KeyGen,
 		FallbackHeaderValidator: &disabled.FallBackHeaderValidator{},

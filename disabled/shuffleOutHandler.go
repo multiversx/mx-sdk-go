@@ -5,12 +5,12 @@ type ShuffledOutHandler struct {
 }
 
 // Process returns nil
-func (s *ShuffledOutHandler) Process(newShardID uint32) error {
+func (s *ShuffledOutHandler) Process(_ uint32) error {
 	return nil
 }
 
 // RegisterHandler does nothing
-func (s *ShuffledOutHandler) RegisterHandler(handler func(newShardID uint32)) {
+func (s *ShuffledOutHandler) RegisterHandler(_ func(uint32)) {
 }
 
 // CurrentShardID return zero

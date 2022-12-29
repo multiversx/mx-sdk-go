@@ -10,11 +10,10 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-crypto"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
@@ -23,13 +22,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	suite  = ed25519.NewEd25519()
+	keyGen = signing.NewKeyGenerator(suite)
+)
+
 func createMockArgsElrondNotifee() ArgsElrondNotifee {
 	return ArgsElrondNotifee{
 		Proxy:           &testsCommon.ProxyStub{},
 		TxBuilder:       &testsCommon.TxBuilderStub{},
-		TxNonceHandler:  &testsCommon.TxNonceHandlerStub{},
+		TxNonceHandler:  &testsCommon.TxNonceHandlerV2Stub{},
 		ContractAddress: data.NewAddressFromBytes(bytes.Repeat([]byte{1}, 32)),
-		PrivateKey:      &testsCommon.PrivateKeyStub{},
+		CryptoHolder:    &testsCommon.CryptoComponentsHolderStub{},
 		BaseGasLimit:    1,
 		GasLimitForEach: 1,
 	}
@@ -46,17 +50,16 @@ func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
 		},
 	}
 
-	txBuilder, _ := builders.NewTxBuilder(blockchain.NewTxSigner())
-	keyGen := signing.NewKeyGenerator(ed25519.NewEd25519())
 	skBytes, _ := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c40d248169f4dd7c90537f05be1c49772ddbf8f7948b507ed17fb23284cf218b7d")
-	sk, _ := keyGen.PrivateKeyFromByteArray(skBytes)
+	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, skBytes)
+	txBuilder, _ := builders.NewTxBuilder(cryptoProvider.NewSigner())
 
 	return ArgsElrondNotifee{
 		Proxy:           proxy,
 		TxBuilder:       txBuilder,
-		TxNonceHandler:  &testsCommon.TxNonceHandlerStub{},
+		TxNonceHandler:  &testsCommon.TxNonceHandlerV2Stub{},
 		ContractAddress: data.NewAddressFromBytes(bytes.Repeat([]byte{1}, 32)),
-		PrivateKey:      sk,
+		CryptoHolder:    holder,
 		BaseGasLimit:    2000,
 		GasLimitForEach: 30,
 	}
@@ -65,16 +68,18 @@ func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
 func createMockPriceChanges() []*aggregator.ArgsPriceChanged {
 	return []*aggregator.ArgsPriceChanged{
 		{
-			Base:               "USD",
-			Quote:              "ETH",
-			DenominatedPrice:   380000,
-			DenominationFactor: 100,
+			Base:             "USD",
+			Quote:            "ETH",
+			DenominatedPrice: 380000,
+			Decimals:         2,
+			Timestamp:        200,
 		},
 		{
-			Base:               "USD",
-			Quote:              "BTC",
-			DenominatedPrice:   47000000000,
-			DenominationFactor: 1000000,
+			Base:             "USD",
+			Quote:            "BTC",
+			DenominatedPrice: 47000000000,
+			Decimals:         6,
+			Timestamp:        300,
 		},
 	}
 }
@@ -132,15 +137,15 @@ func TestNewElrondNotifee(t *testing.T) {
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errInvalidContractAddress, err)
 	})
-	t.Run("nil private key should error", func(t *testing.T) {
+	t.Run("nil cryptoHlder should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsElrondNotifee()
-		args.PrivateKey = nil
+		args.CryptoHolder = nil
 		en, err := NewElrondNotifee(args)
 
 		assert.True(t, check.IfNil(en))
-		assert.Equal(t, errNilPrivateKey, err)
+		assert.Equal(t, builders.ErrNilCryptoComponentsHolder, err)
 	})
 	t.Run("invalid base gas limit should error", func(t *testing.T) {
 		t.Parallel()
@@ -162,40 +167,6 @@ func TestNewElrondNotifee(t *testing.T) {
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errInvalidGasLimitForEach, err)
 	})
-	t.Run("private key to byte array errors should error", func(t *testing.T) {
-		t.Parallel()
-
-		expectedErr := errors.New("expected error")
-		args := createMockArgsElrondNotifee()
-		args.PrivateKey = &testsCommon.PrivateKeyStub{
-			ToByteArrayCalled: func() ([]byte, error) {
-				return nil, expectedErr
-			},
-		}
-		en, err := NewElrondNotifee(args)
-
-		assert.True(t, check.IfNil(en))
-		assert.Equal(t, expectedErr, err)
-	})
-	t.Run("public key to byte array errors should error", func(t *testing.T) {
-		t.Parallel()
-
-		expectedErr := errors.New("expected error")
-		args := createMockArgsElrondNotifee()
-		args.PrivateKey = &testsCommon.PrivateKeyStub{
-			GeneratePublicCalled: func() crypto.PublicKey {
-				return &testsCommon.PublicKeyStub{
-					ToByteArrayCalled: func() ([]byte, error) {
-						return nil, expectedErr
-					},
-				}
-			},
-		}
-		en, err := NewElrondNotifee(args)
-
-		assert.True(t, check.IfNil(en))
-		assert.Equal(t, expectedErr, err)
-	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
@@ -215,9 +186,9 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 0, expectedErr
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				return expectedErr
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -236,9 +207,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -264,9 +236,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 				return nil, expectedErr
 			},
 		}
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -286,9 +259,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
@@ -296,7 +270,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 		args.TxBuilder = &testsCommon.TxBuilderStub{
-			ApplySignatureAndGenerateTxCalled: func(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error) {
+			ApplySignatureAndGenerateTxCalled: func(cryptoHolder core.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error) {
 				return nil, expectedErr
 			},
 		}
@@ -313,9 +287,10 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				return "", expectedErr
@@ -332,21 +307,27 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
+		priceChanges := createMockPriceChanges()
 		sentWasCalled := false
 		args := createMockArgsElrondNotifeeWithSomeRealComponents()
-		args.TxNonceHandler = &testsCommon.TxNonceHandlerStub{
-			GetNonceCalled: func(ctx context.Context, address core.AddressHandler) (uint64, error) {
-				return 43, nil
+		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+				txArgs.Nonce = 43
+				return nil
 			},
 			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
 				txDataStrings := []string{
 					function,
-					hex.EncodeToString([]byte("USD")),
-					hex.EncodeToString([]byte("ETH")),
-					hex.EncodeToString(big.NewInt(380000).Bytes()),
-					hex.EncodeToString([]byte("USD")),
-					hex.EncodeToString([]byte("BTC")),
-					hex.EncodeToString(big.NewInt(47000000000).Bytes()),
+					hex.EncodeToString([]byte(priceChanges[0].Base)),
+					hex.EncodeToString([]byte(priceChanges[0].Quote)),
+					hex.EncodeToString(big.NewInt(priceChanges[0].Timestamp).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[0].DenominatedPrice)).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[0].Decimals)).Bytes()),
+					hex.EncodeToString([]byte(priceChanges[1].Base)),
+					hex.EncodeToString([]byte(priceChanges[1].Quote)),
+					hex.EncodeToString(big.NewInt(priceChanges[1].Timestamp).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[1].DenominatedPrice)).Bytes()),
+					hex.EncodeToString(big.NewInt(int64(priceChanges[1].Decimals)).Bytes()),
 				}
 				txData := []byte(strings.Join(txDataStrings, "@"))
 
@@ -357,9 +338,9 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 				assert.Equal(t, uint64(10), tx.GasPrice)
 				assert.Equal(t, uint64(2060), tx.GasLimit)
 				assert.Equal(t, txData, tx.Data)
-				assert.Equal(t, "1bf31bd077f397dd3e8f1cb47f8211251d696b4d67003b22e638eea6e46200e8101d3e39305f3bf502a5a9838521ba61566bf7d04a7fe91e6d012a94cc6a810e", tx.Signature)
 				assert.Equal(t, "test", tx.ChainID)
 				assert.Equal(t, uint32(1), tx.Version)
+				assert.Equal(t, uint32(0), tx.Options)
 
 				sentWasCalled = true
 
@@ -370,7 +351,6 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		en, err := NewElrondNotifee(args)
 		require.Nil(t, err)
 
-		priceChanges := createMockPriceChanges()
 		err = en.PriceChanged(context.Background(), priceChanges)
 		assert.Nil(t, err)
 		assert.True(t, sentWasCalled)

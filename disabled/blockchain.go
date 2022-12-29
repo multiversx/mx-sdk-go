@@ -8,6 +8,15 @@ import (
 type Blockchain struct {
 }
 
+// GetFinalBlockInfo return 0 and empty slices
+func (b *Blockchain) GetFinalBlockInfo() (uint64, []byte, []byte) {
+	return 0, make([]byte, 0), make([]byte, 0)
+}
+
+// SetFinalBlockInfo does nothing
+func (b *Blockchain) SetFinalBlockInfo(_ uint64, _ []byte, _ []byte) {
+}
+
 // GetGenesisHeader returns nil
 func (b *Blockchain) GetGenesisHeader() data.HeaderHandler {
 	return nil
@@ -57,7 +66,7 @@ func (b *Blockchain) GetCurrentBlockRootHash() []byte {
 }
 
 // SetCurrentBlockHeaderAndRootHash return nil
-func (b *Blockchain) SetCurrentBlockHeaderAndRootHash(bh data.HeaderHandler, rootHash []byte) error {
+func (b *Blockchain) SetCurrentBlockHeaderAndRootHash(_ data.HeaderHandler, _ []byte) error {
 	return nil
 }
 

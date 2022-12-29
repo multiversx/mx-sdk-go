@@ -8,7 +8,15 @@ import (
 	"sync"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing"
+	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+)
+
+var (
+	suite  = ed25519.NewEd25519()
+	keyGen = signing.NewKeyGenerator(suite)
 )
 
 // MoveBalanceHandlerArgs is the argument DTO for the NewMoveBalanceHandler constructor function
@@ -130,7 +138,13 @@ func (mbh *moveBalanceHandler) generateTransaction(ctx context.Context, address 
 	argsCreate.Value = value.String()
 
 	skBytes := mbh.trackableAddressesProvider.PrivateKeyOfBech32Address(address)
-	tx, err := mbh.txInteractor.ApplySignatureAndGenerateTx(skBytes, argsCreate)
+
+	cryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, skBytes)
+	if err != nil {
+		return err
+	}
+
+	tx, err := mbh.txInteractor.ApplySignatureAndGenerateTx(cryptoHolder, argsCreate)
 	if err != nil {
 		return err
 	}

@@ -2,7 +2,6 @@ package headerCheck
 
 import (
 	"context"
-	"encoding/hex"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
@@ -58,7 +57,7 @@ func (rh *rawHeaderHandler) GetShardBlockByHash(ctx context.Context, shardId uin
 		return nil, err
 	}
 
-	blockHeader, err := process.CreateShardHeader(rh.marshaller, headerBytes)
+	blockHeader, err := process.UnmarshalShardHeader(rh.marshaller, headerBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -92,55 +91,12 @@ func (rh *rawHeaderHandler) GetValidatorsInfoPerEpoch(ctx context.Context, epoch
 	}
 	randomness := metaBlock.GetPrevRandSeed()
 
-	validatorsInfoPerEpoch, err := rh.getValidatorsInfo(ctx, metaBlock)
+	validatorsInfoPerEpoch, err := rh.proxy.GetValidatorsInfoByEpoch(ctx, epoch)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	return validatorsInfoPerEpoch, randomness, nil
-}
-
-func (rh *rawHeaderHandler) getValidatorsInfo(ctx context.Context, metaBlock data.HeaderHandler) ([]*state.ShardValidatorInfo, error) {
-	allValidatorInfo := make([]*state.ShardValidatorInfo, 0)
-	for _, miniBlockHeader := range metaBlock.GetMiniBlockHeaderHandlers() {
-		hash := hex.EncodeToString(miniBlockHeader.GetHash())
-
-		miniBlock, err := rh.getMiniBlockByHash(ctx, core.MetachainShardId, hash, metaBlock.GetEpoch())
-		if err != nil {
-			return nil, err
-		}
-
-		if miniBlock.Type != block.PeerBlock {
-			continue
-		}
-
-		for _, txHash := range miniBlock.TxHashes {
-			vid := &state.ShardValidatorInfo{}
-			err := rh.marshaller.Unmarshal(vid, txHash)
-			if err != nil {
-				return nil, err
-			}
-
-			allValidatorInfo = append(allValidatorInfo, vid)
-		}
-	}
-
-	return allValidatorInfo, nil
-}
-
-func (rh *rawHeaderHandler) getMiniBlockByHash(ctx context.Context, shardId uint32, hash string, epoch uint32) (*block.MiniBlock, error) {
-	miniBlockBytes, err := rh.proxy.GetRawMiniBlockByHash(ctx, core.MetachainShardId, hash, epoch)
-	if err != nil {
-		return nil, err
-	}
-
-	miniBlock := &block.MiniBlock{}
-	err = rh.marshaller.Unmarshal(miniBlock, miniBlockBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return miniBlock, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

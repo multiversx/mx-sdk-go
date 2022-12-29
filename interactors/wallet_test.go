@@ -36,6 +36,22 @@ func TestWallet_GetPrivateKeyFromMnemonic(t *testing.T) {
 	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privKey))
 }
 
+func TestWallet_CreateSeedFromMnemonicThenGetPrivateKeyFromSeed(t *testing.T) {
+	t.Parallel()
+
+	w := NewWallet()
+	mnemonic := data.Mnemonic("acid twice post genre topic observe valid viable gesture fortune funny dawn around blood enemy page update reduce decline van bundle zebra rookie real")
+	seed := w.CreateSeedFromMnemonic(mnemonic)
+
+	privKey := w.GetPrivateKeyFromSeed(seed, 0, 0)
+	expectedHexPrivKey := "0b7966138e80b8f3bb64046f56aea4250fd7bacad6ed214165cea6767fd0bc2c"
+	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privKey))
+
+	privKey = w.GetPrivateKeyFromSeed(seed, 0, 1)
+	expectedHexPrivKey = "1648ad209d6b157a289884933e3bb30f161ec7113221ec16f87c3578b05830b0"
+	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privKey))
+}
+
 func TestWallet_GetAddressFromMnemonicWalletIntegration(t *testing.T) {
 	t.Parallel()
 

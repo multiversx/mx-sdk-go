@@ -36,20 +36,25 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 	}
 
 	builtInFuncs := &disabled.BuiltInFunctionContainer{}
+
 	var argsHook = hooks.ArgBlockChainHook{
-		Accounts:           &disabled.Accounts{},
-		PubkeyConv:         core.AddressPublicKeyConverter,
-		StorageService:     &disabled.StorageService{},
-		BlockChain:         &disabled.Blockchain{},
-		ShardCoordinator:   &disabled.ElrondShardCoordinator{},
-		Marshalizer:        &marshal.JsonMarshalizer{},
-		Uint64Converter:    uint64ByteSlice.NewBigEndianConverter(),
-		BuiltInFunctions:   builtInFuncs,
-		DataPool:           &disabled.DataPool{},
-		CompiledSCPool:     storage.NewMapCacher(),
-		NilCompiledSCStore: true,
-		NFTStorageHandler:  &disabled.SimpleESDTNFTStorageHandler{},
-		EpochNotifier:      &disabled.EpochNotifier{},
+		Accounts:              &disabled.Accounts{},
+		PubkeyConv:            core.AddressPublicKeyConverter,
+		StorageService:        &disabled.StorageService{},
+		BlockChain:            &disabled.Blockchain{},
+		ShardCoordinator:      &disabled.ElrondShardCoordinator{},
+		Marshalizer:           &marshal.JsonMarshalizer{},
+		Uint64Converter:       uint64ByteSlice.NewBigEndianConverter(),
+		BuiltInFunctions:      builtInFuncs,
+		DataPool:              &disabled.DataPool{},
+		CompiledSCPool:        storage.NewMapCacher(),
+		NilCompiledSCStore:    true,
+		NFTStorageHandler:     &disabled.SimpleESDTNFTStorageHandler{},
+		EpochNotifier:         &disabled.EpochNotifier{},
+		GlobalSettingsHandler: &disabled.GlobalSettingsHandler{},
+		EnableEpochsHandler:   &disabled.EnableEpochsHandler{},
+		GasSchedule:           &disabled.GasScheduleNotifier{},
+		Counter:               &disabled.BlockChainHookCounter{},
 	}
 	blockchainHook, err := hooks.NewBlockChainHookImpl(argsHook)
 	if err != nil {

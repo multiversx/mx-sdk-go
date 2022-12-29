@@ -16,31 +16,27 @@ const minAutoSendInterval = time.Second
 // ArgsPriceNotifier is the argument DTO for the price notifier
 type ArgsPriceNotifier struct {
 	Pairs            []*ArgsPair
-	Fetcher          PriceFetcher
+	Aggregator       PriceAggregator
 	Notifee          PriceNotifee
 	AutoSendInterval time.Duration
 }
 
-// ArgsPair is the argument DTO for a pair
-type ArgsPair struct {
-	Base                      string
-	Quote                     string
-	PercentDifferenceToNotify uint32
-	TrimPrecision             float64
-	DenominationFactor        uint64
+type priceInfo struct {
+	price     float64
+	timestamp int64
 }
 
 type notifyArgs struct {
-	*ArgsPair
-	newPrice          float64
+	*pair
+	newPrice          priceInfo
 	lastNotifiedPrice float64
 	index             int
 }
 
 type priceNotifier struct {
 	mut                sync.Mutex
-	priceFetcher       PriceFetcher
-	pairs              []*ArgsPair
+	priceAggregator    PriceAggregator
+	pairs              []*pair
 	lastNotifiedPrices []float64
 	notifee            PriceNotifee
 	autoSendInterval   time.Duration
@@ -55,9 +51,21 @@ func NewPriceNotifier(args ArgsPriceNotifier) (*priceNotifier, error) {
 		return nil, err
 	}
 
+	pairs := make([]*pair, 0)
+	for idx, argsPair := range args.Pairs {
+		if argsPair == nil {
+			return nil, fmt.Errorf("%w, index %d", ErrNilArgsPair, idx)
+		}
+		pair, err := newPair(argsPair)
+		if err != nil {
+			return nil, err
+		}
+		pairs = append(pairs, pair)
+	}
+
 	return &priceNotifier{
-		priceFetcher:       args.Fetcher,
-		pairs:              args.Pairs,
+		priceAggregator:    args.Aggregator,
+		pairs:              pairs,
 		lastNotifiedPrices: make([]float64, len(args.Pairs)),
 		notifee:            args.Notifee,
 		autoSendInterval:   args.AutoSendInterval,
@@ -71,27 +79,14 @@ func checkArgsPriceNotifier(args ArgsPriceNotifier) error {
 		return ErrEmptyArgsPairsSlice
 	}
 
-	for idx, argsPair := range args.Pairs {
-		if argsPair == nil {
-			return fmt.Errorf("%w, index %d", ErrNilArgsPair, idx)
-		}
-		if argsPair.TrimPrecision < epsilon {
-			return fmt.Errorf("%w, got %f for pair %s-%s", ErrInvalidTrimPrecision,
-				argsPair.TrimPrecision, argsPair.Base, argsPair.Quote)
-		}
-		if argsPair.DenominationFactor == 0 {
-			return fmt.Errorf("%w, got %d for pair %s-%s", ErrInvalidDenominationFactor,
-				argsPair.DenominationFactor, argsPair.Base, argsPair.Quote)
-		}
-	}
 	if args.AutoSendInterval < minAutoSendInterval {
 		return fmt.Errorf("%w, minimum %v, got %v", ErrInvalidAutoSendInterval, minAutoSendInterval, args.AutoSendInterval)
 	}
 	if check.IfNil(args.Notifee) {
 		return ErrNilPriceNotifee
 	}
-	if check.IfNil(args.Fetcher) {
-		return ErrNilPriceFetcher
+	if check.IfNil(args.Aggregator) {
+		return ErrNilPriceAggregator
 	}
 
 	return nil
@@ -109,21 +104,25 @@ func (pn *priceNotifier) Execute(ctx context.Context) error {
 	return pn.notify(ctx, notifyArgsSlice)
 }
 
-func (pn *priceNotifier) getAllPrices(ctx context.Context) ([]float64, error) {
-	fetchedPrices := make([]float64, len(pn.pairs))
+func (pn *priceNotifier) getAllPrices(ctx context.Context) ([]priceInfo, error) {
+	fetchedPrices := make([]priceInfo, len(pn.pairs))
 	for idx, pair := range pn.pairs {
-		price, err := pn.priceFetcher.FetchPrice(ctx, pair.Base, pair.Quote)
+		price, err := pn.priceAggregator.FetchPrice(ctx, pair.base, pair.quote)
 		if err != nil {
-			return nil, fmt.Errorf("%w while querying the pair %s-%s", err, pair.Base, pair.Quote)
+			return nil, fmt.Errorf("%w while querying the pair %s-%s", err, pair.base, pair.quote)
 		}
 
-		fetchedPrices[idx] = trim(price, pair.TrimPrecision)
+		fetchedPrice := priceInfo{
+			price:     trim(price, pair.trimPrecision),
+			timestamp: time.Now().Unix(),
+		}
+		fetchedPrices[idx] = fetchedPrice
 	}
 
 	return fetchedPrices, nil
 }
 
-func (pn *priceNotifier) computeNotifyArgsSlice(fetchedPrices []float64) []*notifyArgs {
+func (pn *priceNotifier) computeNotifyArgsSlice(fetchedPrices []priceInfo) []*notifyArgs {
 	pn.mut.Lock()
 	defer pn.mut.Unlock()
 
@@ -132,7 +131,7 @@ func (pn *priceNotifier) computeNotifyArgsSlice(fetchedPrices []float64) []*noti
 	result := make([]*notifyArgs, 0, len(pn.pairs))
 	for idx, pair := range pn.pairs {
 		notifyArgsValue := &notifyArgs{
-			ArgsPair:          pair,
+			pair:              pair,
 			newPrice:          fetchedPrices[idx],
 			lastNotifiedPrice: pn.lastNotifiedPrices[idx],
 			index:             idx,
@@ -151,16 +150,16 @@ func (pn *priceNotifier) computeNotifyArgsSlice(fetchedPrices []float64) []*noti
 }
 
 func shouldNotify(notifyArgsValue *notifyArgs) bool {
-	percentValue := float64(notifyArgsValue.PercentDifferenceToNotify) / 100
+	percentValue := float64(notifyArgsValue.percentDifferenceToNotify) / 100
 	shouldBypassPercentCheck := notifyArgsValue.lastNotifiedPrice < epsilon || percentValue < epsilon
 	if shouldBypassPercentCheck {
 		return true
 	}
 
-	absoluteChange := math.Abs(notifyArgsValue.lastNotifiedPrice - notifyArgsValue.newPrice)
+	absoluteChange := math.Abs(notifyArgsValue.lastNotifiedPrice - notifyArgsValue.newPrice.price)
 	percentageChange := absoluteChange * 100 / notifyArgsValue.lastNotifiedPrice
 
-	return percentageChange >= float64(notifyArgsValue.PercentDifferenceToNotify)
+	return percentageChange >= float64(notifyArgsValue.percentDifferenceToNotify)
 }
 
 func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyArgs) error {
@@ -170,14 +169,15 @@ func (pn *priceNotifier) notify(ctx context.Context, notifyArgsSlice []*notifyAr
 
 	args := make([]*ArgsPriceChanged, 0, len(notifyArgsSlice))
 	for _, notify := range notifyArgsSlice {
-		priceTrimmed := trim(notify.newPrice, notify.TrimPrecision)
-		denominatedPrice := uint64(priceTrimmed * float64(notify.DenominationFactor))
+		priceTrimmed := trim(notify.newPrice.price, notify.trimPrecision)
+		denominatedPrice := uint64(priceTrimmed * float64(notify.denominationFactor))
 
 		argPriceChanged := &ArgsPriceChanged{
-			Base:               notify.Base,
-			Quote:              notify.Quote,
-			DenominatedPrice:   denominatedPrice,
-			DenominationFactor: notify.DenominationFactor,
+			Base:             notify.base,
+			Quote:            notify.quote,
+			DenominatedPrice: denominatedPrice,
+			Decimals:         notify.decimals,
+			Timestamp:        notify.newPrice.timestamp,
 		}
 
 		args = append(args, argPriceChanged)

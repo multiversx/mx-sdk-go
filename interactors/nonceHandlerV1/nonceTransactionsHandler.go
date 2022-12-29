@@ -1,4 +1,4 @@
-package interactors
+package nonceHandlerV1
 
 import (
 	"context"
@@ -7,22 +7,26 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 )
 
 const minimumIntervalToResend = time.Second
 
-// nonceTransactionsHandler is the handler used for an unlimited number of addresses.
+var log = logger.GetOrCreate("elrond-sdk-erdgo/interactors/nonceHandlerV1")
+
+// nonceTransactionsHandlerV1 is the handler used for an unlimited number of addresses.
 // It basically contains a map of addressNonceHandler, creating new entries on the first
 // access of a provided address. This struct delegates all the operations on the right
 // instance of addressNonceHandler. It also starts a go routine that will periodically
 // try to resend "stuck transactions" and to clean the inner state. The recommended resend
 // interval is 1 minute. The Close method should be called whenever the current instance of
-// nonceTransactionsHandler should be terminated and collected by the GC.
+// nonceTransactionsHandlerV1 should be terminated and collected by the GC.
 // This struct is concurrent safe.
-type nonceTransactionsHandler struct {
-	proxy              Proxy
+type nonceTransactionsHandlerV1 struct {
+	proxy              interactors.Proxy
 	mutHandlers        sync.Mutex
 	handlers           map[string]*addressNonceHandler
 	checkForDuplicates bool
@@ -30,18 +34,18 @@ type nonceTransactionsHandler struct {
 	intervalToResend   time.Duration
 }
 
-// NewNonceTransactionHandler will create a new instance of the nonceTransactionsHandler. It requires a Proxy implementation
+// NewNonceTransactionHandlerV1 will create a new instance of the nonceTransactionsHandlerV1. It requires a Proxy implementation
 // and an interval at which the transactions sent are rechecked and eventually, resent.
 // checkForDuplicates set as true will prevent sending a transaction with the same receiver, value and data.
-func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration, checkForDuplicates bool) (*nonceTransactionsHandler, error) {
+func NewNonceTransactionHandlerV1(proxy interactors.Proxy, intervalToResend time.Duration, checkForDuplicates bool) (*nonceTransactionsHandlerV1, error) {
 	if check.IfNil(proxy) {
-		return nil, ErrNilProxy
+		return nil, interactors.ErrNilProxy
 	}
 	if intervalToResend < minimumIntervalToResend {
-		return nil, fmt.Errorf("%w for intervalToResend in NewNonceTransactionHandler", ErrInvalidValue)
+		return nil, fmt.Errorf("%w for intervalToResend in NewNonceTransactionHandlerV1", interactors.ErrInvalidValue)
 	}
 
-	nth := &nonceTransactionsHandler{
+	nth := &nonceTransactionsHandlerV1{
 		proxy:              proxy,
 		handlers:           make(map[string]*addressNonceHandler),
 		intervalToResend:   intervalToResend,
@@ -56,9 +60,9 @@ func NewNonceTransactionHandler(proxy Proxy, intervalToResend time.Duration, che
 }
 
 // GetNonce will return the nonce for the provided address
-func (nth *nonceTransactionsHandler) GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error) {
+func (nth *nonceTransactionsHandlerV1) GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error) {
 	if check.IfNil(address) {
-		return 0, ErrNilAddress
+		return 0, interactors.ErrNilAddress
 	}
 
 	anh := nth.getOrCreateAddressNonceHandler(address)
@@ -66,7 +70,7 @@ func (nth *nonceTransactionsHandler) GetNonce(ctx context.Context, address core.
 	return anh.getNonceUpdatingCurrent(ctx)
 }
 
-func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core.AddressHandler) *addressNonceHandler {
+func (nth *nonceTransactionsHandlerV1) getOrCreateAddressNonceHandler(address core.AddressHandler) *addressNonceHandler {
 	nth.mutHandlers.Lock()
 	addressAsString := string(address.AddressBytes())
 	anh, found := nth.handlers[addressAsString]
@@ -80,9 +84,9 @@ func (nth *nonceTransactionsHandler) getOrCreateAddressNonceHandler(address core
 }
 
 // SendTransaction will store and send the provided transaction
-func (nth *nonceTransactionsHandler) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (nth *nonceTransactionsHandlerV1) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
 	if tx == nil {
-		return "", ErrNilTransaction
+		return "", interactors.ErrNilTransaction
 	}
 
 	addrAsBech32 := tx.SndAddr
@@ -95,7 +99,7 @@ func (nth *nonceTransactionsHandler) SendTransaction(ctx context.Context, tx *da
 	if nth.checkForDuplicates && anh.isTxAlreadySent(tx) {
 		// TODO: add gas comparation logic EN-11887
 		anh.decrementComputedNonce()
-		return "", ErrTxAlreadySent
+		return "", interactors.ErrTxAlreadySent
 	}
 	sentHash, err := anh.sendTransaction(ctx, tx)
 	if err != nil {
@@ -105,7 +109,7 @@ func (nth *nonceTransactionsHandler) SendTransaction(ctx context.Context, tx *da
 	return sentHash, nil
 }
 
-func (nth *nonceTransactionsHandler) resendTransactionsLoop(ctx context.Context, intervalToResend time.Duration) {
+func (nth *nonceTransactionsHandlerV1) resendTransactionsLoop(ctx context.Context, intervalToResend time.Duration) {
 	timer := time.NewTimer(intervalToResend)
 	defer timer.Stop()
 
@@ -116,20 +120,20 @@ func (nth *nonceTransactionsHandler) resendTransactionsLoop(ctx context.Context,
 		case <-timer.C:
 			nth.resendTransactions(ctx)
 		case <-ctx.Done():
-			log.Debug("finishing nonceTransactionsHandler.resendTransactionsLoop...")
+			log.Debug("finishing nonceTransactionsHandlerV1.resendTransactionsLoop...")
 			return
 		}
 	}
 }
 
-func (nth *nonceTransactionsHandler) resendTransactions(ctx context.Context) {
+func (nth *nonceTransactionsHandlerV1) resendTransactions(ctx context.Context) {
 	nth.mutHandlers.Lock()
 	defer nth.mutHandlers.Unlock()
 
 	for _, anh := range nth.handlers {
 		select {
 		case <-ctx.Done():
-			log.Debug("finishing nonceTransactionsHandler.resendTransactions...")
+			log.Debug("finishing nonceTransactionsHandlerV1.resendTransactions...")
 			return
 		default:
 		}
@@ -143,9 +147,9 @@ func (nth *nonceTransactionsHandler) resendTransactions(ctx context.Context) {
 
 // ForceNonceReFetch will mark the addressNonceHandler to re-fetch its nonce from the blockchain account.
 // This should be only used in a fallback plan, when some transactions are completely lost (or due to a bug, not even sent in first time)
-func (nth *nonceTransactionsHandler) ForceNonceReFetch(address core.AddressHandler) error {
+func (nth *nonceTransactionsHandlerV1) ForceNonceReFetch(address core.AddressHandler) error {
 	if check.IfNil(address) {
-		return ErrNilAddress
+		return interactors.ErrNilAddress
 	}
 
 	anh := nth.getOrCreateAddressNonceHandler(address)
@@ -155,13 +159,13 @@ func (nth *nonceTransactionsHandler) ForceNonceReFetch(address core.AddressHandl
 }
 
 // Close finishes the transactions resend go routine
-func (nth *nonceTransactionsHandler) Close() error {
+func (nth *nonceTransactionsHandlerV1) Close() error {
 	nth.cancelFunc()
 
 	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (nth *nonceTransactionsHandler) IsInterfaceNil() bool {
+func (nth *nonceTransactionsHandlerV1) IsInterfaceNil() bool {
 	return nth == nil
 }
