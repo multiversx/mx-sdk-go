@@ -69,8 +69,8 @@ extern "C" {
 #endif
 
 extern char* generatePublicKey(char* privateKey);
-extern char* signMessage(char* message, char* privateKey);
-extern GoInt verifyMessage(char* publicKey, char* message, char* signature);
+extern char* computeMessageSignature(char* message, char* privateKey);
+extern GoInt verifyMessageSignature(char* publicKey, char* message, char* signature);
 extern char* generatePrivateKey();
 
 #ifdef __cplusplus

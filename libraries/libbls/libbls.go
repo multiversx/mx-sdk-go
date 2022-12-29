@@ -14,7 +14,7 @@ var (
 	blsSigner    = singlesig.BlsSingleSigner{}
 )
 
-func doGeneratePrivateKey() string {
+func doGeneratePrivateKeyAsHex() string {
 	privateKey, _ := keyGenerator.GeneratePair()
 	privateKeyBytes, err := privateKey.ToByteArray()
 	if err != nil {
@@ -25,7 +25,7 @@ func doGeneratePrivateKey() string {
 	return hex.EncodeToString(privateKeyBytes)
 }
 
-func doGeneratePublicKey(privateKeyHex string) string {
+func doGeneratePublicKeyAsHex(privateKeyHex string) string {
 	privateKeyBytes, ok := decodeInputParameter("private key", privateKeyHex)
 	if !ok {
 		return ""
@@ -33,21 +33,21 @@ func doGeneratePublicKey(privateKeyHex string) string {
 
 	privateKey, err := keyGenerator.PrivateKeyFromByteArray(privateKeyBytes)
 	if err != nil {
-		log.Println("doGeneratePublicKey(): error when creating the private key", err)
+		log.Println("doGeneratePublicKeyAsHex(): error when creating the private key", err)
 		return ""
 	}
 
 	publicKey := privateKey.GeneratePublic()
 	publicKeyBytes, err := publicKey.ToByteArray()
 	if err != nil {
-		log.Println("doGeneratePublicKey(): error when decoding the public key", err)
+		log.Println("doGeneratePublicKeyAsHex(): error when decoding the public key", err)
 		return ""
 	}
 
 	return hex.EncodeToString(publicKeyBytes)
 }
 
-func doSignMessage(messageHex string, privateKeyHex string) string {
+func doComputeMessageSignatureAsHex(messageHex string, privateKeyHex string) string {
 	message, ok := decodeInputParameter("message", messageHex)
 	if !ok {
 		return ""
@@ -60,20 +60,20 @@ func doSignMessage(messageHex string, privateKeyHex string) string {
 
 	privateKey, err := keyGenerator.PrivateKeyFromByteArray(privateKeyBytes)
 	if err != nil {
-		log.Println("doSignMessage(): error when creating the private key", err)
+		log.Println("doComputeMessageSignatureAsHex(): error when creating the private key", err)
 		return ""
 	}
 
 	signature, err := blsSigner.Sign(privateKey, message)
 	if err != nil {
-		log.Println("doSignMessage(): error when signing the message", err)
+		log.Println("doComputeMessageSignatureAsHex(): error when signing the message", err)
 		return ""
 	}
 
 	return hex.EncodeToString(signature)
 }
 
-func doVerifyMessage(publicKeyHex string, messageHex string, signatureHex string) bool {
+func doVerifyMessageSignature(publicKeyHex string, messageHex string, signatureHex string) bool {
 	publicKeyBytes, ok := decodeInputParameter("public key", publicKeyHex)
 	if !ok {
 		return false
@@ -91,7 +91,7 @@ func doVerifyMessage(publicKeyHex string, messageHex string, signatureHex string
 
 	publicKey, err := keyGenerator.PublicKeyFromByteArray(publicKeyBytes)
 	if err != nil {
-		log.Println("doVerifyMessage(): error when creating the public key", err)
+		log.Println("doVerifyMessageSignature(): error when creating the public key", err)
 		return false
 	}
 
