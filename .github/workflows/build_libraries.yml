@@ -1,0 +1,81 @@
+name: Build libraries
+
+on:
+  workflow_dispatch:
+    inputs:
+      attach:
+        type: boolean
+        description: Attach artifacts on release, if one exists
+
+permissions:
+  contents: write
+
+jobs:      
+  build:
+    strategy:
+      matrix:
+        runs-on: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.runs-on }}
+    name: Build
+    steps:
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.17.6
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: "0"
+
+    - name: Get dependencies
+      run: |
+        go get -v -t -d ./...
+        if [ -f Gopkg.toml ]; then
+            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+            dep ensure
+        fi
+
+    - name: Build libbls (Linux)
+      if: runner.os == 'Linux'
+      run: | 
+        cd ./libraries/libbls
+        go build -buildmode=c-shared -o $GITHUB_WORKSPACE/libbls.so .
+
+    - name: Build libbls (MacOS)
+      if: runner.os == 'macOS'
+      run: | 
+        cd ./libraries/libbls
+        go build -buildmode=c-shared -o $GITHUB_WORKSPACE/libbls.dylib .
+
+    - name: Save artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: libraries
+        path: |
+          ${{ github.workspace }}/libbls.so
+          ${{ github.workspace }}/libbls.dylib
+        if-no-files-found: error
+
+  attach-on-release:
+    if: ${{ github.event.inputs.attach == 'true' }}
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: "0"
+
+      - name: Download all workflow artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: libraries
+
+      - name: Upload artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.ref_name }} $(find ./libraries -type f)
