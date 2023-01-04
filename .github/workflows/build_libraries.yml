@@ -6,6 +6,8 @@ on:
       attach:
         type: boolean
         description: Attach artifacts on release, if one exists
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -53,7 +55,7 @@ jobs:
     - name: Save artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: libraries
+        name: artifacts
         path: |
           ${{ github.workspace }}/libbls.so
           ${{ github.workspace }}/libbls.dylib
@@ -72,10 +74,10 @@ jobs:
       - name: Download all workflow artifacts
         uses: actions/download-artifact@v2
         with:
-          path: libraries
+          path: artifacts
 
       - name: Upload artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.ref_name }} $(find ./libraries -type f)
+          gh release upload ${{ github.ref_name }} $(find ./artifacts -type f)
