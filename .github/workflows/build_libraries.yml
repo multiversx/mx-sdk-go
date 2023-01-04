@@ -2,10 +2,8 @@ name: Build libraries
 
 on:
   workflow_dispatch:
-    inputs:
-      attach:
-        type: boolean
-        description: Attach artifacts on release, if one exists
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -14,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        runs-on: [ubuntu-latest, macos-latest]
+        runs-on: [ubuntu-20.04, macos-11,  windows-2019]
     runs-on: ${{ matrix.runs-on }}
     name: Build
     steps:
@@ -31,6 +29,7 @@ jobs:
         fetch-depth: "0"
 
     - name: Get dependencies
+      shell: bash
       run: |
         go get -v -t -d ./...
         if [ -f Gopkg.toml ]; then
@@ -50,17 +49,24 @@ jobs:
         cd ./libraries/libbls
         go build -buildmode=c-shared -o $GITHUB_WORKSPACE/libbls.dylib .
 
+    - name: Build libbls (Windows)
+      shell: bash
+      if: runner.os == 'Windows'
+      run: | 
+        cd ./libraries/libbls
+        go build -buildmode=c-shared -o $GITHUB_WORKSPACE/libbls.dll .
+
     - name: Save artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
-        name: libraries
+        name: artifacts
         path: |
-          ${{ github.workspace }}/libbls.so
-          ${{ github.workspace }}/libbls.dylib
+          libbls.so
+          libbls.dylib
+          libbls.dll
         if-no-files-found: error
 
   attach-on-release:
-    if: ${{ github.event.inputs.attach == 'true' }}
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -70,12 +76,12 @@ jobs:
           fetch-depth: "0"
 
       - name: Download all workflow artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
-          path: libraries
+          path: artifacts
 
       - name: Upload artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.ref_name }} $(find ./libraries -type f)
+          gh release upload ${{ github.ref_name }} $(find ./artifacts -type f)
