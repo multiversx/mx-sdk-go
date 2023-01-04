@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        runs-on: [ubuntu-20.04, macos-11]
+        runs-on: [ubuntu-20.04, macos-11,  windows-2019]
     runs-on: ${{ matrix.runs-on }}
     name: Build
     steps:
@@ -48,6 +48,12 @@ jobs:
         cd ./libraries/libbls
         go build -buildmode=c-shared -o $GITHUB_WORKSPACE/libbls.dylib .
 
+    - name: Build libbls (Windows)
+      if: runner.os == 'Windows'
+      run: | 
+        cd ./libraries/libbls
+        go build -buildmode=c-shared -o $GITHUB_WORKSPACE/libbls.dll .
+
     - name: Save artifacts
       uses: actions/upload-artifact@v2
       with:
@@ -55,6 +61,7 @@ jobs:
         path: |
           ${{ github.workspace }}/libbls.so
           ${{ github.workspace }}/libbls.dylib
+          ${{ github.workspace }}/libbls.dll
         if-no-files-found: error
 
   attach-on-release:
