@@ -22,4 +22,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create --draft --title="vNext" --generate-notes vNext
+          gh release create vNext --target=$GITHUB_SHA --title="vNext" --generate-notes --draft

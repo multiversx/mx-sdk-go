@@ -2,10 +2,6 @@ name: Build libraries
 
 on:
   workflow_dispatch:
-    inputs:
-      attach:
-        type: boolean
-        description: Attach artifacts on release, if one exists
   release:
     types: [published]
 
@@ -62,7 +58,6 @@ jobs:
         if-no-files-found: error
 
   attach-on-release:
-    if: ${{ github.event.inputs.attach == 'true' }}
     needs: [build]
     runs-on: ubuntu-latest
     steps:
