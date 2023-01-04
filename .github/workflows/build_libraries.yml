@@ -53,16 +53,16 @@ jobs:
       if: runner.os == 'Windows'
       run: | 
         cd ./libraries/libbls
-        go build -buildmode=c-shared -o $GITHUB_WORKSPACE/libbls.dll .
+        go build -buildmode=c-shared -o $GITHUB_WORKSPACE\libbls.dll .
 
     - name: Save artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: artifacts
         path: |
-          ${{ github.workspace }}/libbls.so
-          ${{ github.workspace }}/libbls.dylib
-          ${{ github.workspace }}/libbls.dll
+          libbls.so
+          libbls.dylib
+          libbls.dll
         if-no-files-found: error
 
   attach-on-release:
@@ -75,7 +75,7 @@ jobs:
           fetch-depth: "0"
 
       - name: Download all workflow artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: artifacts
 
