@@ -50,10 +50,11 @@ jobs:
         go build -buildmode=c-shared -o $GITHUB_WORKSPACE/libbls.dylib .
 
     - name: Build libbls (Windows)
+      shell: bash
       if: runner.os == 'Windows'
       run: | 
         cd ./libraries/libbls
-        go build -buildmode=c-shared -o $GITHUB_WORKSPACE\libbls.dll .
+        go build -buildmode=c-shared -o $GITHUB_WORKSPACE/libbls.dll .
 
     - name: Save artifacts
       uses: actions/upload-artifact@v3
