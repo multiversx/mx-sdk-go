@@ -25,5 +25,5 @@ func TestBaseEndpointProvider(t *testing.T) {
 	assert.Equal(t, vmValues, base.GetVmValues())
 	assert.Equal(t, genesisNodesConfig, base.GetGenesisNodesConfig())
 	assert.Equal(t, "internal/raw/startofepoch/metablock/by-epoch/5", base.GetRawStartOfEpochMetaBlock(5))
-	assert.Equal(t, "/dummyAddress/guardian-data", base.GetGuardianData("dummyAddress"))
+	assert.Equal(t, "address/dummyAddress/guardian-data", base.GetGuardianData("dummyAddress"))
 }

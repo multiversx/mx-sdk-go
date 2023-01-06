@@ -19,8 +19,8 @@ const (
 	genesisNodesConfig        = "network/genesis-nodes"
 	rawStartOfEpochMetaBlock  = "internal/raw/startofepoch/metablock/by-epoch/%d"
 	rawStartOfEpochValidators = "internal/json/startofepoch/validators/by-epoch/%d"
-	nodeGetGuardianData      = "/%s/guardian-data"
-	)
+	nodeGetGuardianData       = "address/%s/guardian-data"
+)
 
 type baseEndpointProvider struct{}
 
