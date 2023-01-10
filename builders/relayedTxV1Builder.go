@@ -109,7 +109,7 @@ func prepareInnerTxForRelayV1(tx *data.Transaction) (string, error) {
 
 	signatureBytes, err := hex.DecodeString(tx.Signature)
 	if err != nil {
-
+		return "", err
 	}
 
 	coreTx := &transaction.Transaction{
