@@ -62,7 +62,7 @@ func (rtb *relayedTxV1Builder) Build() (*data.Transaction, error) {
 		return nil, ErrNilNetworkConfig
 	}
 
-	innerTxHex, err := prepareInnerTxForRelay(rtb.innerTransaction)
+	innerTxHex, err := prepareInnerTxForRelayV1(rtb.innerTransaction)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (rtb *relayedTxV1Builder) Build() (*data.Transaction, error) {
 	return relayedTx, nil
 }
 
-func prepareInnerTxForRelay(tx *data.Transaction) (string, error) {
+func prepareInnerTxForRelayV1(tx *data.Transaction) (string, error) {
 	txValue, ok := big.NewInt(0).SetString(tx.Value, 10)
 	if !ok {
 		return "", ErrInvalidValue

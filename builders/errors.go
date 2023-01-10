@@ -34,3 +34,9 @@ var ErrNilNetworkConfig = errors.New("nil network config")
 
 // ErrNilInnerTransactionSignature signals that a nil inner transaction signature was provided
 var ErrNilInnerTransactionSignature = errors.New("nil inner transaction signature")
+
+// ErrInvalidGasLimitNeededForInnerTransaction signals that an invalid gas limit needed for the inner transaction was provided
+var ErrInvalidGasLimitNeededForInnerTransaction = errors.New("invalid gas limit needed for inner transaction")
+
+// ErrGasLimitForInnerTransactionV2ShouldBeZero signals that the gas limit for the inner transaction should be zero
+var ErrGasLimitForInnerTransactionV2ShouldBeZero = errors.New("gas limit of the inner transaction should be 0")
