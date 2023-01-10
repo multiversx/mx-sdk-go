@@ -1,17 +1,13 @@
 package builders
 
 import (
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/ElrondNetwork/elrond-go-crypto/signing"
 	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
 	"github.com/stretchr/testify/require"
@@ -23,15 +19,15 @@ const (
 )
 
 func TestRelayedTxV1Builder(t *testing.T) {
-	proxyProvider, err := blockchain.NewElrondProxy(blockchain.ArgsElrondProxy{
-		ProxyURL:            "https://testnet-gateway.elrond.com",
-		CacheExpirationTime: time.Minute,
-		EntityType:          core.Proxy,
-	})
-	require.NoError(t, err)
+	t.Parallel()
 
-	netConfig, err := proxyProvider.GetNetworkConfig(context.Background())
-	require.NoError(t, err)
+	netConfig := &data.NetworkConfig{
+		ChainID:               "T",
+		MinTransactionVersion: 1,
+		GasPerDataByte:        1500,
+		MinGasLimit:           50000,
+		MinGasPrice:           1000000000,
+	}
 
 	relayerAcc, relayerPrivKey := getAccount(t, testRelayerMnemonic)
 	innerSenderAcc, innerSenderPrivKey := getAccount(t, testInnerSenderMnemonic)
