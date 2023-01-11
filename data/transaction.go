@@ -27,8 +27,8 @@ type Transaction struct {
 	Value     string `json:"value"`
 	RcvAddr   string `json:"receiver"`
 	SndAddr   string `json:"sender"`
-	GasPrice  uint64 `json:"gasPrice,omitempty"`
-	GasLimit  uint64 `json:"gasLimit,omitempty"`
+	GasPrice  uint64 `json:"gasPrice"`
+	GasLimit  uint64 `json:"gasLimit"`
 	Data      []byte `json:"data,omitempty"`
 	Signature string `json:"signature,omitempty"`
 	ChainID   string `json:"chainID"`

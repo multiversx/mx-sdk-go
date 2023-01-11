@@ -234,7 +234,7 @@ func (ep *elrondProxy) SendTransaction(ctx context.Context, tx *data.Transaction
 		return "", err
 	}
 	buff, code, err := ep.PostHTTP(ctx, ep.endpointProvider.GetSendTransaction(), jsonTx)
-	if err != nil || code != http.StatusOK {
+	if err != nil {
 		return "", createHTTPStatusError(code, err)
 	}
 
