@@ -42,6 +42,12 @@ var ErrShardIDMismatch = errors.New("shard ID mismatch")
 // ErrNilNetworkStatus signals that nil network status was received
 var ErrNilNetworkStatus = errors.New("nil network status")
 
+// ErrAddressLengthNotCorrect signals that an account does not have the correct address
+var ErrAddressLengthNotCorrect = errors.New("address length is not correct")
+
+// ErrVMTypeLengthIsNotCorrect signals that the vm type length is not correct
+var ErrVMTypeLengthIsNotCorrect = errors.New("vm type length is not correct")
+
 func createHTTPStatusError(httpStatusCode int, err error) error {
 	if err == nil {
 		err = ErrHTTPStatusCodeIsNotOK

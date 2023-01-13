@@ -1,10 +1,14 @@
 package blockchain
 
 import (
+	"bytes"
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"testing"
 
+	"github.com/ElrondNetwork/elrond-go/process/smartContract/hooks"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +45,11 @@ func TestGenerateSameDNSAddress(t *testing.T) {
 	coord, err := NewShardCoordinator(3, 0)
 	require.Nil(t, err)
 
-	ag, err := NewAddressGenerator(coord)
+	args := ArgsAddressGenerator{
+		Coordinator: coord,
+		PubkeyConv:  core.AddressPublicKeyConverter,
+	}
+	ag, err := NewAddressGenerator(args)
 	require.Nil(t, err)
 
 	newDNS, err := ag.CompatibleDNSAddressFromUsername("laura.elrond")
@@ -57,7 +65,11 @@ func TestAddressGenerator_ComputeArwenScAddress(t *testing.T) {
 	coord, err := NewShardCoordinator(3, 0)
 	require.Nil(t, err)
 
-	ag, err := NewAddressGenerator(coord)
+	args := ArgsAddressGenerator{
+		Coordinator: coord,
+		PubkeyConv:  core.AddressPublicKeyConverter,
+	}
+	ag, err := NewAddressGenerator(args)
 	require.Nil(t, err)
 	owner, err := data.NewAddressFromBech32String("erd1dglncxk6sl9a3xumj78n6z2xux4ghp5c92cstv5zsn56tjgtdwpsk46qrs")
 	require.Nil(t, err)
@@ -66,4 +78,86 @@ func TestAddressGenerator_ComputeArwenScAddress(t *testing.T) {
 	require.Nil(t, err)
 
 	assert.Equal(t, "erd1qqqqqqqqqqqqqpgqxcy5fma93yhw44xcmt3zwrl0tlhaqmxrdwpsr2vh8p", scAddress.AddressAsBech32String())
+}
+
+func TestBlockChainHookImpl_NewAddressLengthNoGood(t *testing.T) {
+	t.Parallel()
+
+	coord, err := NewShardCoordinator(3, 0)
+	require.Nil(t, err)
+
+	args := ArgsAddressGenerator{
+		Coordinator: coord,
+		PubkeyConv:  core.AddressPublicKeyConverter,
+	}
+	ag, err := NewAddressGenerator(args)
+	require.Nil(t, err)
+
+	address := []byte("test")
+	nonce := uint64(10)
+
+	scAddress, err := ag.NewAddress(address, nonce, []byte("00"))
+	assert.Equal(t, hooks.ErrAddressLengthNotCorrect, err)
+	assert.Nil(t, scAddress)
+
+	address = []byte("1234567890123456789012345678901234567890")
+	scAddress, err = ag.NewAddress(address, nonce, []byte("00"))
+	assert.Equal(t, hooks.ErrAddressLengthNotCorrect, err)
+	assert.Nil(t, scAddress)
+}
+
+func TestBlockChainHookImpl_NewAddressVMTypeTooLong(t *testing.T) {
+	t.Parallel()
+
+	coord, err := NewShardCoordinator(3, 0)
+	require.Nil(t, err)
+
+	args := ArgsAddressGenerator{
+		Coordinator: coord,
+		PubkeyConv:  core.AddressPublicKeyConverter,
+	}
+	ag, err := NewAddressGenerator(args)
+	require.Nil(t, err)
+
+	address := []byte("01234567890123456789012345678900")
+	nonce := uint64(10)
+
+	vmType := []byte("010")
+	scAddress, err := ag.NewAddress(address, nonce, vmType)
+	assert.Equal(t, hooks.ErrVMTypeLengthIsNotCorrect, err)
+	assert.Nil(t, scAddress)
+}
+
+func TestBlockChainHookImpl_NewAddress(t *testing.T) {
+	t.Parallel()
+
+	coord, err := NewShardCoordinator(3, 0)
+	require.Nil(t, err)
+
+	args := ArgsAddressGenerator{
+		Coordinator: coord,
+		PubkeyConv:  core.AddressPublicKeyConverter,
+	}
+	ag, err := NewAddressGenerator(args)
+	require.Nil(t, err)
+
+	address := []byte("01234567890123456789012345678900")
+	nonce := uint64(10)
+
+	vmType := []byte("11")
+	scAddress1, err := ag.NewAddress(address, nonce, vmType)
+	assert.Nil(t, err)
+
+	for i := 0; i < 8; i++ {
+		assert.Equal(t, scAddress1[i], uint8(0))
+	}
+	assert.True(t, bytes.Equal(vmType, scAddress1[8:10]))
+
+	nonce++
+	scAddress2, err := ag.NewAddress(address, nonce, []byte("00"))
+	assert.Nil(t, err)
+
+	assert.False(t, bytes.Equal(scAddress1, scAddress2))
+
+	fmt.Printf("%s \n%s \n", hex.EncodeToString(scAddress1), hex.EncodeToString(scAddress2))
 }

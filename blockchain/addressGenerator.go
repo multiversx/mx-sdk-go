@@ -2,69 +2,48 @@ package blockchain
 
 import (
 	"bytes"
+	"encoding/binary"
 
 	elrondCore "github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-core/data/typeConverters/uint64ByteSlice"
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
-	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
-	"github.com/ElrondNetwork/elrond-go/process/smartContract/hooks"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/storage"
 )
 
 const accountStartNonce = uint64(0)
 
 var initialDNSAddress = bytes.Repeat([]byte{1}, 32)
 
+// ArgsAddressGenerator represents the arguments structure for the address generator
+type ArgsAddressGenerator struct {
+	PubkeyConv  elrondCore.PubkeyConverter
+	Coordinator *shardCoordinator
+}
+
 // addressGenerator is used to generate some addresses based on elrond-go logic
 type addressGenerator struct {
-	coordinator    *shardCoordinator
-	blockChainHook process.BlockChainHookHandler
-	hasher         hashing.Hasher
+	coordinator *shardCoordinator
+	pubkeyConv  elrondCore.PubkeyConverter
+	hasher      hashing.Hasher
 }
 
 // NewAddressGenerator will create an address generator instance
-func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, error) {
-	if check.IfNil(coordinator) {
+func NewAddressGenerator(args ArgsAddressGenerator) (*addressGenerator, error) {
+	if check.IfNil(args.Coordinator) {
 		return nil, ErrNilShardCoordinator
 	}
-
-	builtInFuncs := &disabled.BuiltInFunctionContainer{}
-
-	var argsHook = hooks.ArgBlockChainHook{
-		Accounts:              &disabled.Accounts{},
-		PubkeyConv:            core.AddressPublicKeyConverter,
-		StorageService:        &disabled.StorageService{},
-		BlockChain:            &disabled.Blockchain{},
-		ShardCoordinator:      &disabled.ElrondShardCoordinator{},
-		Marshalizer:           &marshal.JsonMarshalizer{},
-		Uint64Converter:       uint64ByteSlice.NewBigEndianConverter(),
-		BuiltInFunctions:      builtInFuncs,
-		DataPool:              &disabled.DataPool{},
-		CompiledSCPool:        storage.NewMapCacher(),
-		NilCompiledSCStore:    true,
-		NFTStorageHandler:     &disabled.SimpleESDTNFTStorageHandler{},
-		EpochNotifier:         &disabled.EpochNotifier{},
-		GlobalSettingsHandler: &disabled.GlobalSettingsHandler{},
-		EnableEpochsHandler:   &disabled.EnableEpochsHandler{},
-		GasSchedule:           &disabled.GasScheduleNotifier{},
-		Counter:               &disabled.BlockChainHookCounter{},
-	}
-	blockchainHook, err := hooks.NewBlockChainHookImpl(argsHook)
-	if err != nil {
-		return nil, err
+	if check.IfNil(args.PubkeyConv) {
+		return nil, process.ErrNilPubkeyConverter
 	}
 
 	return &addressGenerator{
-		coordinator:    coordinator,
-		blockChainHook: blockchainHook,
-		hasher:         keccak.NewKeccak(),
+		coordinator: args.Coordinator,
+		pubkeyConv:  args.PubkeyConv,
+		hasher:      keccak.NewKeccak(),
 	}, nil
 }
 
@@ -74,7 +53,7 @@ func (ag *addressGenerator) CompatibleDNSAddress(shardId byte) (core.AddressHand
 	shardInBytes := []byte{0, shardId}
 
 	newDNSPk := string(initialDNSAddress[:(addressLen-elrondCore.ShardIdentiferLen)]) + string(shardInBytes)
-	newDNSAddress, err := ag.blockChainHook.NewAddress([]byte(newDNSPk), accountStartNonce, factory.ArwenVirtualMachine)
+	newDNSAddress, err := ag.NewAddress([]byte(newDNSPk), accountStartNonce, factory.ArwenVirtualMachine)
 	if err != nil {
 		return nil, err
 	}
@@ -96,10 +75,54 @@ func (ag *addressGenerator) ComputeArwenScAddress(address core.AddressHandler, n
 		return nil, ErrNilAddress
 	}
 
-	scAddressBytes, err := ag.blockChainHook.NewAddress(address.AddressBytes(), nonce, factory.ArwenVirtualMachine)
+	scAddressBytes, err := ag.NewAddress(address.AddressBytes(), nonce, factory.ArwenVirtualMachine)
 	if err != nil {
 		return nil, err
 	}
 
 	return data.NewAddressFromBytes(scAddressBytes), nil
+}
+
+// NewAddress is a hook which creates a new smart contract address from the creators address and nonce
+// The address is created by applied keccak256 on the appended value off creator address and nonce
+// Prefix mask is applied for first 8 bytes 0, and for bytes 9-10 - VM type
+// Suffix mask is applied - last 2 bytes are for the shard ID - mask is applied as suffix mask
+func (ag *addressGenerator) NewAddress(creatorAddress []byte, creatorNonce uint64, vmType []byte) ([]byte, error) {
+	addressLength := ag.pubkeyConv.Len()
+	if len(creatorAddress) != addressLength {
+		return nil, ErrAddressLengthNotCorrect
+	}
+
+	if len(vmType) != elrondCore.VMTypeLen {
+		return nil, ErrVMTypeLengthIsNotCorrect
+	}
+
+	base := hashFromAddressAndNonce(creatorAddress, creatorNonce)
+	prefixMask := createPrefixMask(vmType)
+	suffixMask := createSuffixMask(creatorAddress)
+
+	copy(base[:elrondCore.NumInitCharactersForScAddress], prefixMask)
+	copy(base[len(base)-elrondCore.ShardIdentiferLen:], suffixMask)
+
+	return base, nil
+}
+
+func hashFromAddressAndNonce(creatorAddress []byte, creatorNonce uint64) []byte {
+	buffNonce := make([]byte, 8)
+	binary.LittleEndian.PutUint64(buffNonce, creatorNonce)
+	adrAndNonce := append(creatorAddress, buffNonce...)
+	scAddress := keccak.NewKeccak().Compute(string(adrAndNonce))
+
+	return scAddress
+}
+
+func createPrefixMask(vmType []byte) []byte {
+	prefixMask := make([]byte, elrondCore.NumInitCharactersForScAddress-elrondCore.VMTypeLen)
+	prefixMask = append(prefixMask, vmType...)
+
+	return prefixMask
+}
+
+func createSuffixMask(creatorAddress []byte) []byte {
+	return creatorAddress[len(creatorAddress)-2:]
 }
