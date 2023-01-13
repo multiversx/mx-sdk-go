@@ -58,3 +58,9 @@ type FinalityProvider interface {
 	CheckShardFinalization(ctx context.Context, targetShardID uint32, maxNoncesDelta uint64) error
 	IsInterfaceNil() bool
 }
+
+// AddressGenerator is able to generate addresses
+type AddressGenerator interface {
+	NewAddress(creatorAddress []byte, creatorNonce uint64, vmType []byte) ([]byte, error)
+	IsInterfaceNil() bool
+}

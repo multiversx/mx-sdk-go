@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/ElrondNetwork/elrond-go v1.4.1-0.20221223125954-fad91096e0a8
-	github.com/ElrondNetwork/elrond-go-core v1.1.29-0.20221223124225-1a71b43f8eec
+	github.com/ElrondNetwork/elrond-go-core v1.1.29-0.20230113122432-2075fd801974
 	github.com/ElrondNetwork/elrond-go-crypto v1.2.4-0.20221213102512-0180dd3e00ce
 	github.com/ElrondNetwork/elrond-go-logger v1.0.10
 	github.com/ElrondNetwork/elrond-vm-common v1.3.32-0.20221223125018-8a38e6d8fe79

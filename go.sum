@@ -54,8 +54,9 @@ github.com/ElrondNetwork/elrond-go v1.4.1-0.20221223125954-fad91096e0a8/go.mod h
 github.com/ElrondNetwork/elrond-go-core v1.1.26/go.mod h1:N/RI++YU2M6OlnD1GSZepc1wPhI84ykRDQ1IyD3B0wk=
 github.com/ElrondNetwork/elrond-go-core v1.1.27-0.20221219143439-1bc10dae0ea9/go.mod h1:N/RI++YU2M6OlnD1GSZepc1wPhI84ykRDQ1IyD3B0wk=
 github.com/ElrondNetwork/elrond-go-core v1.1.28/go.mod h1:N/RI++YU2M6OlnD1GSZepc1wPhI84ykRDQ1IyD3B0wk=
-github.com/ElrondNetwork/elrond-go-core v1.1.29-0.20221223124225-1a71b43f8eec h1:CT1biUt0CwMueMxMvROtW14BT3JocOp0Eh0EgmAnn2U=
 github.com/ElrondNetwork/elrond-go-core v1.1.29-0.20221223124225-1a71b43f8eec/go.mod h1:N/RI++YU2M6OlnD1GSZepc1wPhI84ykRDQ1IyD3B0wk=
+github.com/ElrondNetwork/elrond-go-core v1.1.29-0.20230113122432-2075fd801974 h1:fkPRJnONw1Gq9Q81NCjZGscA1wElvAMtN+hLpMRqcuQ=
+github.com/ElrondNetwork/elrond-go-core v1.1.29-0.20230113122432-2075fd801974/go.mod h1:bCWd3hV2IeJjYpKpJw47xwk48G2zNHmOkdDC14Dyq7o=
 github.com/ElrondNetwork/elrond-go-crypto v1.2.4-0.20221213102512-0180dd3e00ce h1:zRLWpUnawPkbJ0b3lDkVWJwhNHwlaPN5POcXz+ToqqE=
 github.com/ElrondNetwork/elrond-go-crypto v1.2.4-0.20221213102512-0180dd3e00ce/go.mod h1:niLdPSYjcIzucSj2yMy+yq3KEW0jjFCfvTBOMQphmXk=
 github.com/ElrondNetwork/elrond-go-logger v1.0.10 h1:2xQOWZErcHW5sl9qSRO+7mGNw+QhFhqiUlLLtOgvuuk=

@@ -12,9 +12,6 @@ var ErrInvalidAddress = errors.New("invalid address")
 // ErrNilAddress signals that the provided address is nil
 var ErrNilAddress = errors.New("nil address")
 
-// ErrNilShardCoordinator signals that the provided shard coordinator is nil
-var ErrNilShardCoordinator = errors.New("nil shard coordinator")
-
 // ErrNilNetworkConfigs signals that the provided network configs is nil
 var ErrNilNetworkConfigs = errors.New("nil network configs")
 
@@ -41,6 +38,9 @@ var ErrShardIDMismatch = errors.New("shard ID mismatch")
 
 // ErrNilNetworkStatus signals that nil network status was received
 var ErrNilNetworkStatus = errors.New("nil network status")
+
+// ErrNilAddressGenerator signals that a nil address generator was provided
+var ErrNilAddressGenerator = errors.New("nil address generator")
 
 func createHTTPStatusError(httpStatusCode int, err error) error {
 	if err == nil {

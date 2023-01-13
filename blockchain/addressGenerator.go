@@ -5,66 +5,44 @@ import (
 
 	elrondCore "github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-core/data/typeConverters/uint64ByteSlice"
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
-	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
-	"github.com/ElrondNetwork/elrond-go/process/smartContract/hooks"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/storage"
 )
 
 const accountStartNonce = uint64(0)
 
 var initialDNSAddress = bytes.Repeat([]byte{1}, 32)
 
+// ArgsAddressGenerator represents the arguments structure for the address generator
+type ArgsAddressGenerator struct {
+	PubkeyConv           elrondCore.PubkeyConverter
+	AddressGeneratorCore AddressGenerator
+}
+
 // addressGenerator is used to generate some addresses based on elrond-go logic
 type addressGenerator struct {
-	coordinator    *shardCoordinator
-	blockChainHook process.BlockChainHookHandler
-	hasher         hashing.Hasher
+	addressGeneratorCore AddressGenerator
+	pubkeyConv           elrondCore.PubkeyConverter
+	hasher               hashing.Hasher
 }
 
 // NewAddressGenerator will create an address generator instance
-func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, error) {
-	if check.IfNil(coordinator) {
-		return nil, ErrNilShardCoordinator
+func NewAddressGenerator(args ArgsAddressGenerator) (*addressGenerator, error) {
+	if check.IfNil(args.PubkeyConv) {
+		return nil, process.ErrNilPubkeyConverter
 	}
-
-	builtInFuncs := &disabled.BuiltInFunctionContainer{}
-
-	var argsHook = hooks.ArgBlockChainHook{
-		Accounts:              &disabled.Accounts{},
-		PubkeyConv:            core.AddressPublicKeyConverter,
-		StorageService:        &disabled.StorageService{},
-		BlockChain:            &disabled.Blockchain{},
-		ShardCoordinator:      &disabled.ElrondShardCoordinator{},
-		Marshalizer:           &marshal.JsonMarshalizer{},
-		Uint64Converter:       uint64ByteSlice.NewBigEndianConverter(),
-		BuiltInFunctions:      builtInFuncs,
-		DataPool:              &disabled.DataPool{},
-		CompiledSCPool:        storage.NewMapCacher(),
-		NilCompiledSCStore:    true,
-		NFTStorageHandler:     &disabled.SimpleESDTNFTStorageHandler{},
-		EpochNotifier:         &disabled.EpochNotifier{},
-		GlobalSettingsHandler: &disabled.GlobalSettingsHandler{},
-		EnableEpochsHandler:   &disabled.EnableEpochsHandler{},
-		GasSchedule:           &disabled.GasScheduleNotifier{},
-		Counter:               &disabled.BlockChainHookCounter{},
-	}
-	blockchainHook, err := hooks.NewBlockChainHookImpl(argsHook)
-	if err != nil {
-		return nil, err
+	if check.IfNil(args.AddressGeneratorCore) {
+		return nil, ErrNilAddressGenerator
 	}
 
 	return &addressGenerator{
-		coordinator:    coordinator,
-		blockChainHook: blockchainHook,
-		hasher:         keccak.NewKeccak(),
+		addressGeneratorCore: args.AddressGeneratorCore,
+		pubkeyConv:           args.PubkeyConv,
+		hasher:               keccak.NewKeccak(),
 	}, nil
 }
 
@@ -74,7 +52,7 @@ func (ag *addressGenerator) CompatibleDNSAddress(shardId byte) (core.AddressHand
 	shardInBytes := []byte{0, shardId}
 
 	newDNSPk := string(initialDNSAddress[:(addressLen-elrondCore.ShardIdentiferLen)]) + string(shardInBytes)
-	newDNSAddress, err := ag.blockChainHook.NewAddress([]byte(newDNSPk), accountStartNonce, factory.ArwenVirtualMachine)
+	newDNSAddress, err := ag.addressGeneratorCore.NewAddress([]byte(newDNSPk), accountStartNonce, factory.ArwenVirtualMachine)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +74,7 @@ func (ag *addressGenerator) ComputeArwenScAddress(address core.AddressHandler, n
 		return nil, ErrNilAddress
 	}
 
-	scAddressBytes, err := ag.blockChainHook.NewAddress(address.AddressBytes(), nonce, factory.ArwenVirtualMachine)
+	scAddressBytes, err := ag.addressGeneratorCore.NewAddress(address.AddressBytes(), nonce, factory.ArwenVirtualMachine)
 	if err != nil {
 		return nil, err
 	}

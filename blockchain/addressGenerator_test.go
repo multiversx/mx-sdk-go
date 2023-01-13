@@ -1,69 +1,152 @@
 package blockchain
 
 import (
-	"crypto/rand"
 	"fmt"
 	"testing"
 
+	"github.com/ElrondNetwork/elrond-go-core/core/mock"
+	"github.com/ElrondNetwork/elrond-go/process"
+	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
 	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestAddress_GetShard(t *testing.T) {
+var (
+	expectedErr        = fmt.Errorf("expected error")
+	expectedAddress, _ = data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqxcy5fma93yhw44xcmt3zwrl0tlhaqmxrdwpsr2vh8p")
+)
+
+func TestNewAddressGenerator(t *testing.T) {
 	t.Parallel()
 
-	pubkey := make([]byte, 32)
-	_, _ = rand.Read(pubkey)
+	t.Run("nil pubkey converter", func(t *testing.T) {
+		t.Parallel()
 
-	numShardsWithoutMeta := uint32(2)
-	shardCoordinator, _ := NewShardCoordinator(numShardsWithoutMeta, 0)
+		args := createMockArgsAddressGenerator()
+		args.PubkeyConv = nil
 
-	pubkey[31] &= 0xFE
-	addr0 := data.NewAddressFromBytes(pubkey)
+		ag, err := NewAddressGenerator(args)
 
-	pubkey[31] |= 0x01
-	addr1 := data.NewAddressFromBytes(pubkey)
+		assert.Nil(t, ag)
+		assert.Equal(t, process.ErrNilPubkeyConverter, err)
+	})
+	t.Run("nil address generator core", func(t *testing.T) {
+		t.Parallel()
 
-	sh0, err := shardCoordinator.ComputeShardId(addr0)
-	assert.Nil(t, err)
+		args := createMockArgsAddressGenerator()
+		args.AddressGeneratorCore = nil
 
-	sh1, err := shardCoordinator.ComputeShardId(addr1)
-	assert.Nil(t, err)
+		ag, err := NewAddressGenerator(args)
 
-	assert.Equal(t, sh0, uint32(0))
-	assert.Equal(t, sh1, uint32(1))
+		assert.Nil(t, ag)
+		assert.Equal(t, ErrNilAddressGenerator, err)
+	})
+	t.Run("should work", func(t *testing.T) {
+		args := createMockArgsAddressGenerator()
+		ag, err := NewAddressGenerator(args)
+		require.Nil(t, err)
+		require.NotNil(t, ag)
+	})
 }
 
 func TestGenerateSameDNSAddress(t *testing.T) {
 	t.Parallel()
 
-	coord, err := NewShardCoordinator(3, 0)
-	require.Nil(t, err)
+	t.Run("New address errors should error", func(t *testing.T) {
+		t.Parallel()
 
-	ag, err := NewAddressGenerator(coord)
-	require.Nil(t, err)
+		args := createMockArgsAddressGenerator()
+		args.AddressGeneratorCore = &mock.AddressGeneratorStub{
+			NewAddressCalled: func(address []byte, nonce uint64, vmType []byte) ([]byte, error) {
+				return nil, expectedErr
+			},
+		}
+		ag, err := NewAddressGenerator(args)
+		require.Nil(t, err)
 
-	newDNS, err := ag.CompatibleDNSAddressFromUsername("laura.elrond")
-	require.Nil(t, err)
+		newDNS, err := ag.CompatibleDNSAddressFromUsername("laura.elrond")
+		require.Nil(t, newDNS)
+		assert.Equal(t, expectedErr, err)
+	})
+	t.Run("should work", func(t *testing.T) {
+		args := createMockArgsAddressGenerator()
+		args.AddressGeneratorCore = &mock.AddressGeneratorStub{
+			NewAddressCalled: func(address []byte, nonce uint64, vmType []byte) ([]byte, error) {
+				return expectedAddress.AddressBytes(), nil
+			},
+		}
 
-	fmt.Printf("Compatibile DNS address is %s\n", newDNS.AddressAsBech32String())
-	assert.Equal(t, "erd1qqqqqqqqqqqqqpgqvrsdh798pvd4x09x0argyscxc9h7lzfhqz4sttlatg", newDNS.AddressAsBech32String())
+		ag, err := NewAddressGenerator(args)
+		require.Nil(t, err)
+
+		newDNS, err := ag.CompatibleDNSAddressFromUsername("laura.elrond")
+		require.Nil(t, err)
+
+		fmt.Printf("Compatibile DNS address is %s\n", newDNS.AddressAsBech32String())
+		assert.Equal(t, expectedAddress, newDNS)
+	})
 }
 
 func TestAddressGenerator_ComputeArwenScAddress(t *testing.T) {
 	t.Parallel()
 
-	coord, err := NewShardCoordinator(3, 0)
-	require.Nil(t, err)
+	t.Run("New address errors should error", func(t *testing.T) {
+		t.Parallel()
 
-	ag, err := NewAddressGenerator(coord)
-	require.Nil(t, err)
-	owner, err := data.NewAddressFromBech32String("erd1dglncxk6sl9a3xumj78n6z2xux4ghp5c92cstv5zsn56tjgtdwpsk46qrs")
-	require.Nil(t, err)
+		args := createMockArgsAddressGenerator()
+		args.AddressGeneratorCore = &mock.AddressGeneratorStub{
+			NewAddressCalled: func(address []byte, nonce uint64, vmType []byte) ([]byte, error) {
+				return nil, expectedErr
+			},
+		}
+		ag, err := NewAddressGenerator(args)
+		require.Nil(t, err)
 
-	scAddress, err := ag.ComputeArwenScAddress(owner, 10)
-	require.Nil(t, err)
+		scAddress, err := ag.ComputeArwenScAddress(expectedAddress, 10)
+		require.Nil(t, scAddress)
 
-	assert.Equal(t, "erd1qqqqqqqqqqqqqpgqxcy5fma93yhw44xcmt3zwrl0tlhaqmxrdwpsr2vh8p", scAddress.AddressAsBech32String())
+		assert.Equal(t, expectedErr, err)
+	})
+	t.Run("nil address should error", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsAddressGenerator()
+		args.AddressGeneratorCore = &mock.AddressGeneratorStub{
+			NewAddressCalled: func(address []byte, nonce uint64, vmType []byte) ([]byte, error) {
+				return nil, nil
+			},
+		}
+		ag, err := NewAddressGenerator(args)
+		require.Nil(t, err)
+
+		scAddress, err := ag.ComputeArwenScAddress(nil, 10)
+		require.Nil(t, scAddress)
+
+		assert.Equal(t, ErrNilAddress, err)
+	})
+	t.Run("should work", func(t *testing.T) {
+		args := createMockArgsAddressGenerator()
+		args.AddressGeneratorCore = &mock.AddressGeneratorStub{
+			NewAddressCalled: func(address []byte, nonce uint64, vmType []byte) ([]byte, error) {
+				return expectedAddress.AddressBytes(), nil
+			},
+		}
+		ag, err := NewAddressGenerator(args)
+		require.Nil(t, err)
+		owner, err := data.NewAddressFromBech32String("erd1dglncxk6sl9a3xumj78n6z2xux4ghp5c92cstv5zsn56tjgtdwpsk46qrs")
+		require.Nil(t, err)
+
+		scAddress, err := ag.ComputeArwenScAddress(owner, 10)
+		require.Nil(t, err)
+
+		assert.Equal(t, expectedAddress, scAddress)
+	})
+}
+
+func createMockArgsAddressGenerator() ArgsAddressGenerator {
+	return ArgsAddressGenerator{
+		PubkeyConv:           core.AddressPublicKeyConverter,
+		AddressGeneratorCore: &mock.AddressGeneratorStub{},
+	}
 }
