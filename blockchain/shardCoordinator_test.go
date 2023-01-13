@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAddress_GetShard(t *testing.T) {
+func TestShardCoordinator_ComputeShardID(t *testing.T) {
 	t.Parallel()
 
 	pubkey := make([]byte, 32)

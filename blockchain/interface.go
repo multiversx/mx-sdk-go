@@ -59,6 +59,7 @@ type FinalityProvider interface {
 	IsInterfaceNil() bool
 }
 
+// AddressGenerator is able to generate addresses
 type AddressGenerator interface {
 	NewAddress(creatorAddress []byte, creatorNonce uint64, vmType []byte) ([]byte, error)
 	IsInterfaceNil() bool
