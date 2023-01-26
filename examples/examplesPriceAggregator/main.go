@@ -221,7 +221,7 @@ func createAuthClient() (authentication.AuthClient, error) {
 		EntityType:          core.RestAPIEntityType("Proxy"),
 	}
 
-	proxy, err := blockchain.NewMultiversXProxy(argsProxy)
+	proxy, err := blockchain.NewProxy(argsProxy)
 	if err != nil {
 		return nil, err
 	}
