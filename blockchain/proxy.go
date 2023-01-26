@@ -9,13 +9,13 @@ import (
 	"sort"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-core/core"
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go/state"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/factory"
-	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	erdgoHttp "github.com/ElrondNetwork/elrond-sdk-erdgo/core/http"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-go/state"
+	"github.com/multiversx/mx-sdk-go/blockchain/factory"
+	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+	erdgoHttp "github.com/multiversx/mx-sdk-go/core/http"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 const (

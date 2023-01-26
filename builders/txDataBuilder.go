@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/multiversx/mx-sdk-go/core"
 )
 
 const dataSeparator = "@"

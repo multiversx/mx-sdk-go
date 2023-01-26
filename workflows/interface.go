@@ -3,8 +3,8 @@ package workflows
 import (
 	"context"
 
-	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // TrackableAddressesProvider defines the behavior for a component that can determine if one address is tracked or not

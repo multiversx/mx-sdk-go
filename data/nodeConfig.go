@@ -1,6 +1,6 @@
 package data
 
-import "github.com/ElrondNetwork/elrond-go/state"
+import "github.com/multiversx/mx-chain-go/state"
 
 // GenesisNodesResponse holds the network genesis nodes endpoint reponse
 type GenesisNodesResponse struct {

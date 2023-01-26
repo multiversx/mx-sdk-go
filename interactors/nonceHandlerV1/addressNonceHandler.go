@@ -5,10 +5,10 @@ import (
 	"context"
 	"sync"
 
-	"github.com/ElrondNetwork/elrond-go-core/core"
-	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
+	"github.com/multiversx/mx-chain-core-go/core"
+	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
+	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
 // addressNonceHandler is the handler used for one address. It is able to handle the current

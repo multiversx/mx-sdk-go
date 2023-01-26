@@ -1,8 +1,8 @@
 package core
 
 import (
-	"github.com/ElrondNetwork/elrond-go-core/core/pubkeyConverter"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/multiversx/mx-chain-core-go/core/pubkeyConverter"
+	logger "github.com/multiversx/mx-chain-logger-go"
 )
 
 var log = logger.GetOrCreate("elrond-sdk-erdgo/core")

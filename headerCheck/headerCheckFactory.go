@@ -3,12 +3,12 @@ package headerCheck
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go/factory/crypto"
-	"github.com/ElrondNetwork/elrond-go/process/headerCheck"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck/factory"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-go/factory/crypto"
+	"github.com/multiversx/mx-chain-go/process/headerCheck"
+	"github.com/multiversx/mx-sdk-go/data"
+	"github.com/multiversx/mx-sdk-go/disabled"
+	"github.com/multiversx/mx-sdk-go/headerCheck/factory"
 )
 
 // NewHeaderCheckHandler will create all components needed for header

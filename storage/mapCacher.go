@@ -5,7 +5,7 @@ import (
 	"encoding/gob"
 	"sync"
 
-	logger "github.com/ElrondNetwork/elrond-go-logger"
+	logger "github.com/multiversx/mx-chain-logger-go"
 )
 
 var log = logger.GetOrCreate("elrond-sdk-erdgo/storage")

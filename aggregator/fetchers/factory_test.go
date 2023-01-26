@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/mock"
+	"github.com/multiversx/mx-sdk-go/aggregator/mock"
 	"github.com/stretchr/testify/assert"
 )
 

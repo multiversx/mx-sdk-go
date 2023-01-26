@@ -3,19 +3,19 @@ package blockchain
 import (
 	"bytes"
 
-	elrondCore "github.com/ElrondNetwork/elrond-go-core/core"
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-core/data/typeConverters/uint64ByteSlice"
-	"github.com/ElrondNetwork/elrond-go-core/hashing"
-	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
-	"github.com/ElrondNetwork/elrond-go-core/marshal"
-	"github.com/ElrondNetwork/elrond-go/process"
-	"github.com/ElrondNetwork/elrond-go/process/factory"
-	"github.com/ElrondNetwork/elrond-go/process/smartContract/hooks"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/disabled"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/storage"
+	elrondCore "github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/typeConverters/uint64ByteSlice"
+	"github.com/multiversx/mx-chain-core-go/hashing"
+	"github.com/multiversx/mx-chain-core-go/hashing/keccak"
+	"github.com/multiversx/mx-chain-core-go/marshal"
+	"github.com/multiversx/mx-chain-go/process"
+	"github.com/multiversx/mx-chain-go/process/factory"
+	"github.com/multiversx/mx-chain-go/process/smartContract/hooks"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
+	"github.com/multiversx/mx-sdk-go/disabled"
+	"github.com/multiversx/mx-sdk-go/storage"
 )
 
 const accountStartNonce = uint64(0)
@@ -74,7 +74,7 @@ func (ag *addressGenerator) CompatibleDNSAddress(shardId byte) (core.AddressHand
 	shardInBytes := []byte{0, shardId}
 
 	newDNSPk := string(initialDNSAddress[:(addressLen-elrondCore.ShardIdentiferLen)]) + string(shardInBytes)
-	newDNSAddress, err := ag.blockChainHook.NewAddress([]byte(newDNSPk), accountStartNonce, factory.ArwenVirtualMachine)
+	newDNSAddress, err := ag.blockChainHook.NewAddress([]byte(newDNSPk), accountStartNonce, factory.WasmVirtualMachine)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (ag *addressGenerator) ComputeArwenScAddress(address core.AddressHandler, n
 		return nil, ErrNilAddress
 	}
 
-	scAddressBytes, err := ag.blockChainHook.NewAddress(address.AddressBytes(), nonce, factory.ArwenVirtualMachine)
+	scAddressBytes, err := ag.blockChainHook.NewAddress(address.AddressBytes(), nonce, factory.WasmVirtualMachine)
 	if err != nil {
 		return nil, err
 	}

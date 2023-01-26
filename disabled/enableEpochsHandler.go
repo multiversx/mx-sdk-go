@@ -548,6 +548,16 @@ func (eeh *EnableEpochsHandler) IsRuntimeMemStoreLimitEnabled() bool {
 	return false
 }
 
+// IsWipeSingleNFTLiquidityDecreaseEnabled -
+func (eeh *EnableEpochsHandler) IsWipeSingleNFTLiquidityDecreaseEnabled() bool {
+	return false
+}
+
+// IsAlwaysSaveTokenMetaDataEnabled -
+func (eeh *EnableEpochsHandler) IsAlwaysSaveTokenMetaDataEnabled() bool {
+	return false
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (eeh *EnableEpochsHandler) IsInterfaceNil() bool {
 	return eeh == nil

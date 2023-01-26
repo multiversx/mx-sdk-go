@@ -1,8 +1,8 @@
 package interactors
 
 import (
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
 // AddressNonceHandlerCreatorStub -
