@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/mock"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-sdk-go/aggregator"
+	"github.com/multiversx/mx-sdk-go/aggregator/mock"
 	"github.com/stretchr/testify/assert"
 )
 

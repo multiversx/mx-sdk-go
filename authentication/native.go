@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-sdk-go/builders"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/workflows"
 )
 
 // ArgsNativeAuthClient is the DTO used in the native auth client constructor
@@ -68,7 +68,7 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*nativeAuthClient, error) {
 	}, nil
 }
 
-// GetAccessToken returns an access token used for authentication into different elrond services
+// GetAccessToken returns an access token used for authentication into different MultiversX services
 func (nac *nativeAuthClient) GetAccessToken() (string, error) {
 	now := nac.getTimeHandler()
 	noToken := nac.tokenExpire.IsZero()

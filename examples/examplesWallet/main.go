@@ -1,11 +1,11 @@
 package main
 
 import (
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesWallet")
+var log = logger.GetOrCreate("mx-sdk-go/examples/examplesWallet")
 
 func main() {
 	w := interactors.NewWallet()

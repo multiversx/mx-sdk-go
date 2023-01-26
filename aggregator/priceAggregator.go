@@ -6,13 +6,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	logger "github.com/multiversx/mx-chain-logger-go"
 )
 
 const minResultsNum = 1
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/aggregator")
+var log = logger.GetOrCreate("mx-sdk-go/aggregator")
 
 // ArgsPriceAggregator is the DTO used in the NewPriceAggregator function
 type ArgsPriceAggregator struct {

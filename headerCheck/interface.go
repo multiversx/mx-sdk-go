@@ -3,9 +3,9 @@ package headerCheck
 import (
 	"context"
 
-	coreData "github.com/ElrondNetwork/elrond-go-core/data"
-	"github.com/ElrondNetwork/elrond-go/state"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	coreData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-go/state"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // Proxy holds the behaviour needed for header verifier in order to interact with proxy

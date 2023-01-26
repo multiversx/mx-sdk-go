@@ -1,6 +1,6 @@
 package disabled
 
-import "github.com/ElrondNetwork/elrond-go-core/storage"
+import "github.com/multiversx/mx-chain-core-go/storage"
 
 // Storer is a disabled implementation of Storer interface
 type Storer struct {

@@ -1,27 +1,24 @@
-module github.com/ElrondNetwork/elrond-sdk-erdgo
+module github.com/multiversx/mx-sdk-go
 
 go 1.17
 
 require (
-	github.com/ElrondNetwork/elrond-go v1.4.1-0.20221209102744-b2d7dbb950b4
-	github.com/ElrondNetwork/elrond-go-core v1.1.26
-	github.com/ElrondNetwork/elrond-go-crypto v1.2.2
-	github.com/ElrondNetwork/elrond-go-logger v1.0.10
-	github.com/ElrondNetwork/elrond-vm-common v1.3.30
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/gorilla/websocket v1.5.0
+	github.com/multiversx/mx-chain-core-go v1.1.30
+	github.com/multiversx/mx-chain-crypto-go v1.2.5
+	github.com/multiversx/mx-chain-go v1.4.4
+	github.com/multiversx/mx-chain-logger-go v1.0.11
+	github.com/multiversx/mx-chain-vm-common-go v1.3.36
 	github.com/pborman/uuid v1.2.1
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	github.com/tyler-smith/go-bip39 v1.1.0
 	golang.org/x/crypto v0.3.0
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
 )
 
 require (
-	github.com/ElrondNetwork/concurrent-map v0.1.3 // indirect
-	github.com/ElrondNetwork/elrond-go-p2p v1.0.5 // indirect
-	github.com/ElrondNetwork/elrond-go-storage v1.0.4 // indirect
 	github.com/beevik/ntp v0.3.0 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -114,6 +111,9 @@ require (
 	github.com/multiformats/go-multihash v0.2.1 // indirect
 	github.com/multiformats/go-multistream v0.3.3 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
+	github.com/multiversx/concurrent-map v0.1.4 // indirect
+	github.com/multiversx/mx-chain-p2p-go v1.0.10 // indirect
+	github.com/multiversx/mx-chain-storage-go v1.0.7 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/opencontainers/runtime-spec v1.0.2 // indirect
@@ -156,9 +156,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
-
-replace github.com/ElrondNetwork/arwen-wasm-vm/v1_2 v1.2.41 => github.com/ElrondNetwork/arwen-wasm-vm v1.2.41
-
-replace github.com/ElrondNetwork/arwen-wasm-vm/v1_3 v1.3.41 => github.com/ElrondNetwork/arwen-wasm-vm v1.3.41
-
-replace github.com/ElrondNetwork/arwen-wasm-vm/v1_4 v1.4.58 => github.com/ElrondNetwork/arwen-wasm-vm v1.4.58

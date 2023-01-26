@@ -7,22 +7,22 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/fetchers"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/mock"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core/polling"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
+	"github.com/multiversx/mx-chain-crypto-go/signing"
+	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-sdk-go/aggregator"
+	"github.com/multiversx/mx-sdk-go/aggregator/fetchers"
+	"github.com/multiversx/mx-sdk-go/aggregator/mock"
+	"github.com/multiversx/mx-sdk-go/authentication"
+	"github.com/multiversx/mx-sdk-go/blockchain"
+	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/core/polling"
+	"github.com/multiversx/mx-sdk-go/examples"
+	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesPriceAggregator")
+var log = logger.GetOrCreate("mx-sdk-go/examples/examplesPriceAggregator")
 
 const base = "ETH"
 const quote = "USD"
@@ -33,7 +33,7 @@ const minResultsNum = 3
 const pollInterval = time.Second * 2
 const autoSendInterval = time.Second * 10
 
-const networkAddress = "https://testnet-gateway.elrond.com"
+const networkAddress = "https://testnet-gateway.multiversx.com"
 
 var (
 	suite  = ed25519.NewEd25519()
@@ -211,7 +211,7 @@ func createAuthClient() (authentication.AuthClient, error) {
 		return nil, err
 	}
 
-	argsProxy := blockchain.ArgsElrondProxy{
+	argsProxy := blockchain.ArgsProxy{
 		ProxyURL:            networkAddress,
 		SameScState:         false,
 		ShouldBeSynced:      false,
@@ -221,7 +221,7 @@ func createAuthClient() (authentication.AuthClient, error) {
 		EntityType:          core.RestAPIEntityType("Proxy"),
 	}
 
-	proxy, err := blockchain.NewElrondProxy(argsProxy)
+	proxy, err := blockchain.NewProxy(argsProxy)
 	if err != nil {
 		return nil, err
 	}

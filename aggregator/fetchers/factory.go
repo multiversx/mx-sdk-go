@@ -3,7 +3,7 @@ package fetchers
 import (
 	"fmt"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
+	"github.com/multiversx/mx-sdk-go/aggregator"
 )
 
 // MaiarTokensPair defines a base-quote pair of ids used by maiar exchange

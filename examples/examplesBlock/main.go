@@ -5,16 +5,16 @@ import (
 	"encoding/json"
 	"time"
 
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-sdk-go/blockchain"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/examples"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesBlock")
+var log = logger.GetOrCreate("mx-sdk-go/examples/examplesBlock")
 
 func main() {
-	args := blockchain.ArgsElrondProxy{
+	args := blockchain.ArgsProxy{
 		ProxyURL:            examples.TestnetGateway,
 		Client:              nil,
 		SameScState:         false,
@@ -23,7 +23,7 @@ func main() {
 		CacheExpirationTime: time.Minute,
 		EntityType:          core.Proxy,
 	}
-	ep, err := blockchain.NewElrondProxy(args)
+	ep, err := blockchain.NewProxy(args)
 	if err != nil {
 		log.Error("error creating proxy", "error", err)
 		return

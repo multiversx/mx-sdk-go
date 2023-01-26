@@ -9,20 +9,20 @@ import (
 	"strings"
 	"time"
 
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples/examplesFlowWalletTracker/mock"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-sdk-go/blockchain"
+	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
+	"github.com/multiversx/mx-sdk-go/builders"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/examples"
+	"github.com/multiversx/mx-sdk-go/examples/examplesFlowWalletTracker/mock"
+	"github.com/multiversx/mx-sdk-go/interactors"
+	"github.com/multiversx/mx-sdk-go/workflows"
 )
 
 const timeToExecuteRequest = time.Second
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesFlowWalletTracker")
+var log = logger.GetOrCreate("mx-sdk-go/examples/examplesFlowWalletTracker")
 
 type moveBalanceHandler interface {
 	GenerateMoveBalanceTransactions(ctx context.Context, addresses []string)
@@ -51,7 +51,7 @@ func main() {
 }
 
 func runApp() error {
-	args := blockchain.ArgsElrondProxy{
+	args := blockchain.ArgsProxy{
 		ProxyURL:            examples.TestnetGateway,
 		Client:              nil,
 		SameScState:         false,
@@ -60,7 +60,7 @@ func runApp() error {
 		CacheExpirationTime: time.Minute,
 		EntityType:          core.Proxy,
 	}
-	ep, err := blockchain.NewElrondProxy(args)
+	ep, err := blockchain.NewProxy(args)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func runApp() error {
 		return err
 	}
 
-	receiverAddress := "erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht" // /elrond-sdk-erdgo/interactors/testdata/test.pem
+	receiverAddress := "erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht" // /mx-sdk-go/interactors/testdata/test.pem
 	txInteractor, err := interactors.NewTransactionInteractor(ep, txBuilder)
 	if err != nil {
 		return err

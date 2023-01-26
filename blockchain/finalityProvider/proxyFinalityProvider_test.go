@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/core"
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
+	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-sdk-go/data"
+	"github.com/multiversx/mx-sdk-go/testsCommon"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -85,7 +85,7 @@ func TestExtractNonceOfShardID(t *testing.T) {
 	})
 }
 
-func TestElrondBaseProxy_CheckShardFinalization(t *testing.T) {
+func TestBaseProxy_CheckShardFinalization(t *testing.T) {
 	t.Parallel()
 
 	t.Run("invalid maxNoncesDelta", func(t *testing.T) {

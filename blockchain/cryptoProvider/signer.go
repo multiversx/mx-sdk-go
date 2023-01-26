@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
-	"github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519/singlesig"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-chain-core-go/hashing/keccak"
+	"github.com/multiversx/mx-chain-crypto-go"
+	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519/singlesig"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 var (
-	signerLog     = logger.GetOrCreate("elrond-sdk-erdgo/signer")
+	signerLog     = logger.GetOrCreate("mx-sdk-go/signer")
 	hasher        = keccak.NewKeccak()
 	singleSigner  = &singlesig.Ed25519Signer{}
 	messagePrefix = []byte("\x17Elrond Signed Message:\n")

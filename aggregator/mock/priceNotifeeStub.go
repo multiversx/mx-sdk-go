@@ -3,7 +3,7 @@ package mock
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
+	"github.com/multiversx/mx-sdk-go/aggregator"
 )
 
 // PriceNotifeeStub -
