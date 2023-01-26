@@ -22,8 +22,8 @@ const (
 	withResultsQueryParam = "?withResults=true"
 )
 
-// ArgsMultiversXProxy is the DTO used in the multiversx proxy constructor
-type ArgsMultiversXProxy struct {
+// ArgsProxy is the DTO used in the multiversx proxy constructor
+type ArgsProxy struct {
 	ProxyURL            string
 	Client              erdgoHttp.Client
 	SameScState         bool
@@ -36,7 +36,7 @@ type ArgsMultiversXProxy struct {
 
 // multiversXProxy implements basic functions for interacting with a multiversx Proxy
 type multiversXProxy struct {
-	*multiversXBaseProxy
+	*baseProxy
 	sameScState         bool
 	shouldBeSynced      bool
 	finalityCheck       bool
@@ -45,7 +45,7 @@ type multiversXProxy struct {
 }
 
 // NewMultiversXProxy initializes and returns a multiversXProxy object
-func NewMultiversXProxy(args ArgsMultiversXProxy) (*multiversXProxy, error) {
+func NewMultiversXProxy(args ArgsProxy) (*multiversXProxy, error) {
 	err := checkArgsProxy(args)
 	if err != nil {
 		return nil, err
@@ -57,12 +57,12 @@ func NewMultiversXProxy(args ArgsMultiversXProxy) (*multiversXProxy, error) {
 	}
 
 	clientWrapper := erdgoHttp.NewHttpClientWrapper(args.Client, args.ProxyURL)
-	baseArgs := argsMultiversXBaseProxy{
+	baseArgs := argsBaseProxy{
 		httpClientWrapper: clientWrapper,
 		expirationTime:    args.CacheExpirationTime,
 		endpointProvider:  endpointProvider,
 	}
-	baseProxy, err := newMultiversXBaseProxy(baseArgs)
+	baseProxy, err := newBaseProxy(baseArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func NewMultiversXProxy(args ArgsMultiversXProxy) (*multiversXProxy, error) {
 	}
 
 	ep := &multiversXProxy{
-		multiversXBaseProxy: baseProxy,
+		baseProxy:           baseProxy,
 		sameScState:         args.SameScState,
 		shouldBeSynced:      args.ShouldBeSynced,
 		finalityCheck:       args.FinalityCheck,
@@ -84,7 +84,7 @@ func NewMultiversXProxy(args ArgsMultiversXProxy) (*multiversXProxy, error) {
 	return ep, nil
 }
 
-func checkArgsProxy(args ArgsMultiversXProxy) error {
+func checkArgsProxy(args ArgsProxy) error {
 	if args.FinalityCheck {
 		if args.AllowedDeltaToFinal < erdgoCore.MinAllowedDeltaToFinal {
 			return fmt.Errorf("%w, provided: %d, minimum: %d",

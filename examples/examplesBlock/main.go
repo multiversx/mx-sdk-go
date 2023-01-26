@@ -14,7 +14,7 @@ import (
 var log = logger.GetOrCreate("mx-sdk-go/examples/examplesBlock")
 
 func main() {
-	args := blockchain.ArgsMultiversXProxy{
+	args := blockchain.ArgsProxy{
 		ProxyURL:            examples.TestnetGateway,
 		Client:              nil,
 		SameScState:         false,

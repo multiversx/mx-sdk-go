@@ -51,7 +51,7 @@ func main() {
 }
 
 func runApp() error {
-	args := blockchain.ArgsMultiversXProxy{
+	args := blockchain.ArgsProxy{
 		ProxyURL:            examples.TestnetGateway,
 		Client:              nil,
 		SameScState:         false,

@@ -211,7 +211,7 @@ func createAuthClient() (authentication.AuthClient, error) {
 		return nil, err
 	}
 
-	argsProxy := blockchain.ArgsMultiversXProxy{
+	argsProxy := blockchain.ArgsProxy{
 		ProxyURL:            networkAddress,
 		SameScState:         false,
 		ShouldBeSynced:      false,

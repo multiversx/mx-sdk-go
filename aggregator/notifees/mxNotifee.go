@@ -18,8 +18,8 @@ const minGasLimit = uint64(1)
 
 var log = logger.GetOrCreate("mx-sdk-go/aggregator/notifees")
 
-// ArgsMultiversXNotifee is the argument DTO for the NewMultiversXNotifee function
-type ArgsMultiversXNotifee struct {
+// ArgsMxNotifee is the argument DTO for the NewMxNotifee function
+type ArgsMxNotifee struct {
 	Proxy           Proxy
 	TxBuilder       TxBuilder
 	TxNonceHandler  TransactionNonceHandler
@@ -29,7 +29,7 @@ type ArgsMultiversXNotifee struct {
 	GasLimitForEach uint64
 }
 
-type multiversXNotifee struct {
+type mxNotifee struct {
 	proxy           Proxy
 	txBuilder       TxBuilder
 	txNonceHandler  TransactionNonceHandler
@@ -39,14 +39,14 @@ type multiversXNotifee struct {
 	cryptoHolder    core.CryptoComponentsHolder
 }
 
-// NewMultiversXNotifee will create a new instance of multiversXNotifee
-func NewMultiversXNotifee(args ArgsMultiversXNotifee) (*multiversXNotifee, error) {
-	err := checkArgsMultiversXNotifee(args)
+// NewMxNotifee will create a new instance of mxNotifee
+func NewMxNotifee(args ArgsMxNotifee) (*mxNotifee, error) {
+	err := checkArgsMxNotifee(args)
 	if err != nil {
 		return nil, err
 	}
 
-	notifee := &multiversXNotifee{
+	notifee := &mxNotifee{
 		proxy:           args.Proxy,
 		txBuilder:       args.TxBuilder,
 		txNonceHandler:  args.TxNonceHandler,
@@ -59,7 +59,7 @@ func NewMultiversXNotifee(args ArgsMultiversXNotifee) (*multiversXNotifee, error
 	return notifee, nil
 }
 
-func checkArgsMultiversXNotifee(args ArgsMultiversXNotifee) error {
+func checkArgsMxNotifee(args ArgsMxNotifee) error {
 	if check.IfNil(args.Proxy) {
 		return errNilProxy
 	}
@@ -90,7 +90,7 @@ func checkArgsMultiversXNotifee(args ArgsMultiversXNotifee) error {
 
 // PriceChanged is the function that gets called by a price notifier. This function will assemble a MultiversX
 // transaction, having the transaction's data field containing all the price changes information
-func (en *multiversXNotifee) PriceChanged(ctx context.Context, priceChanges []*aggregator.ArgsPriceChanged) error {
+func (en *mxNotifee) PriceChanged(ctx context.Context, priceChanges []*aggregator.ArgsPriceChanged) error {
 	txData, err := en.prepareTxData(priceChanges)
 	if err != nil {
 		return err
@@ -132,7 +132,7 @@ func (en *multiversXNotifee) PriceChanged(ctx context.Context, priceChanges []*a
 	return nil
 }
 
-func (en *multiversXNotifee) prepareTxData(priceChanges []*aggregator.ArgsPriceChanged) ([]byte, error) {
+func (en *mxNotifee) prepareTxData(priceChanges []*aggregator.ArgsPriceChanged) ([]byte, error) {
 	txDataBuilder := builders.NewTxDataBuilder()
 	txDataBuilder.Function(function)
 
@@ -148,6 +148,6 @@ func (en *multiversXNotifee) prepareTxData(priceChanges []*aggregator.ArgsPriceC
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (en *multiversXNotifee) IsInterfaceNil() bool {
+func (en *mxNotifee) IsInterfaceNil() bool {
 	return en == nil
 }
