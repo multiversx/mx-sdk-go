@@ -68,7 +68,7 @@ func NewNativeAuthClient(args ArgsNativeAuthClient) (*nativeAuthClient, error) {
 	}, nil
 }
 
-// GetAccessToken returns an access token used for authentication into different elrond services
+// GetAccessToken returns an access token used for authentication into different MultiversX services
 func (nac *nativeAuthClient) GetAccessToken() (string, error) {
 	now := nac.getTimeHandler()
 	noToken := nac.tokenExpire.IsZero()

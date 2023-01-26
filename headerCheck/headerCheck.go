@@ -10,7 +10,7 @@ import (
 	logger "github.com/multiversx/mx-chain-logger-go"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/headerCheck")
+var log = logger.GetOrCreate("mx-sdk-go/headerCheck")
 
 // ArgsHeaderVerifier holds all dependencies required by headerVerifier in
 // order to create a new instance

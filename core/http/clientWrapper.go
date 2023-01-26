@@ -12,7 +12,7 @@ import (
 
 const (
 	httpUserAgentKey = "User-Agent"
-	httpUserAgent    = "Elrond go SDK / 1.0.0 <Posting to nodes>"
+	httpUserAgent    = "MultiversX go SDK / 1.0.0 <Posting to nodes>"
 
 	httpAcceptTypeKey = "Accept"
 	httpAcceptType    = "application/json"

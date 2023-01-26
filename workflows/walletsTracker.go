@@ -12,7 +12,7 @@ import (
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/workflows")
+var log = logger.GetOrCreate("mx-sdk-go/workflows")
 
 // WalletTrackerArgs is the argument DTO for the NewWalletTracker constructor function
 type WalletTrackerArgs struct {

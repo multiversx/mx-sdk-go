@@ -15,7 +15,7 @@ import (
 
 const minimumIntervalToResend = time.Second
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/interactors/nonceHandlerV2")
+var log = logger.GetOrCreate("mx-sdk-go/interactors/nonceHandlerV2")
 
 // ArgsNonceTransactionsHandlerV2 is the argument DTO for a nonce transactions handler component
 type ArgsNonceTransactionsHandlerV2 struct {

@@ -11,10 +11,10 @@ import (
 	"github.com/multiversx/mx-sdk-go/examples"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesVMQuery")
+var log = logger.GetOrCreate("mx-sdk-go/examples/examplesVMQuery")
 
 func main() {
-	args := blockchain.ArgsElrondProxy{
+	args := blockchain.ArgsMultiversXProxy{
 		ProxyURL:            examples.TestnetGateway,
 		Client:              nil,
 		SameScState:         false,
@@ -23,7 +23,7 @@ func main() {
 		CacheExpirationTime: time.Minute,
 		EntityType:          core.Proxy,
 	}
-	ep, err := blockchain.NewElrondProxy(args)
+	ep, err := blockchain.NewMultiversXProxy(args)
 	if err != nil {
 		log.Error("error creating proxy", "error", err)
 		return

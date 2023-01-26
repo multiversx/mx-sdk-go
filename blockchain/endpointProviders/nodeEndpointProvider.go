@@ -13,7 +13,7 @@ const (
 	nodeRawMiniBlockByHashEndpoint = "internal/raw/miniblock/by-hash/%s/epoch/%d"
 )
 
-// nodeEndpointProvider is suitable to work with an Elrond node (observer)
+// nodeEndpointProvider is suitable to work with an multiversx node (observer)
 type nodeEndpointProvider struct {
 	*baseEndpointProvider
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-go/api/logs"
-	elrondShared "github.com/multiversx/mx-chain-go/api/shared"
+	mxChainShared "github.com/multiversx/mx-chain-go/api/shared"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-sdk-go/core"
 )
@@ -19,7 +19,7 @@ var log = logger.GetOrCreate("api")
 
 type webServer struct {
 	sync.RWMutex
-	httpServer   elrondShared.HttpServerCloser
+	httpServer   mxChainShared.HttpServerCloser
 	apiInterface string
 	cancelFunc   func()
 }

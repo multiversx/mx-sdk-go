@@ -15,7 +15,7 @@ import (
 
 const minimumIntervalToResend = time.Second
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/interactors/nonceHandlerV1")
+var log = logger.GetOrCreate("mx-sdk-go/interactors/nonceHandlerV1")
 
 // nonceTransactionsHandlerV1 is the handler used for an unlimited number of addresses.
 // It basically contains a map of addressNonceHandler, creating new entries on the first

@@ -13,7 +13,7 @@ const (
 	proxyRawMiniBlockByHash = "internal/%d/raw/miniblock/by-hash/%s/epoch/%d"
 )
 
-// proxyEndpointProvider is suitable to work with an Elrond Proxy
+// proxyEndpointProvider is suitable to work with an MultiversX Proxy
 type proxyEndpointProvider struct {
 	*baseEndpointProvider
 }

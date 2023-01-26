@@ -10,7 +10,7 @@ import (
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/interactors")
+var log = logger.GetOrCreate("mx-sdk-go/interactors")
 
 const defaultTimeBetweenBunches = time.Second
 

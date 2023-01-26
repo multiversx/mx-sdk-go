@@ -85,7 +85,7 @@ func TestExtractNonceOfShardID(t *testing.T) {
 	})
 }
 
-func TestElrondBaseProxy_CheckShardFinalization(t *testing.T) {
+func TestMultiversXBaseProxy_CheckShardFinalization(t *testing.T) {
 	t.Parallel()
 
 	t.Run("invalid maxNoncesDelta", func(t *testing.T) {

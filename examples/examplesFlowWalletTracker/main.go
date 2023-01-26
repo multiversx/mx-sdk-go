@@ -22,7 +22,7 @@ import (
 
 const timeToExecuteRequest = time.Second
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesFlowWalletTracker")
+var log = logger.GetOrCreate("mx-sdk-go/examples/examplesFlowWalletTracker")
 
 type moveBalanceHandler interface {
 	GenerateMoveBalanceTransactions(ctx context.Context, addresses []string)
@@ -51,7 +51,7 @@ func main() {
 }
 
 func runApp() error {
-	args := blockchain.ArgsElrondProxy{
+	args := blockchain.ArgsMultiversXProxy{
 		ProxyURL:            examples.TestnetGateway,
 		Client:              nil,
 		SameScState:         false,
@@ -60,7 +60,7 @@ func runApp() error {
 		CacheExpirationTime: time.Minute,
 		EntityType:          core.Proxy,
 	}
-	ep, err := blockchain.NewElrondProxy(args)
+	ep, err := blockchain.NewMultiversXProxy(args)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func runApp() error {
 		return err
 	}
 
-	receiverAddress := "erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht" // /elrond-sdk-erdgo/interactors/testdata/test.pem
+	receiverAddress := "erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht" // /mx-sdk-go/interactors/testdata/test.pem
 	txInteractor, err := interactors.NewTransactionInteractor(ep, txBuilder)
 	if err != nil {
 		return err

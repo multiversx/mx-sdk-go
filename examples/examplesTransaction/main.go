@@ -18,13 +18,13 @@ import (
 var (
 	suite  = ed25519.NewEd25519()
 	keyGen = signing.NewKeyGenerator(suite)
-	log    = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesTransaction")
+	log    = logger.GetOrCreate("mx-sdk-go/examples/examplesTransaction")
 )
 
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
 
-	args := blockchain.ArgsElrondProxy{
+	args := blockchain.ArgsMultiversXProxy{
 		ProxyURL:            examples.TestnetGateway,
 		Client:              nil,
 		SameScState:         false,
@@ -33,7 +33,7 @@ func main() {
 		CacheExpirationTime: time.Minute,
 		EntityType:          core.Proxy,
 	}
-	ep, err := blockchain.NewElrondProxy(args)
+	ep, err := blockchain.NewMultiversXProxy(args)
 	if err != nil {
 		log.Error("error creating proxy", "error", err)
 		return

@@ -3,7 +3,7 @@ package blockchain
 import (
 	"bytes"
 
-	elrondCore "github.com/multiversx/mx-chain-core-go/core"
+	mxChainCore "github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/typeConverters/uint64ByteSlice"
 	"github.com/multiversx/mx-chain-core-go/hashing"
@@ -22,7 +22,7 @@ const accountStartNonce = uint64(0)
 
 var initialDNSAddress = bytes.Repeat([]byte{1}, 32)
 
-// addressGenerator is used to generate some addresses based on elrond-go logic
+// addressGenerator is used to generate some addresses based on mx-chain-go logic
 type addressGenerator struct {
 	coordinator    *shardCoordinator
 	blockChainHook process.BlockChainHookHandler
@@ -42,7 +42,7 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 		PubkeyConv:            core.AddressPublicKeyConverter,
 		StorageService:        &disabled.StorageService{},
 		BlockChain:            &disabled.Blockchain{},
-		ShardCoordinator:      &disabled.ElrondShardCoordinator{},
+		ShardCoordinator:      &disabled.MultiversXShardCoordinator{},
 		Marshalizer:           &marshal.JsonMarshalizer{},
 		Uint64Converter:       uint64ByteSlice.NewBigEndianConverter(),
 		BuiltInFunctions:      builtInFuncs,
@@ -73,7 +73,7 @@ func (ag *addressGenerator) CompatibleDNSAddress(shardId byte) (core.AddressHand
 	addressLen := len(initialDNSAddress)
 	shardInBytes := []byte{0, shardId}
 
-	newDNSPk := string(initialDNSAddress[:(addressLen-elrondCore.ShardIdentiferLen)]) + string(shardInBytes)
+	newDNSPk := string(initialDNSAddress[:(addressLen-mxChainCore.ShardIdentiferLen)]) + string(shardInBytes)
 	newDNSAddress, err := ag.blockChainHook.NewAddress([]byte(newDNSPk), accountStartNonce, factory.WasmVirtualMachine)
 	if err != nil {
 		return nil, err
