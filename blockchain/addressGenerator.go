@@ -42,7 +42,7 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 		PubkeyConv:            core.AddressPublicKeyConverter,
 		StorageService:        &disabled.StorageService{},
 		BlockChain:            &disabled.Blockchain{},
-		ShardCoordinator:      &disabled.MultiversXShardCoordinator{},
+		ShardCoordinator:      &disabled.ShardCoordinator{},
 		Marshalizer:           &marshal.JsonMarshalizer{},
 		Uint64Converter:       uint64ByteSlice.NewBigEndianConverter(),
 		BuiltInFunctions:      builtInFuncs,

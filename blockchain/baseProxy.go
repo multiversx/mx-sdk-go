@@ -21,13 +21,13 @@ const (
 	minimumCachingInterval = time.Second
 )
 
-type argsMultiversXBaseProxy struct {
+type argsBaseProxy struct {
 	expirationTime    time.Duration
 	httpClientWrapper httpClientWrapper
 	endpointProvider  EndpointProvider
 }
 
-type multiversXBaseProxy struct {
+type baseProxy struct {
 	httpClientWrapper
 	mut                 sync.RWMutex
 	fetchedConfigs      *data.NetworkConfig
@@ -37,14 +37,14 @@ type multiversXBaseProxy struct {
 	endpointProvider    EndpointProvider
 }
 
-// newMultiversXBaseProxy will create a base multiversx proxy with cache instance
-func newMultiversXBaseProxy(args argsMultiversXBaseProxy) (*multiversXBaseProxy, error) {
+// newBaseProxy will create a base multiversx proxy with cache instance
+func newBaseProxy(args argsBaseProxy) (*baseProxy, error) {
 	err := checkArgsBaseProxy(args)
 	if err != nil {
 		return nil, err
 	}
 
-	return &multiversXBaseProxy{
+	return &baseProxy{
 		httpClientWrapper:   args.httpClientWrapper,
 		cacheExpiryDuration: args.expirationTime,
 		endpointProvider:    args.endpointProvider,
@@ -52,7 +52,7 @@ func newMultiversXBaseProxy(args argsMultiversXBaseProxy) (*multiversXBaseProxy,
 	}, nil
 }
 
-func checkArgsBaseProxy(args argsMultiversXBaseProxy) error {
+func checkArgsBaseProxy(args argsBaseProxy) error {
 	if args.expirationTime < minimumCachingInterval {
 		return fmt.Errorf("%w, provided: %v, minimum: %v", ErrInvalidCacherDuration, args.expirationTime, minimumCachingInterval)
 	}
@@ -71,7 +71,7 @@ func since(t time.Time) time.Duration {
 }
 
 // GetNetworkConfig will return the cached network configs fetching new values and saving them if necessary
-func (proxy *multiversXBaseProxy) GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error) {
+func (proxy *baseProxy) GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error) {
 	proxy.mut.RLock()
 	cachedConfigs := proxy.getCachedConfigs()
 	proxy.mut.RUnlock()
@@ -83,7 +83,7 @@ func (proxy *multiversXBaseProxy) GetNetworkConfig(ctx context.Context) (*data.N
 	return proxy.cacheConfigs(ctx)
 }
 
-func (proxy *multiversXBaseProxy) getCachedConfigs() *data.NetworkConfig {
+func (proxy *baseProxy) getCachedConfigs() *data.NetworkConfig {
 	if proxy.sinceTimeHandler(proxy.lastFetchedTime) > proxy.cacheExpiryDuration {
 		return nil
 	}
@@ -91,7 +91,7 @@ func (proxy *multiversXBaseProxy) getCachedConfigs() *data.NetworkConfig {
 	return proxy.fetchedConfigs
 }
 
-func (proxy *multiversXBaseProxy) cacheConfigs(ctx context.Context) (*data.NetworkConfig, error) {
+func (proxy *baseProxy) cacheConfigs(ctx context.Context) (*data.NetworkConfig, error) {
 	proxy.mut.Lock()
 	defer proxy.mut.Unlock()
 
@@ -114,7 +114,7 @@ func (proxy *multiversXBaseProxy) cacheConfigs(ctx context.Context) (*data.Netwo
 }
 
 // getNetworkConfigFromSource retrieves the network configuration from the proxy
-func (proxy *multiversXBaseProxy) getNetworkConfigFromSource(ctx context.Context) (*data.NetworkConfig, error) {
+func (proxy *baseProxy) getNetworkConfigFromSource(ctx context.Context) (*data.NetworkConfig, error) {
 	buff, code, err := proxy.GetHTTP(ctx, proxy.endpointProvider.GetNetworkConfig())
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
@@ -134,7 +134,7 @@ func (proxy *multiversXBaseProxy) getNetworkConfigFromSource(ctx context.Context
 
 // GetShardOfAddress returns the shard ID of a provided address by using a shardCoordinator object and querying the
 // network config route
-func (proxy *multiversXBaseProxy) GetShardOfAddress(ctx context.Context, bech32Address string) (uint32, error) {
+func (proxy *baseProxy) GetShardOfAddress(ctx context.Context, bech32Address string) (uint32, error) {
 	addr, err := data.NewAddressFromBech32String(bech32Address)
 	if err != nil {
 		return 0, err
@@ -154,7 +154,7 @@ func (proxy *multiversXBaseProxy) GetShardOfAddress(ctx context.Context, bech32A
 }
 
 // GetNetworkStatus will return the network status of a provided shard
-func (proxy *multiversXBaseProxy) GetNetworkStatus(ctx context.Context, shardID uint32) (*data.NetworkStatus, error) {
+func (proxy *baseProxy) GetNetworkStatus(ctx context.Context, shardID uint32) (*data.NetworkStatus, error) {
 	endpoint := proxy.endpointProvider.GetNodeStatus(shardID)
 	buff, code, err := proxy.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
@@ -172,7 +172,7 @@ func (proxy *multiversXBaseProxy) GetNetworkStatus(ctx context.Context, shardID 
 	return &data.NetworkStatus{}, ErrInvalidEndpointProvider
 }
 
-func (proxy *multiversXBaseProxy) getNetworkStatus(buff []byte, shardID uint32) (*data.NetworkStatus, error) {
+func (proxy *baseProxy) getNetworkStatus(buff []byte, shardID uint32) (*data.NetworkStatus, error) {
 	response := &data.NetworkStatusResponse{}
 	err := json.Unmarshal(buff, response)
 	if err != nil {
@@ -190,7 +190,7 @@ func (proxy *multiversXBaseProxy) getNetworkStatus(buff []byte, shardID uint32) 
 	return response.Data.Status, nil
 }
 
-func (proxy *multiversXBaseProxy) getNodeStatus(buff []byte, shardID uint32) (*data.NetworkStatus, error) {
+func (proxy *baseProxy) getNodeStatus(buff []byte, shardID uint32) (*data.NetworkStatus, error) {
 	response := &data.NodeStatusResponse{}
 	err := json.Unmarshal(buff, response)
 	if err != nil {
@@ -208,7 +208,7 @@ func (proxy *multiversXBaseProxy) getNodeStatus(buff []byte, shardID uint32) (*d
 	return response.Data.Status, nil
 }
 
-func (proxy *multiversXBaseProxy) checkReceivedNodeStatus(networkStatus *data.NetworkStatus, shardID uint32) error {
+func (proxy *baseProxy) checkReceivedNodeStatus(networkStatus *data.NetworkStatus, shardID uint32) error {
 	if networkStatus == nil {
 		return fmt.Errorf("%w, requested from %d", ErrNilNetworkStatus, shardID)
 	}
@@ -223,11 +223,11 @@ func (proxy *multiversXBaseProxy) checkReceivedNodeStatus(networkStatus *data.Ne
 }
 
 // GetRestAPIEntityType returns the REST API entity type that this implementation works with
-func (proxy *multiversXBaseProxy) GetRestAPIEntityType() core.RestAPIEntityType {
+func (proxy *baseProxy) GetRestAPIEntityType() core.RestAPIEntityType {
 	return proxy.endpointProvider.GetRestAPIEntityType()
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (proxy *multiversXBaseProxy) IsInterfaceNil() bool {
+func (proxy *baseProxy) IsInterfaceNil() bool {
 	return proxy == nil
 }

@@ -24,7 +24,7 @@ var (
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
 
-	args := blockchain.ArgsMultiversXProxy{
+	args := blockchain.ArgsProxy{
 		ProxyURL:            examples.TestnetGateway,
 		Client:              nil,
 		SameScState:         false,
