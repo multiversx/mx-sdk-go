@@ -44,7 +44,7 @@ type multiversXProxy struct {
 	finalityProvider    FinalityProvider
 }
 
-// NewMultiversXProxy initializes and returns an multiversXProxy object
+// NewMultiversXProxy initializes and returns a multiversXProxy object
 func NewMultiversXProxy(args ArgsMultiversXProxy) (*multiversXProxy, error) {
 	err := checkArgsProxy(args)
 	if err != nil {
