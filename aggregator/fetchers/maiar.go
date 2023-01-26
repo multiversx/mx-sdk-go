@@ -11,7 +11,7 @@ import (
 
 const (
 	// TODO EN-13146: extract this urls constants in a file
-	dataApiUrl = "https://tools.elrond.com/data-api/graphql"
+	dataApiUrl = "https://tools.multiversx.com/data-api/graphql"
 	query      = "query MaiarPriceUrl($base: String!, $quote: String!) { trading { pair(first_token: $base, second_token: $quote) { price { last time } } } }"
 )
 

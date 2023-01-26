@@ -16,11 +16,11 @@ type cryptocomPriceRequest struct {
 }
 
 type cryptocomData struct {
-	Data cryptocomPair `json:"data"`
+	Data []cryptocomPair `json:"data"`
 }
 
 type cryptocomPair struct {
-	Price float64 `json:"a"`
+	Price string `json:"a"`
 }
 
 type cryptocom struct {
@@ -41,10 +41,13 @@ func (c *cryptocom) FetchPrice(ctx context.Context, base, quote string) (float64
 	if err != nil {
 		return 0, err
 	}
-	if cpr.Result.Data.Price <= 0 {
+	if len(cpr.Result.Data) == 0 {
 		return 0, errInvalidResponseData
 	}
-	return cpr.Result.Data.Price, nil
+	if cpr.Result.Data[0].Price == "" {
+		return 0, errInvalidResponseData
+	}
+	return StrToPositiveFloat64(cpr.Result.Data[0].Price)
 }
 
 // Name returns the name

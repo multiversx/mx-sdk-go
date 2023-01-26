@@ -218,7 +218,7 @@ func createAuthClient() (authentication.AuthClient, error) {
 		FinalityCheck:       false,
 		AllowedDeltaToFinal: 1,
 		CacheExpirationTime: time.Second,
-		EntityType:          core.RestAPIEntityType("Proxy"),
+		EntityType:          core.Proxy,
 	}
 
 	proxy, err := blockchain.NewProxy(argsProxy)
