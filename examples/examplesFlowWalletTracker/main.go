@@ -60,7 +60,7 @@ func runApp() error {
 		CacheExpirationTime: time.Minute,
 		EntityType:          core.Proxy,
 	}
-	ep, err := blockchain.NewMultiversXProxy(args)
+	ep, err := blockchain.NewProxy(args)
 	if err != nil {
 		return err
 	}

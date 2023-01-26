@@ -23,7 +23,7 @@ func main() {
 		CacheExpirationTime: time.Minute,
 		EntityType:          core.Proxy,
 	}
-	ep, err := blockchain.NewMultiversXProxy(args)
+	ep, err := blockchain.NewProxy(args)
 	if err != nil {
 		log.Error("error creating proxy", "error", err)
 		return
