@@ -12,7 +12,7 @@ import (
 
 const minResultsNum = 1
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/aggregator")
+var log = logger.GetOrCreate("mx-sdk-go/aggregator")
 
 // ArgsPriceAggregator is the DTO used in the NewPriceAggregator function
 type ArgsPriceAggregator struct {

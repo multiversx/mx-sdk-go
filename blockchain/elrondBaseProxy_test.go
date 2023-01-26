@@ -18,23 +18,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createMockArgsElrondBaseProxy() argsElrondBaseProxy {
-	return argsElrondBaseProxy{
+func createMockArgsMultiversXBaseProxy() argsMultiversXBaseProxy {
+	return argsMultiversXBaseProxy{
 		httpClientWrapper: &testsCommon.HTTPClientWrapperStub{},
 		expirationTime:    time.Second,
 		endpointProvider:  endpointProviders.NewNodeEndpointProvider(),
 	}
 }
 
-func TestNewElrondBaseProxy(t *testing.T) {
+func TestNewMultiversXBaseProxy(t *testing.T) {
 	t.Parallel()
 
 	t.Run("nil http client wrapper", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = nil
-		baseProxy, err := newElrondBaseProxy(args)
+		baseProxy, err := newMultiversXBaseProxy(args)
 
 		assert.True(t, check.IfNil(baseProxy))
 		assert.True(t, errors.Is(err, ErrNilHTTPClientWrapper))
@@ -42,9 +42,9 @@ func TestNewElrondBaseProxy(t *testing.T) {
 	t.Run("invalid caching duration", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.expirationTime = time.Second - time.Nanosecond
-		baseProxy, err := newElrondBaseProxy(args)
+		baseProxy, err := newMultiversXBaseProxy(args)
 
 		assert.True(t, check.IfNil(baseProxy))
 		assert.True(t, errors.Is(err, ErrInvalidCacherDuration))
@@ -52,9 +52,9 @@ func TestNewElrondBaseProxy(t *testing.T) {
 	t.Run("nil endpoint provider", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.endpointProvider = nil
-		baseProxy, err := newElrondBaseProxy(args)
+		baseProxy, err := newMultiversXBaseProxy(args)
 
 		assert.True(t, check.IfNil(baseProxy))
 		assert.True(t, errors.Is(err, ErrNilEndpointProvider))
@@ -62,15 +62,15 @@ func TestNewElrondBaseProxy(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondBaseProxy()
-		baseProxy, err := newElrondBaseProxy(args)
+		args := createMockArgsMultiversXBaseProxy()
+		baseProxy, err := newMultiversXBaseProxy(args)
 
 		assert.False(t, check.IfNil(baseProxy))
 		assert.Nil(t, err)
 	})
 }
 
-func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
+func TestMultiversXBaseProxy_GetNetworkConfig(t *testing.T) {
 	t.Parallel()
 
 	expectedReturnedNetworkConfig := &data.NetworkConfig{
@@ -110,10 +110,10 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 			return networkConfigBytes, http.StatusOK, nil
 		}
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = mockWrapper
 		args.expirationTime = minimumCachingInterval * 2
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 		baseProxy.sinceTimeHandler = func(t time.Time) time.Duration {
 			return minimumCachingInterval
 		}
@@ -134,10 +134,10 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 			return networkConfigBytes, http.StatusOK, nil
 		}
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = mockWrapper
 		args.expirationTime = minimumCachingInterval * 2
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 		baseProxy.sinceTimeHandler = func(t time.Time) time.Duration {
 			return minimumCachingInterval*2 + time.Millisecond
 		}
@@ -159,9 +159,9 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 			return nil, http.StatusBadRequest, expectedErr
 		}
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = mockWrapper
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		configs, err := baseProxy.GetNetworkConfig(context.Background())
 
@@ -180,9 +180,9 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 			return []byte("malformed data"), http.StatusOK, nil
 		}
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = mockWrapper
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		configs, err := baseProxy.GetNetworkConfig(context.Background())
 
@@ -211,9 +211,9 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 			return erroredNetworkConfigBytes, http.StatusOK, nil
 		}
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = mockWrapper
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		configs, err := baseProxy.GetNetworkConfig(context.Background())
 
@@ -232,10 +232,10 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 			return nil, http.StatusOK, nil
 		}
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = mockWrapper
 		args.expirationTime = minimumCachingInterval * 2
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 		baseProxy.fetchedConfigs = expectedReturnedNetworkConfig
 		baseProxy.sinceTimeHandler = func(t time.Time) time.Duration {
 			return minimumCachingInterval
@@ -249,20 +249,20 @@ func TestElrondBaseProxy_GetNetworkConfig(t *testing.T) {
 	})
 }
 
-func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
+func TestMultiversXBaseProxy_GetNetworkStatus(t *testing.T) {
 	t.Parallel()
 
 	expectedErr := errors.New("expected error")
 	t.Run("get errors", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return nil, http.StatusBadRequest, expectedErr
 			},
 		}
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
@@ -272,13 +272,13 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 	t.Run("malformed response - node endpoint provider", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return []byte("malformed response"), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
@@ -288,14 +288,14 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 	t.Run("malformed response - proxy endpoint provider", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.endpointProvider = endpointProviders.NewProxyEndpointProvider()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return []byte("malformed response"), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
@@ -314,13 +314,13 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 		}
 		respBytes, _ := json.Marshal(resp)
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return respBytes, http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
@@ -339,14 +339,14 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 		}
 		respBytes, _ := json.Marshal(resp)
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.endpointProvider = endpointProviders.NewProxyEndpointProvider()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return respBytes, http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
@@ -356,13 +356,13 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 	t.Run("GetNodeStatus returns nil network status - node endpoint provider", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return getNetworkStatusBytes(nil), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
@@ -372,14 +372,14 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 	t.Run("GetNodeStatus returns nil network status - proxy endpoint provider", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.endpointProvider = endpointProviders.NewProxyEndpointProvider()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return getNetworkStatusBytes(nil), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
@@ -402,13 +402,13 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 			ShardID:                    core.MetachainShardId,
 		}
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return getNodeStatusBytes(providedNetworkStatus), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
@@ -430,13 +430,13 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 			CrossCheckBlockHeight:      "aaa",
 		}
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return getNodeStatusBytes(providedNetworkStatus), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, err)
@@ -458,14 +458,14 @@ func TestElrondBaseProxy_GetNetworkStatus(t *testing.T) {
 			ShardID:                    core.MetachainShardId, // this won't be tested in this test
 		}
 
-		args := createMockArgsElrondBaseProxy()
+		args := createMockArgsMultiversXBaseProxy()
 		args.endpointProvider = endpointProviders.NewProxyEndpointProvider()
 		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				return getNetworkStatusBytes(providedNetworkStatus), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newElrondBaseProxy(args)
+		baseProxy, _ := newMultiversXBaseProxy(args)
 
 		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, err)
@@ -495,7 +495,7 @@ func getNodeStatusBytes(status *data.NetworkStatus) []byte {
 	return respBytes
 }
 
-func TestElrondBaseProxy_GetShardOfAddress(t *testing.T) {
+func TestMultiversXBaseProxy_GetShardOfAddress(t *testing.T) {
 	t.Parallel()
 
 	t.Run("invalid address", func(t *testing.T) {
@@ -554,7 +554,7 @@ func TestElrondBaseProxy_GetShardOfAddress(t *testing.T) {
 	})
 }
 
-func createBaseProxyForGetShardOfAddress(numShards uint32, errGet error) *elrondBaseProxy {
+func createBaseProxyForGetShardOfAddress(numShards uint32, errGet error) *multiversXBaseProxy {
 	expectedReturnedNetworkConfig := &data.NetworkConfig{
 		NumShardsWithoutMeta: numShards,
 	}
@@ -576,18 +576,18 @@ func createBaseProxyForGetShardOfAddress(numShards uint32, errGet error) *elrond
 		return networkConfigBytes, http.StatusOK, nil
 	}
 
-	args := createMockArgsElrondBaseProxy()
+	args := createMockArgsMultiversXBaseProxy()
 	args.httpClientWrapper = mockWrapper
-	baseProxy, _ := newElrondBaseProxy(args)
+	baseProxy, _ := newMultiversXBaseProxy(args)
 
 	return baseProxy
 }
 
-func TestElrondBaseProxy_GetRestAPIEntityType(t *testing.T) {
+func TestMultiversXBaseProxy_GetRestAPIEntityType(t *testing.T) {
 	t.Parallel()
 
-	args := createMockArgsElrondBaseProxy()
-	baseProxy, _ := newElrondBaseProxy(args)
+	args := createMockArgsMultiversXBaseProxy()
+	baseProxy, _ := newMultiversXBaseProxy(args)
 
 	assert.Equal(t, args.endpointProvider.GetRestAPIEntityType(), baseProxy.GetRestAPIEntityType())
 }

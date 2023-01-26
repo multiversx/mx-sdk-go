@@ -13,7 +13,7 @@ type TxBuilder interface {
 	IsInterfaceNil() bool
 }
 
-// Proxy holds the primitive functions that the elrond proxy engine supports & implements
+// Proxy holds the primitive functions that the multiversx proxy engine supports & implements
 // dependency inversion: blockchain package is considered inner business logic, this package is considered "plugin"
 type Proxy interface {
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)

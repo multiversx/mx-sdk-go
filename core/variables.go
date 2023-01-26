@@ -5,7 +5,7 @@ import (
 	logger "github.com/multiversx/mx-chain-logger-go"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/core")
+var log = logger.GetOrCreate("mx-sdk-go/core")
 
 // AddressPublicKeyConverter represents the default address public key converter
 var AddressPublicKeyConverter, _ = pubkeyConverter.NewBech32PubkeyConverter(AddressBytesLen, log)

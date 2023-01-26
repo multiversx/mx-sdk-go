@@ -6,13 +6,13 @@ import (
 	"math/big"
 	"strings"
 
-	elrondCore "github.com/multiversx/mx-chain-core-go/core"
+	mxChainCore "github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-sdk-go/core"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/blockchain/finalityprovider")
+var log = logger.GetOrCreate("mx-sdk-go/blockchain/finalityprovider")
 
 type proxyFinalityProvider struct {
 	proxy proxy
@@ -36,7 +36,7 @@ func (provider *proxyFinalityProvider) CheckShardFinalization(ctx context.Contex
 	if maxNoncesDelta < core.MinAllowedDeltaToFinal {
 		return fmt.Errorf("%w, provided: %d, minimum: %d", ErrInvalidAllowedDeltaToFinal, maxNoncesDelta, core.MinAllowedDeltaToFinal)
 	}
-	if targetShardID == elrondCore.MetachainShardId {
+	if targetShardID == mxChainCore.MetachainShardId {
 		// we consider this final since the minAllowedDeltaToFinal is 1
 		return nil
 	}
@@ -62,7 +62,7 @@ func (provider *proxyFinalityProvider) CheckShardFinalization(ctx context.Contex
 }
 
 func (provider *proxyFinalityProvider) getNoncesFromMetaAndShard(ctx context.Context, targetShardID uint32) (uint64, uint64, error) {
-	networkStatusMeta, err := provider.proxy.GetNetworkStatus(ctx, elrondCore.MetachainShardId)
+	networkStatusMeta, err := provider.proxy.GetNetworkStatus(ctx, mxChainCore.MetachainShardId)
 	if err != nil {
 		return 0, 0, err
 	}

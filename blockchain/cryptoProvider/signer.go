@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	signerLog     = logger.GetOrCreate("elrond-sdk-erdgo/signer")
+	signerLog     = logger.GetOrCreate("mx-sdk-go/signer")
 	hasher        = keccak.NewKeccak()
 	singleSigner  = &singlesig.Ed25519Signer{}
 	messagePrefix = []byte("\x17Elrond Signed Message:\n")

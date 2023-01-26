@@ -8,7 +8,7 @@ import (
 	logger "github.com/multiversx/mx-chain-logger-go"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/storage")
+var log = logger.GetOrCreate("mx-sdk-go/storage")
 
 // mapCacher is the cacher implementation based on a map
 type mapCacher struct {

@@ -7,7 +7,7 @@ import (
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
-// Proxy holds the primitive functions that the elrond proxy engine supports & implements
+// Proxy holds the primitive functions that the multiversx proxy engine supports & implements
 type Proxy interface {
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
 	GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error)

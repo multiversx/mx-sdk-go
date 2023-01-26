@@ -27,8 +27,8 @@ var (
 	keyGen = signing.NewKeyGenerator(suite)
 )
 
-func createMockArgsElrondNotifee() ArgsElrondNotifee {
-	return ArgsElrondNotifee{
+func createMockArgsMultiversXNotifee() ArgsMultiversXNotifee {
+	return ArgsMultiversXNotifee{
 		Proxy:           &testsCommon.ProxyStub{},
 		TxBuilder:       &testsCommon.TxBuilderStub{},
 		TxNonceHandler:  &testsCommon.TxNonceHandlerV2Stub{},
@@ -39,7 +39,7 @@ func createMockArgsElrondNotifee() ArgsElrondNotifee {
 	}
 }
 
-func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
+func createMockArgsMultiversXNotifeeWithSomeRealComponents() ArgsMultiversXNotifee {
 	proxy := &testsCommon.ProxyStub{
 		GetNetworkConfigCalled: func() (*data.NetworkConfig, error) {
 			return &data.NetworkConfig{
@@ -54,7 +54,7 @@ func createMockArgsElrondNotifeeWithSomeRealComponents() ArgsElrondNotifee {
 	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, skBytes)
 	txBuilder, _ := builders.NewTxBuilder(cryptoProvider.NewSigner())
 
-	return ArgsElrondNotifee{
+	return ArgsMultiversXNotifee{
 		Proxy:           proxy,
 		TxBuilder:       txBuilder,
 		TxNonceHandler:  &testsCommon.TxNonceHandlerV2Stub{},
@@ -84,15 +84,15 @@ func createMockPriceChanges() []*aggregator.ArgsPriceChanged {
 	}
 }
 
-func TestNewElrondNotifee(t *testing.T) {
+func TestNewMultiversXNotifee(t *testing.T) {
 	t.Parallel()
 
 	t.Run("nil proxy should error", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondNotifee()
+		args := createMockArgsMultiversXNotifee()
 		args.Proxy = nil
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errNilProxy, err)
@@ -100,9 +100,9 @@ func TestNewElrondNotifee(t *testing.T) {
 	t.Run("nil tx builder should error", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondNotifee()
+		args := createMockArgsMultiversXNotifee()
 		args.TxBuilder = nil
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errNilTxBuilder, err)
@@ -110,9 +110,9 @@ func TestNewElrondNotifee(t *testing.T) {
 	t.Run("nil tx nonce handler should error", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondNotifee()
+		args := createMockArgsMultiversXNotifee()
 		args.TxNonceHandler = nil
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errNilTxNonceHandler, err)
@@ -120,9 +120,9 @@ func TestNewElrondNotifee(t *testing.T) {
 	t.Run("nil contract address should error", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondNotifee()
+		args := createMockArgsMultiversXNotifee()
 		args.ContractAddress = nil
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errNilContractAddressHandler, err)
@@ -130,9 +130,9 @@ func TestNewElrondNotifee(t *testing.T) {
 	t.Run("invalid contract address should error", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondNotifee()
+		args := createMockArgsMultiversXNotifee()
 		args.ContractAddress = data.NewAddressFromBytes([]byte("invalid"))
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errInvalidContractAddress, err)
@@ -140,9 +140,9 @@ func TestNewElrondNotifee(t *testing.T) {
 	t.Run("nil cryptoHlder should error", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondNotifee()
+		args := createMockArgsMultiversXNotifee()
 		args.CryptoHolder = nil
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, builders.ErrNilCryptoComponentsHolder, err)
@@ -150,9 +150,9 @@ func TestNewElrondNotifee(t *testing.T) {
 	t.Run("invalid base gas limit should error", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondNotifee()
+		args := createMockArgsMultiversXNotifee()
 		args.BaseGasLimit = minGasLimit - 1
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errInvalidBaseGasLimit, err)
@@ -160,9 +160,9 @@ func TestNewElrondNotifee(t *testing.T) {
 	t.Run("invalid gas limit for each should error", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondNotifee()
+		args := createMockArgsMultiversXNotifee()
 		args.GasLimitForEach = minGasLimit - 1
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 
 		assert.True(t, check.IfNil(en))
 		assert.Equal(t, errInvalidGasLimitForEach, err)
@@ -170,22 +170,22 @@ func TestNewElrondNotifee(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondNotifee()
-		en, err := NewElrondNotifee(args)
+		args := createMockArgsMultiversXNotifee()
+		en, err := NewMultiversXNotifee(args)
 
 		assert.False(t, check.IfNil(en))
 		assert.Nil(t, err)
 	})
 }
 
-func TestElrondNotifee_PriceChanged(t *testing.T) {
+func TestMultiversXNotifee_PriceChanged(t *testing.T) {
 	t.Parallel()
 
 	t.Run("get nonce errors", func(t *testing.T) {
 		t.Parallel()
 
 		expectedErr := errors.New("expected error")
-		args := createMockArgsElrondNotifeeWithSomeRealComponents()
+		args := createMockArgsMultiversXNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
 			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				return expectedErr
@@ -196,7 +196,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 		require.Nil(t, err)
 
 		priceChanges := createMockPriceChanges()
@@ -206,7 +206,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 	t.Run("invalid price arguments", func(t *testing.T) {
 		t.Parallel()
 
-		args := createMockArgsElrondNotifeeWithSomeRealComponents()
+		args := createMockArgsMultiversXNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
 			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				txArgs.Nonce = 43
@@ -218,7 +218,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 		require.Nil(t, err)
 
 		priceChanges := createMockPriceChanges()
@@ -230,7 +230,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		t.Parallel()
 
 		expectedErr := errors.New("expected error")
-		args := createMockArgsElrondNotifeeWithSomeRealComponents()
+		args := createMockArgsMultiversXNotifeeWithSomeRealComponents()
 		args.Proxy = &testsCommon.ProxyStub{
 			GetNetworkConfigCalled: func() (*data.NetworkConfig, error) {
 				return nil, expectedErr
@@ -247,7 +247,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 		require.Nil(t, err)
 
 		priceChanges := createMockPriceChanges()
@@ -258,7 +258,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		t.Parallel()
 
 		expectedErr := errors.New("expected error")
-		args := createMockArgsElrondNotifeeWithSomeRealComponents()
+		args := createMockArgsMultiversXNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
 			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				txArgs.Nonce = 43
@@ -275,7 +275,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 		require.Nil(t, err)
 
 		priceChanges := createMockPriceChanges()
@@ -286,7 +286,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 		t.Parallel()
 
 		expectedErr := errors.New("expected error")
-		args := createMockArgsElrondNotifeeWithSomeRealComponents()
+		args := createMockArgsMultiversXNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
 			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				txArgs.Nonce = 43
@@ -297,7 +297,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 		require.Nil(t, err)
 
 		priceChanges := createMockPriceChanges()
@@ -309,7 +309,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 
 		priceChanges := createMockPriceChanges()
 		sentWasCalled := false
-		args := createMockArgsElrondNotifeeWithSomeRealComponents()
+		args := createMockArgsMultiversXNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
 			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
 				txArgs.Nonce = 43
@@ -348,7 +348,7 @@ func TestElrondNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 
-		en, err := NewElrondNotifee(args)
+		en, err := NewMultiversXNotifee(args)
 		require.Nil(t, err)
 
 		err = en.PriceChanged(context.Background(), priceChanges)

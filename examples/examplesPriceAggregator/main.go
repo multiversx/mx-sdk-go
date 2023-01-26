@@ -22,7 +22,7 @@ import (
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesPriceAggregator")
+var log = logger.GetOrCreate("mx-sdk-go/examples/examplesPriceAggregator")
 
 const base = "ETH"
 const quote = "USD"
@@ -33,7 +33,7 @@ const minResultsNum = 3
 const pollInterval = time.Second * 2
 const autoSendInterval = time.Second * 10
 
-const networkAddress = "https://testnet-gateway.elrond.com"
+const networkAddress = "https://testnet-gateway.multiversx.com"
 
 var (
 	suite  = ed25519.NewEd25519()
@@ -211,7 +211,7 @@ func createAuthClient() (authentication.AuthClient, error) {
 		return nil, err
 	}
 
-	argsProxy := blockchain.ArgsElrondProxy{
+	argsProxy := blockchain.ArgsMultiversXProxy{
 		ProxyURL:            networkAddress,
 		SameScState:         false,
 		ShouldBeSynced:      false,
@@ -221,7 +221,7 @@ func createAuthClient() (authentication.AuthClient, error) {
 		EntityType:          core.RestAPIEntityType("Proxy"),
 	}
 
-	proxy, err := blockchain.NewElrondProxy(argsProxy)
+	proxy, err := blockchain.NewMultiversXProxy(argsProxy)
 	if err != nil {
 		return nil, err
 	}
