@@ -32,16 +32,16 @@ func TestNewPriceFetcher(t *testing.T) {
 	t.Run("nil graphqlGetter should error", func(t *testing.T) {
 		t.Parallel()
 
-		pf, err := NewPriceFetcher(MaiarName, &mock.HttpResponseGetterStub{}, nil, nil)
+		pf, err := NewPriceFetcher(XExchangeName, &mock.HttpResponseGetterStub{}, nil, nil)
 		assert.Nil(t, pf)
 		assert.True(t, errors.Is(err, errNilGraphqlGetter))
 	})
-	t.Run("nil map for maiar should error", func(t *testing.T) {
+	t.Run("nil map for xExchange should error", func(t *testing.T) {
 		t.Parallel()
 
-		pf, err := NewPriceFetcher(MaiarName, &mock.HttpResponseGetterStub{}, &mock.GraphqlResponseGetterStub{}, nil)
+		pf, err := NewPriceFetcher(XExchangeName, &mock.HttpResponseGetterStub{}, &mock.GraphqlResponseGetterStub{}, nil)
 		assert.Nil(t, pf)
-		assert.True(t, errors.Is(err, errNilMaiarTokensMap))
+		assert.True(t, errors.Is(err, errNilXExchangeTokensMap))
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
@@ -70,8 +70,8 @@ func TestNewPriceFetcher(t *testing.T) {
 		pf, err = NewPriceFetcher(OkexName, &mock.HttpResponseGetterStub{}, &mock.GraphqlResponseGetterStub{}, createMockMap())
 		assert.Equal(t, "*fetchers.okex", fmt.Sprintf("%T", pf))
 		assert.Nil(t, err)
-		pf, err = NewPriceFetcher(MaiarName, &mock.HttpResponseGetterStub{}, &mock.GraphqlResponseGetterStub{}, createMockMap())
-		assert.Equal(t, "*fetchers.maiar", fmt.Sprintf("%T", pf))
+		pf, err = NewPriceFetcher(XExchangeName, &mock.HttpResponseGetterStub{}, &mock.GraphqlResponseGetterStub{}, createMockMap())
+		assert.Equal(t, "*fetchers.xExchange", fmt.Sprintf("%T", pf))
 		assert.Nil(t, err)
 	})
 }
