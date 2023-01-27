@@ -28,8 +28,8 @@ var errShouldSkipTest = errors.New("should skip test")
 
 const networkAddress = "https://testnet-gateway.multiversx.com"
 
-func createMockMap() map[string]MaiarTokensPair {
-	return map[string]MaiarTokensPair{
+func createMockMap() map[string]XExchangeTokensPair {
+	return map[string]XExchangeTokensPair{
 		"ETH-USD": {
 			Base:  "WEGLD-bd4d79", // for tests only until we have an ETH id
 			Quote: "USDC-c76f1f",
@@ -214,10 +214,10 @@ func Test_FetchPriceErrors(t *testing.T) {
 			require.Equal(t, float64(0), price)
 			require.IsType(t, err, &strconv.NumError{})
 		})
-		t.Run("maiar: missing key from map should error "+fetcherName, func(t *testing.T) {
+		t.Run("xExchange: missing key from map should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			if fetcherName != MaiarName {
+			if fetcherName != XExchangeName {
 				return
 			}
 
@@ -239,10 +239,10 @@ func Test_FetchPriceErrors(t *testing.T) {
 			assert.Equal(t, errInvalidPair, err)
 			require.Equal(t, float64(0), price)
 		})
-		t.Run("maiar: invalid graphql response should error "+fetcherName, func(t *testing.T) {
+		t.Run("xExchange: invalid graphql response should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			if fetcherName != MaiarName {
+			if fetcherName != XExchangeName {
 				return
 			}
 
@@ -338,7 +338,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 
 func getFuncQueryCalled(name, returnPrice string, returnErr error) func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 	switch name {
-	case MaiarName:
+	case XExchangeName:
 		return func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 			priceArray := make([]priceResponse, 0)
 			var p priceResponse

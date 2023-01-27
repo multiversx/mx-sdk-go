@@ -4,24 +4,24 @@ const (
 	quoteUSDFiat = "USD"
 	quoteUSDT    = "USDT"
 
-	// BinanceName defines the Binance exchange
+	// BinanceName defines the Binance exchange name
 	BinanceName = "Binance"
-	// BitfinexName defines the Bitfinex exchange
+	// BitfinexName defines the Bitfinex exchange name
 	BitfinexName = "Bitfinex"
-	// CryptocomName defines the crypto.com exchange
+	// CryptocomName defines the crypto.com exchange name
 	CryptocomName = "Crypto.com"
-	// GeminiName defines the Gemini exchange
+	// GeminiName defines the Gemini exchange name
 	GeminiName = "Gemini"
-	// HitbtcName defines the HitBTC exchange
+	// HitbtcName defines the HitBTC exchange name
 	HitbtcName = "HitBTC"
-	// HuobiName defines the Huobi exchange
+	// HuobiName defines the Huobi exchange name
 	HuobiName = "Huobi"
-	// KrakenName defines the Kraken exchange
+	// KrakenName defines the Kraken exchange name
 	KrakenName = "Kraken"
-	// OkexName defines the Okex exchange
+	// OkexName defines the Okex exchange name
 	OkexName = "Okex"
-	// MaiarName defines the Maiar exchange
-	MaiarName = "Maiar"
+	// XExchangeName defines the XExchange name
+	XExchangeName = "XExchange"
 )
 
 // ImplementedFetchers is the map of all implemented exchange fetchers
@@ -34,5 +34,5 @@ var ImplementedFetchers = map[string]struct{}{
 	HuobiName:     {},
 	KrakenName:    {},
 	OkexName:      {},
-	MaiarName:     {},
+	XExchangeName: {},
 }

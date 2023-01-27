@@ -157,8 +157,8 @@ func addPairToFetchers(pair *aggregator.ArgsPair, priceFetchers []aggregator.Pri
 	}
 }
 
-func createMaiarMap() map[string]fetchers.MaiarTokensPair {
-	return map[string]fetchers.MaiarTokensPair{
+func createXExchangeMap() map[string]fetchers.XExchangeTokensPair {
+	return map[string]fetchers.XExchangeTokensPair{
 		"ETH-USD": {
 			// for tests only until we have an ETH id
 			// the price will be dropped as it is extreme compared to real price
@@ -183,7 +183,7 @@ func createPriceFetchers() ([]aggregator.PriceFetcher, error) {
 	}
 
 	for exchangeName := range exchanges {
-		priceFetcher, err := fetchers.NewPriceFetcher(exchangeName, httpResponseGetter, graphqlResponseGetter, createMaiarMap())
+		priceFetcher, err := fetchers.NewPriceFetcher(exchangeName, httpResponseGetter, graphqlResponseGetter, createXExchangeMap())
 		if err != nil {
 			return nil, err
 		}

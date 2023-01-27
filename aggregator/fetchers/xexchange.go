@@ -35,32 +35,32 @@ type graphqlResponse struct {
 	} `json:"data"`
 }
 
-type maiar struct {
+type xExchange struct {
 	aggregator.GraphqlGetter
 	baseFetcher
-	maiarTokensMap map[string]MaiarTokensPair
+	xExchangeTokensMap map[string]XExchangeTokensPair
 }
 
 // FetchPrice will fetch the price using the http client
-func (m *maiar) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
-	if !m.hasPair(base, quote) {
+func (x *xExchange) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
+	if !x.hasPair(base, quote) {
 		return 0, aggregator.ErrPairNotSupported
 	}
 
-	maiarTokensPair, ok := m.fetchMaiarTokensPair(base, quote)
+	xExchangeTokensPair, ok := x.fetchXExchangeTokensPair(base, quote)
 	if !ok {
 		return 0, errInvalidPair
 	}
 
-	variables, err := json.Marshal(variables{
-		BasePrice:  maiarTokensPair.Base,
-		QuotePrice: maiarTokensPair.Quote,
+	vars, err := json.Marshal(variables{
+		BasePrice:  xExchangeTokensPair.Base,
+		QuotePrice: xExchangeTokensPair.Quote,
 	})
 	if err != nil {
 		return 0, err
 	}
 
-	resp, err := m.GraphqlGetter.Query(ctx, dataApiUrl, query, string(variables))
+	resp, err := x.GraphqlGetter.Query(ctx, dataApiUrl, query, string(vars))
 	if err != nil {
 		return 0, err
 	}
@@ -79,18 +79,18 @@ func (m *maiar) FetchPrice(ctx context.Context, base string, quote string) (floa
 	return price, nil
 }
 
-func (m *maiar) fetchMaiarTokensPair(base, quote string) (MaiarTokensPair, bool) {
+func (x *xExchange) fetchXExchangeTokensPair(base, quote string) (XExchangeTokensPair, bool) {
 	pair := fmt.Sprintf("%s-%s", base, quote)
-	mtp, ok := m.maiarTokensMap[pair]
+	mtp, ok := x.xExchangeTokensMap[pair]
 	return mtp, ok
 }
 
 // Name returns the name
-func (m *maiar) Name() string {
-	return MaiarName
+func (x *xExchange) Name() string {
+	return XExchangeName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (m *maiar) IsInterfaceNil() bool {
-	return m == nil
+func (x *xExchange) IsInterfaceNil() bool {
+	return x == nil
 }
