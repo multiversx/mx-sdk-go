@@ -12,7 +12,8 @@ import (
 const (
 	// TODO EN-13146: extract this urls constants in a file
 	dataApiUrl = "https://tools.multiversx.com/data-api/graphql"
-	query      = "query MaiarPriceUrl($base: String!, $quote: String!) { trading { pair(first_token: $base, second_token: $quote) { price { last time } } } }"
+	// TODO: update the query after data-api rebranding
+	query = "query MaiarPriceUrl($base: String!, $quote: String!) { trading { pair(first_token: $base, second_token: $quote) { price { last time } } } }"
 )
 
 type variables struct {
