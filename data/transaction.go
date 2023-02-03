@@ -1,6 +1,6 @@
 package data
 
-import "github.com/ElrondNetwork/elrond-go-core/data/transaction"
+import "github.com/multiversx/mx-chain-core-go/data/transaction"
 
 // SendTransactionResponse holds the response received from the network when broadcasting a transaction
 type SendTransactionResponse struct {
@@ -27,8 +27,8 @@ type Transaction struct {
 	Value             string `json:"value"`
 	RcvAddr           string `json:"receiver"`
 	SndAddr           string `json:"sender"`
-	GasPrice          uint64 `json:"gasPrice,omitempty"`
-	GasLimit          uint64 `json:"gasLimit,omitempty"`
+	GasPrice          uint64 `json:"gasPrice"`
+	GasLimit          uint64 `json:"gasLimit"`
 	Data              []byte `json:"data,omitempty"`
 	Signature         string `json:"signature,omitempty"`
 	ChainID           string `json:"chainID"`

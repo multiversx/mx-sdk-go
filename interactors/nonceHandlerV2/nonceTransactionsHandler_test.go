@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
-	testsInteractors "github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon/interactors"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
+	"github.com/multiversx/mx-sdk-go/interactors"
+	"github.com/multiversx/mx-sdk-go/testsCommon"
+	testsInteractors "github.com/multiversx/mx-sdk-go/testsCommon/interactors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

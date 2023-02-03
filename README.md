@@ -1,14 +1,10 @@
-# Elrond SDK for GO
+# MultiversX SDK for GO
 
-Elrond SDK for GO - useful for developing GO applications that interact with the Elrond Network.
+MultiversX SDK for GO - useful for developing GO applications that interact with the blockchain.
 
 ## Documentation
 
-[pkg.go.dev](https://pkg.go.dev/github.com/ElrondNetwork/elrond-sdk/erdgo) 
-
-## CHANGELOG
-
-[CHANGELOG](CHANGELOG.md)
+[pkg.go.dev](https://pkg.go.dev/github.com/multiversx/mx-sdk-erdgo)
 
 ## Dependencies
 

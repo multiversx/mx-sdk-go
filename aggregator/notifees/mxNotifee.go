@@ -3,12 +3,12 @@ package notifees
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-sdk-go/aggregator"
+	"github.com/multiversx/mx-sdk-go/builders"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 const zeroString = "0"
@@ -16,10 +16,10 @@ const txVersion = uint32(1)
 const function = "submitBatch"
 const minGasLimit = uint64(1)
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/aggregator/notifees")
+var log = logger.GetOrCreate("mx-sdk-go/aggregator/notifees")
 
-// ArgsElrondNotifee is the argument DTO for the NewElrondNotifee function
-type ArgsElrondNotifee struct {
+// ArgsMxNotifee is the argument DTO for the NewMxNotifee function
+type ArgsMxNotifee struct {
 	Proxy           Proxy
 	TxBuilder       TxBuilder
 	TxNonceHandler  TransactionNonceHandler
@@ -29,7 +29,7 @@ type ArgsElrondNotifee struct {
 	GasLimitForEach uint64
 }
 
-type elrondNotifee struct {
+type mxNotifee struct {
 	proxy           Proxy
 	txBuilder       TxBuilder
 	txNonceHandler  TransactionNonceHandler
@@ -39,14 +39,14 @@ type elrondNotifee struct {
 	cryptoHolder    core.CryptoComponentsHolder
 }
 
-// NewElrondNotifee will create a new instance of elrondNotifee
-func NewElrondNotifee(args ArgsElrondNotifee) (*elrondNotifee, error) {
-	err := checkArgsElrondNotifee(args)
+// NewMxNotifee will create a new instance of mxNotifee
+func NewMxNotifee(args ArgsMxNotifee) (*mxNotifee, error) {
+	err := checkArgsMxNotifee(args)
 	if err != nil {
 		return nil, err
 	}
 
-	notifee := &elrondNotifee{
+	notifee := &mxNotifee{
 		proxy:           args.Proxy,
 		txBuilder:       args.TxBuilder,
 		txNonceHandler:  args.TxNonceHandler,
@@ -59,7 +59,7 @@ func NewElrondNotifee(args ArgsElrondNotifee) (*elrondNotifee, error) {
 	return notifee, nil
 }
 
-func checkArgsElrondNotifee(args ArgsElrondNotifee) error {
+func checkArgsMxNotifee(args ArgsMxNotifee) error {
 	if check.IfNil(args.Proxy) {
 		return errNilProxy
 	}
@@ -88,9 +88,9 @@ func checkArgsElrondNotifee(args ArgsElrondNotifee) error {
 	return nil
 }
 
-// PriceChanged is the function that gets called by a price notifier. This function will assemble an Elrond
+// PriceChanged is the function that gets called by a price notifier. This function will assemble a MultiversX
 // transaction, having the transaction's data field containing all the price changes information
-func (en *elrondNotifee) PriceChanged(ctx context.Context, priceChanges []*aggregator.ArgsPriceChanged) error {
+func (en *mxNotifee) PriceChanged(ctx context.Context, priceChanges []*aggregator.ArgsPriceChanged) error {
 	txData, err := en.prepareTxData(priceChanges)
 	if err != nil {
 		return err
@@ -132,7 +132,7 @@ func (en *elrondNotifee) PriceChanged(ctx context.Context, priceChanges []*aggre
 	return nil
 }
 
-func (en *elrondNotifee) prepareTxData(priceChanges []*aggregator.ArgsPriceChanged) ([]byte, error) {
+func (en *mxNotifee) prepareTxData(priceChanges []*aggregator.ArgsPriceChanged) ([]byte, error) {
 	txDataBuilder := builders.NewTxDataBuilder()
 	txDataBuilder.Function(function)
 
@@ -148,6 +148,6 @@ func (en *elrondNotifee) prepareTxData(priceChanges []*aggregator.ArgsPriceChang
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (en *elrondNotifee) IsInterfaceNil() bool {
+func (en *mxNotifee) IsInterfaceNil() bool {
 	return en == nil
 }

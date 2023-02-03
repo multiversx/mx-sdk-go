@@ -16,10 +16,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-chain-crypto-go/signing"
+	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/pborman/uuid"
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/crypto/scrypt"
@@ -46,7 +46,7 @@ type bip32 struct {
 }
 
 var suite = ed25519.NewEd25519()
-var keyGenerator = crypto.NewKeyGenerator(suite)
+var keyGenerator = signing.NewKeyGenerator(suite)
 
 type encryptedKeyJSONV4 struct {
 	Address string `json:"address"`

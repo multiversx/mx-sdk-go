@@ -3,7 +3,7 @@ package data
 import (
 	"fmt"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/multiversx/mx-sdk-go/core"
 )
 
 const offsetPretty = 8

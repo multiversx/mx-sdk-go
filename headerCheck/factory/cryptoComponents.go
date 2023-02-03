@@ -1,12 +1,13 @@
 package factory
 
 import (
-	"github.com/ElrondNetwork/elrond-go-core/hashing/blake2b"
-	"github.com/ElrondNetwork/elrond-go-crypto"
-	disabledSig "github.com/ElrondNetwork/elrond-go-crypto/signing/disabled/singlesig"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/mcl"
-	mclMultiSig "github.com/ElrondNetwork/elrond-go-crypto/signing/mcl/multisig"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/multisig"
+	"github.com/multiversx/mx-chain-core-go/hashing/blake2b"
+	crypto "github.com/multiversx/mx-chain-crypto-go"
+	"github.com/multiversx/mx-chain-crypto-go/signing"
+	disabledSig "github.com/multiversx/mx-chain-crypto-go/signing/disabled/singlesig"
+	"github.com/multiversx/mx-chain-crypto-go/signing/mcl"
+	mclMultiSig "github.com/multiversx/mx-chain-crypto-go/signing/mcl/multisig"
+	"github.com/multiversx/mx-chain-crypto-go/signing/multisig"
 )
 
 type cryptoComponents struct {
@@ -18,7 +19,7 @@ type cryptoComponents struct {
 
 // CreateCryptoComponents creates crypto components needed for header verification
 func CreateCryptoComponents() (*cryptoComponents, error) {
-	blockSignKeyGen := crypto.NewKeyGenerator(mcl.NewSuiteBLS12())
+	blockSignKeyGen := signing.NewKeyGenerator(mcl.NewSuiteBLS12())
 
 	interceptSingleSigner := &disabledSig.DisabledSingleSig{}
 

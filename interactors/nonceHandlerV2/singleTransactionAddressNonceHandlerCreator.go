@@ -1,8 +1,8 @@
 package nonceHandlerV2
 
 import (
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
 // SingleTransactionAddressNonceHandlerCreator is used to create singleTransactionAddressNonceHandler instances
