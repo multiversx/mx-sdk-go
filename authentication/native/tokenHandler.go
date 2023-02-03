@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
+	"github.com/multiversx/mx-sdk-go/authentication"
 )
 
 // authTokenHandler will handle encoding and decoding native authentication tokens

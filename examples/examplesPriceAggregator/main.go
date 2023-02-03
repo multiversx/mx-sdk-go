@@ -14,7 +14,7 @@ import (
 	"github.com/multiversx/mx-sdk-go/aggregator/fetchers"
 	"github.com/multiversx/mx-sdk-go/aggregator/mock"
 	"github.com/multiversx/mx-sdk-go/authentication"
-	"github.com/multiversx/mx-sdk-go/authentication"
+	"github.com/multiversx/mx-sdk-go/authentication/native"
 	"github.com/multiversx/mx-sdk-go/blockchain"
 	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
 	"github.com/multiversx/mx-sdk-go/core"

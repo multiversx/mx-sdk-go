@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multiversx/mx-chain-crypto-go"
+	crypto "github.com/multiversx/mx-chain-crypto-go"
 	"github.com/multiversx/mx-sdk-go/authentication"
 	"github.com/multiversx/mx-sdk-go/authentication/native/mock"
 	"github.com/multiversx/mx-sdk-go/data"

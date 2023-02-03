@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-core/core"
-	crypto "github.com/ElrondNetwork/elrond-go-crypto"
-	genesisMock "github.com/ElrondNetwork/elrond-go/genesis/mock"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication/native/mock"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
+	"github.com/multiversx/mx-chain-core-go/core"
+	crypto "github.com/multiversx/mx-chain-crypto-go"
+	genesisMock "github.com/multiversx/mx-chain-go/genesis/mock"
+	"github.com/multiversx/mx-sdk-go/authentication"
+	"github.com/multiversx/mx-sdk-go/authentication/native/mock"
+	"github.com/multiversx/mx-sdk-go/data"
+	"github.com/multiversx/mx-sdk-go/testsCommon"
+	"github.com/multiversx/mx-sdk-go/workflows"
 	"github.com/stretchr/testify/require"
 )
 

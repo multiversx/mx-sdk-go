@@ -7,17 +7,17 @@ import (
 	"os"
 	"time"
 
-	crypto "github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
+	"github.com/multiversx/mx-chain-crypto-go/signing"
+	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-sdk-go/blockchain"
+	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
+	"github.com/multiversx/mx-sdk-go/builders"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
+	"github.com/multiversx/mx-sdk-go/examples"
+	"github.com/multiversx/mx-sdk-go/interactors"
+	"github.com/multiversx/mx-sdk-go/workflows"
 	"github.com/urfave/cli"
 )
 
@@ -106,13 +106,13 @@ VERSION:
 	}
 
 	argsConfig = &cfg{}
-	log        = logger.GetOrCreate("elrond-sdk-erdgo/cmd/cli")
+	log        = logger.GetOrCreate("mx-sdk-go/cmd/cli")
 )
 
 var HOME = os.Getenv("HOME")
-var pathGeneratedWallets = HOME + "/Elrond/testnet/filegen/output/walletKey.pem"
+var pathGeneratedWallets = HOME + "/MultiversX/testnet/filegen/output/walletKey.pem"
 var suite = ed25519.NewEd25519()
-var keyGen = crypto.NewKeyGenerator(suite)
+var keyGen = signing.NewKeyGenerator(suite)
 
 const (
 	alice              = "alice"
@@ -169,7 +169,7 @@ func main() {
 
 	app.Name = "cli"
 	app.Version = "v1.0.0"
-	app.Usage = "This binary provides commands to interact with the elrond blockchain"
+	app.Usage = "This binary provides commands to interact with the MultiversX blockchain"
 
 	app.Flags = []cli.Flag{
 		setGuardian,
@@ -198,7 +198,7 @@ func process() error {
 		return err
 	}
 
-	ep, err := blockchain.NewElrondProxy(createElrondProxyArgs())
+	ep, err := blockchain.NewProxy(createProxyArgs())
 	if err != nil {
 		log.Error("error creating proxy", "error", err)
 		return err
@@ -599,7 +599,7 @@ func loadPemFiles() (*testData, error) {
 	return td, nil
 }
 
-func createElrondProxyArgs() blockchain.ArgsElrondProxy {
+func createProxyArgs() blockchain.ArgsProxy {
 	proxyURL := examples.TestnetGateway
 	switch argsConfig.proxy {
 	case mainnet:
@@ -614,7 +614,7 @@ func createElrondProxyArgs() blockchain.ArgsElrondProxy {
 		}
 	}
 
-	return blockchain.ArgsElrondProxy{
+	return blockchain.ArgsProxy{
 		ProxyURL:            proxyURL,
 		Client:              nil,
 		SameScState:         false,

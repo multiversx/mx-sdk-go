@@ -3,6 +3,7 @@ package blockchain
 import (
 	"context"
 
+	"github.com/multiversx/mx-chain-core-go/data/api"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 )
