@@ -3,12 +3,12 @@ package blockchain
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-go-core/data/api"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-chain-core-go/data/api"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
-// Proxy holds the primitive functions that the elrond proxy engine supports & implements
+// Proxy holds the primitive functions that the multiversx proxy engine supports & implements
 type Proxy interface {
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
 	GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error)

@@ -1,6 +1,6 @@
 package testsCommon
 
-import "github.com/ElrondNetwork/elrond-go-crypto"
+import crypto "github.com/multiversx/mx-chain-crypto-go"
 
 // PrivateKeyStub -
 type PrivateKeyStub struct {

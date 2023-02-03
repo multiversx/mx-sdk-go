@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-sdk-go/core"
 )
 
 type nonces struct {

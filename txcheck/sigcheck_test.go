@@ -5,17 +5,17 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
-	"github.com/ElrondNetwork/elrond-go-core/hashing/keccak"
-	marshallerFactory "github.com/ElrondNetwork/elrond-go-core/marshal/factory"
-	crypto "github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/txcheck"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-core-go/hashing/keccak"
+	marshallerFactory "github.com/multiversx/mx-chain-core-go/marshal/factory"
+	"github.com/multiversx/mx-chain-crypto-go/signing"
+	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
+	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
+	"github.com/multiversx/mx-sdk-go/builders"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
+	"github.com/multiversx/mx-sdk-go/interactors"
+	"github.com/multiversx/mx-sdk-go/txcheck"
 	"github.com/stretchr/testify/require"
 )
 
@@ -88,7 +88,7 @@ func Test_VerifyTransactionSignature(t *testing.T) {
 
 func createUserAndGuardianKeys(t *testing.T) (cryptoHolderUser core.CryptoComponentsHolder, cryptoHolderGuardian core.CryptoComponentsHolder) {
 	suite := ed25519.NewEd25519()
-	keyGen := crypto.NewKeyGenerator(suite)
+	keyGen := signing.NewKeyGenerator(suite)
 
 	skUser, err := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c4")
 	require.Nil(t, err)

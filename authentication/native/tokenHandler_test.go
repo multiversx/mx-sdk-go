@@ -3,8 +3,8 @@ package native
 import (
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-sdk-go/authentication"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

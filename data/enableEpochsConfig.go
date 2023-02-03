@@ -1,6 +1,6 @@
 package data
 
-import "github.com/ElrondNetwork/elrond-go/config"
+import "github.com/multiversx/mx-chain-go/config"
 
 // EnableEpochsConfigResponse holds the enable epochs config endpoint response
 type EnableEpochsConfigResponse struct {

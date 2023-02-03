@@ -3,7 +3,7 @@ package finalityProvider
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 type proxy interface {

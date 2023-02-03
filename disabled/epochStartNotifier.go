@@ -1,7 +1,7 @@
 package disabled
 
 import (
-	"github.com/ElrondNetwork/elrond-go/epochStart"
+	"github.com/multiversx/mx-chain-go/epochStart"
 )
 
 // EpochStartNotifier is a disabled implementation of EpochStartEventNotifier interface

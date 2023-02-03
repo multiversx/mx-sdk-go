@@ -1,6 +1,6 @@
 package disabled
 
-import vmcommon "github.com/ElrondNetwork/elrond-vm-common"
+import vmcommon "github.com/multiversx/mx-chain-vm-common-go"
 
 // BlockChainHookCounter is a disabled implementation of BlockChainHookCounter interface
 type BlockChainHookCounter struct {
@@ -24,9 +24,9 @@ func (bhc *BlockChainHookCounter) ResetCounters() {
 func (bhc *BlockChainHookCounter) SetMaximumValues(_ map[string]uint64) {
 }
 
-// GetCounterValues returns nil
+// GetCounterValues returns an empty map
 func (bhc *BlockChainHookCounter) GetCounterValues() map[string]uint64 {
-	return nil
+	return make(map[string]uint64)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

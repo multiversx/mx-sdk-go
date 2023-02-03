@@ -1,6 +1,6 @@
 package core
 
-import crypto "github.com/ElrondNetwork/elrond-go-crypto"
+import crypto "github.com/multiversx/mx-chain-crypto-go"
 
 // AddressHandler will handle different implementations of an address
 type AddressHandler interface {

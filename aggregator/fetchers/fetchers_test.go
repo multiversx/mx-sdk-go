@@ -9,17 +9,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator/mock"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-crypto-go/signing"
+	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
+	"github.com/multiversx/mx-sdk-go/aggregator"
+	"github.com/multiversx/mx-sdk-go/aggregator/mock"
+	"github.com/multiversx/mx-sdk-go/authentication"
+	"github.com/multiversx/mx-sdk-go/authentication/native"
+	"github.com/multiversx/mx-sdk-go/blockchain"
+	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/examples"
+	"github.com/multiversx/mx-sdk-go/interactors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var errShouldSkipTest = errors.New("should skip test")
 
-func createMockMap() map[string]MaiarTokensPair {
-	return map[string]MaiarTokensPair{
+const networkAddress = "https://testnet-gateway.multiversx.com"
+
+func createMockMap() map[string]XExchangeTokensPair {
+	return map[string]XExchangeTokensPair{
 		"ETH-USD": {
 			Base:  "WEGLD-bd4d79", // for tests only until we have an ETH id
 			Quote: "USDC-c76f1f",
@@ -35,8 +46,59 @@ func createMockMap() map[string]MaiarTokensPair {
 	}
 }
 
+func createAuthClient() (authentication.AuthClient, error) {
+	w := interactors.NewWallet()
+	privateKeyBytes, err := w.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))
+	if err != nil {
+		return nil, err
+	}
+
+	argsProxy := blockchain.ArgsProxy{
+		ProxyURL:            networkAddress,
+		SameScState:         false,
+		ShouldBeSynced:      false,
+		FinalityCheck:       false,
+		AllowedDeltaToFinal: 1,
+		CacheExpirationTime: time.Second,
+		EntityType:          core.Proxy,
+	}
+
+	proxy, err := blockchain.NewProxy(argsProxy)
+	if err != nil {
+		return nil, err
+	}
+
+	keyGen := signing.NewKeyGenerator(ed25519.NewEd25519())
+	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, privateKeyBytes)
+	args := native.ArgsNativeAuthClient{
+		Signer:                 cryptoProvider.NewSigner(),
+		ExtraInfo:              struct{}{},
+		Proxy:                  proxy,
+		CryptoComponentsHolder: holder,
+		TokenExpiryInSeconds:   60 * 60 * 24,
+		Host:                   "oracle",
+		TokenHandler:           native.NewAuthTokenHandler(),
+	}
+
+	authClient, err := native.NewNativeAuthClient(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return authClient, nil
+}
+
 func Test_FunctionalTesting(t *testing.T) {
 	t.Parallel()
+
+	responseGetter, err := aggregator.NewHttpResponseGetter()
+	require.Nil(t, err)
+
+	authClient, err := createAuthClient()
+	require.Nil(t, err)
+
+	graphqlGetter, err := aggregator.NewGraphqlResponseGetter(authClient)
+	require.Nil(t, err)
 
 	for f := range ImplementedFetchers {
 		fetcherName := f
@@ -44,11 +106,11 @@ func Test_FunctionalTesting(t *testing.T) {
 			t.Skip("this test should be run only when doing debugging work on the component")
 
 			t.Parallel()
-			fetcher, _ := NewPriceFetcher(fetcherName, &mock.HttpResponseGetterStub{}, &mock.GraphqlResponseGetterStub{}, createMockMap())
+			fetcher, _ := NewPriceFetcher(fetcherName, responseGetter, graphqlGetter, createMockMap())
 			ethTicker := "ETH"
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
-			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
-			require.Nil(t, err)
+			price, fetchErr := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
+			require.Nil(t, fetchErr)
 			fmt.Printf("price between %s and %s is: %v from %s\n", ethTicker, quoteUSDFiat, price, fetcherName)
 			require.True(t, price > 0)
 		})
@@ -154,10 +216,10 @@ func Test_FetchPriceErrors(t *testing.T) {
 			require.Equal(t, float64(0), price)
 			require.IsType(t, err, &strconv.NumError{})
 		})
-		t.Run("maiar: missing key from map should error "+fetcherName, func(t *testing.T) {
+		t.Run("xExchange: missing key from map should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			if fetcherName != MaiarName {
+			if fetcherName != XExchangeName {
 				return
 			}
 
@@ -179,10 +241,10 @@ func Test_FetchPriceErrors(t *testing.T) {
 			assert.Equal(t, errInvalidPair, err)
 			require.Equal(t, float64(0), price)
 		})
-		t.Run("maiar: invalid graphql response should error "+fetcherName, func(t *testing.T) {
+		t.Run("xExchange: invalid graphql response should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			if fetcherName != MaiarName {
+			if fetcherName != XExchangeName {
 				return
 			}
 
@@ -278,7 +340,7 @@ func Test_FetchPriceErrors(t *testing.T) {
 
 func getFuncQueryCalled(name, returnPrice string, returnErr error) func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 	switch name {
-	case MaiarName:
+	case XExchangeName:
 		return func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 			priceArray := make([]priceResponse, 0)
 			var p priceResponse
@@ -319,10 +381,10 @@ func getFuncGetCalled(name, returnPrice, pair string, returnErr error) func(ctx 
 	case CryptocomName:
 		return func(ctx context.Context, url string, response interface{}) error {
 			cast, _ := response.(*cryptocomPriceRequest)
-			var err error
-			cast.Result.Data.Price, err = strconv.ParseFloat(returnPrice, 64)
-			if err != nil {
-				return errShouldSkipTest
+			cast.Result.Data = []cryptocomPair{
+				{
+					Price: returnPrice,
+				},
 			}
 			return returnErr
 		}

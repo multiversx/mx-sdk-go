@@ -3,11 +3,11 @@ package headerCheck
 import (
 	"context"
 
-	coreData "github.com/ElrondNetwork/elrond-go-core/data"
-	"github.com/ElrondNetwork/elrond-go-core/data/api"
-	"github.com/ElrondNetwork/elrond-go/state"
-	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	coreData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-core-go/data/api"
+	"github.com/multiversx/mx-chain-go/state"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // Proxy holds the behaviour needed for header verifier in order to interact with proxy
@@ -22,7 +22,7 @@ type Proxy interface {
 	GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error)
 	GetGenesisNodesPubKeys(ctx context.Context) (*data.GenesisNodes, error)
 	GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
-	GetGuardianData(ctx context.Context, address erdgoCore.AddressHandler) (*api.GuardianData, error)
+	GetGuardianData(ctx context.Context, address core.AddressHandler) (*api.GuardianData, error)
 	IsInterfaceNil() bool
 }
 

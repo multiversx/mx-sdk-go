@@ -3,9 +3,9 @@ package factory
 import (
 	"fmt"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/endpointProviders"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/finalityProvider"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/multiversx/mx-sdk-go/blockchain/endpointProviders"
+	"github.com/multiversx/mx-sdk-go/blockchain/finalityProvider"
+	"github.com/multiversx/mx-sdk-go/core"
 )
 
 // CreateEndpointProvider creates a new instance of EndpointProvider

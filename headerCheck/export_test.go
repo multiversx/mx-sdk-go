@@ -3,7 +3,7 @@ package headerCheck
 import (
 	"context"
 
-	coreData "github.com/ElrondNetwork/elrond-go-core/data"
+	coreData "github.com/multiversx/mx-chain-core-go/data"
 )
 
 func (hch *headerVerifier) FetchHeaderByHashAndShard(ctx context.Context, shardId uint32, hash string) (coreData.HeaderHandler, error) {

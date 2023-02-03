@@ -5,21 +5,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/pubkeyConverter"
-	crypto "github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/cryptoProvider"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
+	"github.com/multiversx/mx-chain-core-go/core/pubkeyConverter"
+	"github.com/multiversx/mx-chain-crypto-go/signing"
+	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-sdk-go/authentication"
+	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
+	"github.com/multiversx/mx-sdk-go/data"
+	"github.com/multiversx/mx-sdk-go/examples"
+	"github.com/multiversx/mx-sdk-go/interactors"
+	"github.com/multiversx/mx-sdk-go/testsCommon"
+	"github.com/multiversx/mx-sdk-go/workflows"
 	"github.com/stretchr/testify/require"
 )
 
-var keyGen = crypto.NewKeyGenerator(ed25519.NewEd25519())
+var keyGen = signing.NewKeyGenerator(ed25519.NewEd25519())
 
 func TestNativeserver_ClientServer(t *testing.T) {
 

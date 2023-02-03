@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	goCore "github.com/ElrondNetwork/elrond-go-core/core"
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	crypto "github.com/ElrondNetwork/elrond-go-crypto"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/workflows"
+	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	crypto "github.com/multiversx/mx-chain-crypto-go"
+	"github.com/multiversx/mx-sdk-go/authentication"
+	"github.com/multiversx/mx-sdk-go/builders"
+	"github.com/multiversx/mx-sdk-go/workflows"
 )
 
 // ArgsNativeAuthServer is the DTO used in the native auth server constructor
@@ -17,7 +17,7 @@ type ArgsNativeAuthServer struct {
 	Proxy           workflows.ProxyHandler
 	TokenHandler    authentication.AuthTokenHandler
 	Signer          builders.Signer
-	PubKeyConverter goCore.PubkeyConverter
+	PubKeyConverter core.PubkeyConverter
 	KeyGenerator    crypto.KeyGenerator
 }
 
@@ -26,7 +26,7 @@ type authServer struct {
 	tokenHandler    authentication.AuthTokenHandler
 	signer          builders.Signer
 	keyGenerator    crypto.KeyGenerator
-	pubKeyConverter goCore.PubkeyConverter
+	pubKeyConverter core.PubkeyConverter
 	getTimeHandler  func() time.Time
 }
 
@@ -48,7 +48,7 @@ func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
 	}
 
 	if check.IfNil(args.PubKeyConverter) {
-		return nil, goCore.ErrNilPubkeyConverter
+		return nil, core.ErrNilPubkeyConverter
 	}
 
 	if check.IfNil(args.TokenHandler) {

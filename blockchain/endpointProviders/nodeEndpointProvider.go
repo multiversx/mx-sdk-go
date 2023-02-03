@@ -3,7 +3,7 @@ package endpointProviders
 import (
 	"fmt"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/multiversx/mx-sdk-go/core"
 )
 
 const (
@@ -13,7 +13,7 @@ const (
 	nodeRawMiniBlockByHashEndpoint = "internal/raw/miniblock/by-hash/%s/epoch/%d"
 )
 
-// nodeEndpointProvider is suitable to work with an Elrond node (observer)
+// nodeEndpointProvider is suitable to work with a MultiversX node (observer)
 type nodeEndpointProvider struct {
 	*baseEndpointProvider
 }

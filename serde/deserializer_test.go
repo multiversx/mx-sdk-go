@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/serde/testingMocks"
+	"github.com/multiversx/mx-sdk-go/serde/testingMocks"
 	"github.com/stretchr/testify/assert"
 )
 

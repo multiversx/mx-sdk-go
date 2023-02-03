@@ -3,11 +3,11 @@ package interactors
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
-// Proxy holds the primitive functions that the elrond proxy engine supports & implements
+// Proxy holds the primitive functions that the multiversx proxy engine supports & implements
 // dependency inversion: blockchain package is considered inner business logic, this package is considered "plugin"
 type Proxy interface {
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)

@@ -1,6 +1,6 @@
 package mock
 
-import "github.com/ElrondNetwork/elrond-sdk-erdgo/authentication"
+import "github.com/multiversx/mx-sdk-go/authentication"
 
 // AuthServerStub -
 type AuthServerStub struct {
