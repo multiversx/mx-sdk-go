@@ -41,7 +41,6 @@ func TestNativeserver_ClientServer(t *testing.T) {
 			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
 				block := &data.Block{
 					Timestamp: int(lastBlock.Timestamp),
-					Hash:      lastBlock.Hash,
 				}
 				buff, _ := json.Marshal(block)
 				return buff, http.StatusOK, nil
@@ -83,7 +82,6 @@ func createNativeServer(httpClientWrapper authentication.HttpClientWrapper, toke
 	converter, _ := pubkeyConverter.NewBech32PubkeyConverter(32, logger.GetOrCreate("testscommon"))
 
 	serverArgs := ArgsNativeAuthServer{
-		ApiNetworkAddress: "api.multiversx.com",
 		HttpClientWrapper: httpClientWrapper,
 		TokenHandler:      tokenHandler,
 		Signer:            &testsCommon.SignerStub{},

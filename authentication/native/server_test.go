@@ -26,15 +26,6 @@ var httpExpectedErr = authentication.CreateHTTPStatusError(http.StatusInternalSe
 func TestNativeserver_NewNativeAuthServer(t *testing.T) {
 	t.Parallel()
 
-	t.Run("empty api network address should error", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthServer()
-		args.ApiNetworkAddress = ""
-		server, err := NewNativeAuthServer(args)
-		require.Nil(t, server)
-		require.Equal(t, authentication.ErrEmptyApiNetworkAddress, err)
-	})
 	t.Run("nil http server wrapper should error", func(t *testing.T) {
 		t.Parallel()
 
@@ -95,7 +86,7 @@ func TestNativeserver_Validate(t *testing.T) {
 
 	tokenTtl := int64(20)
 	blockTimestamp := int64(10)
-	t.Run("proxy returns error should error", func(t *testing.T) {
+	t.Run("httpClientWrapper returns error should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthServer()
@@ -294,7 +285,6 @@ func TestNativeserver_Validate(t *testing.T) {
 
 func createMockArgsNativeAuthServer() ArgsNativeAuthServer {
 	return ArgsNativeAuthServer{
-		ApiNetworkAddress: "api.multiversx.com",
 		HttpClientWrapper: &testsCommon.HTTPClientWrapperStub{},
 		TokenHandler:      &mock.AuthTokenHandlerStub{},
 		Signer:            &testsCommon.SignerStub{},

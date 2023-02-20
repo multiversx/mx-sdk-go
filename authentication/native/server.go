@@ -3,6 +3,7 @@ package native
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -14,9 +15,10 @@ import (
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
+const blockByHashEndpoint = "blocks/%s"
+
 // ArgsNativeAuthServer is the DTO used in the native auth server constructor
 type ArgsNativeAuthServer struct {
-	ApiNetworkAddress string
 	HttpClientWrapper authentication.HttpClientWrapper
 	TokenHandler      authentication.AuthTokenHandler
 	Signer            builders.Signer
@@ -26,7 +28,6 @@ type ArgsNativeAuthServer struct {
 
 type authServer struct {
 	httpClientWrapper authentication.HttpClientWrapper
-	apiNetworkAddress string
 	tokenHandler      authentication.AuthTokenHandler
 	signer            builders.Signer
 	keyGenerator      crypto.KeyGenerator
@@ -39,10 +40,6 @@ type authServer struct {
 // 1. Checks whether the provided signature from tokens corresponds with the provided address for the provided body
 // 2. Checks the token expiration status
 func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
-	if len(args.ApiNetworkAddress) == 0 {
-		return nil, authentication.ErrEmptyApiNetworkAddress
-	}
-
 	if check.IfNil(args.HttpClientWrapper) {
 		return nil, authentication.ErrNilHttpClientWrapper
 	}
@@ -64,7 +61,6 @@ func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
 	}
 
 	return &authServer{
-		apiNetworkAddress: args.ApiNetworkAddress,
 		httpClientWrapper: args.HttpClientWrapper,
 		tokenHandler:      args.TokenHandler,
 		signer:            args.Signer,
@@ -129,7 +125,7 @@ func (server *authServer) IsInterfaceNil() bool {
 
 func (server *authServer) getBlockByHash(ctx context.Context, hash string) (*data.Block, error) {
 	var block data.Block
-	buff, code, err := server.httpClientWrapper.GetHTTP(ctx, "blocks/"+hash)
+	buff, code, err := server.httpClientWrapper.GetHTTP(ctx, fmt.Sprintf(blockByHashEndpoint, hash))
 	if err != nil || code != http.StatusOK {
 		return nil, authentication.CreateHTTPStatusError(code, err)
 	}
