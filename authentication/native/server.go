@@ -115,7 +115,13 @@ func (server *authServer) validateSignature(token authentication.AuthToken) erro
 
 	unsignedToken := server.tokenHandler.GetUnsignedToken(token)
 	signableMessage := server.tokenHandler.GetSignableMessage(token.GetAddress(), unsignedToken)
-	return server.signer.VerifyMessage(signableMessage, pubkey, token.GetSignature())
+
+	err = server.signer.VerifyMessage(signableMessage, pubkey, token.GetSignature())
+	if err != nil {
+		signableMessageLegacy := server.tokenHandler.GetSignableMessageLegacy(token.GetAddress(), unsignedToken)
+		return server.signer.VerifyMessage(signableMessageLegacy, pubkey, token.GetSignature())
+	}
+	return err
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
