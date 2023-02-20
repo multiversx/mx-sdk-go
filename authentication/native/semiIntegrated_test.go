@@ -2,6 +2,8 @@ package native
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
 	"testing"
 	"time"
 
@@ -25,20 +27,28 @@ func TestNativeserver_ClientServer(t *testing.T) {
 
 	t.Run("valid token", func(t *testing.T) {
 		t.Parallel()
-		lastHyperBlock := &data.HyperBlock{
+		lastBlock := &data.HyperBlock{
 			Timestamp: uint64(time.Now().Unix()),
 			Hash:      "hash",
 		}
 		proxy := &testsCommon.ProxyStub{
 			GetHyperBlockByNonceCalled: func(ctx context.Context, nonce uint64) (*data.HyperBlock, error) {
-				return lastHyperBlock, nil
+				return lastBlock, nil
 			},
-			GetHyperBlockByHashCalled: func(ctx context.Context, hash string) (*data.HyperBlock, error) {
-				return lastHyperBlock, nil
+		}
+
+		httpClientWrapper := &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				block := &data.Block{
+					Timestamp: int(lastBlock.Timestamp),
+					Hash:      lastBlock.Hash,
+				}
+				buff, _ := json.Marshal(block)
+				return buff, http.StatusOK, nil
 			},
 		}
 		tokenHandler := NewAuthTokenHandler()
-		server := createNativeServer(proxy, tokenHandler)
+		server := createNativeServer(httpClientWrapper, tokenHandler)
 		alice := createNativeClient(examples.AlicePemContents, proxy, tokenHandler, "host")
 
 		authToken, _ := alice.GetAccessToken()
@@ -69,15 +79,16 @@ func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler a
 	return client
 }
 
-func createNativeServer(proxy workflows.ProxyHandler, tokenHandler authentication.AuthTokenHandler) *authServer {
+func createNativeServer(httpClientWrapper authentication.HttpClientWrapper, tokenHandler authentication.AuthTokenHandler) *authServer {
 	converter, _ := pubkeyConverter.NewBech32PubkeyConverter(32, logger.GetOrCreate("testscommon"))
 
 	serverArgs := ArgsNativeAuthServer{
-		Proxy:           proxy,
-		TokenHandler:    tokenHandler,
-		Signer:          &testsCommon.SignerStub{},
-		KeyGenerator:    keyGen,
-		PubKeyConverter: converter,
+		ApiNetworkAddress: "api.multiversx.com",
+		HttpClientWrapper: httpClientWrapper,
+		TokenHandler:      tokenHandler,
+		Signer:            &testsCommon.SignerStub{},
+		PubKeyConverter:   converter,
+		KeyGenerator:      keyGen,
 	}
 	server, _ := NewNativeAuthServer(serverArgs)
 

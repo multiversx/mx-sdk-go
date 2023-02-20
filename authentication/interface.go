@@ -1,5 +1,7 @@
 package authentication
 
+import "context"
+
 // AuthClient defines the behavior of an authentication client
 type AuthClient interface {
 	GetAccessToken() (string, error)
@@ -29,5 +31,12 @@ type AuthToken interface {
 	GetSignature() []byte
 	GetBlockHash() string
 	GetExtraInfo() []byte
+	IsInterfaceNil() bool
+}
+
+// HttpClientWrapper defines the behavior of http client able to make http requests
+type HttpClientWrapper interface {
+	GetHTTP(ctx context.Context, endpoint string) ([]byte, int, error)
+	PostHTTP(ctx context.Context, endpoint string, data []byte) ([]byte, int, error)
 	IsInterfaceNil() bool
 }
