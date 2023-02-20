@@ -1,6 +1,10 @@
 package authentication
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"net/http"
+)
 
 // ErrNilAcceptedHosts signals that a nil or empty accepted hosts map has been provided
 var ErrNilAcceptedHosts = errors.New("nil accepted hosts")
@@ -28,3 +32,22 @@ var ErrTokenExpired = errors.New("token expired")
 
 // ErrNilCryptoComponentsHolder signals that a nil cryptoComponentsHolder has been provided
 var ErrNilCryptoComponentsHolder = errors.New("nil cryptoComponentsHolder")
+
+// ErrEmptyApiNetworkAddress signals that an empty api network address was provided
+var ErrEmptyApiNetworkAddress = errors.New("empty api network address")
+
+// ErrNilHttpClientWrapper signals that a nil http client wrapper was provided
+var ErrNilHttpClientWrapper = errors.New("nil http client wrapper")
+
+// ErrHTTPStatusCodeIsNotOK signals that the returned HTTP status code is not OK
+var ErrHTTPStatusCodeIsNotOK = errors.New("HTTP status code is not OK")
+
+// CreateHTTPStatusError creates an error with the provided http status code and error
+func CreateHTTPStatusError(httpStatusCode int, err error) error {
+	if err == nil {
+		err = ErrHTTPStatusCodeIsNotOK
+	}
+
+	return fmt.Errorf("%w, returned http status: %d, %s",
+		err, httpStatusCode, http.StatusText(httpStatusCode))
+}
