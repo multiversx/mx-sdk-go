@@ -129,7 +129,7 @@ func (server *authServer) IsInterfaceNil() bool {
 
 func (server *authServer) getBlockByHash(ctx context.Context, hash string) (*data.Block, error) {
 	var block data.Block
-	buff, code, err := server.httpClientWrapper.GetHTTP(ctx, server.apiNetworkAddress+"/blocks/"+hash)
+	buff, code, err := server.httpClientWrapper.GetHTTP(ctx, "/blocks/"+hash)
 	if err != nil || code != http.StatusOK {
 		return nil, authentication.CreateHTTPStatusError(code, err)
 	}
