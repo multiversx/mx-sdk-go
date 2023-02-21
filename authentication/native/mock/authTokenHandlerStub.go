@@ -4,10 +4,11 @@ import "github.com/multiversx/mx-sdk-go/authentication"
 
 // AuthTokenHandlerStub -
 type AuthTokenHandlerStub struct {
-	DecodeCalled             func(accessToken string) (authentication.AuthToken, error)
-	EncodeCalled             func(authToken authentication.AuthToken) (string, error)
-	GetUnsignedTokenCalled   func(authToken authentication.AuthToken) []byte
-	GetSignableMessageCalled func(address, unsignedToken []byte) []byte
+	DecodeCalled                   func(accessToken string) (authentication.AuthToken, error)
+	EncodeCalled                   func(authToken authentication.AuthToken) (string, error)
+	GetUnsignedTokenCalled         func(authToken authentication.AuthToken) []byte
+	GetSignableMessageCalled       func(address, unsignedToken []byte) []byte
+	GetSignableMessageLegacyCalled func(address, unsignedToken []byte) []byte
 }
 
 // Decode -
@@ -38,6 +39,14 @@ func (stub *AuthTokenHandlerStub) GetUnsignedToken(authToken authentication.Auth
 func (stub *AuthTokenHandlerStub) GetSignableMessage(address, unsignedToken []byte) []byte {
 	if stub.GetSignableMessageCalled != nil {
 		return stub.GetSignableMessageCalled(address, unsignedToken)
+	}
+	return nil
+}
+
+// GetSignableMessageLegacy -
+func (stub *AuthTokenHandlerStub) GetSignableMessageLegacy(address, unsignedToken []byte) []byte {
+	if stub.GetSignableMessageLegacyCalled != nil {
+		return stub.GetSignableMessageLegacyCalled(address, unsignedToken)
 	}
 	return nil
 }

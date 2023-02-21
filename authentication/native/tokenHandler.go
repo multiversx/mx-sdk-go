@@ -93,6 +93,11 @@ func (th *authTokenHandler) GetSignableMessage(address, unsignedToken []byte) []
 	return []byte(fmt.Sprintf("%s%s", address, unsignedToken))
 }
 
+// GetSignableMessageLegacy returns a message to be signed
+func (th *authTokenHandler) GetSignableMessageLegacy(address, unsignedToken []byte) []byte {
+	return []byte(fmt.Sprintf("%s%s{}", address, unsignedToken))
+}
+
 func decodeHandler(source string) ([]byte, error) {
 	source = strings.ReplaceAll(source, "-", "+")
 	source = strings.ReplaceAll(source, "_", "/")
