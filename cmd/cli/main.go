@@ -304,17 +304,13 @@ func setGuardianOption(td *testData, options *selectedOptions) error {
 }
 
 func setGuardedTxByOption(td *testData, options *selectedOptions) error {
-	selectedAddress, sk, err := selectAddressAndSkFromString(td, argsConfig.guardedTxBy)
+	selectedAddress, _, err := selectAddressAndSkFromString(td, argsConfig.guardedTxBy)
 	if err != nil {
 		return err
 	}
 
 	if selectedAddress != nil {
 		options.txArguments.GuardianAddr = selectedAddress.AddressAsBech32String()
-		options.guardianCryptoHolder, err = cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
-		if err != nil {
-			return err
-		}
 		options.txArguments.Options = maskGuardedTx
 	}
 
@@ -532,11 +528,11 @@ func loadPemFiles() (*testData, error) {
 
 	w := interactors.NewWallet()
 
-	td.skFunding, err = w.LoadPrivateKeyFromPemFile(pathGeneratedWallets)
+	/*td.skFunding, err = w.LoadPrivateKeyFromPemFile(pathGeneratedWallets)
 	if err != nil {
 		log.Error("unable to load funding wallet", "error", err)
 		return nil, err
-	}
+	}*/
 
 	td.skAlice, err = w.LoadPrivateKeyFromPemData([]byte(examples.AlicePemContents))
 	if err != nil {
@@ -562,11 +558,11 @@ func loadPemFiles() (*testData, error) {
 		return nil, err
 	}
 
-	td.addressFunding, err = w.GetAddressFromPrivateKey(td.skFunding)
+	/*td.addressFunding, err = w.GetAddressFromPrivateKey(td.skFunding)
 	if err != nil {
 		log.Error("unable to load funding address from private key", "error", err)
 		return nil, err
-	}
+	}*/
 
 	// Generate address from private key
 	td.addressAlice, err = w.GetAddressFromPrivateKey(td.skAlice)
