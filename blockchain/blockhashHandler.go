@@ -14,18 +14,16 @@ import (
 )
 
 const (
-	minimumRoundingRound = 1
-	minPollingInterval   = time.Second
-	minBlockTtl          = time.Second
-	logPath              = "blockchain/blockhashHandler"
-	blockByHashEndpoint  = "blocks/%s?fields=timestamp"
+	minPollingInterval  = time.Second
+	minBlockTtl         = time.Second
+	logPath             = "blockchain/blockhashHandler"
+	blockByHashEndpoint = "blocks/%s?fields=timestamp"
 )
 
 type argsBlockhashHandler struct {
-	roundingRound     uint64
 	pollingInterval   time.Duration
-	httpClientWrapper httpClientWrapper
 	blockTtl          time.Duration
+	httpClientWrapper httpClientWrapper
 }
 
 type blockhashHandler struct {
@@ -35,7 +33,6 @@ type blockhashHandler struct {
 	loopStatus      *atomic.Flag
 	cancel          func()
 	pollingInterval time.Duration
-	roundingRound   uint64
 	blockTtl        time.Duration
 	getTimeHandler  func() time.Time
 }
@@ -49,7 +46,6 @@ func NewBlockhashHandler(args argsBlockhashHandler) (*blockhashHandler, error) {
 
 	bh := &blockhashHandler{
 		blockhashes:       make(map[string]int),
-		roundingRound:     args.roundingRound,
 		blockTtl:          args.blockTtl,
 		loopStatus:        &atomic.Flag{},
 		pollingInterval:   args.pollingInterval,
@@ -65,9 +61,6 @@ func NewBlockhashHandler(args argsBlockhashHandler) (*blockhashHandler, error) {
 }
 
 func checkArgs(args argsBlockhashHandler) error {
-	if args.roundingRound < minimumRoundingRound {
-		return fmt.Errorf("%w in checkArgs for value RoundingRound", ErrInvalidValue)
-	}
 	if args.pollingInterval < minPollingInterval {
 		return fmt.Errorf("%w in checkArgs for value PollingInterval", ErrInvalidValue)
 	}
