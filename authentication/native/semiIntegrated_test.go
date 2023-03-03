@@ -2,8 +2,6 @@ package native
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"testing"
 	"time"
 
@@ -37,17 +35,16 @@ func TestNativeserver_ClientServer(t *testing.T) {
 			},
 		}
 
-		httpClientWrapper := &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+		blockhashHandler := &testsCommon.BlockhashHandlerStub{
+			GetBlockByHashCalled: func(ctx context.Context, hash string) (*data.Block, error) {
 				block := &data.Block{
 					Timestamp: int(lastBlock.Timestamp),
 				}
-				buff, _ := json.Marshal(block)
-				return buff, http.StatusOK, nil
+				return block, nil
 			},
 		}
 		tokenHandler := NewAuthTokenHandler()
-		server := createNativeServer(httpClientWrapper, tokenHandler)
+		server := createNativeServer(blockhashHandler, tokenHandler)
 		alice := createNativeClient(examples.AlicePemContents, proxy, tokenHandler, "host")
 
 		authToken, _ := alice.GetAccessToken()
@@ -78,15 +75,15 @@ func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler a
 	return client
 }
 
-func createNativeServer(httpClientWrapper authentication.HttpClientWrapper, tokenHandler authentication.AuthTokenHandler) *authServer {
+func createNativeServer(blockhashHandler authentication.BlockhashHandler, tokenHandler authentication.AuthTokenHandler) *authServer {
 	converter, _ := pubkeyConverter.NewBech32PubkeyConverter(32, logger.GetOrCreate("testscommon"))
 
 	serverArgs := ArgsNativeAuthServer{
-		HttpClientWrapper: httpClientWrapper,
-		TokenHandler:      tokenHandler,
-		Signer:            &testsCommon.SignerStub{},
-		PubKeyConverter:   converter,
-		KeyGenerator:      keyGen,
+		BlockhashHandler: blockhashHandler,
+		TokenHandler:     tokenHandler,
+		Signer:           &testsCommon.SignerStub{},
+		PubKeyConverter:  converter,
+		KeyGenerator:     keyGen,
 	}
 	server, _ := NewNativeAuthServer(serverArgs)
 

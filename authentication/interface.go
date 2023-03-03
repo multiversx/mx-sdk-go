@@ -49,6 +49,5 @@ type HttpClientWrapper interface {
 // BlockhashHandler defines the behavior of a blockhash handler
 type BlockhashHandler interface {
 	GetBlockByHash(ctx context.Context, hash string) (*data.Block, error)
-	GetBlockByNonce(ctx context.Context, nonce uint64) (*data.Block, error)
 	IsInterfaceNil() bool
 }
