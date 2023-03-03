@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/atomic"
@@ -28,6 +29,7 @@ type argsBlockhashHandler struct {
 
 type blockhashHandler struct {
 	httpClientWrapper
+	sync.RWMutex
 	log             logger.Logger
 	blockhashes     map[string]int
 	loopStatus      *atomic.Flag
@@ -92,6 +94,8 @@ func (bh *blockhashHandler) GetBlockTimestampByHash(ctx context.Context, hash st
 
 	now := bh.getTimeHandler()
 	if int64(block.Timestamp) > now.Add(-bh.blockTtl).Unix() {
+		bh.Lock()
+		defer bh.Unlock()
 		bh.blockhashes[hash] = block.Timestamp
 	}
 	return block.Timestamp, nil
@@ -105,6 +109,8 @@ func (bh *blockhashHandler) processLoop(ctx context.Context) {
 	defer timer.Stop()
 
 	for {
+		bh.Lock()
+		defer bh.Unlock()
 		for hash, timestamp := range bh.blockhashes {
 			now := bh.getTimeHandler()
 			if int64(timestamp) <= now.Add(-bh.blockTtl).Unix() {
