@@ -39,6 +39,9 @@ var ErrInvalidEndpointProvider = errors.New("invalid endpoint provider")
 // ErrShardIDMismatch signals that a shard ID mismatch has occurred
 var ErrShardIDMismatch = errors.New("shard ID mismatch")
 
+// ErrInvalidValue signals that an invalid value was provided
+var ErrInvalidValue = errors.New("invalid value")
+
 // ErrNilNetworkStatus signals that nil network status was received
 var ErrNilNetworkStatus = errors.New("nil network status")
 
@@ -49,4 +52,13 @@ func createHTTPStatusError(httpStatusCode int, err error) error {
 
 	return fmt.Errorf("%w, returned http status: %d, %s",
 		err, httpStatusCode, http.StatusText(httpStatusCode))
+}
+
+func createHTTPStatusErrorWithBody(httpStatusCode int, err error, buff []byte) error {
+	if err == nil {
+		err = ErrHTTPStatusCodeIsNotOK
+	}
+
+	return fmt.Errorf("%w, returned http status: %d, %s, body: %s",
+		err, httpStatusCode, http.StatusText(httpStatusCode), string(buff))
 }
