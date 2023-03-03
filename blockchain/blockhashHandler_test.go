@@ -15,14 +15,6 @@ import (
 )
 
 func TestNewBlockhashHandler(t *testing.T) {
-	t.Run("invalid rounding round", func(t *testing.T) {
-		args := createMockArgsBlockhashHandler()
-		args.roundingRound = 0
-		handler, err := NewBlockhashHandler(args)
-
-		assert.True(t, check.IfNil(handler))
-		assert.Equal(t, err, fmt.Errorf("%w in checkArgs for value RoundingRound", ErrInvalidValue))
-	})
 	t.Run("invalid polling interval", func(t *testing.T) {
 		args := createMockArgsBlockhashHandler()
 		args.pollingInterval = time.Millisecond
@@ -48,12 +40,7 @@ func TestNewBlockhashHandler(t *testing.T) {
 		assert.Equal(t, err, ErrNilHTTPClientWrapper)
 	})
 	t.Run("should work", func(t *testing.T) {
-		args := argsBlockhashHandler{
-			roundingRound:     10,
-			blockTtl:          time.Minute,
-			pollingInterval:   time.Second,
-			httpClientWrapper: &testsCommon.HTTPClientWrapperStub{},
-		}
+		args := createMockArgsBlockhashHandler()
 		handler, err := NewBlockhashHandler(args)
 
 		assert.False(t, check.IfNil(handler))
@@ -197,7 +184,6 @@ func TestProcessLoop_ContextCancellation(t *testing.T) {
 
 func createMockArgsBlockhashHandler() argsBlockhashHandler {
 	return argsBlockhashHandler{
-		roundingRound:     10,
 		blockTtl:          time.Minute,
 		pollingInterval:   time.Second,
 		httpClientWrapper: &testsCommon.HTTPClientWrapperStub{},
