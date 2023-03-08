@@ -36,6 +36,7 @@ const (
 	scryptP         = 1
 	scryptDKLen     = 32
 	addressLen      = 32
+	mnemonicKind    = "mnemonic"
 )
 
 type bip32Path []uint32
@@ -51,6 +52,7 @@ var keyGenerator = signing.NewKeyGenerator(suite)
 type encryptedKeyJSONV4 struct {
 	Address string `json:"address"`
 	Bech32  string `json:"bech32"`
+	Kind    string `json:"kind"`
 	Crypto  struct {
 		Cipher       string `json:"cipher"`
 		CipherText   string `json:"ciphertext"`
@@ -226,20 +228,25 @@ func (w *wallet) LoadPrivateKeyFromJsonFile(filename string, password string) ([
 	privateKey := make([]byte, len(cipherText))
 	stream.XORKeyStream(privateKey, cipherText)
 
-	if len(privateKey) > 32 {
-		privateKey = privateKey[:32]
+	if key.Kind != mnemonicKind { // wallets with the old JSON format
+		if len(privateKey) > 32 {
+			privateKey = privateKey[:32]
+		}
+		address, errGetAddr := w.GetAddressFromPrivateKey(privateKey)
+		if errGetAddr != nil {
+			return nil, errGetAddr
+		}
+
+		isSameAccount := hex.EncodeToString(address.AddressBytes()) == key.Address &&
+			address.AddressAsBech32String() == key.Bech32
+		if !isSameAccount {
+			return nil, ErrDifferentAccountRecovered
+		}
+	} else {
+		// on the new JSON versions, the mnemonic is encrypted, instead of the private key. Therefore, get the private key from mnemonic
+		privateKey = w.GetPrivateKeyFromMnemonic(data.Mnemonic(privateKey), 0, 0)
 	}
 
-	address, err := w.GetAddressFromPrivateKey(privateKey)
-	if err != nil {
-		return nil, err
-	}
-
-	isSameAccount := hex.EncodeToString(address.AddressBytes()) == key.Address &&
-		address.AddressAsBech32String() == key.Bech32
-	if !isSameAccount {
-		return nil, ErrDifferentAccountRecovered
-	}
 	return privateKey, nil
 }
 

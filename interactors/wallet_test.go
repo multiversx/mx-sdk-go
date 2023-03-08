@@ -91,6 +91,21 @@ func TestWallet_LoadPrivateKeyFromJsonFile(t *testing.T) {
 	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privkey))
 }
 
+func TestWallet_LoadPrivateKeyFromJsonFileWithKind(t *testing.T) {
+	t.Parallel()
+
+	filename := "testdata/testWithKind.json"
+	password := "password"
+	w := NewWallet()
+	privkey, err := w.LoadPrivateKeyFromJsonFile(filename, password)
+	require.Nil(t, err)
+	expectedHexPrivKey := "413f42575f7f26fad3317a778771212fdb80245850981e48b58a4f25e344e8f9"
+	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privkey))
+
+	address, _ := w.GetAddressFromPrivateKey(privkey)
+	require.Equal(t, "erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th", address.AddressAsBech32String())
+}
+
 func TestWallet_SavePrivateKeyToJsonFile(t *testing.T) {
 	t.Parallel()
 
