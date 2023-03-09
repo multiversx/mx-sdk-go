@@ -225,29 +225,36 @@ func (w *wallet) LoadPrivateKeyFromJsonFile(filename string, password string) ([
 	}
 
 	stream := cipher.NewCTR(aesBlock, iv)
-	privateKey := make([]byte, len(cipherText))
-	stream.XORKeyStream(privateKey, cipherText)
+	decryptedData := make([]byte, len(cipherText))
+	stream.XORKeyStream(decryptedData, cipherText)
 
 	if key.Kind != mnemonicKind { // wallets with the old JSON format
-		if len(privateKey) > 32 {
-			privateKey = privateKey[:32]
-		}
-		address, errGetAddr := w.GetAddressFromPrivateKey(privateKey)
-		if errGetAddr != nil {
-			return nil, errGetAddr
-		}
-
-		isSameAccount := hex.EncodeToString(address.AddressBytes()) == key.Address &&
-			address.AddressAsBech32String() == key.Bech32
-		if !isSameAccount {
-			return nil, ErrDifferentAccountRecovered
-		}
+		return w.secretKeyAfterChecks(key, decryptedData)
 	} else {
-		// on the new JSON versions, the mnemonic is encrypted, instead of the private key. Therefore, get the private key from mnemonic
-		privateKey = w.GetPrivateKeyFromMnemonic(data.Mnemonic(privateKey), 0, 0)
+		return w.secretKeyFromMnemonic(decryptedData), nil
+	}
+}
+
+func (w *wallet) secretKeyAfterChecks(key *encryptedKeyJSONV4, secretKey []byte) ([]byte, error) {
+	if len(secretKey) > 32 {
+		secretKey = secretKey[:32]
+	}
+	address, errGetAddr := w.GetAddressFromPrivateKey(secretKey)
+	if errGetAddr != nil {
+		return nil, errGetAddr
 	}
 
-	return privateKey, nil
+	isSameAccount := hex.EncodeToString(address.AddressBytes()) == key.Address &&
+		address.AddressAsBech32String() == key.Bech32
+	if !isSameAccount {
+		return nil, ErrDifferentAccountRecovered
+	}
+
+	return secretKey, nil
+}
+
+func (w *wallet) secretKeyFromMnemonic(mnemonic []byte) []byte {
+	return w.GetPrivateKeyFromMnemonic(data.Mnemonic(mnemonic), 0, 0)
 }
 
 // SavePrivateKeyToJsonFile saves a password encrypted private key to a .json file
