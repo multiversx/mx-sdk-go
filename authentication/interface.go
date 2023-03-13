@@ -1,6 +1,10 @@
 package authentication
 
-import "context"
+import (
+	"context"
+
+	"github.com/multiversx/mx-sdk-go/data"
+)
 
 // AuthClient defines the behavior of an authentication client
 type AuthClient interface {
@@ -39,5 +43,11 @@ type AuthToken interface {
 type HttpClientWrapper interface {
 	GetHTTP(ctx context.Context, endpoint string) ([]byte, int, error)
 	PostHTTP(ctx context.Context, endpoint string, data []byte) ([]byte, int, error)
+	IsInterfaceNil() bool
+}
+
+// BlockhashHandler defines the behavior of a blockhash handler
+type BlockhashHandler interface {
+	GetBlockByHash(ctx context.Context, hash string) (*data.Block, error)
 	IsInterfaceNil() bool
 }

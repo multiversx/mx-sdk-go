@@ -2,10 +2,7 @@ package native
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -21,19 +18,18 @@ import (
 )
 
 var expectedErr = errors.New("expected error")
-var httpExpectedErr = authentication.CreateHTTPStatusError(http.StatusInternalServerError, expectedErr)
 
 func TestNativeserver_NewNativeAuthServer(t *testing.T) {
 	t.Parallel()
 
-	t.Run("nil http server wrapper should error", func(t *testing.T) {
+	t.Run("nil blockhash handler should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthServer()
-		args.HttpClientWrapper = nil
+		args.BlockhashHandler = nil
 		server, err := NewNativeAuthServer(args)
 		require.Nil(t, server)
-		require.Equal(t, authentication.ErrNilHttpClientWrapper, err)
+		require.Equal(t, authentication.ErrNilBlockhashHandler, err)
 	})
 	t.Run("nil signer should error", func(t *testing.T) {
 		t.Parallel()
@@ -86,13 +82,13 @@ func TestNativeserver_Validate(t *testing.T) {
 
 	tokenTtl := int64(20)
 	blockTimestamp := int64(10)
-	t.Run("httpClientWrapper returns error should error", func(t *testing.T) {
+	t.Run("blockhash handler returns error should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthServer()
-		args.HttpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
-				return nil, http.StatusInternalServerError, expectedErr
+		args.BlockhashHandler = &testsCommon.BlockhashHandlerStub{
+			GetBlockByHashCalled: func(ctx context.Context, hash string) (*data.Block, error) {
+				return nil, expectedErr
 			},
 		}
 		server, _ := NewNativeAuthServer(args)
@@ -100,19 +96,18 @@ func TestNativeserver_Validate(t *testing.T) {
 		err := server.Validate(&AuthToken{
 			ttl: tokenTtl,
 		})
-		require.Equal(t, httpExpectedErr, err)
+		require.Equal(t, expectedErr, err)
 	})
 	t.Run("token expired should error", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthServer()
-		args.HttpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+		args.BlockhashHandler = &testsCommon.BlockhashHandlerStub{
+			GetBlockByHashCalled: func(ctx context.Context, hash string) (*data.Block, error) {
 				block := &data.Block{
 					Timestamp: int(blockTimestamp),
 				}
-				buff, _ := json.Marshal(block)
-				return buff, http.StatusOK, nil
+				return block, nil
 			},
 		}
 		server, _ := NewNativeAuthServer(args)
@@ -129,13 +124,12 @@ func TestNativeserver_Validate(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthServer()
-		args.HttpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+		args.BlockhashHandler = &testsCommon.BlockhashHandlerStub{
+			GetBlockByHashCalled: func(ctx context.Context, hash string) (*data.Block, error) {
 				block := &data.Block{
 					Timestamp: int(blockTimestamp),
 				}
-				buff, _ := json.Marshal(block)
-				return buff, http.StatusOK, nil
+				return block, nil
 			},
 		}
 		args.PubKeyConverter = &genesisMock.PubkeyConverterStub{
@@ -157,13 +151,12 @@ func TestNativeserver_Validate(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthServer()
-		args.HttpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+		args.BlockhashHandler = &testsCommon.BlockhashHandlerStub{
+			GetBlockByHashCalled: func(ctx context.Context, hash string) (*data.Block, error) {
 				block := &data.Block{
 					Timestamp: int(blockTimestamp),
 				}
-				buff, _ := json.Marshal(block)
-				return buff, http.StatusOK, nil
+				return block, nil
 			},
 		}
 		args.KeyGenerator = &genesisMock.KeyGeneratorStub{
@@ -186,25 +179,6 @@ func TestNativeserver_Validate(t *testing.T) {
 		})
 		require.Equal(t, expectedErr, err)
 	})
-	t.Run("invalid http result should error", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNativeAuthServer()
-		args.HttpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
-				return nil, http.StatusOK, nil
-			},
-		}
-		server, _ := NewNativeAuthServer(args)
-		server.getTimeHandler = func() time.Time {
-			return time.Unix(int64(blockTimestamp), 1)
-		}
-
-		err := server.Validate(&AuthToken{
-			ttl: tokenTtl,
-		})
-		assert.True(t, strings.Contains(err.Error(), "unexpected end of JSON input"))
-	})
 	t.Run("verification errors should error", func(t *testing.T) {
 		t.Parallel()
 
@@ -214,13 +188,12 @@ func TestNativeserver_Validate(t *testing.T) {
 				return []byte("token")
 			},
 		}
-		args.HttpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+		args.BlockhashHandler = &testsCommon.BlockhashHandlerStub{
+			GetBlockByHashCalled: func(ctx context.Context, hash string) (*data.Block, error) {
 				block := &data.Block{
 					Timestamp: int(blockTimestamp),
 				}
-				buff, _ := json.Marshal(block)
-				return buff, http.StatusOK, nil
+				return block, nil
 			},
 		}
 		args.KeyGenerator = &genesisMock.KeyGeneratorStub{
@@ -252,13 +225,12 @@ func TestNativeserver_Validate(t *testing.T) {
 				return []byte("token")
 			},
 		}
-		args.HttpClientWrapper = &testsCommon.HTTPClientWrapperStub{
-			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+		args.BlockhashHandler = &testsCommon.BlockhashHandlerStub{
+			GetBlockByHashCalled: func(ctx context.Context, hash string) (*data.Block, error) {
 				block := &data.Block{
 					Timestamp: int(blockTimestamp),
 				}
-				buff, _ := json.Marshal(block)
-				return buff, http.StatusOK, nil
+				return block, nil
 			},
 		}
 		args.KeyGenerator = &genesisMock.KeyGeneratorStub{
@@ -285,10 +257,10 @@ func TestNativeserver_Validate(t *testing.T) {
 
 func createMockArgsNativeAuthServer() ArgsNativeAuthServer {
 	return ArgsNativeAuthServer{
-		HttpClientWrapper: &testsCommon.HTTPClientWrapperStub{},
-		TokenHandler:      &mock.AuthTokenHandlerStub{},
-		Signer:            &testsCommon.SignerStub{},
-		PubKeyConverter:   &genesisMock.PubkeyConverterStub{},
-		KeyGenerator:      &genesisMock.KeyGeneratorStub{},
+		BlockhashHandler: &testsCommon.BlockhashHandlerStub{},
+		TokenHandler:     &mock.AuthTokenHandlerStub{},
+		Signer:           &testsCommon.SignerStub{},
+		PubKeyConverter:  &genesisMock.PubkeyConverterStub{},
+		KeyGenerator:     &genesisMock.KeyGeneratorStub{},
 	}
 }

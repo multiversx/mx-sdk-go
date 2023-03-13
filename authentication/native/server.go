@@ -2,9 +2,6 @@ package native
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core"
@@ -12,27 +9,24 @@ import (
 	crypto "github.com/multiversx/mx-chain-crypto-go"
 	"github.com/multiversx/mx-sdk-go/authentication"
 	"github.com/multiversx/mx-sdk-go/builders"
-	"github.com/multiversx/mx-sdk-go/data"
 )
-
-const blockByHashEndpoint = "blocks/%s"
 
 // ArgsNativeAuthServer is the DTO used in the native auth server constructor
 type ArgsNativeAuthServer struct {
-	HttpClientWrapper authentication.HttpClientWrapper
-	TokenHandler      authentication.AuthTokenHandler
-	Signer            builders.Signer
-	PubKeyConverter   core.PubkeyConverter
-	KeyGenerator      crypto.KeyGenerator
+	BlockhashHandler authentication.BlockhashHandler
+	TokenHandler     authentication.AuthTokenHandler
+	Signer           builders.Signer
+	PubKeyConverter  core.PubkeyConverter
+	KeyGenerator     crypto.KeyGenerator
 }
 
 type authServer struct {
-	httpClientWrapper authentication.HttpClientWrapper
-	tokenHandler      authentication.AuthTokenHandler
-	signer            builders.Signer
-	keyGenerator      crypto.KeyGenerator
-	pubKeyConverter   core.PubkeyConverter
-	getTimeHandler    func() time.Time
+	blockhashHandler authentication.BlockhashHandler
+	tokenHandler     authentication.AuthTokenHandler
+	signer           builders.Signer
+	keyGenerator     crypto.KeyGenerator
+	pubKeyConverter  core.PubkeyConverter
+	getTimeHandler   func() time.Time
 }
 
 // NewNativeAuthServer returns a native authentication server that verifies
@@ -40,8 +34,8 @@ type authServer struct {
 // 1. Checks whether the provided signature from tokens corresponds with the provided address for the provided body
 // 2. Checks the token expiration status
 func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
-	if check.IfNil(args.HttpClientWrapper) {
-		return nil, authentication.ErrNilHttpClientWrapper
+	if check.IfNil(args.BlockhashHandler) {
+		return nil, authentication.ErrNilBlockhashHandler
 	}
 
 	if check.IfNil(args.Signer) {
@@ -61,12 +55,12 @@ func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
 	}
 
 	return &authServer{
-		httpClientWrapper: args.HttpClientWrapper,
-		tokenHandler:      args.TokenHandler,
-		signer:            args.Signer,
-		keyGenerator:      args.KeyGenerator,
-		pubKeyConverter:   args.PubKeyConverter,
-		getTimeHandler:    time.Now,
+		blockhashHandler: args.BlockhashHandler,
+		tokenHandler:     args.TokenHandler,
+		signer:           args.Signer,
+		keyGenerator:     args.KeyGenerator,
+		pubKeyConverter:  args.PubKeyConverter,
+		getTimeHandler:   time.Now,
 	}, nil
 
 }
@@ -87,7 +81,7 @@ func (server *authServer) Validate(authToken authentication.AuthToken) error {
 }
 
 func (server *authServer) validateExpiration(token authentication.AuthToken) error {
-	block, err := server.getBlockByHash(context.Background(), token.GetBlockHash())
+	block, err := server.blockhashHandler.GetBlockByHash(context.Background(), token.GetBlockHash())
 	if err != nil {
 		return err
 	}
@@ -127,18 +121,4 @@ func (server *authServer) validateSignature(token authentication.AuthToken) erro
 // IsInterfaceNil returns true if there is no value under the interface
 func (server *authServer) IsInterfaceNil() bool {
 	return server == nil
-}
-
-func (server *authServer) getBlockByHash(ctx context.Context, hash string) (*data.Block, error) {
-	var block data.Block
-	buff, code, err := server.httpClientWrapper.GetHTTP(ctx, fmt.Sprintf(blockByHashEndpoint, hash))
-	if err != nil || code != http.StatusOK {
-		return nil, authentication.CreateHTTPStatusError(code, err)
-	}
-
-	err = json.Unmarshal(buff, &block)
-	if err != nil {
-		return nil, err
-	}
-	return &block, nil
 }
