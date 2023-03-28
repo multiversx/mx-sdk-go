@@ -9,13 +9,17 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/storage"
 	crypto "github.com/multiversx/mx-chain-crypto-go"
 	"github.com/multiversx/mx-sdk-go/authentication"
 	"github.com/multiversx/mx-sdk-go/builders"
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
-const blockByHashEndpoint = "blocks/%s"
+const (
+	blockByHashEndpoint = "blocks/%s"
+	int64Size           = 64
+)
 
 // ArgsNativeAuthServer is the DTO used in the native auth server constructor
 type ArgsNativeAuthServer struct {
@@ -24,6 +28,7 @@ type ArgsNativeAuthServer struct {
 	Signer            builders.Signer
 	PubKeyConverter   core.PubkeyConverter
 	KeyGenerator      crypto.KeyGenerator
+	TimestampsCacher  storage.Cacher
 }
 
 type authServer struct {
@@ -33,6 +38,7 @@ type authServer struct {
 	keyGenerator      crypto.KeyGenerator
 	pubKeyConverter   core.PubkeyConverter
 	getTimeHandler    func() time.Time
+	cacher            storage.Cacher
 }
 
 // NewNativeAuthServer returns a native authentication server that verifies
@@ -40,24 +46,9 @@ type authServer struct {
 // 1. Checks whether the provided signature from tokens corresponds with the provided address for the provided body
 // 2. Checks the token expiration status
 func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
-	if check.IfNil(args.HttpClientWrapper) {
-		return nil, authentication.ErrNilHttpClientWrapper
-	}
-
-	if check.IfNil(args.Signer) {
-		return nil, authentication.ErrNilSigner
-	}
-
-	if check.IfNil(args.KeyGenerator) {
-		return nil, crypto.ErrNilKeyGenerator
-	}
-
-	if check.IfNil(args.PubKeyConverter) {
-		return nil, core.ErrNilPubkeyConverter
-	}
-
-	if check.IfNil(args.TokenHandler) {
-		return nil, authentication.ErrNilTokenHandler
+	err := checkArgs(args)
+	if err != nil {
+		return nil, err
 	}
 
 	return &authServer{
@@ -67,8 +58,31 @@ func NewNativeAuthServer(args ArgsNativeAuthServer) (*authServer, error) {
 		keyGenerator:      args.KeyGenerator,
 		pubKeyConverter:   args.PubKeyConverter,
 		getTimeHandler:    time.Now,
+		cacher:            args.TimestampsCacher,
 	}, nil
+}
 
+func checkArgs(args ArgsNativeAuthServer) error {
+	if check.IfNil(args.HttpClientWrapper) {
+		return authentication.ErrNilHttpClientWrapper
+	}
+	if check.IfNil(args.Signer) {
+		return authentication.ErrNilSigner
+	}
+	if check.IfNil(args.KeyGenerator) {
+		return crypto.ErrNilKeyGenerator
+	}
+	if check.IfNil(args.PubKeyConverter) {
+		return core.ErrNilPubkeyConverter
+	}
+	if check.IfNil(args.TokenHandler) {
+		return authentication.ErrNilTokenHandler
+	}
+	if check.IfNil(args.TimestampsCacher) {
+		return authentication.ErrNilCacher
+	}
+
+	return nil
 }
 
 // Validate validates the given accessToken
@@ -87,19 +101,43 @@ func (server *authServer) Validate(authToken authentication.AuthToken) error {
 }
 
 func (server *authServer) validateExpiration(token authentication.AuthToken) error {
-	block, err := server.getBlockByHash(context.Background(), token.GetBlockHash())
+	blockHash := token.GetBlockHash()
+	timestamp, err := server.getBlockTimestamp(blockHash)
 	if err != nil {
 		return err
 	}
 
-	expires := int64(block.Timestamp) + token.GetTtl()
+	expireTime := timestamp + token.GetTtl()
 
-	isTokenExpired := server.getTimeHandler().After(time.Unix(expires, 0))
+	isTokenExpired := server.getTimeHandler().After(time.Unix(expireTime, 0))
 
 	if isTokenExpired {
 		return authentication.ErrTokenExpired
 	}
 	return nil
+}
+
+func (server *authServer) getBlockTimestamp(blockHash string) (int64, error) {
+	cachedTimestampValue, found := server.cacher.Get([]byte(blockHash))
+	if found {
+		timestamp, ok := cachedTimestampValue.(int64)
+		if !ok {
+			return 0, fmt.Errorf("%w while casting timestamp value: %v", authentication.ErrInvalidValue, cachedTimestampValue)
+		}
+
+		return timestamp, nil
+	}
+
+	block, err := server.getBlockByHash(context.Background(), blockHash)
+	if err != nil {
+		return 0, err
+	}
+
+	intTimestamp := int64(block.Timestamp)
+
+	server.cacher.Put([]byte(blockHash), intTimestamp, int64Size)
+
+	return intTimestamp, nil
 }
 
 func (server *authServer) validateSignature(token authentication.AuthToken) error {
