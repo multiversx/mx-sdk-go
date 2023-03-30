@@ -12,6 +12,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	crypto "github.com/multiversx/mx-chain-crypto-go"
 	genesisMock "github.com/multiversx/mx-chain-go/genesis/mock"
+	"github.com/multiversx/mx-chain-go/testscommon"
 	"github.com/multiversx/mx-sdk-go/authentication"
 	"github.com/multiversx/mx-sdk-go/authentication/native/mock"
 	"github.com/multiversx/mx-sdk-go/data"
@@ -71,6 +72,15 @@ func TestNativeserver_NewNativeAuthServer(t *testing.T) {
 		require.Nil(t, server)
 		require.Equal(t, authentication.ErrNilTokenHandler, err)
 	})
+	t.Run("nil cacher should error", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsNativeAuthServer()
+		args.TimestampsCacher = nil
+		server, err := NewNativeAuthServer(args)
+		require.Nil(t, server)
+		require.Equal(t, authentication.ErrNilCacher, err)
+	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
@@ -86,6 +96,29 @@ func TestNativeserver_Validate(t *testing.T) {
 
 	tokenTtl := int64(20)
 	blockTimestamp := int64(10)
+	providedBlockHash := "provided block hash"
+
+	t.Run("invalid cached value should return error", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsNativeAuthServer()
+		args.TimestampsCacher = &testscommon.CacherStub{
+			GetCalled: func(key []byte) (value interface{}, ok bool) {
+				assert.Equal(t, []byte(providedBlockHash), key)
+				return "invalid value", true
+			},
+		}
+		server, _ := NewNativeAuthServer(args)
+		server.getTimeHandler = func() time.Time {
+			return time.Unix(blockTimestamp, 1)
+		}
+
+		err := server.Validate(&AuthToken{
+			ttl:       tokenTtl,
+			blockHash: providedBlockHash,
+		})
+		assert.True(t, errors.Is(err, authentication.ErrInvalidValue))
+	})
 	t.Run("httpClientWrapper returns error should error", func(t *testing.T) {
 		t.Parallel()
 
@@ -178,7 +211,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 		server, _ := NewNativeAuthServer(args)
 		server.getTimeHandler = func() time.Time {
-			return time.Unix(int64(blockTimestamp), 1)
+			return time.Unix(blockTimestamp, 1)
 		}
 
 		err := server.Validate(&AuthToken{
@@ -197,7 +230,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 		server, _ := NewNativeAuthServer(args)
 		server.getTimeHandler = func() time.Time {
-			return time.Unix(int64(blockTimestamp), 1)
+			return time.Unix(blockTimestamp, 1)
 		}
 
 		err := server.Validate(&AuthToken{
@@ -235,7 +268,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 		server, _ := NewNativeAuthServer(args)
 		server.getTimeHandler = func() time.Time {
-			return time.Unix(int64(blockTimestamp), 1)
+			return time.Unix(blockTimestamp, 1)
 		}
 
 		err := server.Validate(&AuthToken{
@@ -243,7 +276,7 @@ func TestNativeserver_Validate(t *testing.T) {
 		})
 		require.Equal(t, expectedErr, err)
 	})
-	t.Run("should work", func(t *testing.T) {
+	t.Run("should work - token not cached", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsNativeAuthServer()
@@ -273,11 +306,53 @@ func TestNativeserver_Validate(t *testing.T) {
 		}
 		server, _ := NewNativeAuthServer(args)
 		server.getTimeHandler = func() time.Time {
-			return time.Unix(int64(blockTimestamp), 1)
+			return time.Unix(blockTimestamp, 1)
 		}
 
 		err := server.Validate(&AuthToken{
 			ttl: tokenTtl,
+		})
+		assert.Nil(t, err)
+	})
+	t.Run("should work - token cached", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsNativeAuthServer()
+		args.TokenHandler = &mock.AuthTokenHandlerStub{
+			GetUnsignedTokenCalled: func(authToken authentication.AuthToken) []byte {
+				return []byte("token")
+			},
+		}
+		args.HttpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				assert.Fail(t, "should have not been called")
+				return []byte{}, http.StatusOK, nil
+			},
+		}
+		args.KeyGenerator = &genesisMock.KeyGeneratorStub{
+			PublicKeyFromByteArrayCalled: func(b []byte) (crypto.PublicKey, error) {
+				return nil, nil
+			},
+		}
+		args.Signer = &testsCommon.SignerStub{
+			VerifyMessageCalled: func(msg []byte, publicKey crypto.PublicKey, sig []byte) error {
+				return nil
+			},
+		}
+		args.TimestampsCacher = &testscommon.CacherStub{
+			GetCalled: func(key []byte) (value interface{}, ok bool) {
+				assert.Equal(t, []byte(providedBlockHash), key)
+				return blockTimestamp, true
+			},
+		}
+		server, _ := NewNativeAuthServer(args)
+		server.getTimeHandler = func() time.Time {
+			return time.Unix(blockTimestamp, 1)
+		}
+
+		err := server.Validate(&AuthToken{
+			ttl:       tokenTtl,
+			blockHash: providedBlockHash,
 		})
 		assert.Nil(t, err)
 	})
@@ -290,5 +365,6 @@ func createMockArgsNativeAuthServer() ArgsNativeAuthServer {
 		Signer:            &testsCommon.SignerStub{},
 		PubKeyConverter:   &genesisMock.PubkeyConverterStub{},
 		KeyGenerator:      &genesisMock.KeyGeneratorStub{},
+		TimestampsCacher:  &testscommon.CacherStub{},
 	}
 }
