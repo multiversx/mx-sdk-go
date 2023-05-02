@@ -246,6 +246,10 @@ func (proxy *baseProxy) ProcessTransactionStatus(txInfo data.TransactionInfo) tr
 }
 
 func findIdentifierInLogs(txInfo data.TransactionInfo, identifier string) bool {
+	if txInfo.Data.Transaction.Logs == nil {
+		return false
+	}
+
 	for _, event := range txInfo.Data.Transaction.Logs.Events {
 		if event.Identifier == identifier {
 			return true

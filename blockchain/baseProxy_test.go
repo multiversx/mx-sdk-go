@@ -632,6 +632,14 @@ func TestBaseProxyInstance_ProcessTransactionStatus(t *testing.T) {
 		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
 		require.Equal(t, transaction.TxStatusSuccess, status)
 	})
+	t.Run("tx info ok but with nil logs", func(t *testing.T) {
+		t.Parallel()
+
+		txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedOK.json")
+		txInfo.Data.Transaction.Logs = nil
+		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+		require.Equal(t, transaction.TxStatusPending, status)
+	})
 	t.Run("tx info failed", func(t *testing.T) {
 		t.Parallel()
 
