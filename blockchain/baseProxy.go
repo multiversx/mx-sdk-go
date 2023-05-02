@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
@@ -19,6 +20,8 @@ var log = logger.GetOrCreate("mx-sdk-go/blockchain")
 
 const (
 	minimumCachingInterval = time.Second
+	txCompleted            = "completedTxEvent"
+	txFailed               = "signalError"
 )
 
 type argsBaseProxy struct {
@@ -225,6 +228,31 @@ func (proxy *baseProxy) checkReceivedNodeStatus(networkStatus *data.NetworkStatu
 // GetRestAPIEntityType returns the REST API entity type that this implementation works with
 func (proxy *baseProxy) GetRestAPIEntityType() core.RestAPIEntityType {
 	return proxy.endpointProvider.GetRestAPIEntityType()
+}
+
+// ProcessTransactionStatus will parse the provided transaction info and return its status accordingly
+func (proxy *baseProxy) ProcessTransactionStatus(txInfo data.TransactionInfo) transaction.TxStatus {
+	if txInfo.Data.Transaction.Status != string(transaction.TxStatusSuccess) {
+		return transaction.TxStatus(txInfo.Data.Transaction.Status)
+	}
+	if findIdentifierInLogs(txInfo, txFailed) {
+		return transaction.TxStatusFail
+	}
+	if findIdentifierInLogs(txInfo, txCompleted) {
+		return transaction.TxStatusSuccess
+	}
+
+	return transaction.TxStatusPending
+}
+
+func findIdentifierInLogs(txInfo data.TransactionInfo, identifier string) bool {
+	for _, event := range txInfo.Data.Transaction.Logs.Events {
+		if event.Identifier == identifier {
+			return true
+		}
+	}
+
+	return false
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

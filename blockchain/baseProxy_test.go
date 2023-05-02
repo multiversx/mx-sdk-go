@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/blockchain/endpointProviders"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/testsCommon"
@@ -590,4 +592,51 @@ func TestBaseProxy_GetRestAPIEntityType(t *testing.T) {
 	baseProxyInstance, _ := newBaseProxy(args)
 
 	assert.Equal(t, args.endpointProvider.GetRestAPIEntityType(), baseProxyInstance.GetRestAPIEntityType())
+}
+
+func loadJsonIntoTransactionInfo(tb testing.TB, path string) data.TransactionInfo {
+	txInfo := &data.TransactionInfo{}
+	buff, err := ioutil.ReadFile(path)
+	require.Nil(tb, err)
+
+	err = json.Unmarshal(buff, txInfo)
+	require.Nil(tb, err)
+
+	return *txInfo
+}
+
+func TestBaseProxyInstance_ProcessTransactionStatus(t *testing.T) {
+	t.Parallel()
+
+	args := createMockArgsBaseProxy()
+	baseProxyInstance, _ := newBaseProxy(args)
+
+	t.Run("pending new", func(t *testing.T) {
+		t.Parallel()
+
+		txInfo := loadJsonIntoTransactionInfo(t, "./testdata/pendingNew.json")
+		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+		require.Equal(t, transaction.TxStatusPending, status)
+	})
+	t.Run("pending executing", func(t *testing.T) {
+		t.Parallel()
+
+		txInfo := loadJsonIntoTransactionInfo(t, "./testdata/pendingExecuting.json")
+		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+		require.Equal(t, transaction.TxStatusPending, status)
+	})
+	t.Run("tx info ok", func(t *testing.T) {
+		t.Parallel()
+
+		txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedOK.json")
+		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+		require.Equal(t, transaction.TxStatusSuccess, status)
+	})
+	t.Run("tx info failed", func(t *testing.T) {
+		t.Parallel()
+
+		txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedFailed.json")
+		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+		require.Equal(t, transaction.TxStatusFail, status)
+	})
 }
