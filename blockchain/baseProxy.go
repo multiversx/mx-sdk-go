@@ -241,6 +241,9 @@ func (proxy *baseProxy) ProcessTransactionStatus(txInfo data.TransactionInfo) tr
 	if findIdentifierInLogs(txInfo, txCompleted) {
 		return transaction.TxStatusSuccess
 	}
+	if txInfo.Data.Transaction.Logs == nil && len(txInfo.Data.Transaction.ScResults) == 0 {
+		return transaction.TxStatusSuccess
+	}
 
 	return transaction.TxStatusPending
 }
