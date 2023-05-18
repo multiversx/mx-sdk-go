@@ -52,7 +52,7 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 		NFTStorageHandler:     &disabled.SimpleESDTNFTStorageHandler{},
 		EpochNotifier:         &disabled.EpochNotifier{},
 		GlobalSettingsHandler: &disabled.GlobalSettingsHandler{},
-		EnableEpochsHandler:   &disabled.EnableEpochsHandler{},
+		EnableEpochsHandler:   &disabled.EnableEpochsHandlerStub{},
 		GasSchedule:           &disabled.GasScheduleNotifier{},
 		Counter:               &disabled.BlockChainHookCounter{},
 	}
