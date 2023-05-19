@@ -231,6 +231,7 @@ func (proxy *baseProxy) GetRestAPIEntityType() core.RestAPIEntityType {
 }
 
 // ProcessTransactionStatus will parse the provided transaction info and return its status accordingly
+// TODO move this in proxy, directly
 func (proxy *baseProxy) ProcessTransactionStatus(txInfo data.TransactionInfo) transaction.TxStatus {
 	if txInfo.Data.Transaction.Status != string(transaction.TxStatusSuccess) {
 		return transaction.TxStatus(txInfo.Data.Transaction.Status)
