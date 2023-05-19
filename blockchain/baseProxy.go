@@ -22,6 +22,8 @@ const (
 	minimumCachingInterval = time.Second
 	txCompleted            = "completedTxEvent"
 	txFailed               = "signalError"
+	scDeploy               = "SCDeploy"
+	moveBalanceTransaction = "MoveBalance"
 )
 
 type argsBaseProxy struct {
@@ -239,11 +241,17 @@ func (proxy *baseProxy) ProcessTransactionStatus(txInfo data.TransactionInfo) tr
 	if findIdentifierInLogs(txInfo, txFailed) {
 		return transaction.TxStatusFail
 	}
-	if findIdentifierInLogs(txInfo, txCompleted) {
-		return transaction.TxStatusSuccess
+	containsCompletion := findIdentifierInLogs(txInfo, txCompleted) || findIdentifierInLogs(txInfo, scDeploy)
+	if containsCompletion {
+		return transaction.TxStatus(txInfo.Data.Transaction.Status)
 	}
-	if txInfo.Data.Transaction.Logs == nil && len(txInfo.Data.Transaction.ScResults) == 0 {
-		return transaction.TxStatusSuccess
+
+	isNotarized := txInfo.Data.Transaction.NotarizedAtSourceInMetaNonce > 0 && txInfo.Data.Transaction.NotarizedAtDestinationInMetaNonce > 0
+	isNotarizedMoveBalanceTransaction := isNotarized &&
+		txInfo.Data.Transaction.ProcessingTypeOnSource == moveBalanceTransaction &&
+		txInfo.Data.Transaction.ProcessingTypeOnDestination == moveBalanceTransaction
+	if isNotarizedMoveBalanceTransaction {
+		return transaction.TxStatus(txInfo.Data.Transaction.Status)
 	}
 
 	return transaction.TxStatusPending

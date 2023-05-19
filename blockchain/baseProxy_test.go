@@ -611,40 +611,58 @@ func TestBaseProxyInstance_ProcessTransactionStatus(t *testing.T) {
 	args := createMockArgsBaseProxy()
 	baseProxyInstance, _ := newBaseProxy(args)
 
-	t.Run("pending new", func(t *testing.T) {
-		t.Parallel()
+	t.Run("Move balance", func(t *testing.T) {
+		t.Run("pending", func(t *testing.T) {
+			t.Parallel()
 
-		txInfo := loadJsonIntoTransactionInfo(t, "./testdata/pendingNew.json")
-		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-		require.Equal(t, transaction.TxStatusPending, status)
+			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/pendingNewMoveBalance.json")
+			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+			require.Equal(t, transaction.TxStatusPending, status)
+		})
+		t.Run("executed", func(t *testing.T) {
+			t.Parallel()
+
+			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedOKMoveBalance.json")
+			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+			require.Equal(t, transaction.TxStatusSuccess, status)
+		})
 	})
-	t.Run("pending executing", func(t *testing.T) {
-		t.Parallel()
+	t.Run("SC calls", func(t *testing.T) {
+		t.Run("pending new", func(t *testing.T) {
+			t.Parallel()
 
-		txInfo := loadJsonIntoTransactionInfo(t, "./testdata/pendingExecuting.json")
-		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-		require.Equal(t, transaction.TxStatusPending, status)
-	})
-	t.Run("tx info ok", func(t *testing.T) {
-		t.Parallel()
+			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/pendingNewSCCall.json")
+			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+			require.Equal(t, transaction.TxStatusPending, status)
+		})
+		t.Run("executing", func(t *testing.T) {
+			t.Parallel()
 
-		txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedOK.json")
-		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-		require.Equal(t, transaction.TxStatusSuccess, status)
-	})
-	t.Run("tx info ok but with nil logs", func(t *testing.T) {
-		t.Parallel()
+			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/executingSCCall.json")
+			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+			require.Equal(t, transaction.TxStatusPending, status)
+		})
+		t.Run("tx info ok", func(t *testing.T) {
+			t.Parallel()
 
-		txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedOK.json")
-		txInfo.Data.Transaction.Logs = nil
-		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-		require.Equal(t, transaction.TxStatusPending, status)
-	})
-	t.Run("tx info failed", func(t *testing.T) {
-		t.Parallel()
+			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedOKSCCall.json")
+			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+			require.Equal(t, transaction.TxStatusSuccess, status)
+		})
+		t.Run("tx info ok but with nil logs", func(t *testing.T) {
+			t.Parallel()
 
-		txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedFailed.json")
-		status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-		require.Equal(t, transaction.TxStatusFail, status)
+			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedOKSCCall.json")
+			txInfo.Data.Transaction.Logs = nil
+			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+			require.Equal(t, transaction.TxStatusPending, status)
+		})
+		t.Run("tx info failed", func(t *testing.T) {
+			t.Parallel()
+
+			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedFailedSCCall.json")
+			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
+			require.Equal(t, transaction.TxStatusFail, status)
+		})
 	})
 }
