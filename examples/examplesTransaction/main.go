@@ -61,14 +61,14 @@ func main() {
 		return
 	}
 
-	transactionArguments, err := ep.GetDefaultTransactionArguments(context.Background(), address, netConfigs)
+	tx, _, err := ep.GetDefaultTransactionArguments(context.Background(), address, netConfigs)
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return
 	}
 
-	transactionArguments.RcvAddr = address.AddressAsBech32String() // send to self
-	transactionArguments.Value = "1000000000000000000"             // 1EGLD
+	tx.Receiver = address.AddressAsBech32String() // send to self
+	tx.Value = "1000000000000000000"              // 1EGLD
 
 	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, privateKey)
 	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewSigner())
@@ -83,25 +83,25 @@ func main() {
 		return
 	}
 
-	tx, err := ti.ApplySignatureAndGenerateTx(holder, transactionArguments)
+	err = ti.ApplySignature(holder, &tx)
 	if err != nil {
-		log.Error("error creating transaction", "error", err)
+		log.Error("error signing transaction", "error", err)
 		return
 	}
-	ti.AddTransaction(tx)
+	ti.AddTransaction(&tx)
 
 	// a new transaction with the signature done on the hash of the transaction
 	// it's ok to reuse the arguments here, they will be copied, anyway
-	transactionArguments.Version = 2
-	transactionArguments.Options = 1
-	transactionArguments.Nonce++ // do not forget to increment the nonce, otherwise you will get 2 transactions
+	tx.Version = 2
+	tx.Options = 1
+	tx.Nonce++ // do not forget to increment the nonce, otherwise you will get 2 transactions
 	// with the same nonce (only one of them will get executed)
-	txSigOnHash, err := ti.ApplySignatureAndGenerateTx(holder, transactionArguments)
+	err = ti.ApplySignature(holder, &tx)
 	if err != nil {
 		log.Error("error creating transaction", "error", err)
 		return
 	}
-	ti.AddTransaction(txSigOnHash)
+	ti.AddTransaction(&tx)
 
 	hashes, err := ti.SendTransactionsAsBunch(context.Background(), 100)
 	if err != nil {

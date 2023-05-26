@@ -6,6 +6,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
@@ -51,48 +52,47 @@ func TestAddressNonceHandler_ApplyNonceAndGasPrice(t *testing.T) {
 	t.Run("tx already sent; oldTx.GasPrice == txArgs.GasPrice == anh.gasPrice", func(t *testing.T) {
 		t.Parallel()
 
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
+		tx := createDefaultTx()
 
 		anh, err := NewAddressNonceHandlerWithPrivateAccess(&testsCommon.ProxyStub{}, testAddress)
 		require.Nil(t, err)
 
-		_, err = anh.SendTransaction(context.Background(), tx)
+		_, err = anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 
-		anh.gasPrice = txArgs.GasPrice
-		err = anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
+		anh.gasPrice = tx.GasPrice
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx)
 		require.Equal(t, interactors.ErrTxAlreadySent, err)
 	})
 	t.Run("tx already sent; oldTx.GasPrice < txArgs.GasPrice", func(t *testing.T) {
 		t.Parallel()
 
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice-1, txArgs)
+		tx := createDefaultTx()
+		initialGasPrice := tx.GasPrice
+		tx.GasPrice--
 
 		anh, err := NewAddressNonceHandlerWithPrivateAccess(&testsCommon.ProxyStub{}, testAddress)
 		require.Nil(t, err)
 
-		_, err = anh.SendTransaction(context.Background(), tx)
+		_, err = anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 
-		anh.gasPrice = txArgs.GasPrice
-		err = anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
+		anh.gasPrice = initialGasPrice
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx)
 		require.Nil(t, err)
 	})
 	t.Run("oldTx.GasPrice == txArgs.GasPrice && oldTx.GasPrice < anh.gasPrice", func(t *testing.T) {
 		t.Parallel()
 
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
+		tx := createDefaultTx()
 		anh, err := NewAddressNonceHandlerWithPrivateAccess(&testsCommon.ProxyStub{}, testAddress)
 		require.Nil(t, err)
 
-		_, err = anh.SendTransaction(context.Background(), tx)
+		_, err = anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 
-		anh.gasPrice = txArgs.GasPrice + 1
-		err = anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
+		anh.gasPrice = tx.GasPrice + 1
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx)
 		require.Nil(t, err)
 	})
 }
@@ -159,9 +159,9 @@ func TestAddressNonceHandler_getNonceUpdatingCurrent(t *testing.T) {
 			},
 		}
 		anh, _ := NewAddressNonceHandlerWithPrivateAccess(proxy, testAddress)
-		txArgs := createTxArgs()
+		tx := createDefaultTx()
 
-		err := anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
+		err := anh.ApplyNonceAndGasPrice(context.Background(), &tx)
 		require.Equal(t, expectedErr, err)
 	})
 }
@@ -169,7 +169,7 @@ func TestAddressNonceHandler_getNonceUpdatingCurrent(t *testing.T) {
 func TestAddressNonceHandler_DropTransactions(t *testing.T) {
 	t.Parallel()
 
-	txArgs := createTxArgs()
+	tx := createDefaultTx()
 
 	blockchainNonce := uint64(100)
 	minGasPrice := uint64(10)
@@ -184,11 +184,10 @@ func TestAddressNonceHandler_DropTransactions(t *testing.T) {
 
 	anh, _ := NewAddressNonceHandlerWithPrivateAccess(proxy, testAddress)
 
-	err := anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
+	err := anh.ApplyNonceAndGasPrice(context.Background(), &tx)
 	require.Nil(t, err)
 
-	tx := createTx(txArgs.GasPrice, txArgs)
-	_, err = anh.SendTransaction(context.Background(), tx)
+	_, err = anh.SendTransaction(context.Background(), &tx)
 	require.Nil(t, err)
 
 	require.True(t, anh.computedNonceWasSet)
@@ -229,15 +228,14 @@ func TestAddressNonceHandler_ReSendTransactionsIfRequired(t *testing.T) {
 			GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 				return &data.Account{Nonce: blockchainNonce - 1}, nil
 			},
-			SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
+			SendTransactionsCalled: func(txs []*transaction.FrontendTransaction) ([]string, error) {
 				return make([]string, 0), expectedErr
 			},
 		}
 		anh, _ := NewAddressNonceHandlerWithPrivateAccess(proxy, testAddress)
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
+		tx := createDefaultTx()
 		tx.Nonce = blockchainNonce
-		_, err := anh.SendTransaction(context.Background(), tx)
+		_, err := anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(anh.transactions))
 
@@ -257,9 +255,8 @@ func TestAddressNonceHandler_ReSendTransactionsIfRequired(t *testing.T) {
 			},
 		}
 		anh, _ := NewAddressNonceHandlerWithPrivateAccess(proxy, testAddress)
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
-		_, err := anh.SendTransaction(context.Background(), tx)
+		tx := createDefaultTx()
+		_, err := anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(anh.transactions))
 
@@ -274,9 +271,8 @@ func TestAddressNonceHandler_ReSendTransactionsIfRequired(t *testing.T) {
 		t.Parallel()
 
 		anh, _ := NewAddressNonceHandlerWithPrivateAccess(&testsCommon.ProxyStub{}, testAddress)
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
-		_, err := anh.SendTransaction(context.Background(), tx)
+		tx := createDefaultTx()
+		_, err := anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(anh.transactions))
 
@@ -297,10 +293,9 @@ func TestAddressNonceHandler_ReSendTransactionsIfRequired(t *testing.T) {
 			},
 		}
 		anh, _ := NewAddressNonceHandlerWithPrivateAccess(proxy, testAddress)
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
+		tx := createDefaultTx()
 		tx.Nonce = blockchainNonce + 1
-		_, err := anh.SendTransaction(context.Background(), tx)
+		_, err := anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(anh.transactions))
 
@@ -319,15 +314,14 @@ func TestAddressNonceHandler_ReSendTransactionsIfRequired(t *testing.T) {
 			GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 				return &data.Account{Nonce: blockchainNonce - 1}, nil
 			},
-			SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
+			SendTransactionsCalled: func(txs []*transaction.FrontendTransaction) ([]string, error) {
 				return make([]string, 0), nil
 			},
 		}
 		anh, _ := NewAddressNonceHandlerWithPrivateAccess(proxy, testAddress)
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
+		tx := createDefaultTx()
 		tx.Nonce = blockchainNonce
-		_, err := anh.SendTransaction(context.Background(), tx)
+		_, err := anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(anh.transactions))
 
@@ -356,30 +350,15 @@ func TestAddressNonceHandler_fetchGasPriceIfRequired(t *testing.T) {
 	require.Equal(t, uint64(0), anh.gasPrice)
 }
 
-func createTxArgs() data.ArgCreateTransaction {
-	return data.ArgCreateTransaction{
+func createDefaultTx() transaction.FrontendTransaction {
+	return transaction.FrontendTransaction{
 		Value:    "1",
-		RcvAddr:  testAddress.AddressAsBech32String(),
-		SndAddr:  testAddress.AddressAsBech32String(),
+		Receiver: testAddress.AddressAsBech32String(),
+		Sender:   testAddress.AddressAsBech32String(),
 		GasPrice: 100000,
 		GasLimit: 50000,
 		Data:     nil,
 		ChainID:  "3",
 		Version:  1,
-	}
-}
-
-func createTx(gasPrice uint64, txArgs data.ArgCreateTransaction) *data.Transaction {
-	return &data.Transaction{
-		Nonce:     txArgs.Nonce,
-		Value:     txArgs.Value,
-		RcvAddr:   txArgs.RcvAddr,
-		SndAddr:   txArgs.SndAddr,
-		GasPrice:  gasPrice,
-		GasLimit:  txArgs.GasLimit,
-		Data:      txArgs.Data,
-		Signature: "sig",
-		ChainID:   txArgs.ChainID,
-		Version:   txArgs.Version,
 	}
 }

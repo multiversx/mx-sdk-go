@@ -84,20 +84,20 @@ func NewHeaderCheckHandler(
 		return nil, err
 	}
 
-	rawHeaderHandler, err := NewRawHeaderHandler(proxy, coreComp.Marshaller)
+	rawHeaderHandlerInstance, err := NewRawHeaderHandler(proxy, coreComp.Marshaller)
 	if err != nil {
 		return nil, err
 	}
 
 	headerVerifierArgs := ArgsHeaderVerifier{
-		HeaderHandler:     rawHeaderHandler,
+		HeaderHandler:     rawHeaderHandlerInstance,
 		HeaderSigVerifier: headerSigVerifier,
 		NodesCoordinator:  nodesCoordinator,
 	}
-	headerVerifier, err := NewHeaderVerifier(headerVerifierArgs)
+	headerVerifierInstance, err := NewHeaderVerifier(headerVerifierArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	return headerVerifier, nil
+	return headerVerifierInstance, nil
 }

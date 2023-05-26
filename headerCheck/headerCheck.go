@@ -67,9 +67,9 @@ func (hch *headerVerifier) VerifyHeaderSignatureByHash(ctx context.Context, shar
 
 	if !hch.nodesCoordinator.IsEpochInConfig(headerEpoch) {
 		log.Info("nodes config is set for epoch", "epoch", headerEpoch)
-		err := hch.updateNodesConfigPerEpoch(ctx, headerEpoch)
-		if err != nil {
-			return false, err
+		errUpdate := hch.updateNodesConfigPerEpoch(ctx, headerEpoch)
+		if errUpdate != nil {
+			return false, errUpdate
 		}
 	}
 

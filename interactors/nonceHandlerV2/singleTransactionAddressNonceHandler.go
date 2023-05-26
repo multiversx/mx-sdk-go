@@ -6,15 +6,15 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	erdgoCore "github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
 type singleTransactionAddressNonceHandler struct {
 	mut                    sync.RWMutex
 	address                erdgoCore.AddressHandler
-	transaction            *data.Transaction
+	transaction            *transaction.FrontendTransaction
 	gasPrice               uint64
 	nonceUntilGasIncreased uint64
 	proxy                  interactors.Proxy
@@ -34,16 +34,16 @@ func NewSingleTransactionAddressNonceHandler(proxy interactors.Proxy, address er
 	}, nil
 }
 
-// ApplyNonceAndGasPrice will apply the computed nonce to the given ArgCreateTransaction
-func (anh *singleTransactionAddressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txArgs *data.ArgCreateTransaction) error {
+// ApplyNonceAndGasPrice will apply the computed nonce to the given FrontendTransaction
+func (anh *singleTransactionAddressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, tx *transaction.FrontendTransaction) error {
 	nonce, err := anh.getNonce(ctx)
 	if err != nil {
 		return err
 	}
-	txArgs.Nonce = nonce
+	tx.Nonce = nonce
 
 	anh.fetchGasPriceIfRequired(ctx, nonce)
-	txArgs.GasPrice = core.MaxUint64(anh.gasPrice, txArgs.GasPrice)
+	tx.GasPrice = core.MaxUint64(anh.gasPrice, tx.GasPrice)
 	return nil
 }
 
@@ -97,7 +97,7 @@ func (anh *singleTransactionAddressNonceHandler) ReSendTransactionsIfRequired(ct
 }
 
 // SendTransaction will save and propagate a transaction to the network
-func (anh *singleTransactionAddressNonceHandler) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (anh *singleTransactionAddressNonceHandler) SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 	anh.mut.Lock()
 	anh.transaction = tx
 	anh.mut.Unlock()

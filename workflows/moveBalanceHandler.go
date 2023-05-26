@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-crypto-go/signing"
 	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
 	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
@@ -110,12 +111,12 @@ func (mbh *moveBalanceHandler) generateTransaction(ctx context.Context, address 
 		return errors.New("nil cached configs")
 	}
 
-	argsCreate, err := mbh.proxy.GetDefaultTransactionArguments(ctx, addressHandler, networkConfigs)
+	tx, availableBalanceString, err := mbh.proxy.GetDefaultTransactionArguments(ctx, addressHandler, networkConfigs)
 	if err != nil {
 		return err
 	}
 
-	availableBalance, ok := big.NewInt(0).SetString(argsCreate.AvailableBalance, 10)
+	availableBalance, ok := big.NewInt(0).SetString(availableBalanceString, 10)
 	if !ok {
 		return ErrInvalidAvailableBalanceValue
 	}
@@ -131,11 +132,11 @@ func (mbh *moveBalanceHandler) generateTransaction(ctx context.Context, address 
 
 	//add custom data bytes here if the move-balance transaction towards the hot wallet needs
 	// to carry some unique information
-	argsCreate.Data = nil
-	argsCreate.RcvAddr = mbh.receiverAddress
+	tx.Data = nil
+	tx.Receiver = mbh.receiverAddress
 
-	value := availableBalance.Sub(availableBalance, mbh.computeTxFee(networkConfigs, argsCreate))
-	argsCreate.Value = value.String()
+	value := availableBalance.Sub(availableBalance, mbh.computeTxFee(networkConfigs, tx))
+	tx.Value = value.String()
 
 	skBytes := mbh.trackableAddressesProvider.PrivateKeyOfBech32Address(address)
 
@@ -144,26 +145,26 @@ func (mbh *moveBalanceHandler) generateTransaction(ctx context.Context, address 
 		return err
 	}
 
-	tx, err := mbh.txInteractor.ApplySignatureAndGenerateTx(cryptoHolder, argsCreate)
+	err = mbh.txInteractor.ApplySignature(cryptoHolder, &tx)
 	if err != nil {
 		return err
 	}
 
 	log.Debug("adding transaction", "from", address, "to", mbh.receiverAddress, "value", value.String())
-	mbh.txInteractor.AddTransaction(tx)
+	mbh.txInteractor.AddTransaction(&tx)
 
 	return nil
 }
 
-func (mbh *moveBalanceHandler) computeTxFee(networkConfigs *data.NetworkConfig, argsCreate data.ArgCreateTransaction) *big.Int {
+func (mbh *moveBalanceHandler) computeTxFee(networkConfigs *data.NetworkConfig, tx transaction.FrontendTransaction) *big.Int {
 	// this implementation should change if more complex transactions should be generated
 	// if the transaction is required to do a smart contract call, wrap a transaction using the relay mechanism
 	// or do an ESDT/SFT/NFT operation, then we need to query the proxy's `/transaction/cost` endpoint route
 	// in order to get the correct gas limit
 
-	argsCreate.GasLimit = networkConfigs.MinGasLimit + uint64(len(argsCreate.Data))*networkConfigs.GasPerDataByte
-	result := big.NewInt(int64(argsCreate.GasPrice))
-	result.Mul(result, big.NewInt(int64(argsCreate.GasLimit)))
+	gasLimit := networkConfigs.MinGasLimit + uint64(len(tx.Data))*networkConfigs.GasPerDataByte
+	result := big.NewInt(int64(tx.GasPrice))
+	result.Mul(result, big.NewInt(int64(gasLimit)))
 
 	return result
 }

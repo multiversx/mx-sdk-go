@@ -34,9 +34,9 @@ func TestNewBaseProxy(t *testing.T) {
 
 		args := createMockArgsBaseProxy()
 		args.httpClientWrapper = nil
-		baseProxy, err := newBaseProxy(args)
+		baseProxyInstance, err := newBaseProxy(args)
 
-		assert.True(t, check.IfNil(baseProxy))
+		assert.True(t, check.IfNil(baseProxyInstance))
 		assert.True(t, errors.Is(err, ErrNilHTTPClientWrapper))
 	})
 	t.Run("invalid caching duration", func(t *testing.T) {
@@ -44,9 +44,9 @@ func TestNewBaseProxy(t *testing.T) {
 
 		args := createMockArgsBaseProxy()
 		args.expirationTime = time.Second - time.Nanosecond
-		baseProxy, err := newBaseProxy(args)
+		baseProxyInstance, err := newBaseProxy(args)
 
-		assert.True(t, check.IfNil(baseProxy))
+		assert.True(t, check.IfNil(baseProxyInstance))
 		assert.True(t, errors.Is(err, ErrInvalidCacherDuration))
 	})
 	t.Run("nil endpoint provider", func(t *testing.T) {
@@ -54,18 +54,18 @@ func TestNewBaseProxy(t *testing.T) {
 
 		args := createMockArgsBaseProxy()
 		args.endpointProvider = nil
-		baseProxy, err := newBaseProxy(args)
+		baseProxyInstance, err := newBaseProxy(args)
 
-		assert.True(t, check.IfNil(baseProxy))
+		assert.True(t, check.IfNil(baseProxyInstance))
 		assert.True(t, errors.Is(err, ErrNilEndpointProvider))
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsBaseProxy()
-		baseProxy, err := newBaseProxy(args)
+		baseProxyInstance, err := newBaseProxy(args)
 
-		assert.False(t, check.IfNil(baseProxy))
+		assert.False(t, check.IfNil(baseProxyInstance))
 		assert.Nil(t, err)
 	})
 }
@@ -113,12 +113,12 @@ func TestBaseProxy_GetNetworkConfig(t *testing.T) {
 		args := createMockArgsBaseProxy()
 		args.httpClientWrapper = mockWrapper
 		args.expirationTime = minimumCachingInterval * 2
-		baseProxy, _ := newBaseProxy(args)
-		baseProxy.sinceTimeHandler = func(t time.Time) time.Duration {
+		baseProxyInstance, _ := newBaseProxy(args)
+		baseProxyInstance.sinceTimeHandler = func(t time.Time) time.Duration {
 			return minimumCachingInterval
 		}
 
-		configs, err := baseProxy.GetNetworkConfig(context.Background())
+		configs, err := baseProxyInstance.GetNetworkConfig(context.Background())
 
 		require.Nil(t, err)
 		require.True(t, wasCalled)
@@ -137,12 +137,12 @@ func TestBaseProxy_GetNetworkConfig(t *testing.T) {
 		args := createMockArgsBaseProxy()
 		args.httpClientWrapper = mockWrapper
 		args.expirationTime = minimumCachingInterval * 2
-		baseProxy, _ := newBaseProxy(args)
-		baseProxy.sinceTimeHandler = func(t time.Time) time.Duration {
+		baseProxyInstance, _ := newBaseProxy(args)
+		baseProxyInstance.sinceTimeHandler = func(t time.Time) time.Duration {
 			return minimumCachingInterval*2 + time.Millisecond
 		}
 
-		configs, err := baseProxy.GetNetworkConfig(context.Background())
+		configs, err := baseProxyInstance.GetNetworkConfig(context.Background())
 
 		require.Nil(t, err)
 		require.True(t, wasCalled)
@@ -161,9 +161,9 @@ func TestBaseProxy_GetNetworkConfig(t *testing.T) {
 
 		args := createMockArgsBaseProxy()
 		args.httpClientWrapper = mockWrapper
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		configs, err := baseProxy.GetNetworkConfig(context.Background())
+		configs, err := baseProxyInstance.GetNetworkConfig(context.Background())
 
 		require.Nil(t, configs)
 		require.True(t, wasCalled)
@@ -182,9 +182,9 @@ func TestBaseProxy_GetNetworkConfig(t *testing.T) {
 
 		args := createMockArgsBaseProxy()
 		args.httpClientWrapper = mockWrapper
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		configs, err := baseProxy.GetNetworkConfig(context.Background())
+		configs, err := baseProxyInstance.GetNetworkConfig(context.Background())
 
 		require.Nil(t, configs)
 		require.True(t, wasCalled)
@@ -213,9 +213,9 @@ func TestBaseProxy_GetNetworkConfig(t *testing.T) {
 
 		args := createMockArgsBaseProxy()
 		args.httpClientWrapper = mockWrapper
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		configs, err := baseProxy.GetNetworkConfig(context.Background())
+		configs, err := baseProxyInstance.GetNetworkConfig(context.Background())
 
 		require.Nil(t, configs)
 		require.True(t, wasCalled)
@@ -235,13 +235,13 @@ func TestBaseProxy_GetNetworkConfig(t *testing.T) {
 		args := createMockArgsBaseProxy()
 		args.httpClientWrapper = mockWrapper
 		args.expirationTime = minimumCachingInterval * 2
-		baseProxy, _ := newBaseProxy(args)
-		baseProxy.fetchedConfigs = expectedReturnedNetworkConfig
-		baseProxy.sinceTimeHandler = func(t time.Time) time.Duration {
+		baseProxyInstance, _ := newBaseProxy(args)
+		baseProxyInstance.fetchedConfigs = expectedReturnedNetworkConfig
+		baseProxyInstance.sinceTimeHandler = func(t time.Time) time.Duration {
 			return minimumCachingInterval
 		}
 
-		configs, err := baseProxy.GetNetworkConfig(context.Background())
+		configs, err := baseProxyInstance.GetNetworkConfig(context.Background())
 
 		require.Nil(t, err)
 		assert.False(t, wasCalled)
@@ -262,9 +262,9 @@ func TestBaseProxy_GetNetworkStatus(t *testing.T) {
 				return nil, http.StatusBadRequest, expectedErr
 			},
 		}
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		result, err := baseProxyInstance.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
 		assert.True(t, errors.Is(err, expectedErr))
 		assert.True(t, strings.Contains(err.Error(), http.StatusText(http.StatusBadRequest)))
@@ -278,9 +278,9 @@ func TestBaseProxy_GetNetworkStatus(t *testing.T) {
 				return []byte("malformed response"), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		result, err := baseProxyInstance.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
 		assert.NotNil(t, err)
 		assert.True(t, strings.Contains(err.Error(), "invalid character 'm'"))
@@ -295,9 +295,9 @@ func TestBaseProxy_GetNetworkStatus(t *testing.T) {
 				return []byte("malformed response"), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		result, err := baseProxyInstance.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
 		assert.NotNil(t, err)
 		assert.True(t, strings.Contains(err.Error(), "invalid character 'm'"))
@@ -320,9 +320,9 @@ func TestBaseProxy_GetNetworkStatus(t *testing.T) {
 				return respBytes, http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		result, err := baseProxyInstance.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
 		assert.NotNil(t, err)
 		assert.True(t, strings.Contains(err.Error(), expectedErr.Error()))
@@ -346,9 +346,9 @@ func TestBaseProxy_GetNetworkStatus(t *testing.T) {
 				return respBytes, http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		result, err := baseProxyInstance.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
 		assert.NotNil(t, err)
 		assert.True(t, strings.Contains(err.Error(), expectedErr.Error()))
@@ -362,9 +362,9 @@ func TestBaseProxy_GetNetworkStatus(t *testing.T) {
 				return getNetworkStatusBytes(nil), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		result, err := baseProxyInstance.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
 		assert.True(t, errors.Is(err, ErrNilNetworkStatus))
 		assert.True(t, strings.Contains(err.Error(), "requested from 0"))
@@ -379,9 +379,9 @@ func TestBaseProxy_GetNetworkStatus(t *testing.T) {
 				return getNetworkStatusBytes(nil), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		result, err := baseProxyInstance.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
 		assert.True(t, errors.Is(err, ErrNilNetworkStatus))
 		assert.True(t, strings.Contains(err.Error(), "requested from 0"))
@@ -408,9 +408,9 @@ func TestBaseProxy_GetNetworkStatus(t *testing.T) {
 				return getNodeStatusBytes(providedNetworkStatus), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		result, err := baseProxyInstance.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, result)
 		assert.True(t, errors.Is(err, ErrShardIDMismatch))
 		assert.True(t, strings.Contains(err.Error(), "requested from 0, got response from 4294967295"))
@@ -436,9 +436,9 @@ func TestBaseProxy_GetNetworkStatus(t *testing.T) {
 				return getNodeStatusBytes(providedNetworkStatus), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		result, err := baseProxyInstance.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, err)
 		assert.Equal(t, providedNetworkStatus, result)
 	})
@@ -465,9 +465,9 @@ func TestBaseProxy_GetNetworkStatus(t *testing.T) {
 				return getNetworkStatusBytes(providedNetworkStatus), http.StatusOK, nil
 			},
 		}
-		baseProxy, _ := newBaseProxy(args)
+		baseProxyInstance, _ := newBaseProxy(args)
 
-		result, err := baseProxy.GetNetworkStatus(context.Background(), 0)
+		result, err := baseProxyInstance.GetNetworkStatus(context.Background(), 0)
 		assert.Nil(t, err)
 		assert.Equal(t, providedNetworkStatus, result)
 	})
@@ -501,10 +501,10 @@ func TestBaseProxy_GetShardOfAddress(t *testing.T) {
 	t.Run("invalid address", func(t *testing.T) {
 		t.Parallel()
 
-		baseProxy := createBaseProxyForGetShardOfAddress(3, nil)
+		baseProxyInstance := createBaseProxyForGetShardOfAddress(3, nil)
 
 		addrShard1 := "invalid"
-		shardID, err := baseProxy.GetShardOfAddress(context.Background(), addrShard1)
+		shardID, err := baseProxyInstance.GetShardOfAddress(context.Background(), addrShard1)
 
 		assert.Zero(t, shardID)
 		assert.NotNil(t, err)
@@ -514,10 +514,10 @@ func TestBaseProxy_GetShardOfAddress(t *testing.T) {
 		t.Parallel()
 
 		expectedErr := errors.New("expected error")
-		baseProxy := createBaseProxyForGetShardOfAddress(3, expectedErr)
+		baseProxyInstance := createBaseProxyForGetShardOfAddress(3, expectedErr)
 
 		addrShard1 := "erd1qqqqqqqqqqqqqpgqzyuaqg3dl7rqlkudrsnm5ek0j3a97qevd8sszj0glf"
-		shardID, err := baseProxy.GetShardOfAddress(context.Background(), addrShard1)
+		shardID, err := baseProxyInstance.GetShardOfAddress(context.Background(), addrShard1)
 
 		assert.Zero(t, shardID)
 		assert.True(t, errors.Is(err, expectedErr))
@@ -526,10 +526,10 @@ func TestBaseProxy_GetShardOfAddress(t *testing.T) {
 	t.Run("num shards without meta is 0", func(t *testing.T) {
 		t.Parallel()
 
-		baseProxy := createBaseProxyForGetShardOfAddress(0, nil)
+		baseProxyInstance := createBaseProxyForGetShardOfAddress(0, nil)
 
 		addrShard1 := "erd1qqqqqqqqqqqqqpgqzyuaqg3dl7rqlkudrsnm5ek0j3a97qevd8sszj0glf"
-		shardID, err := baseProxy.GetShardOfAddress(context.Background(), addrShard1)
+		shardID, err := baseProxyInstance.GetShardOfAddress(context.Background(), addrShard1)
 
 		assert.Zero(t, shardID)
 		assert.NotNil(t, err)
@@ -538,16 +538,16 @@ func TestBaseProxy_GetShardOfAddress(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		baseProxy := createBaseProxyForGetShardOfAddress(3, nil)
+		baseProxyInstance := createBaseProxyForGetShardOfAddress(3, nil)
 
 		addrShard1 := "erd1qqqqqqqqqqqqqpgqzyuaqg3dl7rqlkudrsnm5ek0j3a97qevd8sszj0glf"
-		shardID, err := baseProxy.GetShardOfAddress(context.Background(), addrShard1)
+		shardID, err := baseProxyInstance.GetShardOfAddress(context.Background(), addrShard1)
 
 		assert.Nil(t, err)
 		assert.Equal(t, uint32(1), shardID)
 
 		addrShardMeta := "erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqllls0lczs7"
-		shardID, err = baseProxy.GetShardOfAddress(context.Background(), addrShardMeta)
+		shardID, err = baseProxyInstance.GetShardOfAddress(context.Background(), addrShardMeta)
 
 		assert.Nil(t, err)
 		assert.Equal(t, core.MetachainShardId, shardID)
@@ -578,16 +578,16 @@ func createBaseProxyForGetShardOfAddress(numShards uint32, errGet error) *basePr
 
 	args := createMockArgsBaseProxy()
 	args.httpClientWrapper = mockWrapper
-	baseProxy, _ := newBaseProxy(args)
+	baseProxyInstance, _ := newBaseProxy(args)
 
-	return baseProxy
+	return baseProxyInstance
 }
 
 func TestBaseProxy_GetRestAPIEntityType(t *testing.T) {
 	t.Parallel()
 
 	args := createMockArgsBaseProxy()
-	baseProxy, _ := newBaseProxy(args)
+	baseProxyInstance, _ := newBaseProxy(args)
 
-	assert.Equal(t, args.endpointProvider.GetRestAPIEntityType(), baseProxy.GetRestAPIEntityType())
+	assert.Equal(t, args.endpointProvider.GetRestAPIEntityType(), baseProxyInstance.GetRestAPIEntityType())
 }

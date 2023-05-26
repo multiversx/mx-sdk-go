@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-crypto-go/signing"
 	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
 	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
@@ -32,11 +33,11 @@ func TestRelayedTxV1Builder(t *testing.T) {
 	relayerAcc, relayerPrivKey := getAccount(t, testRelayerMnemonic)
 	innerSenderAcc, innerSenderPrivKey := getAccount(t, testInnerSenderMnemonic)
 
-	innerTx := &data.Transaction{
+	innerTx := &transaction.FrontendTransaction{
 		Nonce:    innerSenderAcc.Nonce,
 		Value:    "100000000",
-		RcvAddr:  "erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th",
-		SndAddr:  innerSenderAcc.Address,
+		Receiver: "erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th",
+		Sender:   innerSenderAcc.Address,
 		GasPrice: netConfig.MinGasPrice,
 		GasLimit: netConfig.MinGasLimit,
 		Data:     nil,
@@ -87,9 +88,9 @@ func getAccount(t *testing.T, mnemonic string) (*data.Account, []byte) {
 	return account, privKey
 }
 
-func signTx(t *testing.T, privKeyBytes []byte, tx *data.Transaction) []byte {
-	keyGen := signing.NewKeyGenerator(ed25519.NewEd25519())
-	privKey, err := keyGen.PrivateKeyFromByteArray(privKeyBytes)
+func signTx(t *testing.T, privKeyBytes []byte, tx *transaction.FrontendTransaction) []byte {
+	keyGenInstance := signing.NewKeyGenerator(ed25519.NewEd25519())
+	privKey, err := keyGenInstance.PrivateKeyFromByteArray(privKeyBytes)
 	require.NoError(t, err)
 	signer := cryptoProvider.NewSigner()
 
