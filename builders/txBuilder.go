@@ -43,10 +43,7 @@ func (builder *txBuilder) ApplyUserSignature(
 	tx *transaction.FrontendTransaction,
 ) error {
 	tx.Sender = cryptoHolder.GetBech32()
-	unsignedTx, err := builder.CreateUnsignedTransaction(tx)
-	if err != nil {
-		return nil, err
-	}
+	unsignedTx := TransactionToUnsignedTx(tx)
 
 	signature, err := builder.signTx(unsignedTx, cryptoHolder)
 	if err != nil {
@@ -58,7 +55,7 @@ func (builder *txBuilder) ApplyUserSignature(
 	return nil
 }
 
-func (builder *txBuilder) signTx(unsignedTx *data.Transaction, userCryptoHolder core.CryptoComponentsHolder) ([]byte, error) {
+func (builder *txBuilder) signTx(unsignedTx *transaction.FrontendTransaction, userCryptoHolder core.CryptoComponentsHolder) ([]byte, error) {
 	// TODO: refactor to use Transaction from core so that GetDataForSigning can be used (this logic is duplicated in core)
 	unsignedMessage, err := json.Marshal(unsignedTx)
 	if err != nil {
@@ -78,7 +75,7 @@ func (builder *txBuilder) signTx(unsignedTx *data.Transaction, userCryptoHolder 
 // Does a basic check for the transaction options and guardian address.
 func (builder *txBuilder) ApplyGuardianSignature(
 	guardianCryptoHolder core.CryptoComponentsHolder,
-	tx *data.Transaction,
+	tx *transaction.FrontendTransaction,
 ) error {
 	nodeTx, err := transactionToNodeTransaction(tx)
 	if err != nil {
@@ -187,17 +184,12 @@ func transactionToNodeTransaction(tx *transaction.FrontendTransaction) (*transac
 }
 
 // TransactionToUnsignedTx returns a shallow clone of the transaction, that has the signature fields set to nil
-func TransactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
+func TransactionToUnsignedTx(tx *transaction.FrontendTransaction) *transaction.FrontendTransaction {
 	unsignedTx := *tx
 	unsignedTx.Signature = ""
 	unsignedTx.GuardianSignature = ""
+
 	return &unsignedTx
-}
-
-func (builder *txBuilder) createUnsignedTx(arg data.ArgCreateTransaction) *data.Transaction {
-	tx := builder.createTransaction(arg)
-
-	return TransactionToUnsignedTx(tx), nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

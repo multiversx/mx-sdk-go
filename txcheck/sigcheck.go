@@ -6,12 +6,11 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	crypto "github.com/multiversx/mx-chain-crypto-go"
 	"github.com/multiversx/mx-sdk-go/builders"
-	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // VerifyTransactionSignature handles the signature verification for a given transaction
 func VerifyTransactionSignature(
-	tx *data.Transaction,
+	tx *transaction.FrontendTransaction,
 	pk crypto.PublicKey,
 	signature []byte,
 	verifier builders.Signer,
@@ -38,7 +37,7 @@ func VerifyTransactionSignature(
 }
 
 func checkParams(
-	tx *data.Transaction,
+	tx *transaction.FrontendTransaction,
 	pk crypto.PublicKey,
 	signature []byte,
 	verifier builders.Signer,

@@ -70,7 +70,7 @@ func TestTxBuilder_ApplySignature(t *testing.T) {
 			},
 		})
 
-		errGenerate := tb.ApplyUserSignature(cryptoHolder, argsCopy)
+		errGenerate := tb.ApplyUserSignature(cryptoHolder, &txCopy)
 		assert.Empty(t, txCopy.Signature)
 		assert.Equal(t, expectedErr, errGenerate)
 	})
@@ -97,7 +97,7 @@ func TestTxBuilder_ApplySignature(t *testing.T) {
 		txCopy.Version = 2
 		txCopy.Options = 1
 
-		errGenerate := tb.ApplyUserSignaturex(cryptoHolder, &txCopy)
+		errGenerate := tb.ApplyUserSignature(cryptoHolder, &txCopy)
 		require.Nil(t, errGenerate)
 
 		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", txCopy.Sender)
@@ -138,7 +138,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
 		}
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
 
-		_ := tb.ApplyUserSignature(cryptoHolder, tx)
+		_ = tb.ApplyUserSignature(cryptoHolder, tx)
 		assert.Equal(t, "725c6aa7def724c60f02ee481734807038fef125e453242bf4dc570fc4a4f2ff1b78e996a2ec67ef8be03f9b98b0251d419cfc72c6e6c5c9e33f879af938f008", tx.Signature)
 
 		txHash, errGenerate := tb.ComputeTxHash(tx)
@@ -162,10 +162,10 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 	cryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
 	require.Nil(t, err)
 
-	args := data.ArgCreateTransaction{
+	tx := transaction.FrontendTransaction{
 		Nonce:        1,
 		Value:        "11500313000000000000",
-		RcvAddr:      "erd1p72ru5zcdsvgkkcm9swtvw2zy5epylwgv8vwquptkw7ga7pfvk7qz7snzw",
+		Receiver:     "erd1p72ru5zcdsvgkkcm9swtvw2zy5epylwgv8vwquptkw7ga7pfvk7qz7snzw",
 		GasPrice:     1000000000,
 		GasLimit:     60000,
 		Data:         []byte(""),
@@ -176,49 +176,49 @@ func TestTxBuilder_ApplyUserSignatureAndGenerateWithTxGuardian(t *testing.T) {
 	}
 
 	t.Run("no guardian option should fail", func(t *testing.T) {
-		args := args
-		args.Options = 0
+		txLocal := tx
+		txLocal.Options = 0
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
-		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
+		_ = tb.ApplyUserSignature(cryptoHolder, &txLocal)
+		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, &txLocal)
 
-		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, tx)
 		require.Equal(t, ErrMissingGuardianOption, err)
 	})
 
 	t.Run("no guardian address should fail", func(t *testing.T) {
-		args := args
-		args.GuardianAddr = ""
+		txLocal := tx
+		txLocal.GuardianAddr = ""
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
-		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
+		_ = tb.ApplyUserSignature(cryptoHolder, &txLocal)
 
-		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, tx)
+		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, &txLocal)
 		require.NotNil(t, err)
 	})
 
 	t.Run("different guardian address should fail", func(t *testing.T) {
-		args := args
-		args.GuardianAddr = senderAddress
+		txLocal := tx
+		txLocal.GuardianAddr = senderAddress
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
-		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
+		_ = tb.ApplyUserSignature(cryptoHolder, &txLocal)
 
-		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, tx)
+		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, &txLocal)
 		require.Equal(t, ErrGuardianDoesNotMatch, err)
 	})
 	t.Run("correct guardian ok", func(t *testing.T) {
-		args := args
+		txLocal := tx
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
-		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
+		_ = tb.ApplyUserSignature(cryptoHolder, &txLocal)
 
-		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, tx)
+		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, &txLocal)
 		require.Nil(t, err)
 	})
 	t.Run("correct guardian and sign with hash ok", func(t *testing.T) {
-		args := args
-		args.Options |= transaction.MaskSignedWithHash
+		txLocal := tx
+		txLocal.Options |= transaction.MaskSignedWithHash
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
-		tx, _ := tb.ApplyUserSignatureAndGenerateTx(cryptoHolder, args)
+		_ = tb.ApplyUserSignature(cryptoHolder, &txLocal)
 
-		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, tx)
+		err = tb.ApplyGuardianSignature(cryptoHolderGuardian, &txLocal)
 		require.Nil(t, err)
 	})
 }

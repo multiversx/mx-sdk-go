@@ -228,16 +228,16 @@ func TestGetAccount(t *testing.T) {
 	t.Run("nil address should error", func(t *testing.T) {
 		t.Parallel()
 
-		response, err := proxy.GetAccount(context.Background(), nil)
-		require.Equal(t, err, ErrNilAddress)
+		response, errGet := proxyInstance.GetAccount(context.Background(), nil)
+		require.Equal(t, errGet, ErrNilAddress)
 		require.Nil(t, response)
 	})
 	t.Run("invalid address should error", func(t *testing.T) {
 		t.Parallel()
 
 		invalidAddress := data.NewAddressFromBytes([]byte("invalid address"))
-		response, err := proxy.GetAccount(context.Background(), invalidAddress)
-		require.Equal(t, err, ErrInvalidAddress)
+		response, errGet := proxyInstance.GetAccount(context.Background(), invalidAddress)
+		require.Equal(t, errGet, ErrInvalidAddress)
 		require.Nil(t, response)
 	})
 	t.Run("finality checker errors should not query", func(t *testing.T) {

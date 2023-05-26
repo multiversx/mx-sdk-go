@@ -573,8 +573,8 @@ func (eeh *EnableEpochsHandler) IsRuntimeCodeSizeFixEnabled() bool {
 	return false
 }
 
-// IsRuntimeCodeSizeFixEnabled -
-func (eeh *EnableEpochsHandler) IsRuntimeCodeSizeFixEnabled() bool {
+// IsRelayedNonceFixEnabled -
+func (eeh *EnableEpochsHandler) IsRelayedNonceFixEnabled() bool {
 	return false
 }
 
