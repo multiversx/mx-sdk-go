@@ -69,7 +69,7 @@ func NewNonceTransactionHandlerV2(args ArgsNonceTransactionsHandlerV2) (*nonceTr
 	return nth, nil
 }
 
-// ApplyNonceAndGasPrice will apply the nonce to the given ArgCreateTransaction
+// ApplyNonceAndGasPrice will apply the nonce to the given frontend transaction
 func (nth *nonceTransactionsHandlerV2) ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error {
 	if check.IfNil(address) {
 		return interactors.ErrNilAddress

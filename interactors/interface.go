@@ -42,7 +42,7 @@ type TransactionNonceHandlerV1 interface {
 	IsInterfaceNil() bool
 }
 
-// TransactionNonceHandlerV2 defines the component able to apply nonce for a given ArgCreateTransaction
+// TransactionNonceHandlerV2 defines the component able to apply nonce for a given frontend transaction
 type TransactionNonceHandlerV2 interface {
 	ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error
 	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)

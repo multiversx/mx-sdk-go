@@ -37,7 +37,7 @@ func (builder *txBuilder) ApplySignature(
 	tx *transaction.FrontendTransaction,
 ) error {
 	tx.Sender = cryptoHolder.GetBech32()
-	unsignedMessage := builder.createUnsignedTx(*tx)
+	unsignedMessage := builder.createUnsignedTx(tx)
 
 	signature, err := builder.signer.SignTransaction(unsignedMessage, cryptoHolder.GetPrivateKey())
 	if err != nil {
@@ -51,7 +51,6 @@ func (builder *txBuilder) ApplySignature(
 
 // ComputeTxHash will return the hash of the provided transaction. It assumes that the transaction is already signed,
 // otherwise it will return an error.
-// The input can be the result of the ApplySignatureAndGenerateTx function
 func (builder *txBuilder) ComputeTxHash(tx *transaction.FrontendTransaction) ([]byte, error) {
 	if len(tx.Signature) == 0 {
 		return nil, ErrMissingSignature
@@ -107,8 +106,8 @@ func transactionToNodeTransaction(tx *transaction.FrontendTransaction) (*transac
 	}, nil
 }
 
-func (builder *txBuilder) createUnsignedTx(tx transaction.FrontendTransaction) *transaction.FrontendTransaction {
-	copiedTransaction := tx
+func (builder *txBuilder) createUnsignedTx(tx *transaction.FrontendTransaction) *transaction.FrontendTransaction {
+	copiedTransaction := *tx
 	copiedTransaction.Signature = ""
 
 	return &copiedTransaction

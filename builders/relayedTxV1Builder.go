@@ -112,7 +112,7 @@ func prepareInnerTxForRelayV1(tx *transaction.FrontendTransaction) (string, erro
 		return "", err
 	}
 
-	// TODO: remove this hardcoded implementation in core. Create there a dedicated converter between FrontendTransaction <-> Transaction
+	// TODO: remove this hardcoded implementation. Inside mx-chain-core-go, create there a dedicated converter between FrontendTransaction <-> Transaction
 	coreTx := &transaction.Transaction{
 		Nonce:     tx.Nonce,
 		Value:     txValue,

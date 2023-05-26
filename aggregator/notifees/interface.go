@@ -24,7 +24,7 @@ type Proxy interface {
 	IsInterfaceNil() bool
 }
 
-// TransactionNonceHandler defines the component able to apply nonce for a given ArgCreateTransaction
+// TransactionNonceHandler defines the component able to apply nonce for a given FrontendTransaction
 type TransactionNonceHandler interface {
 	ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error
 	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)

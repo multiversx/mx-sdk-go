@@ -85,7 +85,7 @@ func main() {
 
 	err = ti.ApplySignature(holder, &tx)
 	if err != nil {
-		log.Error("error creating transaction", "error", err)
+		log.Error("error signing transaction", "error", err)
 		return
 	}
 	ti.AddTransaction(&tx)
