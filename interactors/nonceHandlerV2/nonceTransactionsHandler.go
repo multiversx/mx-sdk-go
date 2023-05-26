@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
@@ -69,12 +70,12 @@ func NewNonceTransactionHandlerV2(args ArgsNonceTransactionsHandlerV2) (*nonceTr
 }
 
 // ApplyNonceAndGasPrice will apply the nonce to the given ArgCreateTransaction
-func (nth *nonceTransactionsHandlerV2) ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+func (nth *nonceTransactionsHandlerV2) ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error {
 	if check.IfNil(address) {
 		return interactors.ErrNilAddress
 	}
-	if txArgs == nil {
-		return interactors.ErrNilArgCreateTransaction
+	if tx == nil {
+		return interactors.ErrNilTransaction
 	}
 
 	anh, err := nth.getOrCreateAddressNonceHandler(address)
@@ -82,7 +83,7 @@ func (nth *nonceTransactionsHandlerV2) ApplyNonceAndGasPrice(ctx context.Context
 		return err
 	}
 
-	return anh.ApplyNonceAndGasPrice(ctx, txArgs)
+	return anh.ApplyNonceAndGasPrice(ctx, tx)
 }
 
 func (nth *nonceTransactionsHandlerV2) getOrCreateAddressNonceHandler(address core.AddressHandler) (interactors.AddressNonceHandler, error) {
@@ -124,12 +125,12 @@ func (nth *nonceTransactionsHandlerV2) createAddressNonceHandler(address core.Ad
 }
 
 // SendTransaction will store and send the provided transaction
-func (nth *nonceTransactionsHandlerV2) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (nth *nonceTransactionsHandlerV2) SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 	if tx == nil {
 		return "", interactors.ErrNilTransaction
 	}
 
-	addrAsBech32 := tx.SndAddr
+	addrAsBech32 := tx.Sender
 	address, err := data.NewAddressFromBech32String(addrAsBech32)
 	if err != nil {
 		return "", fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)

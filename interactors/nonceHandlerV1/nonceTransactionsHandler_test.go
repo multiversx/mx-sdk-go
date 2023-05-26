@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
@@ -83,7 +84,7 @@ func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminating
 
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
-	sentTransactions := make(map[int][]*data.Transaction)
+	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
@@ -94,7 +95,7 @@ func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminating
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
+		SendTransactionsCalled: func(txs []*transaction.FrontendTransaction) ([]string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
@@ -104,11 +105,11 @@ func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminating
 
 			return hashes, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = []*data.Transaction{tx}
+			sentTransactions[numCalls] = []*transaction.FrontendTransaction{tx}
 			numCalls++
 
 			return "", nil
@@ -146,7 +147,7 @@ func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminating
 
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
-	sentTransactions := make(map[int][]*data.Transaction)
+	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
@@ -157,11 +158,11 @@ func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminating
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = []*data.Transaction{tx}
+			sentTransactions[numCalls] = []*transaction.FrontendTransaction{tx}
 			numCalls++
 
 			return "", nil
@@ -196,7 +197,7 @@ func TestNonceTransactionsHandlerV1_SendTransactionResendingEliminatingAll(t *te
 
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
-	sentTransactions := make(map[int][]*data.Transaction)
+	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
@@ -207,11 +208,11 @@ func TestNonceTransactionsHandlerV1_SendTransactionResendingEliminatingAll(t *te
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = []*data.Transaction{tx}
+			sentTransactions[numCalls] = []*transaction.FrontendTransaction{tx}
 			numCalls++
 
 			return "", nil
@@ -255,7 +256,7 @@ func TestNonceTransactionsHandlerV1_SendTransactionErrors(t *testing.T) {
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			return "", errSent
 		},
 	}
@@ -275,14 +276,14 @@ func TestNonceTransactionsHandlerV1_SendTransactionErrors(t *testing.T) {
 	require.Equal(t, "", hash)
 }
 
-func createMockTransactions(addr core.AddressHandler, numTxs int, startNonce uint64) []*data.Transaction {
-	txs := make([]*data.Transaction, 0, numTxs)
+func createMockTransactions(addr core.AddressHandler, numTxs int, startNonce uint64) []*transaction.FrontendTransaction {
+	txs := make([]*transaction.FrontendTransaction, 0, numTxs)
 	for i := 0; i < numTxs; i++ {
-		tx := &data.Transaction{
+		tx := &transaction.FrontendTransaction{
 			Nonce:     startNonce,
 			Value:     "1",
-			RcvAddr:   addr.AddressAsBech32String(),
-			SndAddr:   addr.AddressAsBech32String(),
+			Receiver:  addr.AddressAsBech32String(),
+			Sender:    addr.AddressAsBech32String(),
 			GasPrice:  100000,
 			GasLimit:  50000,
 			Data:      nil,
@@ -306,7 +307,7 @@ func TestNonceTransactionsHandlerV1_SendTransactionsWithGetNonce(t *testing.T) {
 
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
-	sentTransactions := make(map[int][]*data.Transaction)
+	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
@@ -317,11 +318,11 @@ func TestNonceTransactionsHandlerV1_SendTransactionsWithGetNonce(t *testing.T) {
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = []*data.Transaction{tx}
+			sentTransactions[numCalls] = []*transaction.FrontendTransaction{tx}
 			numCalls++
 
 			return "", nil
@@ -363,7 +364,7 @@ func TestNonceTransactionsHandlerV1_SendDuplicateTransactions(t *testing.T) {
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			require.LessOrEqual(t, numCalls, 1)
 			currentNonce++
 			return "", nil
@@ -374,11 +375,11 @@ func TestNonceTransactionsHandlerV1_SendDuplicateTransactions(t *testing.T) {
 
 	nonce, err := nth.GetNonce(context.Background(), testAddress)
 	require.Nil(t, err)
-	tx := &data.Transaction{
+	tx := &transaction.FrontendTransaction{
 		Nonce:     nonce,
 		Value:     "1",
-		RcvAddr:   testAddress.AddressAsBech32String(),
-		SndAddr:   testAddress.AddressAsBech32String(),
+		Receiver:  testAddress.AddressAsBech32String(),
+		Sender:    testAddress.AddressAsBech32String(),
 		GasPrice:  100000,
 		GasLimit:  50000,
 		Data:      nil,
@@ -408,17 +409,17 @@ func createMockTransactionsWithGetNonce(
 	addr core.AddressHandler,
 	numTxs int,
 	nth interactors.TransactionNonceHandlerV1,
-) []*data.Transaction {
-	txs := make([]*data.Transaction, 0, numTxs)
+) []*transaction.FrontendTransaction {
+	txs := make([]*transaction.FrontendTransaction, 0, numTxs)
 	for i := 0; i < numTxs; i++ {
 		nonce, err := nth.GetNonce(context.Background(), addr)
 		require.Nil(tb, err)
 
-		tx := &data.Transaction{
+		tx := &transaction.FrontendTransaction{
 			Nonce:     nonce,
 			Value:     "1",
-			RcvAddr:   addr.AddressAsBech32String(),
-			SndAddr:   addr.AddressAsBech32String(),
+			Receiver:  addr.AddressAsBech32String(),
+			Sender:    addr.AddressAsBech32String(),
 			GasPrice:  100000,
 			GasLimit:  50000,
 			Data:      nil,

@@ -21,21 +21,6 @@ type SendTransactionsResponse struct {
 	Code  string `json:"code"`
 }
 
-// Transaction holds the fields of a transaction to be broadcasted to the network
-type Transaction struct {
-	Nonce     uint64 `json:"nonce"`
-	Value     string `json:"value"`
-	RcvAddr   string `json:"receiver"`
-	SndAddr   string `json:"sender"`
-	GasPrice  uint64 `json:"gasPrice"`
-	GasLimit  uint64 `json:"gasLimit"`
-	Data      []byte `json:"data,omitempty"`
-	Signature string `json:"signature,omitempty"`
-	ChainID   string `json:"chainID"`
-	Version   uint32 `json:"version"`
-	Options   uint32 `json:"options,omitempty"`
-}
-
 // TransactionStatus holds a transaction's status response from the network
 type TransactionStatus struct {
 	Data struct {
@@ -91,20 +76,4 @@ type ResponseTxCost struct {
 	Data  TxCostResponseData `json:"data"`
 	Error string             `json:"error"`
 	Code  string             `json:"code"`
-}
-
-// ArgCreateTransaction will hold the transaction fields
-type ArgCreateTransaction struct {
-	Nonce            uint64
-	Value            string
-	RcvAddr          string
-	SndAddr          string
-	GasPrice         uint64
-	GasLimit         uint64
-	Data             []byte
-	Signature        string
-	ChainID          string
-	Version          uint32
-	Options          uint32
-	AvailableBalance string
 }

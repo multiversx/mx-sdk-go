@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-sdk-go/aggregator"
 	"github.com/multiversx/mx-sdk-go/builders"
 	"github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 )
 
 const zeroString = "0"
@@ -102,9 +102,9 @@ func (en *mxNotifee) PriceChanged(ctx context.Context, priceChanges []*aggregato
 	}
 
 	gasLimit := en.baseGasLimit + uint64(len(priceChanges))*en.gasLimitForEach
-	txArgs := data.ArgCreateTransaction{
+	tx := &transaction.FrontendTransaction{
 		Value:    zeroString,
-		RcvAddr:  en.contractAddress.AddressAsBech32String(),
+		Receiver: en.contractAddress.AddressAsBech32String(),
 		GasPrice: networkConfigs.MinGasPrice,
 		GasLimit: gasLimit,
 		Data:     txData,
@@ -112,12 +112,12 @@ func (en *mxNotifee) PriceChanged(ctx context.Context, priceChanges []*aggregato
 		Version:  txVersion,
 	}
 
-	err = en.txNonceHandler.ApplyNonceAndGasPrice(ctx, en.cryptoHolder.GetAddressHandler(), &txArgs)
+	err = en.txNonceHandler.ApplyNonceAndGasPrice(ctx, en.cryptoHolder.GetAddressHandler(), tx)
 	if err != nil {
 		return err
 	}
 
-	tx, err := en.txBuilder.ApplySignatureAndGenerateTx(en.cryptoHolder, txArgs)
+	err = en.txBuilder.ApplySignature(en.cryptoHolder, tx)
 	if err != nil {
 		return err
 	}

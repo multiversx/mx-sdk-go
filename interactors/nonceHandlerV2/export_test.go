@@ -2,8 +2,8 @@ package nonceHandlerV2
 
 import (
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	erdgoCore "github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
@@ -18,6 +18,6 @@ func NewAddressNonceHandlerWithPrivateAccess(proxy interactors.Proxy, address er
 	return &addressNonceHandler{
 		address:      address,
 		proxy:        proxy,
-		transactions: make(map[uint64]*data.Transaction),
+		transactions: make(map[uint64]*transaction.FrontendTransaction),
 	}, nil
 }

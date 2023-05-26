@@ -9,7 +9,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/hashing/blake2b"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 )
 
 var (
@@ -32,46 +31,28 @@ func NewTxBuilder(signer Signer) (*txBuilder, error) {
 	}, nil
 }
 
-// createTransaction assembles a transaction from the provided arguments
-func (builder *txBuilder) createTransaction(arg data.ArgCreateTransaction) *data.Transaction {
-	return &data.Transaction{
-		Nonce:     arg.Nonce,
-		Value:     arg.Value,
-		RcvAddr:   arg.RcvAddr,
-		SndAddr:   arg.SndAddr,
-		GasPrice:  arg.GasPrice,
-		GasLimit:  arg.GasLimit,
-		Data:      arg.Data,
-		Signature: arg.Signature,
-		ChainID:   arg.ChainID,
-		Version:   arg.Version,
-		Options:   arg.Options,
-	}
-}
-
-// ApplySignatureAndGenerateTx will apply the corresponding sender and compute the signature field and
-// generate the transaction instance
-func (builder *txBuilder) ApplySignatureAndGenerateTx(
+// ApplySignature will apply the corresponding sender and compute and set the signature field
+func (builder *txBuilder) ApplySignature(
 	cryptoHolder core.CryptoComponentsHolder,
-	arg data.ArgCreateTransaction,
-) (*data.Transaction, error) {
-	arg.SndAddr = cryptoHolder.GetBech32()
-	unsignedMessage := builder.createUnsignedTx(arg)
+	tx *transaction.FrontendTransaction,
+) error {
+	tx.Sender = cryptoHolder.GetBech32()
+	unsignedMessage := builder.createUnsignedTx(*tx)
 
 	signature, err := builder.signer.SignTransaction(unsignedMessage, cryptoHolder.GetPrivateKey())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	arg.Signature = hex.EncodeToString(signature)
+	tx.Signature = hex.EncodeToString(signature)
 
-	return builder.createTransaction(arg), nil
+	return nil
 }
 
 // ComputeTxHash will return the hash of the provided transaction. It assumes that the transaction is already signed,
 // otherwise it will return an error.
 // The input can be the result of the ApplySignatureAndGenerateTx function
-func (builder *txBuilder) ComputeTxHash(tx *data.Transaction) ([]byte, error) {
+func (builder *txBuilder) ComputeTxHash(tx *transaction.FrontendTransaction) ([]byte, error) {
 	if len(tx.Signature) == 0 {
 		return nil, ErrMissingSignature
 	}
@@ -90,13 +71,13 @@ func (builder *txBuilder) ComputeTxHash(tx *data.Transaction) ([]byte, error) {
 	return txHash, nil
 }
 
-func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transaction, error) {
-	receiverBytes, err := core.AddressPublicKeyConverter.Decode(tx.RcvAddr)
+func transactionToNodeTransaction(tx *transaction.FrontendTransaction) (*transaction.Transaction, error) {
+	receiverBytes, err := core.AddressPublicKeyConverter.Decode(tx.Receiver)
 	if err != nil {
 		return nil, err
 	}
 
-	senderBytes, err := core.AddressPublicKeyConverter.Decode(tx.SndAddr)
+	senderBytes, err := core.AddressPublicKeyConverter.Decode(tx.Sender)
 	if err != nil {
 		return nil, err
 	}
@@ -126,11 +107,11 @@ func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transactio
 	}, nil
 }
 
-func (builder *txBuilder) createUnsignedTx(arg data.ArgCreateTransaction) *data.Transaction {
-	arg.Signature = ""
-	tx := builder.createTransaction(arg)
+func (builder *txBuilder) createUnsignedTx(tx transaction.FrontendTransaction) *transaction.FrontendTransaction {
+	copiedTransaction := tx
+	copiedTransaction.Signature = ""
 
-	return tx
+	return &copiedTransaction
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

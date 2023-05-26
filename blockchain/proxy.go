@@ -11,6 +11,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/state"
 	"github.com/multiversx/mx-sdk-go/blockchain/factory"
 	erdgoCore "github.com/multiversx/mx-sdk-go/core"
@@ -62,18 +63,18 @@ func NewProxy(args ArgsProxy) (*proxy, error) {
 		expirationTime:    args.CacheExpirationTime,
 		endpointProvider:  endpointProvider,
 	}
-	baseProxy, err := newBaseProxy(baseArgs)
+	baseProxyInstance, err := newBaseProxy(baseArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	finalityProvider, err := factory.CreateFinalityProvider(baseProxy, args.FinalityCheck)
+	finalityProvider, err := factory.CreateFinalityProvider(baseProxyInstance, args.FinalityCheck)
 	if err != nil {
 		return nil, err
 	}
 
 	ep := &proxy{
-		baseProxy:           baseProxy,
+		baseProxy:           baseProxyInstance,
 		sameScState:         args.SameScState,
 		shouldBeSynced:      args.ShouldBeSynced,
 		finalityCheck:       args.FinalityCheck,
@@ -166,33 +167,32 @@ func (ep *proxy) GetDefaultTransactionArguments(
 	ctx context.Context,
 	address erdgoCore.AddressHandler,
 	networkConfigs *data.NetworkConfig,
-) (data.ArgCreateTransaction, error) {
+) (transaction.FrontendTransaction, string, error) {
 	if networkConfigs == nil {
-		return data.ArgCreateTransaction{}, ErrNilNetworkConfigs
+		return transaction.FrontendTransaction{}, "", ErrNilNetworkConfigs
 	}
 	if check.IfNil(address) {
-		return data.ArgCreateTransaction{}, ErrNilAddress
+		return transaction.FrontendTransaction{}, "", ErrNilAddress
 	}
 
 	account, err := ep.GetAccount(ctx, address)
 	if err != nil {
-		return data.ArgCreateTransaction{}, err
+		return transaction.FrontendTransaction{}, "", err
 	}
 
-	return data.ArgCreateTransaction{
-		Nonce:            account.Nonce,
-		Value:            "",
-		RcvAddr:          "",
-		SndAddr:          address.AddressAsBech32String(),
-		GasPrice:         networkConfigs.MinGasPrice,
-		GasLimit:         networkConfigs.MinGasLimit,
-		Data:             nil,
-		Signature:        "",
-		ChainID:          networkConfigs.ChainID,
-		Version:          networkConfigs.MinTransactionVersion,
-		Options:          0,
-		AvailableBalance: account.Balance,
-	}, nil
+	return transaction.FrontendTransaction{
+		Nonce:     account.Nonce,
+		Value:     "",
+		Receiver:  "",
+		Sender:    address.AddressAsBech32String(),
+		GasPrice:  networkConfigs.MinGasPrice,
+		GasLimit:  networkConfigs.MinGasLimit,
+		Data:      nil,
+		Signature: "",
+		ChainID:   networkConfigs.ChainID,
+		Version:   networkConfigs.MinTransactionVersion,
+		Options:   0,
+	}, account.Balance, nil
 }
 
 // GetAccount retrieves an account info from the network (nonce, balance)
@@ -228,7 +228,7 @@ func (ep *proxy) GetAccount(ctx context.Context, address erdgoCore.AddressHandle
 }
 
 // SendTransaction broadcasts a transaction to the network and returns the txhash if successful
-func (ep *proxy) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (ep *proxy) SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 	jsonTx, err := json.Marshal(tx)
 	if err != nil {
 		return "", err
@@ -251,7 +251,7 @@ func (ep *proxy) SendTransaction(ctx context.Context, tx *data.Transaction) (str
 }
 
 // SendTransactions broadcasts the provided transactions to the network and returns the txhashes if successful
-func (ep *proxy) SendTransactions(ctx context.Context, txs []*data.Transaction) ([]string, error) {
+func (ep *proxy) SendTransactions(ctx context.Context, txs []*transaction.FrontendTransaction) ([]string, error) {
 	jsonTx, err := json.Marshal(txs)
 	if err != nil {
 		return nil, err
@@ -345,7 +345,7 @@ func (ep *proxy) getTransactionInfo(ctx context.Context, hash string, withResult
 }
 
 // RequestTransactionCost retrieves how many gas a transaction will consume
-func (ep *proxy) RequestTransactionCost(ctx context.Context, tx *data.Transaction) (*data.TxCostResponseData, error) {
+func (ep *proxy) RequestTransactionCost(ctx context.Context, tx *transaction.FrontendTransaction) (*data.TxCostResponseData, error) {
 	jsonTx, err := json.Marshal(tx)
 	if err != nil {
 		return nil, err

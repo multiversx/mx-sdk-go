@@ -7,8 +7,8 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	erdgoCore "github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
@@ -31,7 +31,7 @@ type addressNonceHandler struct {
 	lowestNonce            uint64
 	gasPrice               uint64
 	nonceUntilGasIncreased uint64
-	transactions           map[uint64]*data.Transaction
+	transactions           map[uint64]*transaction.FrontendTransaction
 }
 
 // NewAddressNonceHandler returns a new instance of a addressNonceHandler
@@ -45,37 +45,37 @@ func NewAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHa
 	return &addressNonceHandler{
 		address:      address,
 		proxy:        proxy,
-		transactions: make(map[uint64]*data.Transaction),
+		transactions: make(map[uint64]*transaction.FrontendTransaction),
 	}, nil
 }
 
 // ApplyNonceAndGasPrice will apply the computed nonce to the given ArgCreateTransaction
-func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txArgs *data.ArgCreateTransaction) error {
-	oldTx, alreadyExists := anh.isTxAlreadySent(txArgs)
+func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, tx *transaction.FrontendTransaction) error {
+	oldTx, alreadyExists := anh.isTxAlreadySent(tx)
 	if alreadyExists {
-		err := anh.handleTxAlreadyExists(oldTx, txArgs)
+		err := anh.handleTxAlreadyExists(oldTx, tx)
 		if err != nil {
 			return err
 		}
 	}
 
 	nonce, err := anh.getNonceUpdatingCurrent(ctx)
-	txArgs.Nonce = nonce
+	tx.Nonce = nonce
 	if err != nil {
 		return err
 	}
 
 	anh.fetchGasPriceIfRequired(ctx, nonce)
-	txArgs.GasPrice = core.MaxUint64(anh.gasPrice, txArgs.GasPrice)
+	tx.GasPrice = core.MaxUint64(anh.gasPrice, tx.GasPrice)
 	return nil
 }
 
-func (anh *addressNonceHandler) handleTxAlreadyExists(oldTx *data.Transaction, txArgs *data.ArgCreateTransaction) error {
-	if oldTx.GasPrice < txArgs.GasPrice {
+func (anh *addressNonceHandler) handleTxAlreadyExists(oldTx *transaction.FrontendTransaction, tx *transaction.FrontendTransaction) error {
+	if oldTx.GasPrice < tx.GasPrice {
 		return nil
 	}
 
-	if oldTx.GasPrice == txArgs.GasPrice && oldTx.GasPrice < anh.gasPrice {
+	if oldTx.GasPrice == tx.GasPrice && oldTx.GasPrice < anh.gasPrice {
 		return nil
 	}
 
@@ -132,13 +132,13 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 	anh.mut.Lock()
 	if account.Nonce == anh.computedNonce {
 		anh.lowestNonce = anh.computedNonce
-		anh.transactions = make(map[uint64]*data.Transaction)
+		anh.transactions = make(map[uint64]*transaction.FrontendTransaction)
 		anh.mut.Unlock()
 
 		return nil
 	}
 
-	resendableTxs := make([]*data.Transaction, 0, len(anh.transactions))
+	resendableTxs := make([]*transaction.FrontendTransaction, 0, len(anh.transactions))
 	minNonce := anh.computedNonce
 	for txNonce, tx := range anh.transactions {
 		if txNonce <= account.Nonce {
@@ -166,7 +166,7 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 }
 
 // SendTransaction will save and propagate a transaction to the network
-func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 	anh.mut.Lock()
 	anh.transactions[tx.Nonce] = tx
 	anh.mut.Unlock()
@@ -177,18 +177,18 @@ func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *data.Tr
 // DropTransactions will delete the cached transactions and will try to replace the current transactions from the pool using more gas price
 func (anh *addressNonceHandler) DropTransactions() {
 	anh.mut.Lock()
-	anh.transactions = make(map[uint64]*data.Transaction)
+	anh.transactions = make(map[uint64]*transaction.FrontendTransaction)
 	anh.computedNonceWasSet = false
 	anh.gasPrice++
 	anh.nonceUntilGasIncreased = anh.computedNonce
 	anh.mut.Unlock()
 }
 
-func (anh *addressNonceHandler) isTxAlreadySent(tx *data.ArgCreateTransaction) (*data.Transaction, bool) {
+func (anh *addressNonceHandler) isTxAlreadySent(tx *transaction.FrontendTransaction) (*transaction.FrontendTransaction, bool) {
 	anh.mut.RLock()
 	defer anh.mut.RUnlock()
 	for _, oldTx := range anh.transactions {
-		isTheSameReceiverDataValue := oldTx.RcvAddr == tx.RcvAddr &&
+		isTheSameReceiverDataValue := oldTx.Receiver == tx.Receiver &&
 			bytes.Equal(oldTx.Data, tx.Data) &&
 			oldTx.Value == tx.Value
 		if isTheSameReceiverDataValue {
