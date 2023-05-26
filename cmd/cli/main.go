@@ -432,7 +432,7 @@ func generateAndSendTransaction(options *selectedOptions, proxy interactors.Prox
 	copiedTx := options.tx
 	err = ti.ApplyUserSignature(options.senderCryptoHolder, &copiedTx)
 	if err != nil {
-		log.Error("error creating transaction", "error", err)
+		log.Error("error signing transaction", "error", err)
 		return err
 	}
 
@@ -481,7 +481,7 @@ func fundWallets(td *testData, proxy workflows.ProxyHandler, netConfigs *data.Ne
 	return nil
 }
 
-func sendFundWalletsTxs(td *testData, proxy workflows.ProxyHandler, txArgs transaction.FrontendTransaction, receivers []core.AddressHandler) error {
+func sendFundWalletsTxs(td *testData, proxy workflows.ProxyHandler, providedTx transaction.FrontendTransaction, receivers []core.AddressHandler) error {
 	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewSigner())
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
@@ -501,22 +501,22 @@ func sendFundWalletsTxs(td *testData, proxy workflows.ProxyHandler, txArgs trans
 		return err
 	}
 
-	var tx transaction.FrontendTransaction
-	txArgs.Value = "10000000000000000000" // 10EGLD
+	providedTx.Value = "10000000000000000000" // 10EGLD
 	for _, addressHandler := range receivers {
-		txArgs.Receiver = addressHandler.AddressAsBech32String()
+		tx := providedTx // copy
+
+		tx.Receiver = addressHandler.AddressAsBech32String()
 		fundingWalletCryptoHolder, localErr := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skFunding)
 		if localErr != nil {
-			return err
+			return localErr
 		}
-		tx = txArgs // copy
 		localErr = ti.ApplyUserSignature(fundingWalletCryptoHolder, &tx)
 		if localErr != nil {
-			log.Error("error creating transaction", "error", localErr)
+			log.Error("error signing transaction", "error", localErr)
 			return localErr
 		}
 		ti.AddTransaction(&tx)
-		txArgs.Nonce++
+		providedTx.Nonce++
 	}
 
 	hashes, err := ti.SendTransactionsAsBunch(context.Background(), 100)
