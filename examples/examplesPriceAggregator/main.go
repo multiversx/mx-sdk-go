@@ -184,9 +184,9 @@ func createPriceFetchers() ([]aggregator.PriceFetcher, error) {
 	}
 
 	for exchangeName := range exchanges {
-		priceFetcher, err := fetchers.NewPriceFetcher(exchangeName, httpResponseGetter, graphqlResponseGetter, createXExchangeMap())
-		if err != nil {
-			return nil, err
+		priceFetcher, errFetch := fetchers.NewPriceFetcher(exchangeName, httpResponseGetter, graphqlResponseGetter, createXExchangeMap())
+		if errFetch != nil {
+			return nil, errFetch
 		}
 
 		priceFetchers = append(priceFetchers, priceFetcher)

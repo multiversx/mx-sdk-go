@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/stretchr/testify/require"
 )
@@ -21,11 +22,11 @@ func TestRelayedTxV2Builder(t *testing.T) {
 	relayerAcc, relayerPrivKey := getAccount(t, testRelayerMnemonic)
 	innerSenderAcc, innerSenderPrivKey := getAccount(t, testInnerSenderMnemonic)
 
-	innerTx := &data.Transaction{
+	innerTx := &transaction.FrontendTransaction{
 		Nonce:    innerSenderAcc.Nonce,
 		Value:    "0",
-		RcvAddr:  "erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u",
-		SndAddr:  innerSenderAcc.Address,
+		Receiver: "erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u",
+		Sender:   innerSenderAcc.Address,
 		GasPrice: netConfig.MinGasPrice,
 		GasLimit: 0,
 		Data:     []byte("getContractConfig"),

@@ -1,13 +1,13 @@
 package testsCommon
 
 import (
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	crypto "github.com/multiversx/mx-chain-crypto-go"
-	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // SignerStub -
 type SignerStub struct {
-	SignTransactionCalled       func(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error)
+	SignTransactionCalled       func(tx *transaction.FrontendTransaction, privateKey crypto.PrivateKey) ([]byte, error)
 	SignTransactionBufferCalled func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
 	SignMessageCalled           func(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
 	VerifyMessageCalled         func(msg []byte, publicKey crypto.PublicKey, sig []byte) error
@@ -16,7 +16,7 @@ type SignerStub struct {
 }
 
 // SignTransaction -
-func (stub *SignerStub) SignTransaction(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error) {
+func (stub *SignerStub) SignTransaction(tx *transaction.FrontendTransaction, privateKey crypto.PrivateKey) ([]byte, error) {
 	if stub.SignTransactionCalled != nil {
 		return stub.SignTransactionCalled(tx, privateKey)
 	}

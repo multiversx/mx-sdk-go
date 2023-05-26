@@ -573,6 +573,11 @@ func (eeh *EnableEpochsHandler) IsRuntimeCodeSizeFixEnabled() bool {
 	return false
 }
 
+// IsRuntimeCodeSizeFixEnabled -
+func (eeh *EnableEpochsHandler) IsRuntimeCodeSizeFixEnabled() bool {
+	return false
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (eeh *EnableEpochsHandler) IsInterfaceNil() bool {
 	return eeh == nil

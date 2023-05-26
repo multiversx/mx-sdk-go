@@ -3,6 +3,7 @@ package workflows
 import (
 	"context"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	erdgoCore "github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 )
@@ -27,14 +28,14 @@ type ProxyHandler interface {
 	GetLatestHyperBlockNonce(ctx context.Context) (uint64, error)
 	GetHyperBlockByNonce(ctx context.Context, nonce uint64) (*data.HyperBlock, error)
 	GetHyperBlockByHash(ctx context.Context, hash string) (*data.HyperBlock, error)
-	GetDefaultTransactionArguments(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (data.ArgCreateTransaction, error)
+	GetDefaultTransactionArguments(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error)
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
 	IsInterfaceNil() bool
 }
 
 // TransactionInteractor defines the transaction interactor behavior used in workflows
 type TransactionInteractor interface {
-	AddTransaction(tx *data.Transaction)
-	ApplyUserSignatureAndGenerateTx(cryptoHolder erdgoCore.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	AddTransaction(tx *transaction.FrontendTransaction)
+	ApplyUserSignature(cryptoHolder erdgoCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
 	IsInterfaceNil() bool
 }

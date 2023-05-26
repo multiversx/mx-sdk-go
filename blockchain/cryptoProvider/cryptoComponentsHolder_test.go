@@ -17,12 +17,12 @@ func TestNewCryptoComponentsHolder(t *testing.T) {
 	t.Run("invalid privateKey bytes", func(t *testing.T) {
 		t.Parallel()
 
-		keyGen := &cryptoMocks.KeyGenStub{
+		keyGenInstance := &cryptoMocks.KeyGenStub{
 			PrivateKeyFromByteArrayStub: func(b []byte) (crypto.PrivateKey, error) {
 				return nil, expectedError
 			},
 		}
-		holder, err := NewCryptoComponentsHolder(keyGen, []byte(""))
+		holder, err := NewCryptoComponentsHolder(keyGenInstance, []byte(""))
 		require.Nil(t, holder)
 		require.Equal(t, expectedError, err)
 	})
@@ -38,12 +38,12 @@ func TestNewCryptoComponentsHolder(t *testing.T) {
 			GeneratePublicCalled: func() crypto.PublicKey {
 				return publicKey
 			}}
-		keyGen := &cryptoMocks.KeyGenStub{
+		keyGenInstance := &cryptoMocks.KeyGenStub{
 			PrivateKeyFromByteArrayStub: func(b []byte) (crypto.PrivateKey, error) {
 				return privateKey, nil
 			},
 		}
-		holder, err := NewCryptoComponentsHolder(keyGen, []byte(""))
+		holder, err := NewCryptoComponentsHolder(keyGenInstance, []byte(""))
 		require.Nil(t, holder)
 		require.Equal(t, expectedError, err)
 	})
@@ -55,12 +55,12 @@ func TestNewCryptoComponentsHolder(t *testing.T) {
 				return &testsCommon.PublicKeyStub{}
 			},
 		}
-		keyGen := &cryptoMocks.KeyGenStub{
+		keyGenInstance := &cryptoMocks.KeyGenStub{
 			PrivateKeyFromByteArrayStub: func(b []byte) (crypto.PrivateKey, error) {
 				return privateKey, nil
 			},
 		}
-		holder, err := NewCryptoComponentsHolder(keyGen, []byte(""))
+		holder, err := NewCryptoComponentsHolder(keyGenInstance, []byte(""))
 		require.False(t, check.IfNil(holder))
 		require.Nil(t, err)
 		_ = holder.GetPublicKey()

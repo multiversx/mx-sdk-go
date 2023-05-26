@@ -5,6 +5,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/data/api"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/state"
 	erdgoCore "github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
@@ -16,8 +17,8 @@ type ProxyStub struct {
 	GetRatingsConfigCalled               func() (*data.RatingsConfig, error)
 	GetEnableEpochsConfigCalled          func() (*data.EnableEpochsConfig, error)
 	GetAccountCalled                     func(address erdgoCore.AddressHandler) (*data.Account, error)
-	SendTransactionCalled                func(tx *data.Transaction) (string, error)
-	SendTransactionsCalled               func(txs []*data.Transaction) ([]string, error)
+	SendTransactionCalled                func(tx *transaction.FrontendTransaction) (string, error)
+	SendTransactionsCalled               func(txs []*transaction.FrontendTransaction) ([]string, error)
 	ExecuteVMQueryCalled                 func(vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
 	GetNonceAtEpochStartCalled           func(shardId uint32) (uint64, error)
 	GetRawMiniBlockByHashCalled          func(shardId uint32, hash string, epoch uint32) ([]byte, error)
@@ -31,7 +32,7 @@ type ProxyStub struct {
 	GetLatestHyperBlockNonceCalled       func(ctx context.Context) (uint64, error)
 	GetHyperBlockByNonceCalled           func(ctx context.Context, nonce uint64) (*data.HyperBlock, error)
 	GetHyperBlockByHashCalled            func(ctx context.Context, hash string) (*data.HyperBlock, error)
-	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (data.ArgCreateTransaction, error)
+	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error)
 	GetValidatorsInfoByEpochCalled       func(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
 	GetGuardianDataCalled                func(ctx context.Context, address erdgoCore.AddressHandler) (*api.GuardianData, error)
 }
@@ -82,7 +83,7 @@ func (stub *ProxyStub) GetAccount(_ context.Context, address erdgoCore.AddressHa
 }
 
 // SendTransaction -
-func (stub *ProxyStub) SendTransaction(_ context.Context, tx *data.Transaction) (string, error) {
+func (stub *ProxyStub) SendTransaction(_ context.Context, tx *transaction.FrontendTransaction) (string, error) {
 	if stub.SendTransactionCalled != nil {
 		return stub.SendTransactionCalled(tx)
 	}
@@ -91,7 +92,7 @@ func (stub *ProxyStub) SendTransaction(_ context.Context, tx *data.Transaction) 
 }
 
 // SendTransactions -
-func (stub *ProxyStub) SendTransactions(_ context.Context, txs []*data.Transaction) ([]string, error) {
+func (stub *ProxyStub) SendTransactions(_ context.Context, txs []*transaction.FrontendTransaction) ([]string, error) {
 	if stub.SendTransactionsCalled != nil {
 		return stub.SendTransactionsCalled(txs)
 	}
@@ -203,11 +204,11 @@ func (stub *ProxyStub) GetHyperBlockByHash(ctx context.Context, hash string) (*d
 }
 
 // GetDefaultTransactionArguments -
-func (stub *ProxyStub) GetDefaultTransactionArguments(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (data.ArgCreateTransaction, error) {
+func (stub *ProxyStub) GetDefaultTransactionArguments(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error) {
 	if stub.GetDefaultTransactionArgumentsCalled != nil {
 		return stub.GetDefaultTransactionArgumentsCalled(ctx, address, networkConfigs)
 	}
-	return data.ArgCreateTransaction{}, nil
+	return transaction.FrontendTransaction{}, "", nil
 }
 
 // GetValidatorsInfoByEpoch -

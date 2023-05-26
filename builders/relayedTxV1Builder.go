@@ -11,7 +11,7 @@ import (
 )
 
 type relayedTxV1Builder struct {
-	innerTransaction *data.Transaction
+	innerTransaction *transaction.FrontendTransaction
 	relayerAccount   *data.Account
 	networkConfig    *data.NetworkConfig
 }
@@ -26,7 +26,7 @@ func NewRelayedTxV1Builder() *relayedTxV1Builder {
 }
 
 // SetInnerTransaction sets the inner transaction to be relayed
-func (rtb *relayedTxV1Builder) SetInnerTransaction(tx *data.Transaction) *relayedTxV1Builder {
+func (rtb *relayedTxV1Builder) SetInnerTransaction(tx *transaction.FrontendTransaction) *relayedTxV1Builder {
 	rtb.innerTransaction = tx
 
 	return rtb
@@ -48,7 +48,7 @@ func (rtb *relayedTxV1Builder) SetNetworkConfig(config *data.NetworkConfig) *rel
 
 // Build builds the relayed transaction v1
 // The returned transaction will not be signed
-func (rtb *relayedTxV1Builder) Build() (*data.Transaction, error) {
+func (rtb *relayedTxV1Builder) Build() (*transaction.FrontendTransaction, error) {
 	if rtb.innerTransaction == nil {
 		return nil, ErrNilInnerTransaction
 	}
@@ -75,11 +75,11 @@ func (rtb *relayedTxV1Builder) Build() (*data.Transaction, error) {
 		return nil, ErrInvalidValue
 	}
 
-	relayedTx := &data.Transaction{
+	relayedTx := &transaction.FrontendTransaction{
 		Nonce:    rtb.relayerAccount.Nonce,
 		Value:    innerTxValue.String(),
-		RcvAddr:  rtb.innerTransaction.SndAddr,
-		SndAddr:  rtb.relayerAccount.Address,
+		Receiver: rtb.innerTransaction.Sender,
+		Sender:   rtb.relayerAccount.Address,
 		GasPrice: rtb.innerTransaction.GasPrice,
 		GasLimit: gasLimit,
 		Data:     payload,
@@ -90,19 +90,19 @@ func (rtb *relayedTxV1Builder) Build() (*data.Transaction, error) {
 	return relayedTx, nil
 }
 
-func prepareInnerTxForRelayV1(tx *data.Transaction) (string, error) {
+func prepareInnerTxForRelayV1(tx *transaction.FrontendTransaction) (string, error) {
 	txValue, ok := big.NewInt(0).SetString(tx.Value, 10)
 	if !ok {
 		return "", ErrInvalidValue
 	}
 
 	addressConverter := core.AddressPublicKeyConverter
-	receiverAddress, err := addressConverter.Decode(tx.RcvAddr)
+	receiverAddress, err := addressConverter.Decode(tx.Receiver)
 	if err != nil {
 		return "", err
 	}
 
-	senderAddress, err := addressConverter.Decode(tx.SndAddr)
+	senderAddress, err := addressConverter.Decode(tx.Sender)
 	if err != nil {
 		return "", err
 	}
@@ -112,6 +112,7 @@ func prepareInnerTxForRelayV1(tx *data.Transaction) (string, error) {
 		return "", err
 	}
 
+	// TODO: remove this hardcoded implementation. Inside mx-chain-core-go, create there a dedicated converter between FrontendTransaction <-> Transaction
 	coreTx := &transaction.Transaction{
 		Nonce:     tx.Nonce,
 		Value:     txValue,

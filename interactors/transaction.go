@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
-	"github.com/multiversx/mx-sdk-go/data"
 )
 
 var log = logger.GetOrCreate("mx-sdk-go/interactors")
@@ -20,7 +20,7 @@ type transactionInteractor struct {
 	mutTxAccumulator      sync.RWMutex
 	mutTimeBetweenBunches sync.RWMutex
 	timeBetweenBunches    time.Duration
-	txAccumulator         []*data.Transaction
+	txAccumulator         []*transaction.FrontendTransaction
 }
 
 // NewTransactionInteractor will create an interactor that extends the proxy functionality with some transaction-oriented functionality
@@ -47,7 +47,7 @@ func (ti *transactionInteractor) SetTimeBetweenBunches(timeBetweenBunches time.D
 }
 
 // AddTransaction will add the provided transaction in the transaction accumulator
-func (ti *transactionInteractor) AddTransaction(tx *data.Transaction) {
+func (ti *transactionInteractor) AddTransaction(tx *transaction.FrontendTransaction) {
 	if tx == nil {
 		return
 	}
@@ -58,11 +58,11 @@ func (ti *transactionInteractor) AddTransaction(tx *data.Transaction) {
 }
 
 // PopAccumulatedTransactions will return the whole accumulated contents emptying the accumulator
-func (ti *transactionInteractor) PopAccumulatedTransactions() []*data.Transaction {
+func (ti *transactionInteractor) PopAccumulatedTransactions() []*transaction.FrontendTransaction {
 	ti.mutTxAccumulator.Lock()
-	result := make([]*data.Transaction, len(ti.txAccumulator))
+	result := make([]*transaction.FrontendTransaction, len(ti.txAccumulator))
 	copy(result, ti.txAccumulator)
-	ti.txAccumulator = make([]*data.Transaction, 0)
+	ti.txAccumulator = make([]*transaction.FrontendTransaction, 0)
 	ti.mutTxAccumulator.Unlock()
 
 	return result
@@ -81,7 +81,7 @@ func (ti *transactionInteractor) SendTransactionsAsBunch(ctx context.Context, bu
 	transactions := ti.PopAccumulatedTransactions()
 	allHashes := make([]string, 0)
 	for bunchIndex := 0; len(transactions) > 0; bunchIndex++ {
-		var bunch []*data.Transaction
+		var bunch []*transaction.FrontendTransaction
 
 		log.Debug("sending bunch", "index", bunchIndex)
 
@@ -90,7 +90,7 @@ func (ti *transactionInteractor) SendTransactionsAsBunch(ctx context.Context, bu
 			transactions = transactions[bunchSize:]
 		} else {
 			bunch = transactions
-			transactions = make([]*data.Transaction, 0)
+			transactions = make([]*transaction.FrontendTransaction, 0)
 		}
 
 		hashes, err := ti.Proxy.SendTransactions(ctx, bunch)

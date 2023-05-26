@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-crypto-go/signing"
 	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
 	"github.com/multiversx/mx-sdk-go/aggregator"
@@ -187,10 +188,10 @@ func TestMxNotifee_PriceChanged(t *testing.T) {
 		expectedErr := errors.New("expected error")
 		args := createMockArgsMxNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error {
 				return expectedErr
 			},
-			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
+			SendTransactionCalled: func(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
 				return "", nil
 			},
@@ -208,11 +209,11 @@ func TestMxNotifee_PriceChanged(t *testing.T) {
 
 		args := createMockArgsMxNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
-				txArgs.Nonce = 43
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error {
+				tx.Nonce = 43
 				return nil
 			},
-			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
+			SendTransactionCalled: func(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
 				return "", nil
 			},
@@ -237,11 +238,11 @@ func TestMxNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
-				txArgs.Nonce = 43
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error {
+				tx.Nonce = 43
 				return nil
 			},
-			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
+			SendTransactionCalled: func(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
 				return "", nil
 			},
@@ -260,18 +261,18 @@ func TestMxNotifee_PriceChanged(t *testing.T) {
 		expectedErr := errors.New("expected error")
 		args := createMockArgsMxNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
-				txArgs.Nonce = 43
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error {
+				tx.Nonce = 43
 				return nil
 			},
-			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
+			SendTransactionCalled: func(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 				assert.Fail(t, "should have not called SendTransaction")
 				return "", nil
 			},
 		}
 		args.TxBuilder = &testsCommon.TxBuilderStub{
-			ApplySignatureAndGenerateTxCalled: func(cryptoHolder core.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error) {
-				return nil, expectedErr
+			ApplySignatureCalled: func(cryptoHolder core.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error {
+				return expectedErr
 			},
 		}
 
@@ -288,11 +289,11 @@ func TestMxNotifee_PriceChanged(t *testing.T) {
 		expectedErr := errors.New("expected error")
 		args := createMockArgsMxNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
-				txArgs.Nonce = 43
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error {
+				tx.Nonce = 43
 				return nil
 			},
-			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
+			SendTransactionCalled: func(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 				return "", expectedErr
 			},
 		}
@@ -311,11 +312,11 @@ func TestMxNotifee_PriceChanged(t *testing.T) {
 		sentWasCalled := false
 		args := createMockArgsMxNotifeeWithSomeRealComponents()
 		args.TxNonceHandler = &testsCommon.TxNonceHandlerV2Stub{
-			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
-				txArgs.Nonce = 43
+			ApplyNonceAndGasPriceCalled: func(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error {
+				tx.Nonce = 43
 				return nil
 			},
-			SendTransactionCalled: func(ctx context.Context, tx *data.Transaction) (string, error) {
+			SendTransactionCalled: func(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 				txDataStrings := []string{
 					function,
 					hex.EncodeToString([]byte(priceChanges[0].Base)),
@@ -333,8 +334,8 @@ func TestMxNotifee_PriceChanged(t *testing.T) {
 
 				assert.Equal(t, uint64(43), tx.Nonce)
 				assert.Equal(t, "0", tx.Value)
-				assert.Equal(t, "erd1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsl6e0p7", tx.RcvAddr)
-				assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
+				assert.Equal(t, "erd1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsl6e0p7", tx.Receiver)
+				assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.Sender)
 				assert.Equal(t, uint64(10), tx.GasPrice)
 				assert.Equal(t, uint64(2060), tx.GasLimit)
 				assert.Equal(t, txData, tx.Data)

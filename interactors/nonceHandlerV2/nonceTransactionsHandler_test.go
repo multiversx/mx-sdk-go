@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
@@ -53,7 +54,6 @@ func TestNewNonceTransactionHandlerV2(t *testing.T) {
 func TestNonceTransactionsHandlerV2_GetNonce(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 	numCalls := 0
 
@@ -76,14 +76,14 @@ func TestNonceTransactionsHandlerV2_GetNonce(t *testing.T) {
 	err := nth.ApplyNonceAndGasPrice(context.Background(), nil, nil)
 	assert.Equal(t, interactors.ErrNilAddress, err)
 
-	txArgs := data.ArgCreateTransaction{}
-	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, &txArgs)
+	tx := transaction.FrontendTransaction{}
+	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, &tx)
 	assert.Nil(t, err)
-	assert.Equal(t, currentNonce, txArgs.Nonce)
+	assert.Equal(t, currentNonce, tx.Nonce)
 
-	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, &txArgs)
+	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, &tx)
 	assert.Nil(t, err)
-	assert.Equal(t, currentNonce+1, txArgs.Nonce)
+	assert.Equal(t, currentNonce+1, tx.Nonce)
 
 	assert.Equal(t, 2, numCalls)
 
@@ -93,12 +93,11 @@ func TestNonceTransactionsHandlerV2_GetNonce(t *testing.T) {
 func TestNonceTransactionsHandlerV2_SendMultipleTransactionsResendingEliminatingOne(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
-	sentTransactions := make(map[int][]*data.Transaction)
+	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 
 	args := createMockArgsNonceTransactionsHandlerV2()
 	args.Proxy = &testsCommon.ProxyStub{
@@ -111,7 +110,7 @@ func TestNonceTransactionsHandlerV2_SendMultipleTransactionsResendingEliminating
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
+		SendTransactionsCalled: func(txs []*transaction.FrontendTransaction) ([]string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
@@ -121,11 +120,11 @@ func TestNonceTransactionsHandlerV2_SendMultipleTransactionsResendingEliminating
 
 			return hashes, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = []*data.Transaction{tx}
+			sentTransactions[numCalls] = []*transaction.FrontendTransaction{tx}
 			numCalls++
 
 			return "", nil
@@ -158,12 +157,11 @@ func TestNonceTransactionsHandlerV2_SendMultipleTransactionsResendingEliminating
 func TestNonceTransactionsHandlerV2_SendMultipleTransactionsResendingEliminatingAll(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
-	sentTransactions := make(map[int][]*data.Transaction)
+	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 
 	args := createMockArgsNonceTransactionsHandlerV2()
 	args.Proxy = &testsCommon.ProxyStub{
@@ -176,11 +174,11 @@ func TestNonceTransactionsHandlerV2_SendMultipleTransactionsResendingEliminating
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = []*data.Transaction{tx}
+			sentTransactions[numCalls] = []*transaction.FrontendTransaction{tx}
 			numCalls++
 
 			return "", nil
@@ -209,12 +207,11 @@ func TestNonceTransactionsHandlerV2_SendMultipleTransactionsResendingEliminating
 func TestNonceTransactionsHandlerV2_SendTransactionResendingEliminatingAll(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
-	sentTransactions := make(map[int][]*data.Transaction)
+	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 
 	args := createMockArgsNonceTransactionsHandlerV2()
 	args.Proxy = &testsCommon.ProxyStub{
@@ -227,11 +224,11 @@ func TestNonceTransactionsHandlerV2_SendTransactionResendingEliminatingAll(t *te
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = []*data.Transaction{tx}
+			sentTransactions[numCalls] = []*transaction.FrontendTransaction{tx}
 			numCalls++
 
 			return "", nil
@@ -261,7 +258,6 @@ func TestNonceTransactionsHandlerV2_SendTransactionResendingEliminatingAll(t *te
 func TestNonceTransactionsHandlerV2_SendTransactionErrors(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 
 	var errSent error
@@ -277,7 +273,7 @@ func TestNonceTransactionsHandlerV2_SendTransactionErrors(t *testing.T) {
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			return "", errSent
 		},
 	}
@@ -297,14 +293,14 @@ func TestNonceTransactionsHandlerV2_SendTransactionErrors(t *testing.T) {
 	require.Equal(t, "", hash)
 }
 
-func createMockTransactions(addr core.AddressHandler, numTxs int, startNonce uint64) []*data.Transaction {
-	txs := make([]*data.Transaction, 0, numTxs)
+func createMockTransactions(addr core.AddressHandler, numTxs int, startNonce uint64) []*transaction.FrontendTransaction {
+	txs := make([]*transaction.FrontendTransaction, 0, numTxs)
 	for i := 0; i < numTxs; i++ {
-		tx := &data.Transaction{
+		tx := &transaction.FrontendTransaction{
 			Nonce:     startNonce,
 			Value:     "1",
-			RcvAddr:   addr.AddressAsBech32String(),
-			SndAddr:   addr.AddressAsBech32String(),
+			Receiver:  addr.AddressAsBech32String(),
+			Sender:    addr.AddressAsBech32String(),
 			GasPrice:  100000,
 			GasLimit:  50000,
 			Data:      nil,
@@ -323,12 +319,11 @@ func createMockTransactions(addr core.AddressHandler, numTxs int, startNonce uin
 func TestNonceTransactionsHandlerV2_SendTransactionsWithGetNonce(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 
 	mutSentTransactions := sync.Mutex{}
 	numCalls := 0
-	sentTransactions := make(map[int][]*data.Transaction)
+	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 
 	args := createMockArgsNonceTransactionsHandlerV2()
 	args.Proxy = &testsCommon.ProxyStub{
@@ -341,11 +336,11 @@ func TestNonceTransactionsHandlerV2_SendTransactionsWithGetNonce(t *testing.T) {
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			mutSentTransactions.Lock()
 			defer mutSentTransactions.Unlock()
 
-			sentTransactions[numCalls] = []*data.Transaction{tx}
+			sentTransactions[numCalls] = []*transaction.FrontendTransaction{tx}
 			numCalls++
 
 			return "", nil
@@ -373,7 +368,6 @@ func TestNonceTransactionsHandlerV2_SendTransactionsWithGetNonce(t *testing.T) {
 }
 
 func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 
 	numCalls := 0
@@ -389,7 +383,7 @@ func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
 				Nonce: atomic.LoadUint64(&currentNonce),
 			}, nil
 		},
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			require.LessOrEqual(t, numCalls, 1)
 			currentNonce++
 			return "", nil
@@ -397,30 +391,19 @@ func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
 	}
 	nth, _ := NewNonceTransactionHandlerV2(args)
 
-	txArgs := data.ArgCreateTransaction{
+	tx := &transaction.FrontendTransaction{
 		Value:    "1",
-		RcvAddr:  testAddress.AddressAsBech32String(),
-		SndAddr:  testAddress.AddressAsBech32String(),
+		Receiver: testAddress.AddressAsBech32String(),
+		Sender:   testAddress.AddressAsBech32String(),
 		GasPrice: 100000,
 		GasLimit: 50000,
 		Data:     nil,
 		ChainID:  "3",
 		Version:  1,
 	}
-	err := nth.ApplyNonceAndGasPrice(context.Background(), testAddress, &txArgs)
+	err := nth.ApplyNonceAndGasPrice(context.Background(), testAddress, tx)
 	require.Nil(t, err)
-	tx := &data.Transaction{
-		Nonce:     txArgs.Nonce,
-		Value:     "1",
-		RcvAddr:   testAddress.AddressAsBech32String(),
-		SndAddr:   testAddress.AddressAsBech32String(),
-		GasPrice:  100000,
-		GasLimit:  50000,
-		Data:      nil,
-		Signature: "sig",
-		ChainID:   "3",
-		Version:   1,
-	}
+
 	_, err = nth.SendTransaction(context.Background(), tx)
 	require.Nil(t, err)
 	acc, _ := nth.getOrCreateAddressNonceHandler(testAddress)
@@ -432,10 +415,10 @@ func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
 
 	// trying to apply nonce for the same tx, NonceTransactionHandler shall return ErrTxAlreadySent
 	// and computedNonce shall not increase
-	txArgs.Nonce = 0
-	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, &txArgs)
+	tx.Nonce = 0
+	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, tx)
 	require.Equal(t, err, interactors.ErrTxAlreadySent)
-	require.Equal(t, txArgs.Nonce, uint64(0))
+	require.Equal(t, tx.Nonce, uint64(0))
 	require.Equal(t, accWithPrivateAccess.computedNonce+1, currentNonce)
 }
 
@@ -444,25 +427,21 @@ func createMockTransactionsWithGetNonce(
 	addr core.AddressHandler,
 	numTxs int,
 	nth *nonceTransactionsHandlerV2,
-) []*data.Transaction {
-	txs := make([]*data.Transaction, 0, numTxs)
+) []*transaction.FrontendTransaction {
+	txs := make([]*transaction.FrontendTransaction, 0, numTxs)
 	for i := 0; i < numTxs; i++ {
-		txArgs := data.ArgCreateTransaction{}
-		err := nth.ApplyNonceAndGasPrice(context.Background(), addr, &txArgs)
+		tx := &transaction.FrontendTransaction{}
+		err := nth.ApplyNonceAndGasPrice(context.Background(), addr, tx)
 		require.Nil(tb, err)
 
-		tx := &data.Transaction{
-			Nonce:     txArgs.Nonce,
-			Value:     "1",
-			RcvAddr:   addr.AddressAsBech32String(),
-			SndAddr:   addr.AddressAsBech32String(),
-			GasPrice:  100000,
-			GasLimit:  50000,
-			Data:      nil,
-			Signature: "sig",
-			ChainID:   "3",
-			Version:   1,
-		}
+		tx.Value = "1"
+		tx.Receiver = addr.AddressAsBech32String()
+		tx.Sender = addr.AddressAsBech32String()
+		tx.GasLimit = 50000
+		tx.Data = nil
+		tx.Signature = "sig"
+		tx.ChainID = "3"
+		tx.Version = 1
 
 		txs = append(txs, tx)
 	}
@@ -473,7 +452,6 @@ func createMockTransactionsWithGetNonce(
 func TestNonceTransactionsHandlerV2_ForceNonceReFetch(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
 	currentNonce := uint64(664)
 
 	args := createMockArgsNonceTransactionsHandlerV2()
@@ -490,12 +468,12 @@ func TestNonceTransactionsHandlerV2_ForceNonceReFetch(t *testing.T) {
 	}
 
 	nth, _ := NewNonceTransactionHandlerV2(args)
-	txArgs := data.ArgCreateTransaction{}
-	_ = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, &txArgs)
-	_ = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, &txArgs)
-	err := nth.ApplyNonceAndGasPrice(context.Background(), testAddress, &txArgs)
+	tx := &transaction.FrontendTransaction{}
+	_ = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, tx)
+	_ = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, tx)
+	err := nth.ApplyNonceAndGasPrice(context.Background(), testAddress, tx)
 	require.Nil(t, err)
-	assert.Equal(t, atomic.LoadUint64(&currentNonce)+2, txArgs.Nonce)
+	assert.Equal(t, atomic.LoadUint64(&currentNonce)+2, tx.Nonce)
 
 	err = nth.DropTransactions(nil)
 	assert.Equal(t, interactors.ErrNilAddress, err)
@@ -503,9 +481,9 @@ func TestNonceTransactionsHandlerV2_ForceNonceReFetch(t *testing.T) {
 	err = nth.DropTransactions(testAddress)
 	assert.Nil(t, err)
 
-	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, &txArgs)
+	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, tx)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, atomic.LoadUint64(&currentNonce), txArgs.Nonce)
+	assert.Equal(t, atomic.LoadUint64(&currentNonce), tx.Nonce)
 }
 
 func createMockArgsNonceTransactionsHandlerV2() ArgsNonceTransactionsHandlerV2 {
