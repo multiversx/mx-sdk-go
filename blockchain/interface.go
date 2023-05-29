@@ -3,6 +3,7 @@ package blockchain
 import (
 	"context"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 )
@@ -11,8 +12,8 @@ import (
 type Proxy interface {
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
 	GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error)
-	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
-	SendTransactions(ctx context.Context, txs []*data.Transaction) ([]string, error)
+	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
+	SendTransactions(ctx context.Context, txs []*transaction.FrontendTransaction) ([]string, error)
 	ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
 	IsInterfaceNil() bool
 }

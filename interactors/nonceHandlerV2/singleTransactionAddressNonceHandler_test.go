@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
@@ -56,9 +57,9 @@ func TestSingleTransactionAddressNonceHandler_ApplyNonceAndGasPrice(t *testing.T
 
 		anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
 
-		txArgs := createTxArgs()
+		tx := createDefaultTx()
 
-		err := anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
+		err := anh.ApplyNonceAndGasPrice(context.Background(), &tx)
 		require.Equal(t, expectedErr, err)
 	})
 	t.Run("should work", func(t *testing.T) {
@@ -73,11 +74,11 @@ func TestSingleTransactionAddressNonceHandler_ApplyNonceAndGasPrice(t *testing.T
 
 		anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
 
-		txArgs := createTxArgs()
+		tx := createDefaultTx()
 
-		err := anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
+		err := anh.ApplyNonceAndGasPrice(context.Background(), &tx)
 		require.Nil(t, err)
-		require.Equal(t, blockchainNonce, txArgs.Nonce)
+		require.Equal(t, blockchainNonce, tx.Nonce)
 	})
 }
 
@@ -101,7 +102,7 @@ func TestSingleTransactionAddressNonceHandler_fetchGasPriceIfRequired(t *testing
 func TestSingleTransactionAddressNonceHandler_DropTransactions(t *testing.T) {
 	t.Parallel()
 
-	txArgs := createTxArgs()
+	tx := createDefaultTx()
 
 	blockchainNonce := uint64(100)
 	minGasPrice := uint64(10)
@@ -116,11 +117,10 @@ func TestSingleTransactionAddressNonceHandler_DropTransactions(t *testing.T) {
 
 	anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
 
-	err := anh.ApplyNonceAndGasPrice(context.Background(), &txArgs)
+	err := anh.ApplyNonceAndGasPrice(context.Background(), &tx)
 	require.Nil(t, err)
 
-	tx := createTx(txArgs.GasPrice, txArgs)
-	_, err = anh.SendTransaction(context.Background(), tx)
+	_, err = anh.SendTransaction(context.Background(), &tx)
 	require.Nil(t, err)
 
 	require.Equal(t, uint64(0), anh.nonceUntilGasIncreased)
@@ -139,17 +139,16 @@ func TestSingleTransactionAddressNonceHandler_SendTransaction(t *testing.T) {
 
 	// proxy returns error should error
 	proxy := &testsCommon.ProxyStub{
-		SendTransactionCalled: func(tx *data.Transaction) (string, error) {
+		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			return "", expectedErr
 		},
 	}
 
 	anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
 
-	txArgs := createTxArgs()
-	tx := createTx(txArgs.GasPrice, txArgs)
+	tx := createDefaultTx()
 
-	_, err := anh.SendTransaction(context.Background(), tx)
+	_, err := anh.SendTransaction(context.Background(), &tx)
 	require.Equal(t, expectedErr, err)
 }
 
@@ -173,10 +172,9 @@ func TestSingleTransactionAddressNonceHandler_ReSendTransactionsIfRequired(t *te
 		}
 
 		anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
+		tx := createDefaultTx()
 
-		_, err := anh.SendTransaction(context.Background(), tx)
+		_, err := anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 
 		err = anh.ReSendTransactionsIfRequired(context.Background())
@@ -190,15 +188,14 @@ func TestSingleTransactionAddressNonceHandler_ReSendTransactionsIfRequired(t *te
 			GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 				return &data.Account{Nonce: blockchainNonce}, nil
 			},
-			SendTransactionCalled: func(txs *data.Transaction) (string, error) {
+			SendTransactionCalled: func(txs *transaction.FrontendTransaction) (string, error) {
 				return "", expectedErr
 			},
 		}
 		anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
+		tx := createDefaultTx()
 		tx.Nonce = blockchainNonce
-		anh.transaction = tx
+		anh.transaction = &tx
 
 		err := anh.ReSendTransactionsIfRequired(context.Background())
 		require.Equal(t, expectedErr, err)
@@ -211,15 +208,14 @@ func TestSingleTransactionAddressNonceHandler_ReSendTransactionsIfRequired(t *te
 			GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 				return &data.Account{Nonce: blockchainNonce + 1}, nil
 			},
-			SendTransactionCalled: func(txs *data.Transaction) (string, error) {
+			SendTransactionCalled: func(txs *transaction.FrontendTransaction) (string, error) {
 				return "", expectedErr
 			},
 		}
 		anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
+		tx := createDefaultTx()
 		tx.Nonce = blockchainNonce
-		anh.transaction = tx
+		anh.transaction = &tx
 
 		err := anh.ReSendTransactionsIfRequired(context.Background())
 		require.Nil(t, err)
@@ -233,15 +229,14 @@ func TestSingleTransactionAddressNonceHandler_ReSendTransactionsIfRequired(t *te
 			GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
 				return &data.Account{Nonce: blockchainNonce}, nil
 			},
-			SendTransactionCalled: func(txs *data.Transaction) (string, error) {
+			SendTransactionCalled: func(txs *transaction.FrontendTransaction) (string, error) {
 				return "hash", nil
 			},
 		}
 		anh, _ := NewSingleTransactionAddressNonceHandler(proxy, testAddress)
-		txArgs := createTxArgs()
-		tx := createTx(txArgs.GasPrice, txArgs)
+		tx := createDefaultTx()
 		tx.Nonce = blockchainNonce
-		anh.transaction = tx
+		anh.transaction = &tx
 
 		err := anh.ReSendTransactionsIfRequired(context.Background())
 		require.Nil(t, err)

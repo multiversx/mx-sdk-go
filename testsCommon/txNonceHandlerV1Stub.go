@@ -3,14 +3,14 @@ package testsCommon
 import (
 	"context"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // TxNonceHandlerV1Stub -
 type TxNonceHandlerV1Stub struct {
 	GetNonceCalled          func(ctx context.Context, address core.AddressHandler) (uint64, error)
-	SendTransactionCalled   func(ctx context.Context, tx *data.Transaction) (string, error)
+	SendTransactionCalled   func(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
 	ForceNonceReFetchCalled func(address core.AddressHandler) error
 	CloseCalled             func() error
 }
@@ -25,7 +25,7 @@ func (stub *TxNonceHandlerV1Stub) GetNonce(ctx context.Context, address core.Add
 }
 
 // SendTransaction -
-func (stub *TxNonceHandlerV1Stub) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (stub *TxNonceHandlerV1Stub) SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 	if stub.SendTransactionCalled != nil {
 		return stub.SendTransactionCalled(ctx, tx)
 	}

@@ -7,11 +7,11 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	crypto "github.com/multiversx/mx-chain-crypto-go"
 	"github.com/multiversx/mx-chain-crypto-go/signing"
 	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
 	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
-	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +41,7 @@ func TestNewTxBuilder(t *testing.T) {
 	})
 }
 
-func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
+func TestTxBuilder_ApplySignature(t *testing.T) {
 	t.Parallel()
 
 	sk, err := hex.DecodeString("6ae10fed53a84029e53e35afdbe083688eea0917a09a9431951dd42fd4da14c40d248169f4dd7c90537f05be1c49772ddbf8f7948b507ed17fb23284cf218b7d")
@@ -49,9 +49,9 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 	cryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
 	require.Nil(t, err)
 	value := big.NewInt(999)
-	args := data.ArgCreateTransaction{
+	tx := transaction.FrontendTransaction{
 		Value:    value.String(),
-		RcvAddr:  "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
+		Receiver: "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
 		GasPrice: 10,
 		GasLimit: 100000,
 		Data:     []byte(""),
@@ -62,16 +62,16 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 	t.Run("tx signer errors when signing should error", func(t *testing.T) {
 		t.Parallel()
 
-		argsCopy := args
+		txCopy := tx
 		expectedErr := errors.New("expected error")
 		tb, _ := NewTxBuilder(&testsCommon.SignerStub{
-			SignTransactionCalled: func(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error) {
+			SignTransactionCalled: func(tx *transaction.FrontendTransaction, privateKey crypto.PrivateKey) ([]byte, error) {
 				return nil, expectedErr
 			},
 		})
 
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(cryptoHolder, argsCopy)
-		assert.Nil(t, tx)
+		errGenerate := tb.ApplySignature(cryptoHolder, &txCopy)
+		assert.Empty(t, txCopy.Signature)
 		assert.Equal(t, expectedErr, errGenerate)
 	})
 
@@ -82,27 +82,27 @@ func TestTxBuilder_ApplySignatureAndGenerateTx(t *testing.T) {
 	t.Run("sign on all tx bytes should work", func(t *testing.T) {
 		t.Parallel()
 
-		argsCopy := args
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(cryptoHolder, argsCopy)
+		txCopy := tx
+		errGenerate := tb.ApplySignature(cryptoHolder, &txCopy)
 		require.Nil(t, errGenerate)
 
-		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
+		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", txCopy.Sender)
 		assert.Equal(t, "80e1b5476c5ea9567614d9c364e1a7380b7990b53e7b6fd8431bf8536d174c8b3e73cc354b783a03e5ae0a53b128504a6bcf32c3b9bbc06f284afe1fac179e0d",
-			tx.Signature)
+			txCopy.Signature)
 	})
 	t.Run("sign on tx hash should work", func(t *testing.T) {
 		t.Parallel()
 
-		argsCopy := args
-		argsCopy.Version = 2
-		argsCopy.Options = 1
+		txCopy := tx
+		txCopy.Version = 2
+		txCopy.Options = 1
 
-		tx, errGenerate := tb.ApplySignatureAndGenerateTx(cryptoHolder, argsCopy)
+		errGenerate := tb.ApplySignature(cryptoHolder, &txCopy)
 		require.Nil(t, errGenerate)
 
-		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", tx.SndAddr)
+		assert.Equal(t, "erd1p5jgz605m47fq5mlqklpcjth9hdl3au53dg8a5tlkgegfnep3d7stdk09x", txCopy.Sender)
 		assert.Equal(t, "1761bcac651a65839b53e89f6b0738e0956cb12e8624826b98bfc577c9f8d5e36a2544a9c5445ce7d5059972b2c5f42e25f3ad9f59255465a2ba128f0764b90e",
-			tx.Signature)
+			txCopy.Signature)
 	})
 }
 
@@ -118,7 +118,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
 		t.Parallel()
 
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
-		txHash, errGenerate := tb.ComputeTxHash(&data.Transaction{})
+		txHash, errGenerate := tb.ComputeTxHash(&transaction.FrontendTransaction{})
 		assert.Nil(t, txHash)
 		assert.Equal(t, ErrMissingSignature, errGenerate)
 	})
@@ -126,10 +126,10 @@ func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
 	t.Run("should generate tx hash", func(t *testing.T) {
 		t.Parallel()
 
-		args := data.ArgCreateTransaction{
+		tx := &transaction.FrontendTransaction{
 			Nonce:    1,
 			Value:    "11500313000000000000",
-			RcvAddr:  "erd1p72ru5zcdsvgkkcm9swtvw2zy5epylwgv8vwquptkw7ga7pfvk7qz7snzw",
+			Receiver: "erd1p72ru5zcdsvgkkcm9swtvw2zy5epylwgv8vwquptkw7ga7pfvk7qz7snzw",
 			GasPrice: 1000000000,
 			GasLimit: 60000,
 			Data:     []byte(""),
@@ -138,7 +138,7 @@ func TestTxBuilder_ApplySignatureAndGenerateTxHash(t *testing.T) {
 		}
 		tb, _ := NewTxBuilder(cryptoProvider.NewSigner())
 
-		tx, _ := tb.ApplySignatureAndGenerateTx(cryptoHolder, args)
+		_ = tb.ApplySignature(cryptoHolder, tx)
 		assert.Equal(t, "725c6aa7def724c60f02ee481734807038fef125e453242bf4dc570fc4a4f2ff1b78e996a2ec67ef8be03f9b98b0251d419cfc72c6e6c5c9e33f879af938f008", tx.Signature)
 
 		txHash, errGenerate := tb.ComputeTxHash(tx)

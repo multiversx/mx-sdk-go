@@ -3,29 +3,29 @@ package testsCommon
 import (
 	"context"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // TxNonceHandlerV2Stub -
 type TxNonceHandlerV2Stub struct {
-	ApplyNonceAndGasPriceCalled func(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
-	SendTransactionCalled       func(ctx context.Context, tx *data.Transaction) (string, error)
+	ApplyNonceAndGasPriceCalled func(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error
+	SendTransactionCalled       func(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
 	ForceNonceReFetchCalled     func(address core.AddressHandler) error
 	CloseCalled                 func() error
 }
 
 // ApplyNonceAndGasPrice -
-func (stub *TxNonceHandlerV2Stub) ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error {
+func (stub *TxNonceHandlerV2Stub) ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error {
 	if stub.ApplyNonceAndGasPriceCalled != nil {
-		return stub.ApplyNonceAndGasPriceCalled(ctx, address, txArgs)
+		return stub.ApplyNonceAndGasPriceCalled(ctx, address, tx)
 	}
 
 	return nil
 }
 
 // SendTransaction -
-func (stub *TxNonceHandlerV2Stub) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (stub *TxNonceHandlerV2Stub) SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 	if stub.SendTransactionCalled != nil {
 		return stub.SendTransactionCalled(ctx, tx)
 	}

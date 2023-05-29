@@ -631,6 +631,7 @@ func TestBaseProxyInstance_ProcessTransactionStatus(t *testing.T) {
 		t.Run("pending new", func(t *testing.T) {
 			t.Parallel()
 
+	assert.Equal(t, args.endpointProvider.GetRestAPIEntityType(), baseProxyInstance.GetRestAPIEntityType())
 			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/pendingNewSCCall.json")
 			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
 			require.Equal(t, transaction.TxStatusPending, status)

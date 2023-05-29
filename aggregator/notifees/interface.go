@@ -3,13 +3,14 @@ package notifees
 import (
 	"context"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // TxBuilder defines the component able to build & sign a transaction
 type TxBuilder interface {
-	ApplySignatureAndGenerateTx(cryptoHolder core.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	ApplySignature(cryptoHolder core.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
 	IsInterfaceNil() bool
 }
 
@@ -18,14 +19,14 @@ type TxBuilder interface {
 type Proxy interface {
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
 	GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error)
-	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
-	SendTransactions(ctx context.Context, txs []*data.Transaction) ([]string, error)
+	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
+	SendTransactions(ctx context.Context, txs []*transaction.FrontendTransaction) ([]string, error)
 	IsInterfaceNil() bool
 }
 
-// TransactionNonceHandler defines the component able to apply nonce for a given ArgCreateTransaction
+// TransactionNonceHandler defines the component able to apply nonce for a given FrontendTransaction
 type TransactionNonceHandler interface {
-	ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, txArgs *data.ArgCreateTransaction) error
-	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
+	ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error
+	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
 	IsInterfaceNil() bool
 }
