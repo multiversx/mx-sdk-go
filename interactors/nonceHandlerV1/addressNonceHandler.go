@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	erdgoCore "github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
@@ -24,14 +24,14 @@ type addressNonceHandler struct {
 	proxy               interactors.Proxy
 	computedNonceWasSet bool
 	computedNonce       uint64
-	transactions        map[uint64]*data.Transaction
+	transactions        map[uint64]*transaction.FrontendTransaction
 }
 
 func newAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) *addressNonceHandler {
 	return &addressNonceHandler{
 		address:      address,
 		proxy:        proxy,
-		transactions: make(map[uint64]*data.Transaction),
+		transactions: make(map[uint64]*transaction.FrontendTransaction),
 	}
 }
 
@@ -64,13 +64,13 @@ func (anh *addressNonceHandler) reSendTransactionsIfRequired(ctx context.Context
 
 	anh.mut.Lock()
 	if account.Nonce == anh.computedNonce {
-		anh.transactions = make(map[uint64]*data.Transaction)
+		anh.transactions = make(map[uint64]*transaction.FrontendTransaction)
 		anh.mut.Unlock()
 
 		return nil
 	}
 
-	resendableTxs := make([]*data.Transaction, 0, len(anh.transactions))
+	resendableTxs := make([]*transaction.FrontendTransaction, 0, len(anh.transactions))
 	for txNonce, tx := range anh.transactions {
 		if txNonce <= account.Nonce {
 			delete(anh.transactions, txNonce)
@@ -95,7 +95,7 @@ func (anh *addressNonceHandler) reSendTransactionsIfRequired(ctx context.Context
 	return nil
 }
 
-func (anh *addressNonceHandler) sendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (anh *addressNonceHandler) sendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 	anh.mut.Lock()
 	anh.transactions[tx.Nonce] = tx
 	anh.mut.Unlock()
@@ -103,11 +103,11 @@ func (anh *addressNonceHandler) sendTransaction(ctx context.Context, tx *data.Tr
 	return anh.proxy.SendTransaction(ctx, tx)
 }
 
-func (anh *addressNonceHandler) isTxAlreadySent(tx *data.Transaction) bool {
+func (anh *addressNonceHandler) isTxAlreadySent(tx *transaction.FrontendTransaction) bool {
 	anh.mut.RLock()
 	defer anh.mut.RUnlock()
 	for _, oldTx := range anh.transactions {
-		isTheSameReceiverDataValue := oldTx.RcvAddr == tx.RcvAddr &&
+		isTheSameReceiverDataValue := oldTx.Receiver == tx.Receiver &&
 			bytes.Equal(oldTx.Data, tx.Data) &&
 			oldTx.Value == tx.Value
 		if isTheSameReceiverDataValue {

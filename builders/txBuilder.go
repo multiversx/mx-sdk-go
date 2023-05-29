@@ -13,7 +13,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 )
 
 var (
@@ -38,48 +37,25 @@ func NewTxBuilder(signer Signer) (*txBuilder, error) {
 	}, nil
 }
 
-// createTransaction assembles a transaction from the provided arguments
-func (builder *txBuilder) createTransaction(arg data.ArgCreateTransaction) *data.Transaction {
-	return &data.Transaction{
-		Nonce:             arg.Nonce,
-		Value:             arg.Value,
-		RcvAddr:           arg.RcvAddr,
-		SndAddr:           arg.SndAddr,
-		GasPrice:          arg.GasPrice,
-		GasLimit:          arg.GasLimit,
-		Data:              arg.Data,
-		Signature:         arg.Signature,
-		ChainID:           arg.ChainID,
-		Version:           arg.Version,
-		Options:           arg.Options,
-		GuardianAddr:      arg.GuardianAddr,
-		GuardianSignature: arg.GuardianSignature,
-	}
-}
-
-// ApplyUserSignatureAndGenerateTx will apply the corresponding sender and compute the signature field and
-// generate the transaction instance
-func (builder *txBuilder) ApplyUserSignatureAndGenerateTx(
+// ApplyUserSignature will apply the corresponding sender and compute and set the user signature field
+func (builder *txBuilder) ApplyUserSignature(
 	cryptoHolder core.CryptoComponentsHolder,
-	arg data.ArgCreateTransaction,
-) (*data.Transaction, error) {
-	arg.SndAddr = cryptoHolder.GetBech32()
-	unsignedTx, err := builder.CreateUnsignedTransaction(arg)
-	if err != nil {
-		return nil, err
-	}
+	tx *transaction.FrontendTransaction,
+) error {
+	tx.Sender = cryptoHolder.GetBech32()
+	unsignedTx := TransactionToUnsignedTx(tx)
 
 	signature, err := builder.signTx(unsignedTx, cryptoHolder)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	arg.Signature = hex.EncodeToString(signature)
+	tx.Signature = hex.EncodeToString(signature)
 
-	return builder.createTransaction(arg), nil
+	return nil
 }
 
-func (builder *txBuilder) signTx(unsignedTx *data.Transaction, userCryptoHolder core.CryptoComponentsHolder) ([]byte, error) {
+func (builder *txBuilder) signTx(unsignedTx *transaction.FrontendTransaction, userCryptoHolder core.CryptoComponentsHolder) ([]byte, error) {
 	// TODO: refactor to use Transaction from core so that GetDataForSigning can be used (this logic is duplicated in core)
 	unsignedMessage, err := json.Marshal(unsignedTx)
 	if err != nil {
@@ -99,7 +75,7 @@ func (builder *txBuilder) signTx(unsignedTx *data.Transaction, userCryptoHolder 
 // Does a basic check for the transaction options and guardian address.
 func (builder *txBuilder) ApplyGuardianSignature(
 	guardianCryptoHolder core.CryptoComponentsHolder,
-	tx *data.Transaction,
+	tx *transaction.FrontendTransaction,
 ) error {
 	nodeTx, err := transactionToNodeTransaction(tx)
 	if err != nil {
@@ -137,8 +113,7 @@ func (builder *txBuilder) ApplyGuardianSignature(
 
 // ComputeTxHash will return the hash of the provided transaction. It assumes that the transaction is already signed,
 // otherwise it will return an error.
-// The input can be the result of the ApplySignatureAndGenerateTx function
-func (builder *txBuilder) ComputeTxHash(tx *data.Transaction) ([]byte, error) {
+func (builder *txBuilder) ComputeTxHash(tx *transaction.FrontendTransaction) ([]byte, error) {
 	if len(tx.Signature) == 0 {
 		return nil, ErrMissingSignature
 	}
@@ -157,13 +132,13 @@ func (builder *txBuilder) ComputeTxHash(tx *data.Transaction) ([]byte, error) {
 	return txHash, nil
 }
 
-func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transaction, error) {
-	receiverBytes, err := core.AddressPublicKeyConverter.Decode(tx.RcvAddr)
+func transactionToNodeTransaction(tx *transaction.FrontendTransaction) (*transaction.Transaction, error) {
+	receiverBytes, err := core.AddressPublicKeyConverter.Decode(tx.Receiver)
 	if err != nil {
 		return nil, err
 	}
 
-	senderBytes, err := core.AddressPublicKeyConverter.Decode(tx.SndAddr)
+	senderBytes, err := core.AddressPublicKeyConverter.Decode(tx.Sender)
 	if err != nil {
 		return nil, err
 	}
@@ -209,17 +184,12 @@ func transactionToNodeTransaction(tx *data.Transaction) (*transaction.Transactio
 }
 
 // TransactionToUnsignedTx returns a shallow clone of the transaction, that has the signature fields set to nil
-func TransactionToUnsignedTx(tx *data.Transaction) *data.Transaction {
+func TransactionToUnsignedTx(tx *transaction.FrontendTransaction) *transaction.FrontendTransaction {
 	unsignedTx := *tx
 	unsignedTx.Signature = ""
 	unsignedTx.GuardianSignature = ""
+
 	return &unsignedTx
-}
-
-func (builder *txBuilder) CreateUnsignedTransaction(arg data.ArgCreateTransaction) (*data.Transaction, error) {
-	tx := builder.createTransaction(arg)
-
-	return TransactionToUnsignedTx(tx), nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

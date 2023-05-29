@@ -13,7 +13,6 @@ import (
 	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
 	"github.com/multiversx/mx-sdk-go/builders"
 	"github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
 	"github.com/multiversx/mx-sdk-go/txcheck"
 	"github.com/stretchr/testify/require"
@@ -27,15 +26,16 @@ func Test_VerifyTransactionSignature(t *testing.T) {
 	builder, err := builders.NewTxBuilder(signer)
 	require.Nil(t, err)
 
-	txArg := createTransactionArgs()
-	tx, signature, signatureGuardian, err := createSignedTransaction(userCryptoHolder, guardianCryptoHolder, &txArg, builder)
+	tx := createFrontendTransaction()
+	signature, signatureGuardian, err := signTransaction(userCryptoHolder, guardianCryptoHolder, &tx, builder)
 	require.Nil(t, err)
 
-	txArgHashSigning := txArg
+	txArgHashSigning := tx
 	txArgHashSigning.Options |= transaction.MaskSignedWithHash
 	txArgHashSigning.Version = 2
 
-	txHashSign, signatureOnHash, signatureGuardianOnHash, err := createSignedTransaction(userCryptoHolder, guardianCryptoHolder, &txArg, builder)
+	txHashSign := tx // copy
+	signatureOnHash, signatureGuardianOnHash, err := signTransaction(userCryptoHolder, guardianCryptoHolder, &txHashSign, builder)
 	require.Nil(t, err)
 
 	marshaller, err := marshallerFactory.NewMarshalizer(marshallerFactory.JsonMarshalizer)
@@ -45,43 +45,43 @@ func Test_VerifyTransactionSignature(t *testing.T) {
 	require.Nil(t, err)
 
 	t.Run("nil transaction should err", func(t *testing.T) {
-		err := txcheck.VerifyTransactionSignature(nil, userCryptoHolder.GetPublicKey(), signature, signer, marshaller, hasher)
+		err = txcheck.VerifyTransactionSignature(nil, userCryptoHolder.GetPublicKey(), signature, signer, marshaller, hasher)
 		require.Equal(t, txcheck.ErrNilTransaction, err)
 	})
 	t.Run("nil public key should err", func(t *testing.T) {
-		err := txcheck.VerifyTransactionSignature(tx, nil, signature, signer, marshaller, hasher)
+		err = txcheck.VerifyTransactionSignature(&tx, nil, signature, signer, marshaller, hasher)
 		require.Equal(t, txcheck.ErrNilPubKey, err)
 	})
 	t.Run("nil signature should err", func(t *testing.T) {
-		err := txcheck.VerifyTransactionSignature(tx, userCryptoHolder.GetPublicKey(), nil, signer, marshaller, hasher)
+		err = txcheck.VerifyTransactionSignature(&tx, userCryptoHolder.GetPublicKey(), nil, signer, marshaller, hasher)
 		require.Equal(t, txcheck.ErrNilSignature, err)
 	})
 	t.Run("nil verifier should err", func(t *testing.T) {
-		err := txcheck.VerifyTransactionSignature(tx, userCryptoHolder.GetPublicKey(), signature, nil, marshaller, hasher)
+		err = txcheck.VerifyTransactionSignature(&tx, userCryptoHolder.GetPublicKey(), signature, nil, marshaller, hasher)
 		require.Equal(t, txcheck.ErrNilSignatureVerifier, err)
 	})
 	t.Run("nil marshaller should err", func(t *testing.T) {
-		err := txcheck.VerifyTransactionSignature(tx, userCryptoHolder.GetPublicKey(), signature, signer, nil, hasher)
+		err = txcheck.VerifyTransactionSignature(&tx, userCryptoHolder.GetPublicKey(), signature, signer, nil, hasher)
 		require.Equal(t, txcheck.ErrNilMarshaller, err)
 	})
 	t.Run("nil hasher should err", func(t *testing.T) {
-		err := txcheck.VerifyTransactionSignature(tx, userCryptoHolder.GetPublicKey(), signature, signer, marshaller, nil)
+		err = txcheck.VerifyTransactionSignature(&tx, userCryptoHolder.GetPublicKey(), signature, signer, marshaller, nil)
 		require.Equal(t, txcheck.ErrNilHasher, err)
 	})
 	t.Run("verify user signature OK", func(t *testing.T) {
-		err := txcheck.VerifyTransactionSignature(tx, userCryptoHolder.GetPublicKey(), signature, signer, marshaller, hasher)
+		err = txcheck.VerifyTransactionSignature(&tx, userCryptoHolder.GetPublicKey(), signature, signer, marshaller, hasher)
 		require.Nil(t, err)
 	})
 	t.Run("verify user signature OK with hashSigning", func(t *testing.T) {
-		err := txcheck.VerifyTransactionSignature(txHashSign, userCryptoHolder.GetPublicKey(), signatureOnHash, signer, marshaller, hasher)
+		err = txcheck.VerifyTransactionSignature(&txHashSign, userCryptoHolder.GetPublicKey(), signatureOnHash, signer, marshaller, hasher)
 		require.Nil(t, err)
 	})
 	t.Run("verify guardian signature OK", func(t *testing.T) {
-		err := txcheck.VerifyTransactionSignature(tx, guardianCryptoHolder.GetPublicKey(), signatureGuardian, signer, marshaller, hasher)
+		err = txcheck.VerifyTransactionSignature(&tx, guardianCryptoHolder.GetPublicKey(), signatureGuardian, signer, marshaller, hasher)
 		require.Nil(t, err)
 	})
 	t.Run("verify guardian signature OK with hashSigning", func(t *testing.T) {
-		err := txcheck.VerifyTransactionSignature(txHashSign, guardianCryptoHolder.GetPublicKey(), signatureGuardianOnHash, signer, marshaller, hasher)
+		err = txcheck.VerifyTransactionSignature(&txHashSign, guardianCryptoHolder.GetPublicKey(), signatureGuardianOnHash, signer, marshaller, hasher)
 		require.Nil(t, err)
 	})
 }
@@ -105,11 +105,11 @@ func createUserAndGuardianKeys(t *testing.T) (cryptoHolderUser core.CryptoCompon
 	return
 }
 
-func createTransactionArgs() data.ArgCreateTransaction {
+func createFrontendTransaction() transaction.FrontendTransaction {
 	value := big.NewInt(999)
-	txArg := data.ArgCreateTransaction{
+	txArg := transaction.FrontendTransaction{
 		Value:        value.String(),
-		RcvAddr:      "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
+		Receiver:     "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
 		GasPrice:     10,
 		GasLimit:     100000,
 		Data:         []byte(""),
@@ -122,31 +122,31 @@ func createTransactionArgs() data.ArgCreateTransaction {
 	return txArg
 }
 
-func createSignedTransaction(
+func signTransaction(
 	cryptoHolderUser core.CryptoComponentsHolder,
 	cryptoHolderGuardian core.CryptoComponentsHolder,
-	arg *data.ArgCreateTransaction,
+	tx *transaction.FrontendTransaction,
 	builder interactors.GuardedTxBuilder,
-) (tx *data.Transaction, sigUser []byte, sigGuardian []byte, err error) {
-	tx, err = builder.ApplyUserSignatureAndGenerateTx(cryptoHolderUser, *arg)
+) (sigUser []byte, sigGuardian []byte, err error) {
+	err = builder.ApplyUserSignature(cryptoHolderUser, tx)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	err = builder.ApplyGuardianSignature(cryptoHolderGuardian, tx)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	signatureGuardian, err := hex.DecodeString(tx.GuardianSignature)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	signature, err := hex.DecodeString(tx.Signature)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	return tx, signature, signatureGuardian, nil
+	return signature, signatureGuardian, nil
 }

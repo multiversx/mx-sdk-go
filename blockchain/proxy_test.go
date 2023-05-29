@@ -16,6 +16,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/api"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/config"
 	"github.com/multiversx/mx-chain-go/state"
 	erdgoCore "github.com/multiversx/mx-sdk-go/core"
@@ -148,9 +149,9 @@ func TestNewProxy(t *testing.T) {
 
 		args := createMockArgsProxy(nil)
 		args.CacheExpirationTime = time.Second - time.Nanosecond
-		proxy, err := NewProxy(args)
+		proxyInstance, err := NewProxy(args)
 
-		assert.True(t, check.IfNil(proxy))
+		assert.True(t, check.IfNil(proxyInstance))
 		assert.True(t, errors.Is(err, ErrInvalidCacherDuration))
 	})
 	t.Run("invalid nonce delta should error", func(t *testing.T) {
@@ -159,9 +160,9 @@ func TestNewProxy(t *testing.T) {
 		args := createMockArgsProxy(nil)
 		args.FinalityCheck = true
 		args.AllowedDeltaToFinal = 0
-		proxy, err := NewProxy(args)
+		proxyInstance, err := NewProxy(args)
 
-		assert.True(t, check.IfNil(proxy))
+		assert.True(t, check.IfNil(proxyInstance))
 		assert.True(t, errors.Is(err, ErrInvalidAllowedDeltaToFinal))
 	})
 	t.Run("should work with finality check", func(t *testing.T) {
@@ -169,18 +170,18 @@ func TestNewProxy(t *testing.T) {
 
 		args := createMockArgsProxy(nil)
 		args.FinalityCheck = true
-		proxy, err := NewProxy(args)
+		proxyInstance, err := NewProxy(args)
 
-		assert.False(t, check.IfNil(proxy))
+		assert.False(t, check.IfNil(proxyInstance))
 		assert.Nil(t, err)
 	})
 	t.Run("should work without finality check", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsProxy(nil)
-		proxy, err := NewProxy(args)
+		proxyInstance, err := NewProxy(args)
 
-		assert.False(t, check.IfNil(proxy))
+		assert.False(t, check.IfNil(proxyInstance))
 		assert.Nil(t, err)
 	})
 }
@@ -216,7 +217,7 @@ func TestGetAccount(t *testing.T) {
 	}
 	args := createMockArgsProxy(httpClient)
 	args.FinalityCheck = true
-	proxy, _ := NewProxy(args)
+	proxyInstance, _ := NewProxy(args)
 
 	address, err := data.NewAddressFromBech32String("erd1qqqqqqqqqqqqqpgqfzydqmdw7m2vazsp6u5p95yxz76t2p9rd8ss0zp9ts")
 	if err != nil {
@@ -227,40 +228,40 @@ func TestGetAccount(t *testing.T) {
 	t.Run("nil address should error", func(t *testing.T) {
 		t.Parallel()
 
-		response, err := proxy.GetAccount(context.Background(), nil)
-		require.Equal(t, err, ErrNilAddress)
+		response, errGet := proxyInstance.GetAccount(context.Background(), nil)
+		require.Equal(t, ErrNilAddress, errGet)
 		require.Nil(t, response)
 	})
 	t.Run("invalid address should error", func(t *testing.T) {
 		t.Parallel()
 
 		invalidAddress := data.NewAddressFromBytes([]byte("invalid address"))
-		response, err := proxy.GetAccount(context.Background(), invalidAddress)
-		require.Equal(t, err, ErrInvalidAddress)
+		response, errGet := proxyInstance.GetAccount(context.Background(), invalidAddress)
+		require.Equal(t, ErrInvalidAddress, errGet)
 		require.Nil(t, response)
 	})
 	t.Run("finality checker errors should not query", func(t *testing.T) {
-		proxy.finalityProvider = &testsCommon.FinalityProviderStub{
+		proxyInstance.finalityProvider = &testsCommon.FinalityProviderStub{
 			CheckShardFinalizationCalled: func(ctx context.Context, targetShardID uint32, maxNoncesDelta uint64) error {
 				return expectedErr
 			},
 		}
 
-		account, errGet := proxy.GetAccount(context.Background(), address)
+		account, errGet := proxyInstance.GetAccount(context.Background(), address)
 		assert.Nil(t, account)
 		assert.True(t, errors.Is(errGet, expectedErr))
 		assert.Equal(t, uint32(0), atomic.LoadUint32(&numAccountQueries))
 	})
 	t.Run("finality checker returns nil should return account", func(t *testing.T) {
 		finalityCheckCalled := uint32(0)
-		proxy.finalityProvider = &testsCommon.FinalityProviderStub{
+		proxyInstance.finalityProvider = &testsCommon.FinalityProviderStub{
 			CheckShardFinalizationCalled: func(ctx context.Context, targetShardID uint32, maxNoncesDelta uint64) error {
 				atomic.AddUint32(&finalityCheckCalled, 1)
 				return nil
 			},
 		}
 
-		account, errGet := proxy.GetAccount(context.Background(), address)
+		account, errGet := proxyInstance.GetAccount(context.Background(), address)
 		assert.NotNil(t, account)
 		assert.Equal(t, uint64(37), account.Nonce)
 		assert.Nil(t, errGet)
@@ -298,15 +299,15 @@ func TestProxy_RequestTransactionCost(t *testing.T) {
 	args := createMockArgsProxy(httpClient)
 	ep, _ := NewProxy(args)
 
-	tx := &data.Transaction{
-		Nonce:   1,
-		Value:   "50",
-		RcvAddr: "erd1rh5ws22jxm9pe7dtvhfy6j3uttuupkepferdwtmslms5fydtrh5sx3xr8r",
-		SndAddr: "erd1rh5ws22jxm9pe7dtvhfy6j3uttuupkepferdwtmslms5fydtrh5sx3xr8r",
-		Data:    []byte("hello"),
-		ChainID: "1",
-		Version: 1,
-		Options: 0,
+	tx := &transaction.FrontendTransaction{
+		Nonce:    1,
+		Value:    "50",
+		Receiver: "erd1rh5ws22jxm9pe7dtvhfy6j3uttuupkepferdwtmslms5fydtrh5sx3xr8r",
+		Sender:   "erd1rh5ws22jxm9pe7dtvhfy6j3uttuupkepferdwtmslms5fydtrh5sx3xr8r",
+		Data:     []byte("hello"),
+		ChainID:  "1",
+		Version:  1,
+		Options:  0,
 	}
 	txCost, err := ep.RequestTransactionCost(context.Background(), tx)
 	require.Nil(t, err)

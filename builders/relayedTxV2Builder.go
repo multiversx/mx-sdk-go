@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
 type relayedTxV2Builder struct {
-	innerTransaction                  *data.Transaction
+	innerTransaction                  *transaction.FrontendTransaction
 	gasLimitNeededForInnerTransaction uint64
 	relayerAccount                    *data.Account
 	networkConfig                     *data.NetworkConfig
@@ -26,12 +27,13 @@ func NewRelayedTxV2Builder() *relayedTxV2Builder {
 }
 
 // SetInnerTransaction sets the inner transaction to be relayed
-func (rtb *relayedTxV2Builder) SetInnerTransaction(tx *data.Transaction) *relayedTxV2Builder {
+func (rtb *relayedTxV2Builder) SetInnerTransaction(tx *transaction.FrontendTransaction) *relayedTxV2Builder {
 	rtb.innerTransaction = tx
 
 	return rtb
 }
 
+// SetRelayerAccount sets the relayer account (that will send the wrapped transaction)
 func (rtb *relayedTxV2Builder) SetRelayerAccount(account *data.Account) *relayedTxV2Builder {
 	rtb.relayerAccount = account
 
@@ -54,7 +56,7 @@ func (rtb *relayedTxV2Builder) SetNetworkConfig(config *data.NetworkConfig) *rel
 
 // Build builds the relayed transaction v1
 // The returned transaction will not be signed
-func (rtb *relayedTxV2Builder) Build() (*data.Transaction, error) {
+func (rtb *relayedTxV2Builder) Build() (*transaction.FrontendTransaction, error) {
 	if rtb.innerTransaction == nil {
 		return nil, ErrNilInnerTransaction
 	}
@@ -82,11 +84,11 @@ func (rtb *relayedTxV2Builder) Build() (*data.Transaction, error) {
 	payload := []byte("relayedTxV2@" + innerTxHex)
 	gasLimit := rtb.networkConfig.MinGasLimit + rtb.networkConfig.GasPerDataByte*uint64(len(payload)) + rtb.gasLimitNeededForInnerTransaction
 
-	relayedTx := &data.Transaction{
+	relayedTx := &transaction.FrontendTransaction{
 		Nonce:    rtb.relayerAccount.Nonce,
 		Value:    "0",
-		RcvAddr:  rtb.innerTransaction.SndAddr,
-		SndAddr:  rtb.relayerAccount.Address,
+		Receiver: rtb.innerTransaction.Sender,
+		Sender:   rtb.relayerAccount.Address,
 		GasPrice: rtb.innerTransaction.GasPrice,
 		GasLimit: gasLimit,
 		Data:     payload,
@@ -97,9 +99,9 @@ func (rtb *relayedTxV2Builder) Build() (*data.Transaction, error) {
 	return relayedTx, nil
 }
 
-func prepareInnerTxForRelayV2(tx *data.Transaction) (string, error) {
+func prepareInnerTxForRelayV2(tx *transaction.FrontendTransaction) (string, error) {
 	nonceBytes := big.NewInt(0).SetUint64(tx.Nonce).Bytes()
-	decodedReceiver, err := core.AddressPublicKeyConverter.Decode(tx.RcvAddr)
+	decodedReceiver, err := core.AddressPublicKeyConverter.Decode(tx.Receiver)
 	if err != nil {
 		return "", err
 	}

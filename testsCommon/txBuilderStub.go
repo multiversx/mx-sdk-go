@@ -1,22 +1,22 @@
 package testsCommon
 
 import (
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	erdgoCore "github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // TxBuilderStub -
 type TxBuilderStub struct {
-	ApplySignatureAndGenerateTxCalled func(cryptoHolder erdgoCore.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	ApplyUserSignatureCalled func(cryptoHolder erdgoCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
 }
 
-// ApplySignatureAndGenerateTx -
-func (stub *TxBuilderStub) ApplyUserSignatureAndGenerateTx(cryptoHolder erdgoCore.CryptoComponentsHolder, arg data.ArgCreateTransaction) (*data.Transaction, error) {
-	if stub.ApplySignatureAndGenerateTxCalled != nil {
-		return stub.ApplySignatureAndGenerateTxCalled(cryptoHolder, arg)
+// ApplyUserSignature -
+func (stub *TxBuilderStub) ApplyUserSignature(cryptoHolder erdgoCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error {
+	if stub.ApplyUserSignatureCalled != nil {
+		return stub.ApplyUserSignatureCalled(cryptoHolder, tx)
 	}
 
-	return &data.Transaction{}, nil
+	return nil
 }
 
 // IsInterfaceNil -

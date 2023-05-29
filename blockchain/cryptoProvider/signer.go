@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"strconv"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-core-go/hashing/keccak"
 	crypto "github.com/multiversx/mx-chain-crypto-go"
 	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519/singlesig"
 	logger "github.com/multiversx/mx-chain-logger-go"
-	"github.com/multiversx/mx-sdk-go/data"
 )
 
 var (
@@ -52,7 +52,7 @@ func (s *signer) VerifyByteSlice(msg []byte, publicKey crypto.PublicKey, sig []b
 }
 
 // SignTransaction will generate the signature providing the private key bytes and the serialized form of the transaction
-func (s *signer) SignTransaction(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error) {
+func (s *signer) SignTransaction(tx *transaction.FrontendTransaction, privateKey crypto.PrivateKey) ([]byte, error) {
 	if len(tx.Signature) > 0 {
 		return nil, ErrTxAlreadySigned
 	}

@@ -3,6 +3,7 @@ package builders
 import (
 	"math/big"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	crypto "github.com/multiversx/mx-chain-crypto-go"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
@@ -45,7 +46,7 @@ type VMQueryBuilder interface {
 type Signer interface {
 	SignMessage(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
 	VerifyMessage(msg []byte, publicKey crypto.PublicKey, sig []byte) error
-	SignTransaction(tx *data.Transaction, privateKey crypto.PrivateKey) ([]byte, error)
+	SignTransaction(tx *transaction.FrontendTransaction, privateKey crypto.PrivateKey) ([]byte, error)
 	SignByteSlice(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
 	VerifyByteSlice(msg []byte, publicKey crypto.PublicKey, sig []byte) error
 	IsInterfaceNil() bool

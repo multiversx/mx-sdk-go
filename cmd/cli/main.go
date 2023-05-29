@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-crypto-go/signing"
 	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
 	logger "github.com/multiversx/mx-chain-logger-go"
@@ -109,8 +110,8 @@ VERSION:
 	log        = logger.GetOrCreate("mx-sdk-go/cmd/cli")
 )
 
-var HOME = os.Getenv("HOME")
-var pathGeneratedWallets = HOME + "/MultiversX/testnet/filegen/output/walletKey.pem"
+var homePath = os.Getenv("HOME")
+var pathGeneratedWallets = homePath + "/MultiversX/testnet/filegen/output/walletKey.pem"
 var suite = ed25519.NewEd25519()
 var keyGen = signing.NewKeyGenerator(suite)
 
@@ -145,7 +146,7 @@ type selectedOptions struct {
 	guardianCryptoHolder core.CryptoComponentsHolder
 
 	guardianAddress core.AddressHandler
-	txArguments     data.ArgCreateTransaction
+	tx              transaction.FrontendTransaction
 }
 
 type testData struct {
@@ -268,7 +269,7 @@ func setSenderOption(td *testData, options *selectedOptions) error {
 	}
 
 	if selectedAddress != nil {
-		options.txArguments.SndAddr = selectedAddress.AddressAsBech32String()
+		options.tx.Sender = selectedAddress.AddressAsBech32String()
 		options.senderCryptoHolder, err = cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
 		if err != nil {
 			return err
@@ -284,7 +285,7 @@ func setReceiverOption(td *testData, options *selectedOptions) error {
 		return err
 	}
 	if selectedAddress != nil {
-		options.txArguments.RcvAddr = selectedAddress.AddressAsBech32String()
+		options.tx.Receiver = selectedAddress.AddressAsBech32String()
 	}
 
 	return nil
@@ -310,12 +311,12 @@ func setGuardedTxByOption(td *testData, options *selectedOptions) error {
 	}
 
 	if selectedAddress != nil {
-		options.txArguments.GuardianAddr = selectedAddress.AddressAsBech32String()
+		options.tx.GuardianAddr = selectedAddress.AddressAsBech32String()
 		options.guardianCryptoHolder, err = cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
 		if err != nil {
 			return err
 		}
-		options.txArguments.Options = maskGuardedTx
+		options.tx.Options = maskGuardedTx
 	}
 
 	return nil
@@ -362,7 +363,7 @@ func setOtherOptions(options *selectedOptions, config *data.NetworkConfig) error
 	}
 
 	if len(argsConfig.value) > 0 {
-		options.txArguments.Value = argsConfig.value
+		options.tx.Value = argsConfig.value
 	}
 
 	return nil
@@ -371,20 +372,20 @@ func setOtherOptions(options *selectedOptions, config *data.NetworkConfig) error
 func treatDataIfNeeded(options *selectedOptions, config *data.NetworkConfig) error {
 	var err error
 	if len(argsConfig.guardian) > 0 {
-		options.txArguments.Data, err = createSetGuardianData(options.guardianAddress)
+		options.tx.Data, err = createSetGuardianData(options.guardianAddress)
 		if err != nil {
 			return err
 		}
-		options.txArguments.GasLimit += setGuardianGasCost
-		options.txArguments.RcvAddr = options.txArguments.SndAddr
+		options.tx.GasLimit += setGuardianGasCost
+		options.tx.Receiver = options.tx.Sender
 	}
 	if len(argsConfig.dataField) > 0 {
-		options.txArguments.Data = []byte(argsConfig.dataField)
+		options.tx.Data = []byte(argsConfig.dataField)
 	}
-	options.txArguments.Version = 2
-	options.txArguments.GasLimit += uint64(len(options.txArguments.Data)) * config.GasPerDataByte
+	options.tx.Version = 2
+	options.tx.GasLimit += uint64(len(options.tx.Data)) * config.GasPerDataByte
 	if argsConfig.gasLimit != 0 {
-		options.txArguments.GasLimit = argsConfig.gasLimit
+		options.tx.GasLimit = argsConfig.gasLimit
 	}
 
 	return nil
@@ -397,13 +398,13 @@ func createSetGuardianData(guardianAddress core.AddressHandler) ([]byte, error) 
 }
 
 func getDefaultOptions(td *testData, ep workflows.ProxyHandler, netConfigs *data.NetworkConfig) (*selectedOptions, error) {
-	transactionArguments, err := ep.GetDefaultTransactionArguments(context.Background(), td.addressAlice, netConfigs)
+	tx, _, err := ep.GetDefaultTransactionArguments(context.Background(), td.addressAlice, netConfigs)
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return nil, err
 	}
-	transactionArguments.Value = "0"
-	transactionArguments.RcvAddr = td.addressBob.AddressAsBech32String()
+	tx.Value = "0"
+	tx.Receiver = td.addressBob.AddressAsBech32String()
 
 	aliceCryptoHolder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skAlice)
 	bobCryptoHolder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skBob)
@@ -411,7 +412,7 @@ func getDefaultOptions(td *testData, ep workflows.ProxyHandler, netConfigs *data
 	return &selectedOptions{
 		senderCryptoHolder:   aliceCryptoHolder, // default if nothing provided
 		guardianCryptoHolder: bobCryptoHolder,   // default if nothing provided
-		txArguments:          transactionArguments,
+		tx:                   tx,
 		guardianAddress:      td.addressBob,
 	}, nil
 }
@@ -428,33 +429,34 @@ func generateAndSendTransaction(options *selectedOptions, proxy interactors.Prox
 		return err
 	}
 
-	tx, err := ti.ApplyUserSignatureAndGenerateTx(options.senderCryptoHolder, options.txArguments)
+	copiedTx := options.tx
+	err = ti.ApplyUserSignature(options.senderCryptoHolder, &copiedTx)
 	if err != nil {
-		log.Error("error creating transaction", "error", err)
+		log.Error("error signing transaction", "error", err)
 		return err
 	}
 
 	if len(argsConfig.guardedTxBy) > 0 && argsConfig.guardianSigned {
-		err = ti.ApplyGuardianSignature(options.guardianCryptoHolder, tx)
+		err = ti.ApplyGuardianSignature(options.guardianCryptoHolder, &copiedTx)
 		if err != nil {
 			log.Error("error applying guardian signature", "error", err)
 			return err
 		}
 	}
 
-	ti.AddTransaction(tx)
+	ti.AddTransaction(&copiedTx)
 
 	if argsConfig.send {
-		hashes, err := ti.SendTransactionsAsBunch(context.Background(), 100)
-		if err != nil {
-			log.Error("error sending transaction", "error", err)
-			return err
+		hashes, errSend := ti.SendTransactionsAsBunch(context.Background(), 100)
+		if errSend != nil {
+			log.Error("error sending transaction", "error", errSend)
+			return errSend
 		}
 
 		log.Info("transactions sent", "hashes", hashes)
 	} else {
-		for _, transaction := range ti.PopAccumulatedTransactions() {
-			txJson, _ := json.Marshal(transaction)
+		for _, tx := range ti.PopAccumulatedTransactions() {
+			txJson, _ := json.Marshal(tx)
 			log.Info(string(txJson))
 		}
 	}
@@ -463,7 +465,7 @@ func generateAndSendTransaction(options *selectedOptions, proxy interactors.Prox
 }
 
 func fundWallets(td *testData, proxy workflows.ProxyHandler, netConfigs *data.NetworkConfig) error {
-	transactionArguments, err := proxy.GetDefaultTransactionArguments(context.Background(), td.addressFunding, netConfigs)
+	tx, _, err := proxy.GetDefaultTransactionArguments(context.Background(), td.addressFunding, netConfigs)
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return err
@@ -471,7 +473,7 @@ func fundWallets(td *testData, proxy workflows.ProxyHandler, netConfigs *data.Ne
 
 	receivers := []core.AddressHandler{td.addressAlice, td.addressBob, td.addressEve, td.addressCharlie}
 
-	err = sendFundWalletsTxs(td, proxy, transactionArguments, receivers)
+	err = sendFundWalletsTxs(td, proxy, tx, receivers)
 	if err != nil {
 		return err
 	}
@@ -479,7 +481,7 @@ func fundWallets(td *testData, proxy workflows.ProxyHandler, netConfigs *data.Ne
 	return nil
 }
 
-func sendFundWalletsTxs(td *testData, proxy workflows.ProxyHandler, txArgs data.ArgCreateTransaction, receivers []core.AddressHandler) error {
+func sendFundWalletsTxs(td *testData, proxy workflows.ProxyHandler, providedTx transaction.FrontendTransaction, receivers []core.AddressHandler) error {
 	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewSigner())
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
@@ -499,21 +501,22 @@ func sendFundWalletsTxs(td *testData, proxy workflows.ProxyHandler, txArgs data.
 		return err
 	}
 
-	var tx *data.Transaction
-	txArgs.Value = "10000000000000000000" // 10EGLD
+	providedTx.Value = "10000000000000000000" // 10EGLD
 	for _, addressHandler := range receivers {
-		txArgs.RcvAddr = addressHandler.AddressAsBech32String()
-		fundingWalletCryptoHolder, err := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skFunding)
-		if err != nil {
-			return err
+		tx := providedTx // copy
+
+		tx.Receiver = addressHandler.AddressAsBech32String()
+		fundingWalletCryptoHolder, localErr := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skFunding)
+		if localErr != nil {
+			return localErr
 		}
-		tx, err = ti.ApplyUserSignatureAndGenerateTx(fundingWalletCryptoHolder, txArgs)
-		if err != nil {
-			log.Error("error creating transaction", "error", err)
-			return err
+		localErr = ti.ApplyUserSignature(fundingWalletCryptoHolder, &tx)
+		if localErr != nil {
+			log.Error("error signing transaction", "error", localErr)
+			return localErr
 		}
-		ti.AddTransaction(tx)
-		txArgs.Nonce++
+		ti.AddTransaction(&tx)
+		providedTx.Nonce++
 	}
 
 	hashes, err := ti.SendTransactionsAsBunch(context.Background(), 100)
