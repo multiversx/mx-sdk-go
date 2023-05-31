@@ -12,7 +12,7 @@ import (
 
 const (
 	httpUserAgentKey = "User-Agent"
-	httpUserAgent    = "MultiversX go SDK / 1.0.0 <Posting to nodes>"
+	httpUserAgent    = "MultiversX/1.0.1 (GO SDK tools)"
 
 	httpAcceptTypeKey = "Accept"
 	httpAcceptType    = "application/json"
