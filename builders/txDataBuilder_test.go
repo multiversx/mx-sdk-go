@@ -41,31 +41,61 @@ func TestTxDataBuilder_Function(t *testing.T) {
 func TestTxDataBuilder_AllGoodArguments(t *testing.T) {
 	t.Parallel()
 
-	address, errBech32 := data.NewAddressFromBech32String("erd1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq6mjse8")
-	require.Nil(t, errBech32)
+	t.Run("with function", func(t *testing.T) {
+		t.Parallel()
 
-	builder := NewTxDataBuilder().
-		Function("function").
-		ArgBigInt(big.NewInt(15)).
-		ArgInt64(14).
-		ArgAddress(address).
-		ArgHexString("eeff00").
-		ArgBytes([]byte("aa")).
-		ArgBigInt(big.NewInt(0))
+		address, errBech32 := data.NewAddressFromBech32String("erd1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq6mjse8")
+		require.Nil(t, errBech32)
 
-	expectedTxData := "function@" + hex.EncodeToString([]byte{15}) +
-		"@" + hex.EncodeToString([]byte{14}) + "@" +
-		hex.EncodeToString(address.AddressBytes()) + "@eeff00@" +
-		hex.EncodeToString([]byte("aa")) + "@00"
+		builder := NewTxDataBuilder().
+			Function("function").
+			ArgBigInt(big.NewInt(15)).
+			ArgInt64(14).
+			ArgAddress(address).
+			ArgHexString("eeff00").
+			ArgBytes([]byte("aa")).
+			ArgBigInt(big.NewInt(0))
 
-	txData, err := builder.ToDataString()
-	require.Nil(t, err)
-	require.Equal(t, expectedTxData, txData)
+		expectedTxData := "function@" + hex.EncodeToString([]byte{15}) +
+			"@" + hex.EncodeToString([]byte{14}) + "@" +
+			hex.EncodeToString(address.AddressBytes()) + "@eeff00@" +
+			hex.EncodeToString([]byte("aa")) + "@00"
 
-	txDataBytes, err := builder.ToDataBytes()
-	require.Nil(t, err)
+		txData, err := builder.ToDataString()
+		require.Nil(t, err)
+		require.Equal(t, expectedTxData, txData)
 
-	require.Equal(t, []byte(expectedTxData), txDataBytes)
+		txDataBytes, err := builder.ToDataBytes()
+		require.Nil(t, err)
+
+		require.Equal(t, []byte(expectedTxData), txDataBytes)
+	})
+	t.Run("without function name (deploy SC)", func(t *testing.T) {
+		address, errBech32 := data.NewAddressFromBech32String("erd1k2s324ww2g0yj38qn2ch2jwctdy8mnfxep94q9arncc6xecg3xaq6mjse8")
+		require.Nil(t, errBech32)
+
+		builder := NewTxDataBuilder().
+			ArgHexString("eeff001122").
+			ArgHexString("ee").
+			ArgBigInt(big.NewInt(15)).
+			ArgInt64(14).
+			ArgAddress(address).
+			ArgBytes([]byte("aa")).
+			ArgBigInt(big.NewInt(0))
+
+		expectedTxData := "eeff001122@ee@" + hex.EncodeToString([]byte{15}) +
+			"@" + hex.EncodeToString([]byte{14}) + "@" +
+			hex.EncodeToString(address.AddressBytes()) + "@" + hex.EncodeToString([]byte("aa")) + "@00"
+
+		txData, err := builder.ToDataString()
+		require.Nil(t, err)
+		require.Equal(t, expectedTxData, txData)
+
+		txDataBytes, err := builder.ToDataBytes()
+		require.Nil(t, err)
+
+		require.Equal(t, []byte(expectedTxData), txDataBytes)
+	})
 }
 
 func TestTxDataBuilder_InvalidArguments(t *testing.T) {

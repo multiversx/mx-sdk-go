@@ -71,7 +71,12 @@ func (builder *txDataBuilder) ToDataString() (string, error) {
 		return "", builder.err
 	}
 
-	parts := append([]string{builder.function}, builder.args...)
+	var parts []string
+	if len(builder.function) > 0 {
+		parts = append(parts, builder.function)
+	}
+
+	parts = append(parts, builder.args...)
 
 	return strings.Join(parts, dataSeparator), nil
 }
