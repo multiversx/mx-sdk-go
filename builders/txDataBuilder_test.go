@@ -54,12 +54,14 @@ func TestTxDataBuilder_AllGoodArguments(t *testing.T) {
 			ArgAddress(address).
 			ArgHexString("eeff00").
 			ArgBytes([]byte("aa")).
-			ArgBigInt(big.NewInt(0))
+			ArgBigInt(big.NewInt(0)).
+			ArgBytesList([][]byte{[]byte("bbb"), []byte("ccc")})
 
 		expectedTxData := "function@" + hex.EncodeToString([]byte{15}) +
 			"@" + hex.EncodeToString([]byte{14}) + "@" +
 			hex.EncodeToString(address.AddressBytes()) + "@eeff00@" +
-			hex.EncodeToString([]byte("aa")) + "@00"
+			hex.EncodeToString([]byte("aa")) + "@00@" +
+			hex.EncodeToString([]byte("bbb")) + "@" + hex.EncodeToString([]byte("ccc"))
 
 		txData, err := builder.ToDataString()
 		require.Nil(t, err)
@@ -81,11 +83,13 @@ func TestTxDataBuilder_AllGoodArguments(t *testing.T) {
 			ArgInt64(14).
 			ArgAddress(address).
 			ArgBytes([]byte("aa")).
-			ArgBigInt(big.NewInt(0))
+			ArgBigInt(big.NewInt(0)).
+			ArgBytesList([][]byte{[]byte("bbb"), []byte("ccc")})
 
 		expectedTxData := "eeff001122@ee@" + hex.EncodeToString([]byte{15}) +
 			"@" + hex.EncodeToString([]byte{14}) + "@" +
-			hex.EncodeToString(address.AddressBytes()) + "@" + hex.EncodeToString([]byte("aa")) + "@00"
+			hex.EncodeToString(address.AddressBytes()) + "@" + hex.EncodeToString([]byte("aa")) + "@00@" +
+			hex.EncodeToString([]byte("bbb")) + "@" + hex.EncodeToString([]byte("ccc"))
 
 		txData, err := builder.ToDataString()
 		require.Nil(t, err)
