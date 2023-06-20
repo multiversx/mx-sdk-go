@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/vm"
 	logger "github.com/multiversx/mx-chain-logger-go"
@@ -57,6 +58,16 @@ func TestNewVmQueryGetter(t *testing.T) {
 
 		dg, err := NewVmQueryGetter(args)
 		assert.Equal(t, ErrNilProxy, err)
+		assert.True(t, check.IfNil(dg))
+	})
+	t.Run("nil logger", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsVmQueryGetter()
+		args.Log = nil
+
+		dg, err := NewVmQueryGetter(args)
+		assert.Equal(t, core.ErrNilLogger, err)
 		assert.True(t, check.IfNil(dg))
 	})
 	t.Run("should work", func(t *testing.T) {
