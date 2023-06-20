@@ -18,25 +18,19 @@ const (
 	vmQuerylogPath       = "blockchain/vmQueryGetter"
 )
 
-// ArgsVmQueryGetter is the arguments DTO used in the NewvmQueryGetter constructor
-type ArgsVmQueryGetter struct {
-	Proxy Proxy
-	Log   logger.Logger
-}
-
 type vmQueryGetter struct {
 	proxy Proxy
 	log   logger.Logger
 }
 
 // NewVmQueryGetter creates a new instance of the vmQueryGetter type
-func NewVmQueryGetter(args ArgsVmQueryGetter) (*vmQueryGetter, error) {
-	if check.IfNil(args.Proxy) {
+func NewVmQueryGetter(proxy Proxy) (*vmQueryGetter, error) {
+	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
 	}
 
 	client := vmQueryGetter{
-		proxy: args.Proxy,
+		proxy: proxy,
 	}
 	client.log = logger.GetOrCreate(vmQuerylogPath)
 	return &client, nil
@@ -140,7 +134,8 @@ func parseUInt64FromByteSlice(bytes []byte) (uint64, error) {
 	return num.Uint64(), nil
 }
 
-func (dataGetter *vmQueryGetter) executeQueryFromBuilder(ctx context.Context, builder builders.VMQueryBuilder) ([][]byte, error) {
+// ExecuteQueryFromBuilder will try to execute the provided query and return the result as slice of byte slices
+func (dataGetter *vmQueryGetter) ExecuteQueryFromBuilder(ctx context.Context, builder builders.VMQueryBuilder) ([][]byte, error) {
 	vmValuesRequest, err := builder.ToVmValueRequest()
 	if err != nil {
 		return nil, err
@@ -149,7 +144,8 @@ func (dataGetter *vmQueryGetter) executeQueryFromBuilder(ctx context.Context, bu
 	return dataGetter.ExecuteQueryReturningBytes(ctx, vmValuesRequest)
 }
 
-func (dataGetter *vmQueryGetter) executeQueryUint64FromBuilder(ctx context.Context, builder builders.VMQueryBuilder) (uint64, error) {
+// ExecuteQueryUint64FromBuilder will try to execute the provided query and return the result as uint64
+func (dataGetter *vmQueryGetter) ExecuteQueryUint64FromBuilder(ctx context.Context, builder builders.VMQueryBuilder) (uint64, error) {
 	vmValuesRequest, err := builder.ToVmValueRequest()
 	if err != nil {
 		return 0, err
@@ -158,7 +154,8 @@ func (dataGetter *vmQueryGetter) executeQueryUint64FromBuilder(ctx context.Conte
 	return dataGetter.ExecuteQueryReturningUint64(ctx, vmValuesRequest)
 }
 
-func (dataGetter *vmQueryGetter) executeQueryBoolFromBuilder(ctx context.Context, builder builders.VMQueryBuilder) (bool, error) {
+// ExecuteQueryBoolFromBuilder will try to execute the provided query and return the result as bool
+func (dataGetter *vmQueryGetter) ExecuteQueryBoolFromBuilder(ctx context.Context, builder builders.VMQueryBuilder) (bool, error) {
 	vmValuesRequest, err := builder.ToVmValueRequest()
 	if err != nil {
 		return false, err
