@@ -18,7 +18,7 @@ type ProxyStub struct {
 	GetAccountCalled                     func(address erdgoCore.AddressHandler) (*data.Account, error)
 	SendTransactionCalled                func(tx *transaction.FrontendTransaction) (string, error)
 	SendTransactionsCalled               func(txs []*transaction.FrontendTransaction) ([]string, error)
-	ExecuteVMQueryCalled                 func(vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
+	ExecuteVMQueryCalled                 func(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
 	GetNonceAtEpochStartCalled           func(shardId uint32) (uint64, error)
 	GetRawMiniBlockByHashCalled          func(shardId uint32, hash string, epoch uint32) ([]byte, error)
 	GetRawBlockByNonceCalled             func(shardId uint32, nonce uint64) ([]byte, error)
@@ -35,9 +35,9 @@ type ProxyStub struct {
 }
 
 // ExecuteVMQuery -
-func (stub *ProxyStub) ExecuteVMQuery(_ context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
+func (stub *ProxyStub) ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
 	if stub.ExecuteVMQueryCalled != nil {
-		return stub.ExecuteVMQueryCalled(vmRequest)
+		return stub.ExecuteVMQueryCalled(ctx, vmRequest)
 	}
 
 	return &data.VmValuesResponseData{}, nil
