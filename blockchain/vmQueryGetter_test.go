@@ -113,7 +113,7 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBytes(t *testing.T) {
 		}
 
 		dg, _ := NewVmQueryGetter(proxyInstance)
-		result, err := dg.executeQueryFromBuilder(context.Background(), builder)
+		result, err := dg.ExecuteQueryFromBuilder(context.Background(), builder)
 		assert.Equal(t, expectedErr, err)
 		assert.Nil(t, result)
 	})
@@ -140,7 +140,7 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBytes(t *testing.T) {
 		}
 		dg, _ := NewVmQueryGetter(proxyInstance)
 
-		result, err := dg.executeQueryFromBuilder(context.Background(), builder)
+		result, err := dg.ExecuteQueryFromBuilder(context.Background(), builder)
 		assert.Nil(t, err)
 		assert.Equal(t, retData, result)
 	})
@@ -202,7 +202,7 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBool(t *testing.T) {
 		proxyInstance := createMockProxy([][]byte{{1}})
 		dg, _ := NewVmQueryGetter(proxyInstance)
 
-		result, err := dg.executeQueryBoolFromBuilder(context.Background(), builders.NewVMQueryBuilder())
+		result, err := dg.ExecuteQueryBoolFromBuilder(context.Background(), builders.NewVMQueryBuilder())
 		assert.True(t, result)
 		assert.Nil(t, err)
 
@@ -242,7 +242,7 @@ func TestNewVmQueryGetter_ExecuteQueryReturningUint64(t *testing.T) {
 
 		dg, _ := NewVmQueryGetter(createMockProxy([][]byte{make([]byte, 0)}))
 
-		result, err := dg.executeQueryUint64FromBuilder(context.Background(), builders.NewVMQueryBuilder())
+		result, err := dg.ExecuteQueryUint64FromBuilder(context.Background(), builders.NewVMQueryBuilder())
 		assert.Zero(t, result)
 		assert.Nil(t, err)
 	})
@@ -288,17 +288,17 @@ func TestNewVmQueryGetter_executeQueryWithErroredBuilder(t *testing.T) {
 
 	dg, _ := NewVmQueryGetter(&testsCommon.ProxyStub{})
 
-	resultBytes, err := dg.executeQueryFromBuilder(context.Background(), builder)
+	resultBytes, err := dg.ExecuteQueryFromBuilder(context.Background(), builder)
 	assert.Nil(t, resultBytes)
 	assert.True(t, errors.Is(err, builders.ErrInvalidValue))
 	assert.True(t, strings.Contains(err.Error(), "builder.ArgBytes"))
 
-	resultUint64, err := dg.executeQueryUint64FromBuilder(context.Background(), builder)
+	resultUint64, err := dg.ExecuteQueryUint64FromBuilder(context.Background(), builder)
 	assert.Zero(t, resultUint64)
 	assert.True(t, errors.Is(err, builders.ErrInvalidValue))
 	assert.True(t, strings.Contains(err.Error(), "builder.ArgBytes"))
 
-	resultBool, err := dg.executeQueryBoolFromBuilder(context.Background(), builder)
+	resultBool, err := dg.ExecuteQueryBoolFromBuilder(context.Background(), builder)
 	assert.False(t, resultBool)
 	assert.True(t, errors.Is(err, builders.ErrInvalidValue))
 	assert.True(t, strings.Contains(err.Error(), "builder.ArgBytes"))
