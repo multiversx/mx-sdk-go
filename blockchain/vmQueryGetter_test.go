@@ -8,6 +8,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/vm"
+	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-sdk-go/builders"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/testsCommon"
@@ -22,6 +23,15 @@ const (
 
 var calledArgs = []string{"6172677331", "6172677332"}
 var testSCAddressBech32 = "erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht"
+
+func createMockArgsVmQueryGetter() ArgsVmQueryGetter {
+	args := ArgsVmQueryGetter{
+		Log:   logger.GetOrCreate("test"),
+		Proxy: &testsCommon.ProxyStub{},
+	}
+
+	return args
+}
 
 func createMockProxy(returningBytes [][]byte) *testsCommon.ProxyStub {
 	return &testsCommon.ProxyStub{
@@ -42,14 +52,18 @@ func TestNewVmQueryGetter(t *testing.T) {
 	t.Run("nil proxy", func(t *testing.T) {
 		t.Parallel()
 
-		dg, err := NewVmQueryGetter(nil)
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = nil
+
+		dg, err := NewVmQueryGetter(args)
 		assert.Equal(t, ErrNilProxy, err)
 		assert.True(t, check.IfNil(dg))
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		dg, err := NewVmQueryGetter(&testsCommon.ProxyStub{})
+		args := createMockArgsVmQueryGetter()
+		dg, err := NewVmQueryGetter(args)
 		assert.Nil(t, err)
 		assert.False(t, check.IfNil(dg))
 	})
@@ -62,7 +76,8 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBytes(t *testing.T) {
 	t.Run("nil vm ", func(t *testing.T) {
 		t.Parallel()
 
-		dg, _ := NewVmQueryGetter(&testsCommon.ProxyStub{})
+		args := createMockArgsVmQueryGetter()
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryReturningBytes(context.Background(), nil)
 		assert.Nil(t, result)
@@ -72,12 +87,13 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBytes(t *testing.T) {
 		t.Parallel()
 
 		expectedErr := errors.New("expected error")
-		proxyInstance := &testsCommon.ProxyStub{
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = &testsCommon.ProxyStub{
 			ExecuteVMQueryCalled: func(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
 				return nil, expectedErr
 			},
 		}
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryReturningBytes(context.Background(), &data.VmValueRequest{})
 		assert.Nil(t, result)
@@ -94,7 +110,8 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBytes(t *testing.T) {
 		t.Parallel()
 
 		expectedErr := NewQueryResponseError(returnCode, returnMessage, calledFunction, testSCAddressBech32, calledArgs...)
-		proxyInstance := &testsCommon.ProxyStub{
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = &testsCommon.ProxyStub{
 			ExecuteVMQueryCalled: func(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
 				return &data.VmValuesResponseData{
 					Data: &vm.VMOutputApi{
@@ -112,7 +129,7 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBytes(t *testing.T) {
 			},
 		}
 
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		dg, _ := NewVmQueryGetter(args)
 		result, err := dg.ExecuteQueryFromBuilder(context.Background(), builder)
 		assert.Equal(t, expectedErr, err)
 		assert.Nil(t, result)
@@ -121,7 +138,8 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBytes(t *testing.T) {
 		t.Parallel()
 
 		retData := [][]byte{[]byte("response 1"), []byte("response 2")}
-		proxyInstance := &testsCommon.ProxyStub{
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = &testsCommon.ProxyStub{
 			ExecuteVMQueryCalled: func(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
 				return &data.VmValuesResponseData{
 					Data: &vm.VMOutputApi{
@@ -138,7 +156,7 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBytes(t *testing.T) {
 				}, nil
 			},
 		}
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryFromBuilder(context.Background(), builder)
 		assert.Nil(t, err)
@@ -152,8 +170,9 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBool(t *testing.T) {
 	t.Run("nil request", func(t *testing.T) {
 		t.Parallel()
 
-		proxyInstance := createMockProxy(make([][]byte, 0))
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = createMockProxy(make([][]byte, 0))
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryReturningBool(context.Background(), nil)
 		assert.False(t, result)
@@ -162,8 +181,9 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBool(t *testing.T) {
 	t.Run("empty response", func(t *testing.T) {
 		t.Parallel()
 
-		proxyInstance := createMockProxy(make([][]byte, 0))
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = createMockProxy(make([][]byte, 0))
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryReturningBool(context.Background(), &data.VmValueRequest{})
 		assert.False(t, result)
@@ -172,8 +192,9 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBool(t *testing.T) {
 	t.Run("empty byte slice on first element", func(t *testing.T) {
 		t.Parallel()
 
-		proxyInstance := createMockProxy(make([][]byte, 0))
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = createMockProxy(make([][]byte, 0))
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryReturningBool(context.Background(), &data.VmValueRequest{})
 		assert.False(t, result)
@@ -182,8 +203,9 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBool(t *testing.T) {
 	t.Run("not a bool result", func(t *testing.T) {
 		t.Parallel()
 
-		proxyInstance := createMockProxy([][]byte{[]byte("random bytes")})
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = createMockProxy([][]byte{[]byte("random bytes")})
+		dg, _ := NewVmQueryGetter(args)
 
 		expectedError := NewQueryResponseError(
 			internalError,
@@ -199,8 +221,9 @@ func TestNewVmQueryGetter_ExecuteQueryReturningBool(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		proxyInstance := createMockProxy([][]byte{{1}})
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = createMockProxy([][]byte{{1}})
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryBoolFromBuilder(context.Background(), builders.NewVMQueryBuilder())
 		assert.True(t, result)
@@ -220,8 +243,9 @@ func TestNewVmQueryGetter_ExecuteQueryReturningUint64(t *testing.T) {
 	t.Run("nil request", func(t *testing.T) {
 		t.Parallel()
 
-		proxyInstance := createMockProxy(make([][]byte, 0))
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = createMockProxy(make([][]byte, 0))
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryReturningUint64(context.Background(), nil)
 		assert.Zero(t, result)
@@ -230,8 +254,9 @@ func TestNewVmQueryGetter_ExecuteQueryReturningUint64(t *testing.T) {
 	t.Run("empty response", func(t *testing.T) {
 		t.Parallel()
 
-		proxyInstance := createMockProxy(make([][]byte, 0))
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = createMockProxy(make([][]byte, 0))
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryReturningUint64(context.Background(), &data.VmValueRequest{})
 		assert.Zero(t, result)
@@ -240,7 +265,9 @@ func TestNewVmQueryGetter_ExecuteQueryReturningUint64(t *testing.T) {
 	t.Run("empty byte slice on first element", func(t *testing.T) {
 		t.Parallel()
 
-		dg, _ := NewVmQueryGetter(createMockProxy([][]byte{make([]byte, 0)}))
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = createMockProxy([][]byte{make([]byte, 0)})
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryUint64FromBuilder(context.Background(), builders.NewVMQueryBuilder())
 		assert.Zero(t, result)
@@ -249,8 +276,9 @@ func TestNewVmQueryGetter_ExecuteQueryReturningUint64(t *testing.T) {
 	t.Run("large buffer", func(t *testing.T) {
 		t.Parallel()
 
-		proxyInstance := createMockProxy([][]byte{[]byte("random bytes")})
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = createMockProxy([][]byte{[]byte("random bytes")})
+		dg, _ := NewVmQueryGetter(args)
 
 		expectedError := NewQueryResponseError(
 			internalError,
@@ -266,8 +294,9 @@ func TestNewVmQueryGetter_ExecuteQueryReturningUint64(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		proxyInstance := createMockProxy([][]byte{{1}})
-		dg, _ := NewVmQueryGetter(proxyInstance)
+		args := createMockArgsVmQueryGetter()
+		args.Proxy = createMockProxy([][]byte{{1}})
+		dg, _ := NewVmQueryGetter(args)
 
 		result, err := dg.ExecuteQueryReturningUint64(context.Background(), &data.VmValueRequest{})
 		assert.Equal(t, uint64(1), result)
@@ -286,7 +315,8 @@ func TestNewVmQueryGetter_executeQueryWithErroredBuilder(t *testing.T) {
 
 	builder := builders.NewVMQueryBuilder().ArgBytes(nil)
 
-	dg, _ := NewVmQueryGetter(&testsCommon.ProxyStub{})
+	args := createMockArgsVmQueryGetter()
+	dg, _ := NewVmQueryGetter(args)
 
 	resultBytes, err := dg.ExecuteQueryFromBuilder(context.Background(), builder)
 	assert.Nil(t, resultBytes)

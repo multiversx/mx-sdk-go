@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-sdk-go/builders"
@@ -15,8 +16,13 @@ import (
 const (
 	okCodeAfterExecution = "ok"
 	internalError        = "internal error"
-	vmQuerylogPath       = "blockchain/vmQueryGetter"
 )
+
+// ArgsVmQueryGetter is the arguments DTO used in the NewvmQueryGetter constructor
+type ArgsVmQueryGetter struct {
+	Proxy Proxy
+	Log   logger.Logger
+}
 
 type vmQueryGetter struct {
 	proxy Proxy
@@ -24,16 +30,18 @@ type vmQueryGetter struct {
 }
 
 // NewVmQueryGetter creates a new instance of the vmQueryGetter type
-func NewVmQueryGetter(proxy Proxy) (*vmQueryGetter, error) {
-	if check.IfNil(proxy) {
+func NewVmQueryGetter(args ArgsVmQueryGetter) (*vmQueryGetter, error) {
+	if check.IfNil(args.Proxy) {
 		return nil, ErrNilProxy
 	}
-
-	client := vmQueryGetter{
-		proxy: proxy,
+	if check.IfNil(args.Log) {
+		return nil, core.ErrNilLogger
 	}
-	client.log = logger.GetOrCreate(vmQuerylogPath)
-	return &client, nil
+
+	return &vmQueryGetter{
+		proxy: args.Proxy,
+		log:   args.Log,
+	}, nil
 }
 
 // ExecuteQueryReturningBytes will try to execute the provided query and return the result as slice of byte slices
@@ -44,8 +52,6 @@ func (dataGetter *vmQueryGetter) ExecuteQueryReturningBytes(ctx context.Context,
 
 	response, err := dataGetter.proxy.ExecuteVMQuery(ctx, request)
 	if err != nil {
-		dataGetter.log.Error("got error on VMQuery", "FuncName", request.FuncName,
-			"Args", request.Args, "SC address", request.Address, "Caller", request.CallerAddr, "error", err)
 		return nil, err
 	}
 	dataGetter.log.Debug("executed VMQuery", "FuncName", request.FuncName,
