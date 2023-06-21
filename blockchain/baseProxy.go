@@ -19,11 +19,14 @@ import (
 var log = logger.GetOrCreate("mx-sdk-go/blockchain")
 
 const (
-	minimumCachingInterval = time.Second
-	txCompleted            = "completedTxEvent"
-	txFailed               = "signalError"
-	scDeploy               = "SCDeploy"
-	moveBalanceTransaction = "MoveBalance"
+	minimumCachingInterval                               = time.Second
+	txCompleted                                          = "completedTxEvent"
+	txFailed                                             = "signalError"
+	scDeploy                                             = "SCDeploy"
+	moveBalanceTransaction                               = "MoveBalance"
+	internalVMErrorsEventIdentifier                      = "internalVMErrors"
+	moveBalanceDescriptor                                = "MoveBalance"
+	TxStatusUnknown                 transaction.TxStatus = "unknown"
 )
 
 type argsBaseProxy struct {
@@ -238,10 +241,13 @@ func (proxy *baseProxy) ProcessTransactionStatus(txInfo data.TransactionInfo) tr
 	if txInfo.Data.Transaction.Status != string(transaction.TxStatusSuccess) {
 		return transaction.TxStatus(txInfo.Data.Transaction.Status)
 	}
-	if findIdentifierInLogs(txInfo, txFailed) {
+
+	logs := make([]*transaction.ApiLogs, 0)
+	logs = append(logs, txInfo.Data.Transaction.Logs)
+	if findIdentifierInLogs(logs, txFailed) {
 		return transaction.TxStatusFail
 	}
-	containsCompletion := findIdentifierInLogs(txInfo, txCompleted) || findIdentifierInLogs(txInfo, scDeploy)
+	containsCompletion := findIdentifierInLogs(logs, txCompleted) || findIdentifierInLogs(logs, scDeploy)
 	if containsCompletion {
 		return transaction.TxStatus(txInfo.Data.Transaction.Status)
 	}
@@ -257,18 +263,111 @@ func (proxy *baseProxy) ProcessTransactionStatus(txInfo data.TransactionInfo) tr
 	return transaction.TxStatusPending
 }
 
-func findIdentifierInLogs(txInfo data.TransactionInfo, identifier string) bool {
-	if txInfo.Data.Transaction.Logs == nil {
+func (proxy *baseProxy) computeTransactionStatus(tx *transaction.ApiTransactionResult, withResults bool) transaction.TxStatus {
+	if !withResults {
+		return TxStatusUnknown
+	}
+
+	if tx.Status == transaction.TxStatusInvalid {
+		return transaction.TxStatusFail
+	}
+	if tx.Status != transaction.TxStatusSuccess {
+		return tx.Status
+	}
+
+	if checkIfMoveBalanceNotarized(tx) {
+		return tx.Status
+	}
+
+	txLogsOnFirstLevel := []*transaction.ApiLogs{tx.Logs}
+	if checkIfFailed(txLogsOnFirstLevel) {
+		return transaction.TxStatusFail
+	}
+
+	allLogs, err := proxy.gatherAllLogs(tx)
+	if err != nil {
+		log.Warn("error in TransactionProcessor.computeTransactionStatus", "error", err)
+		return TxStatusUnknown
+	}
+	if checkIfFailed(allLogs) {
+		return transaction.TxStatusFail
+	}
+
+	if checkIfCompleted(allLogs) {
+		return transaction.TxStatusSuccess
+	}
+
+	return transaction.TxStatusPending
+}
+
+func checkIfFailed(logs []*transaction.ApiLogs) bool {
+	if findIdentifierInLogs(logs, internalVMErrorsEventIdentifier) ||
+		findIdentifierInLogs(logs, txFailed) {
+		return true
+	}
+
+	return false
+}
+
+func checkIfCompleted(logs []*transaction.ApiLogs) bool {
+	if findIdentifierInLogs(logs, txCompleted) ||
+		findIdentifierInLogs(logs, scDeploy) {
+		return true
+	}
+
+	return false
+}
+
+func checkIfMoveBalanceNotarized(tx *transaction.ApiTransactionResult) bool {
+	isNotarized := tx.NotarizedAtSourceInMetaNonce > 0 && tx.NotarizedAtDestinationInMetaNonce > 0
+	if !isNotarized {
+		return false
+	}
+	isMoveBalance := tx.ProcessingTypeOnSource == moveBalanceDescriptor && tx.ProcessingTypeOnDestination == moveBalanceDescriptor
+	if !isMoveBalance {
 		return false
 	}
 
-	for _, event := range txInfo.Data.Transaction.Logs.Events {
+	return true
+}
+
+func findIdentifierInLogs(logs []*transaction.ApiLogs, identifier string) bool {
+	if len(logs) == 0 {
+		return false
+	}
+
+	for _, logInstance := range logs {
+		if logInstance == nil {
+			continue
+		}
+
+		found := findIdentifierInSingleLog(logInstance, identifier)
+		if found {
+			return true
+		}
+	}
+
+	return false
+}
+
+func findIdentifierInSingleLog(log *transaction.ApiLogs, identifier string) bool {
+	for _, event := range log.Events {
 		if event.Identifier == identifier {
 			return true
 		}
 	}
 
 	return false
+}
+
+func (proxy *baseProxy) gatherAllLogs(tx *transaction.ApiTransactionResult) ([]*transaction.ApiLogs, error) {
+	allLogs := []*transaction.ApiLogs{tx.Logs}
+
+	for _, scrFromTx := range tx.SmartContractResults {
+		allLogs = append(allLogs, scrFromTx.Logs)
+	}
+
+	return allLogs, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
