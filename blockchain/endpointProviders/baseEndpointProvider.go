@@ -19,6 +19,7 @@ const (
 	genesisNodesConfig        = "network/genesis-nodes"
 	rawStartOfEpochMetaBlock  = "internal/raw/startofepoch/metablock/by-epoch/%d"
 	rawStartOfEpochValidators = "internal/json/startofepoch/validators/by-epoch/%d"
+	isDataTrieMigrated        = "address/%s/is-data-trie-migrated"
 )
 
 type baseEndpointProvider struct{}
@@ -101,4 +102,8 @@ func (base *baseEndpointProvider) GetRawStartOfEpochMetaBlock(epoch uint32) stri
 // GetValidatorsInfo returns the validators endpoint
 func (base *baseEndpointProvider) GetValidatorsInfo(epoch uint32) string {
 	return fmt.Sprintf(rawStartOfEpochValidators, epoch)
+}
+
+func (base *baseEndpointProvider) IsDataTrieMigrated(addressAsBech32 string) string {
+	return fmt.Sprintf(isDataTrieMigrated, addressAsBech32)
 }

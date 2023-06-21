@@ -559,6 +559,30 @@ func (ep *proxy) GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]
 	return response.Data.ValidatorsInfo, nil
 }
 
+// IsDataTrieMigrated returns true if the data trie of the given account is migrated
+func (ep *proxy) IsDataTrieMigrated(ctx context.Context, address erdgoCore.AddressHandler) (bool, error) {
+	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.IsDataTrieMigrated(address.AddressAsBech32String()))
+	if err != nil || code != http.StatusOK {
+		return false, createHTTPStatusError(code, err)
+	}
+
+	response := &data.IsDataTrieMigratedResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return false, err
+	}
+	if response.Error != "" {
+		return false, errors.New(response.Error)
+	}
+
+	isMigrated, ok := response.Data["isMigrated"]
+	if !ok {
+		return false, errors.New("invalid response")
+	}
+
+	return isMigrated, nil
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (ep *proxy) IsInterfaceNil() bool {
 	return ep == nil
