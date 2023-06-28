@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -592,17 +591,6 @@ func TestBaseProxy_GetRestAPIEntityType(t *testing.T) {
 	baseProxyInstance, _ := newBaseProxy(args)
 
 	assert.Equal(t, args.endpointProvider.GetRestAPIEntityType(), baseProxyInstance.GetRestAPIEntityType())
-}
-
-func loadJsonIntoTransactionInfo(tb testing.TB, path string) data.TransactionInfo {
-	txInfo := &data.TransactionInfo{}
-	buff, err := ioutil.ReadFile(path)
-	require.Nil(tb, err)
-
-	err = json.Unmarshal(buff, txInfo)
-	require.Nil(tb, err)
-
-	return *txInfo
 }
 
 func TestBaseProxyInstance_ProcessTransactionStatus(t *testing.T) {
