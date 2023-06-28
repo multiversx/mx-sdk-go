@@ -30,6 +30,15 @@ type TransactionStatus struct {
 	Code  string `json:"code"`
 }
 
+// ProcessedTransactionStatus holds a transaction's processed status response from the network
+type ProcessedTransactionStatus struct {
+	Data struct {
+		ProcessedStatus string `json:"status"`
+	} `json:"data"`
+	Error string `json:"error"`
+	Code  string `json:"code"`
+}
+
 // TransactionInfo holds a transaction info response from the network
 type TransactionInfo struct {
 	Data struct {
