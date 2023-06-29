@@ -1,6 +1,11 @@
 package data
 
-import "github.com/multiversx/mx-sdk-go/core"
+import (
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-sdk-go/core"
+)
+
+var log = logger.GetOrCreate("address")
 
 type address struct {
 	bytes []byte
@@ -30,7 +35,7 @@ func NewAddressFromBech32String(bech32 string) (*address, error) {
 
 // AddressAsBech32String returns the address as a bech32 string
 func (a *address) AddressAsBech32String() string {
-	return core.AddressPublicKeyConverter.Encode(a.bytes)
+	return core.AddressPublicKeyConverter.SilentEncode(a.bytes, log)
 }
 
 // AddressBytes returns the raw address' bytes

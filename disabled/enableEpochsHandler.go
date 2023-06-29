@@ -1,569 +1,1056 @@
 package disabled
 
-// EnableEpochsHandler is a disabled implementation of EnableEpochsHandler interface
-type EnableEpochsHandler struct {
+import "sync"
+
+// EnableEpochsHandlerStub -
+type EnableEpochsHandlerStub struct {
+	sync.RWMutex
+	ResetPenalizedTooMuchGasFlagCalled                           func()
+	BlockGasAndFeesReCheckEnableEpochField                       uint32
+	StakingV2EnableEpochField                                    uint32
+	ScheduledMiniBlocksEnableEpochField                          uint32
+	SwitchJailWaitingEnableEpochField                            uint32
+	BalanceWaitingListsEnableEpochField                          uint32
+	WaitingListFixEnableEpochField                               uint32
+	MultiESDTTransferAsyncCallBackEnableEpochField               uint32
+	FixOOGReturnCodeEnableEpochField                             uint32
+	RemoveNonUpdatedStorageEnableEpochField                      uint32
+	CreateNFTThroughExecByCallerEnableEpochField                 uint32
+	FixFailExecutionOnErrorEnableEpochField                      uint32
+	ManagedCryptoAPIEnableEpochField                             uint32
+	DisableExecByCallerEnableEpochField                          uint32
+	RefactorContextEnableEpochField                              uint32
+	CheckExecuteReadOnlyEnableEpochField                         uint32
+	StorageAPICostOptimizationEnableEpochField                   uint32
+	MiniBlockPartialExecutionEnableEpochField                    uint32
+	RefactorPeersMiniBlocksEnableEpochField                      uint32
+	IsSCDeployFlagEnabledField                                   bool
+	IsBuiltInFunctionsFlagEnabledField                           bool
+	IsRelayedTransactionsFlagEnabledField                        bool
+	IsPenalizedTooMuchGasFlagEnabledField                        bool
+	IsSwitchJailWaitingFlagEnabledField                          bool
+	IsBelowSignedThresholdFlagEnabledField                       bool
+	IsSwitchHysteresisForMinNodesFlagEnabledField                bool
+	IsSwitchHysteresisForMinNodesFlagEnabledForCurrentEpochField bool
+	IsTransactionSignedWithTxHashFlagEnabledField                bool
+	IsMetaProtectionFlagEnabledField                             bool
+	IsAheadOfTimeGasUsageFlagEnabledField                        bool
+	IsGasPriceModifierFlagEnabledField                           bool
+	IsRepairCallbackFlagEnabledField                             bool
+	IsBalanceWaitingListsFlagEnabledField                        bool
+	IsReturnDataToLastTransferFlagEnabledField                   bool
+	IsSenderInOutTransferFlagEnabledField                        bool
+	IsStakeFlagEnabledField                                      bool
+	IsStakingV2FlagEnabledField                                  bool
+	IsStakingV2OwnerFlagEnabledField                             bool
+	IsStakingV2FlagEnabledForActivationEpochCompletedField       bool
+	IsDoubleKeyProtectionFlagEnabledField                        bool
+	IsESDTFlagEnabledField                                       bool
+	IsESDTFlagEnabledForCurrentEpochField                        bool
+	IsGovernanceFlagEnabledField                                 bool
+	IsGovernanceFlagEnabledForCurrentEpochField                  bool
+	IsDelegationManagerFlagEnabledField                          bool
+	IsDelegationSmartContractFlagEnabledField                    bool
+	IsDelegationSmartContractFlagForCurrentEpochEnabledField     bool
+	IsCorrectLastUnJailedFlagEnabledField                        bool
+	IsCorrectLastUnJailedFlagEnabledForCurrentEpochField         bool
+	IsRelayedTransactionsV2FlagEnabledField                      bool
+	IsUnBondTokensV2FlagEnabledField                             bool
+	IsSaveJailedAlwaysFlagEnabledField                           bool
+	IsReDelegateBelowMinCheckFlagEnabledField                    bool
+	IsValidatorToDelegationFlagEnabledField                      bool
+	IsWaitingListFixFlagEnabledField                             bool
+	IsIncrementSCRNonceInMultiTransferFlagEnabledField           bool
+	IsESDTMultiTransferFlagEnabledField                          bool
+	IsGlobalMintBurnFlagEnabledField                             bool
+	IsESDTTransferRoleFlagEnabledField                           bool
+	IsBuiltInFunctionOnMetaFlagEnabledField                      bool
+	IsComputeRewardCheckpointFlagEnabledField                    bool
+	IsSCRSizeInvariantCheckFlagEnabledField                      bool
+	IsBackwardCompSaveKeyValueFlagEnabledField                   bool
+	IsESDTNFTCreateOnMultiShardFlagEnabledField                  bool
+	IsMetaESDTSetFlagEnabledField                                bool
+	IsAddTokensToDelegationFlagEnabledField                      bool
+	IsMultiESDTTransferFixOnCallBackFlagEnabledField             bool
+	IsOptimizeGasUsedInCrossMiniBlocksFlagEnabledField           bool
+	IsCorrectFirstQueuedFlagEnabledField                         bool
+	IsDeleteDelegatorAfterClaimRewardsFlagEnabledField           bool
+	IsFixOOGReturnCodeFlagEnabledField                           bool
+	IsRemoveNonUpdatedStorageFlagEnabledField                    bool
+	IsOptimizeNFTStoreFlagEnabledField                           bool
+	IsCreateNFTThroughExecByCallerFlagEnabledField               bool
+	IsStopDecreasingValidatorRatingWhenStuckFlagEnabledField     bool
+	IsFrontRunningProtectionFlagEnabledField                     bool
+	IsPayableBySCFlagEnabledField                                bool
+	IsCleanUpInformativeSCRsFlagEnabledField                     bool
+	IsStorageAPICostOptimizationFlagEnabledField                 bool
+	IsESDTRegisterAndSetAllRolesFlagEnabledField                 bool
+	IsScheduledMiniBlocksFlagEnabledField                        bool
+	IsCorrectJailedNotUnStakedEmptyQueueFlagEnabledField         bool
+	IsDoNotReturnOldBlockInBlockchainHookFlagEnabledField        bool
+	IsAddFailedRelayedTxToInvalidMBsFlagField                    bool
+	IsSCRSizeInvariantOnBuiltInResultFlagEnabledField            bool
+	IsCheckCorrectTokenIDForTransferRoleFlagEnabledField         bool
+	IsFailExecutionOnEveryAPIErrorFlagEnabledField               bool
+	IsMiniBlockPartialExecutionFlagEnabledField                  bool
+	IsManagedCryptoAPIsFlagEnabledField                          bool
+	IsESDTMetadataContinuousCleanupFlagEnabledField              bool
+	IsDisableExecByCallerFlagEnabledField                        bool
+	IsRefactorContextFlagEnabledField                            bool
+	IsCheckFunctionArgumentFlagEnabledField                      bool
+	IsCheckExecuteOnReadOnlyFlagEnabledField                     bool
+	IsFixAsyncCallbackCheckFlagEnabledField                      bool
+	IsSaveToSystemAccountFlagEnabledField                        bool
+	IsCheckFrozenCollectionFlagEnabledField                      bool
+	IsSendAlwaysFlagEnabledField                                 bool
+	IsValueLengthCheckFlagEnabledField                           bool
+	IsCheckTransferFlagEnabledField                              bool
+	IsTransferToMetaFlagEnabledField                             bool
+	IsESDTNFTImprovementV1FlagEnabledField                       bool
+	IsSetSenderInEeiOutputTransferFlagEnabledField               bool
+	IsChangeDelegationOwnerFlagEnabledField                      bool
+	IsRefactorPeersMiniBlocksFlagEnabledField                    bool
+	IsFixAsyncCallBackArgsListFlagEnabledField                   bool
+	IsFixOldTokenLiquidityEnabledField                           bool
+	IsRuntimeMemStoreLimitEnabledField                           bool
+	IsRuntimeCodeSizeFixEnabledField                             bool
+	IsMaxBlockchainHookCountersFlagEnabledField                  bool
+	IsWipeSingleNFTLiquidityDecreaseEnabledField                 bool
+	IsAlwaysSaveTokenMetaDataEnabledField                        bool
+	IsSetGuardianEnabledField                                    bool
+	IsKeepExecOrderOnCreatedSCRsEnabledField                     bool
+	IsMultiClaimOnDelegationEnabledField                         bool
+	IsChangeUsernameEnabledField                                 bool
 }
 
-// BlockGasAndFeesReCheckEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) BlockGasAndFeesReCheckEnableEpoch() uint32 {
-	return 0
+// ResetPenalizedTooMuchGasFlag -
+func (stub *EnableEpochsHandlerStub) ResetPenalizedTooMuchGasFlag() {
+	if stub.ResetPenalizedTooMuchGasFlagCalled != nil {
+		stub.ResetPenalizedTooMuchGasFlagCalled()
+	}
 }
 
-// StakingV2EnableEpoch returns 0
-func (eeh *EnableEpochsHandler) StakingV2EnableEpoch() uint32 {
-	return 0
+// BlockGasAndFeesReCheckEnableEpoch -
+func (stub *EnableEpochsHandlerStub) BlockGasAndFeesReCheckEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.BlockGasAndFeesReCheckEnableEpochField
 }
 
-// ScheduledMiniBlocksEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) ScheduledMiniBlocksEnableEpoch() uint32 {
-	return 0
+// StakingV2EnableEpoch -
+func (stub *EnableEpochsHandlerStub) StakingV2EnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.StakingV2EnableEpochField
 }
+
+// ScheduledMiniBlocksEnableEpoch -
+func (stub *EnableEpochsHandlerStub) ScheduledMiniBlocksEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// SwitchJailWaitingEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) SwitchJailWaitingEnableEpoch() uint32 {
-	return 0
+	return stub.ScheduledMiniBlocksEnableEpochField
 }
 
-// BalanceWaitingListsEnableEpoch returns WaitingListFixEnableEpochField
-func (eeh *EnableEpochsHandler) BalanceWaitingListsEnableEpoch() uint32 {
-	return 0
+// SwitchJailWaitingEnableEpoch -
+func (stub *EnableEpochsHandlerStub) SwitchJailWaitingEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.SwitchJailWaitingEnableEpochField
 }
 
-// WaitingListFixEnableEpoch returns WaitingListFixEnableEpochField
-func (eeh *EnableEpochsHandler) WaitingListFixEnableEpoch() uint32 {
-	return 0
+// BalanceWaitingListsEnableEpoch -
+func (stub *EnableEpochsHandlerStub) BalanceWaitingListsEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.BalanceWaitingListsEnableEpochField
 }
+
+// WaitingListFixEnableEpoch -
+func (stub *EnableEpochsHandlerStub) WaitingListFixEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// MultiESDTTransferAsyncCallBackEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) MultiESDTTransferAsyncCallBackEnableEpoch() uint32 {
-	return 0
+	return stub.WaitingListFixEnableEpochField
 }
 
-// FixOOGReturnCodeEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) FixOOGReturnCodeEnableEpoch() uint32 {
-	return 0
+// MultiESDTTransferAsyncCallBackEnableEpoch -
+func (stub *EnableEpochsHandlerStub) MultiESDTTransferAsyncCallBackEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.MultiESDTTransferAsyncCallBackEnableEpochField
 }
 
-// RemoveNonUpdatedStorageEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) RemoveNonUpdatedStorageEnableEpoch() uint32 {
-	return 0
+// FixOOGReturnCodeEnableEpoch -
+func (stub *EnableEpochsHandlerStub) FixOOGReturnCodeEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.FixOOGReturnCodeEnableEpochField
 }
+
+// RemoveNonUpdatedStorageEnableEpoch -
+func (stub *EnableEpochsHandlerStub) RemoveNonUpdatedStorageEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// CreateNFTThroughExecByCallerEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) CreateNFTThroughExecByCallerEnableEpoch() uint32 {
-	return 0
+	return stub.RemoveNonUpdatedStorageEnableEpochField
 }
 
-// FixFailExecutionOnErrorEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) FixFailExecutionOnErrorEnableEpoch() uint32 {
-	return 0
+// CreateNFTThroughExecByCallerEnableEpoch -
+func (stub *EnableEpochsHandlerStub) CreateNFTThroughExecByCallerEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.CreateNFTThroughExecByCallerEnableEpochField
 }
 
-// ManagedCryptoAPIEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) ManagedCryptoAPIEnableEpoch() uint32 {
-	return 0
+// FixFailExecutionOnErrorEnableEpoch -
+func (stub *EnableEpochsHandlerStub) FixFailExecutionOnErrorEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.FixFailExecutionOnErrorEnableEpochField
 }
+
+// ManagedCryptoAPIEnableEpoch -
+func (stub *EnableEpochsHandlerStub) ManagedCryptoAPIEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// DisableExecByCallerEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) DisableExecByCallerEnableEpoch() uint32 {
-	return 0
+	return stub.ManagedCryptoAPIEnableEpochField
 }
 
-// RefactorContextEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) RefactorContextEnableEpoch() uint32 {
-	return 0
+// DisableExecByCallerEnableEpoch -
+func (stub *EnableEpochsHandlerStub) DisableExecByCallerEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.DisableExecByCallerEnableEpochField
 }
 
-// CheckExecuteReadOnlyEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) CheckExecuteReadOnlyEnableEpoch() uint32 {
-	return 0
+// RefactorContextEnableEpoch -
+func (stub *EnableEpochsHandlerStub) RefactorContextEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.RefactorContextEnableEpochField
 }
+
+// CheckExecuteReadOnlyEnableEpoch -
+func (stub *EnableEpochsHandlerStub) CheckExecuteReadOnlyEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// StorageAPICostOptimizationEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) StorageAPICostOptimizationEnableEpoch() uint32 {
-	return 0
+	return stub.CheckExecuteReadOnlyEnableEpochField
 }
 
-// MiniBlockPartialExecutionEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) MiniBlockPartialExecutionEnableEpoch() uint32 {
-	return 0
+// StorageAPICostOptimizationEnableEpoch -
+func (stub *EnableEpochsHandlerStub) StorageAPICostOptimizationEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.StorageAPICostOptimizationEnableEpochField
 }
 
-// RefactorPeersMiniBlocksEnableEpoch returns 0
-func (eeh *EnableEpochsHandler) RefactorPeersMiniBlocksEnableEpoch() uint32 {
-	return 0
+// MiniBlockPartialExecutionEnableEpoch -
+func (stub *EnableEpochsHandlerStub) MiniBlockPartialExecutionEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.MiniBlockPartialExecutionEnableEpochField
 }
+
+// RefactorPeersMiniBlocksEnableEpoch -
+func (stub *EnableEpochsHandlerStub) RefactorPeersMiniBlocksEnableEpoch() uint32 {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsSCDeployFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsSCDeployFlagEnabled() bool {
-	return false
+	return stub.RefactorPeersMiniBlocksEnableEpochField
 }
 
-// IsBuiltInFunctionsFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsBuiltInFunctionsFlagEnabled() bool {
-	return false
+// IsSCDeployFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsSCDeployFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsSCDeployFlagEnabledField
 }
 
-// IsRelayedTransactionsFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsRelayedTransactionsFlagEnabled() bool {
-	return false
+// IsBuiltInFunctionsFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsBuiltInFunctionsFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsBuiltInFunctionsFlagEnabledField
 }
+
+// IsRelayedTransactionsFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsRelayedTransactionsFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsPenalizedTooMuchGasFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsPenalizedTooMuchGasFlagEnabled() bool {
-	return false
+	return stub.IsRelayedTransactionsFlagEnabledField
 }
 
-// ResetPenalizedTooMuchGasFlag does nothing
-func (eeh *EnableEpochsHandler) ResetPenalizedTooMuchGasFlag() {
+// IsPenalizedTooMuchGasFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsPenalizedTooMuchGasFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsPenalizedTooMuchGasFlagEnabledField
 }
+
+// IsSwitchJailWaitingFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsSwitchJailWaitingFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsSwitchJailWaitingFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsSwitchJailWaitingFlagEnabled() bool {
-	return false
+	return stub.IsSwitchJailWaitingFlagEnabledField
 }
 
-// IsBelowSignedThresholdFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsBelowSignedThresholdFlagEnabled() bool {
-	return false
+// IsBelowSignedThresholdFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsBelowSignedThresholdFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsBelowSignedThresholdFlagEnabledField
 }
+
+// IsSwitchHysteresisForMinNodesFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsSwitchHysteresisForMinNodesFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsSwitchHysteresisForMinNodesFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsSwitchHysteresisForMinNodesFlagEnabled() bool {
-	return false
+	return stub.IsSwitchHysteresisForMinNodesFlagEnabledField
 }
 
-// IsSwitchHysteresisForMinNodesFlagEnabledForCurrentEpoch returns false
-func (eeh *EnableEpochsHandler) IsSwitchHysteresisForMinNodesFlagEnabledForCurrentEpoch() bool {
-	return false
+// IsSwitchHysteresisForMinNodesFlagEnabledForCurrentEpoch -
+func (stub *EnableEpochsHandlerStub) IsSwitchHysteresisForMinNodesFlagEnabledForCurrentEpoch() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsSwitchHysteresisForMinNodesFlagEnabledForCurrentEpochField
 }
 
-// IsTransactionSignedWithTxHashFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsTransactionSignedWithTxHashFlagEnabled() bool {
-	return false
+// IsTransactionSignedWithTxHashFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsTransactionSignedWithTxHashFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsTransactionSignedWithTxHashFlagEnabledField
 }
+
+// IsMetaProtectionFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsMetaProtectionFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsMetaProtectionFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsMetaProtectionFlagEnabled() bool {
-	return false
+	return stub.IsMetaProtectionFlagEnabledField
 }
 
-// IsAheadOfTimeGasUsageFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsAheadOfTimeGasUsageFlagEnabled() bool {
-	return false
+// IsAheadOfTimeGasUsageFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsAheadOfTimeGasUsageFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsAheadOfTimeGasUsageFlagEnabledField
 }
 
-// IsGasPriceModifierFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsGasPriceModifierFlagEnabled() bool {
-	return false
+// IsGasPriceModifierFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsGasPriceModifierFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsGasPriceModifierFlagEnabledField
 }
+
+// IsRepairCallbackFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsRepairCallbackFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsRepairCallbackFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsRepairCallbackFlagEnabled() bool {
-	return false
+	return stub.IsRepairCallbackFlagEnabledField
 }
 
-// IsBalanceWaitingListsFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsBalanceWaitingListsFlagEnabled() bool {
-	return false
+// IsBalanceWaitingListsFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsBalanceWaitingListsFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsBalanceWaitingListsFlagEnabledField
 }
 
-// IsReturnDataToLastTransferFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsReturnDataToLastTransferFlagEnabled() bool {
-	return false
+// IsReturnDataToLastTransferFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsReturnDataToLastTransferFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsReturnDataToLastTransferFlagEnabledField
 }
+
+// IsSenderInOutTransferFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsSenderInOutTransferFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsSenderInOutTransferFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsSenderInOutTransferFlagEnabled() bool {
-	return false
+	return stub.IsSenderInOutTransferFlagEnabledField
 }
 
-// IsStakeFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsStakeFlagEnabled() bool {
-	return false
+// IsStakeFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsStakeFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsStakeFlagEnabledField
 }
 
-// IsStakingV2FlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsStakingV2FlagEnabled() bool {
-	return false
+// IsStakingV2FlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsStakingV2FlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsStakingV2FlagEnabledField
 }
+
+// IsStakingV2OwnerFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsStakingV2OwnerFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsStakingV2OwnerFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsStakingV2OwnerFlagEnabled() bool {
-	return false
+	return stub.IsStakingV2OwnerFlagEnabledField
 }
 
-// IsStakingV2FlagEnabledForActivationEpochCompleted returns false
-func (eeh *EnableEpochsHandler) IsStakingV2FlagEnabledForActivationEpochCompleted() bool {
-	return false
+// IsStakingV2FlagEnabledForActivationEpochCompleted -
+func (stub *EnableEpochsHandlerStub) IsStakingV2FlagEnabledForActivationEpochCompleted() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsStakingV2FlagEnabledForActivationEpochCompletedField
 }
 
-// IsDoubleKeyProtectionFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsDoubleKeyProtectionFlagEnabled() bool {
-	return false
+// IsDoubleKeyProtectionFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsDoubleKeyProtectionFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsDoubleKeyProtectionFlagEnabledField
 }
+
+// IsESDTFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsESDTFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsESDTFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsESDTFlagEnabled() bool {
-	return false
+	return stub.IsESDTFlagEnabledField
 }
 
-// IsESDTFlagEnabledForCurrentEpoch returns false
-func (eeh *EnableEpochsHandler) IsESDTFlagEnabledForCurrentEpoch() bool {
-	return false
+// IsESDTFlagEnabledForCurrentEpoch -
+func (stub *EnableEpochsHandlerStub) IsESDTFlagEnabledForCurrentEpoch() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsESDTFlagEnabledForCurrentEpochField
 }
 
-// IsGovernanceFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsGovernanceFlagEnabled() bool {
-	return false
+// IsGovernanceFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsGovernanceFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsGovernanceFlagEnabledField
 }
+
+// IsGovernanceFlagEnabledForCurrentEpoch -
+func (stub *EnableEpochsHandlerStub) IsGovernanceFlagEnabledForCurrentEpoch() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsGovernanceFlagEnabledForCurrentEpoch returns false
-func (eeh *EnableEpochsHandler) IsGovernanceFlagEnabledForCurrentEpoch() bool {
-	return false
+	return stub.IsGovernanceFlagEnabledForCurrentEpochField
 }
 
-// IsDelegationManagerFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsDelegationManagerFlagEnabled() bool {
-	return false
+// IsDelegationManagerFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsDelegationManagerFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsDelegationManagerFlagEnabledField
 }
 
-// IsDelegationSmartContractFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsDelegationSmartContractFlagEnabled() bool {
-	return false
+// IsDelegationSmartContractFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsDelegationSmartContractFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsDelegationSmartContractFlagEnabledField
 }
+
+// IsDelegationSmartContractFlagEnabledForCurrentEpoch -
+func (stub *EnableEpochsHandlerStub) IsDelegationSmartContractFlagEnabledForCurrentEpoch() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsDelegationSmartContractFlagEnabledForCurrentEpoch returns false
-func (eeh *EnableEpochsHandler) IsDelegationSmartContractFlagEnabledForCurrentEpoch() bool {
-	return false
+	return stub.IsDelegationSmartContractFlagForCurrentEpochEnabledField
 }
 
-// IsCorrectLastUnJailedFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsCorrectLastUnJailedFlagEnabled() bool {
-	return false
+// IsCorrectLastUnJailedFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsCorrectLastUnJailedFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsCorrectLastUnJailedFlagEnabledField
 }
+
+// IsCorrectLastUnJailedFlagEnabledForCurrentEpoch -
+func (stub *EnableEpochsHandlerStub) IsCorrectLastUnJailedFlagEnabledForCurrentEpoch() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsCorrectLastUnJailedFlagEnabledForCurrentEpoch returns false
-func (eeh *EnableEpochsHandler) IsCorrectLastUnJailedFlagEnabledForCurrentEpoch() bool {
-	return false
+	return stub.IsCorrectLastUnJailedFlagEnabledForCurrentEpochField
 }
 
-// IsRelayedTransactionsV2FlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsRelayedTransactionsV2FlagEnabled() bool {
-	return false
+// IsRelayedTransactionsV2FlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsRelayedTransactionsV2FlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsRelayedTransactionsV2FlagEnabledField
 }
+
+// IsUnBondTokensV2FlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsUnBondTokensV2FlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsUnBondTokensV2FlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsUnBondTokensV2FlagEnabled() bool {
-	return false
+	return stub.IsUnBondTokensV2FlagEnabledField
 }
 
-// IsSaveJailedAlwaysFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsSaveJailedAlwaysFlagEnabled() bool {
-	return false
+// IsSaveJailedAlwaysFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsSaveJailedAlwaysFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsSaveJailedAlwaysFlagEnabledField
 }
 
-// IsReDelegateBelowMinCheckFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsReDelegateBelowMinCheckFlagEnabled() bool {
-	return false
+// IsReDelegateBelowMinCheckFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsReDelegateBelowMinCheckFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsReDelegateBelowMinCheckFlagEnabledField
 }
+
+// IsValidatorToDelegationFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsValidatorToDelegationFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsValidatorToDelegationFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsValidatorToDelegationFlagEnabled() bool {
-	return false
+	return stub.IsValidatorToDelegationFlagEnabledField
 }
 
-// IsWaitingListFixFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsWaitingListFixFlagEnabled() bool {
-	return false
+// IsWaitingListFixFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsWaitingListFixFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsWaitingListFixFlagEnabledField
 }
 
-// IsIncrementSCRNonceInMultiTransferFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsIncrementSCRNonceInMultiTransferFlagEnabled() bool {
-	return false
+// IsIncrementSCRNonceInMultiTransferFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsIncrementSCRNonceInMultiTransferFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsIncrementSCRNonceInMultiTransferFlagEnabledField
 }
+
+// IsESDTMultiTransferFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsESDTMultiTransferFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsESDTMultiTransferFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsESDTMultiTransferFlagEnabled() bool {
-	return false
+	return stub.IsESDTMultiTransferFlagEnabledField
 }
 
-// IsGlobalMintBurnFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsGlobalMintBurnFlagEnabled() bool {
-	return false
+// IsGlobalMintBurnFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsGlobalMintBurnFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsGlobalMintBurnFlagEnabledField
 }
 
-// IsESDTTransferRoleFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsESDTTransferRoleFlagEnabled() bool {
-	return false
+// IsESDTTransferRoleFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsESDTTransferRoleFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsESDTTransferRoleFlagEnabledField
 }
+
+// IsBuiltInFunctionOnMetaFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsBuiltInFunctionOnMetaFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsBuiltInFunctionOnMetaFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsBuiltInFunctionOnMetaFlagEnabled() bool {
-	return false
+	return stub.IsBuiltInFunctionOnMetaFlagEnabledField
 }
 
-// IsComputeRewardCheckpointFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsComputeRewardCheckpointFlagEnabled() bool {
-	return false
+// IsComputeRewardCheckpointFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsComputeRewardCheckpointFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsComputeRewardCheckpointFlagEnabledField
 }
 
-// IsSCRSizeInvariantCheckFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsSCRSizeInvariantCheckFlagEnabled() bool {
-	return false
+// IsSCRSizeInvariantCheckFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsSCRSizeInvariantCheckFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsSCRSizeInvariantCheckFlagEnabledField
 }
+
+// IsBackwardCompSaveKeyValueFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsBackwardCompSaveKeyValueFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsBackwardCompSaveKeyValueFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsBackwardCompSaveKeyValueFlagEnabled() bool {
-	return false
+	return stub.IsBackwardCompSaveKeyValueFlagEnabledField
 }
 
-// IsESDTNFTCreateOnMultiShardFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsESDTNFTCreateOnMultiShardFlagEnabled() bool {
-	return false
+// IsESDTNFTCreateOnMultiShardFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsESDTNFTCreateOnMultiShardFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsESDTNFTCreateOnMultiShardFlagEnabledField
 }
 
-// IsMetaESDTSetFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsMetaESDTSetFlagEnabled() bool {
-	return false
+// IsMetaESDTSetFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsMetaESDTSetFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsMetaESDTSetFlagEnabledField
 }
+
+// IsAddTokensToDelegationFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsAddTokensToDelegationFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsAddTokensToDelegationFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsAddTokensToDelegationFlagEnabled() bool {
-	return false
+	return stub.IsAddTokensToDelegationFlagEnabledField
 }
 
-// IsMultiESDTTransferFixOnCallBackFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsMultiESDTTransferFixOnCallBackFlagEnabled() bool {
-	return false
+// IsMultiESDTTransferFixOnCallBackFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsMultiESDTTransferFixOnCallBackFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsMultiESDTTransferFixOnCallBackFlagEnabledField
 }
 
-// IsOptimizeGasUsedInCrossMiniBlocksFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsOptimizeGasUsedInCrossMiniBlocksFlagEnabled() bool {
-	return false
+// IsOptimizeGasUsedInCrossMiniBlocksFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsOptimizeGasUsedInCrossMiniBlocksFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsOptimizeGasUsedInCrossMiniBlocksFlagEnabledField
 }
+
+// IsCorrectFirstQueuedFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsCorrectFirstQueuedFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsCorrectFirstQueuedFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsCorrectFirstQueuedFlagEnabled() bool {
-	return false
+	return stub.IsCorrectFirstQueuedFlagEnabledField
 }
 
-// IsDeleteDelegatorAfterClaimRewardsFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsDeleteDelegatorAfterClaimRewardsFlagEnabled() bool {
-	return false
+// IsDeleteDelegatorAfterClaimRewardsFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsDeleteDelegatorAfterClaimRewardsFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsDeleteDelegatorAfterClaimRewardsFlagEnabledField
 }
 
-// IsFixOOGReturnCodeFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsFixOOGReturnCodeFlagEnabled() bool {
-	return false
+// IsFixOOGReturnCodeFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsFixOOGReturnCodeFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsFixOOGReturnCodeFlagEnabledField
 }
+
+// IsRemoveNonUpdatedStorageFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsRemoveNonUpdatedStorageFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsRemoveNonUpdatedStorageFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsRemoveNonUpdatedStorageFlagEnabled() bool {
-	return false
+	return stub.IsRemoveNonUpdatedStorageFlagEnabledField
 }
 
-// IsOptimizeNFTStoreFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsOptimizeNFTStoreFlagEnabled() bool {
-	return false
+// IsOptimizeNFTStoreFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsOptimizeNFTStoreFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsOptimizeNFTStoreFlagEnabledField
 }
+
+// IsCreateNFTThroughExecByCallerFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsCreateNFTThroughExecByCallerFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsCreateNFTThroughExecByCallerFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsCreateNFTThroughExecByCallerFlagEnabled() bool {
-	return false
+	return stub.IsCreateNFTThroughExecByCallerFlagEnabledField
 }
 
-// IsStopDecreasingValidatorRatingWhenStuckFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsStopDecreasingValidatorRatingWhenStuckFlagEnabled() bool {
-	return false
+// IsStopDecreasingValidatorRatingWhenStuckFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsStopDecreasingValidatorRatingWhenStuckFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsStopDecreasingValidatorRatingWhenStuckFlagEnabledField
 }
+
+// IsFrontRunningProtectionFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsFrontRunningProtectionFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsFrontRunningProtectionFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsFrontRunningProtectionFlagEnabled() bool {
-	return false
+	return stub.IsFrontRunningProtectionFlagEnabledField
 }
 
-// IsPayableBySCFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsPayableBySCFlagEnabled() bool {
-	return false
+// IsPayableBySCFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsPayableBySCFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsPayableBySCFlagEnabledField
 }
 
-// IsCleanUpInformativeSCRsFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsCleanUpInformativeSCRsFlagEnabled() bool {
-	return false
+// IsCleanUpInformativeSCRsFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsCleanUpInformativeSCRsFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsCleanUpInformativeSCRsFlagEnabledField
 }
+
+// IsStorageAPICostOptimizationFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsStorageAPICostOptimizationFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsStorageAPICostOptimizationFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsStorageAPICostOptimizationFlagEnabled() bool {
-	return false
+	return stub.IsStorageAPICostOptimizationFlagEnabledField
 }
 
-// IsESDTRegisterAndSetAllRolesFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsESDTRegisterAndSetAllRolesFlagEnabled() bool {
-	return false
+// IsESDTRegisterAndSetAllRolesFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsESDTRegisterAndSetAllRolesFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsESDTRegisterAndSetAllRolesFlagEnabledField
 }
 
-// IsScheduledMiniBlocksFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsScheduledMiniBlocksFlagEnabled() bool {
-	return false
+// IsScheduledMiniBlocksFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsScheduledMiniBlocksFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsScheduledMiniBlocksFlagEnabledField
 }
+
+// IsCorrectJailedNotUnStakedEmptyQueueFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsCorrectJailedNotUnStakedEmptyQueueFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsCorrectJailedNotUnStakedEmptyQueueFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsCorrectJailedNotUnStakedEmptyQueueFlagEnabled() bool {
-	return false
+	return stub.IsCorrectJailedNotUnStakedEmptyQueueFlagEnabledField
 }
 
-// IsDoNotReturnOldBlockInBlockchainHookFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsDoNotReturnOldBlockInBlockchainHookFlagEnabled() bool {
-	return false
+// IsDoNotReturnOldBlockInBlockchainHookFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsDoNotReturnOldBlockInBlockchainHookFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsDoNotReturnOldBlockInBlockchainHookFlagEnabledField
 }
 
-// IsAddFailedRelayedTxToInvalidMBsFlag returns false
-func (eeh *EnableEpochsHandler) IsAddFailedRelayedTxToInvalidMBsFlag() bool {
-	return false
+// IsAddFailedRelayedTxToInvalidMBsFlag -
+func (stub *EnableEpochsHandlerStub) IsAddFailedRelayedTxToInvalidMBsFlag() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsAddFailedRelayedTxToInvalidMBsFlagField
 }
+
+// IsSCRSizeInvariantOnBuiltInResultFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsSCRSizeInvariantOnBuiltInResultFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsSCRSizeInvariantOnBuiltInResultFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsSCRSizeInvariantOnBuiltInResultFlagEnabled() bool {
-	return false
+	return stub.IsSCRSizeInvariantOnBuiltInResultFlagEnabledField
 }
 
-// IsCheckCorrectTokenIDForTransferRoleFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsCheckCorrectTokenIDForTransferRoleFlagEnabled() bool {
-	return false
+// IsCheckCorrectTokenIDForTransferRoleFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsCheckCorrectTokenIDForTransferRoleFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsCheckCorrectTokenIDForTransferRoleFlagEnabledField
 }
+
+// IsFailExecutionOnEveryAPIErrorFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsFailExecutionOnEveryAPIErrorFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsFailExecutionOnEveryAPIErrorFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsFailExecutionOnEveryAPIErrorFlagEnabled() bool {
-	return false
+	return stub.IsFailExecutionOnEveryAPIErrorFlagEnabledField
 }
 
-// IsMiniBlockPartialExecutionFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsMiniBlockPartialExecutionFlagEnabled() bool {
-	return false
+// IsMiniBlockPartialExecutionFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsMiniBlockPartialExecutionFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsMiniBlockPartialExecutionFlagEnabledField
 }
+
+// IsManagedCryptoAPIsFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsManagedCryptoAPIsFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsManagedCryptoAPIsFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsManagedCryptoAPIsFlagEnabled() bool {
-	return false
+	return stub.IsManagedCryptoAPIsFlagEnabledField
 }
 
-// IsESDTMetadataContinuousCleanupFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsESDTMetadataContinuousCleanupFlagEnabled() bool {
-	return false
+// IsESDTMetadataContinuousCleanupFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsESDTMetadataContinuousCleanupFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsESDTMetadataContinuousCleanupFlagEnabledField
 }
 
-// IsDisableExecByCallerFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsDisableExecByCallerFlagEnabled() bool {
-	return false
+// IsDisableExecByCallerFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsDisableExecByCallerFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsDisableExecByCallerFlagEnabledField
 }
+
+// IsRefactorContextFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsRefactorContextFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsRefactorContextFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsRefactorContextFlagEnabled() bool {
-	return false
+	return stub.IsRefactorContextFlagEnabledField
 }
 
-// IsCheckFunctionArgumentFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsCheckFunctionArgumentFlagEnabled() bool {
-	return false
+// IsCheckFunctionArgumentFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsCheckFunctionArgumentFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsCheckFunctionArgumentFlagEnabledField
 }
 
-// IsCheckExecuteOnReadOnlyFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsCheckExecuteOnReadOnlyFlagEnabled() bool {
-	return false
+// IsCheckExecuteOnReadOnlyFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsCheckExecuteOnReadOnlyFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsCheckExecuteOnReadOnlyFlagEnabledField
 }
+
+// IsFixAsyncCallbackCheckFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsFixAsyncCallbackCheckFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsFixAsyncCallbackCheckFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsFixAsyncCallbackCheckFlagEnabled() bool {
-	return false
+	return stub.IsFixAsyncCallbackCheckFlagEnabledField
 }
 
-// IsSaveToSystemAccountFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsSaveToSystemAccountFlagEnabled() bool {
-	return false
+// IsSaveToSystemAccountFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsSaveToSystemAccountFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsSaveToSystemAccountFlagEnabledField
 }
 
-// IsCheckFrozenCollectionFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsCheckFrozenCollectionFlagEnabled() bool {
-	return false
+// IsCheckFrozenCollectionFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsCheckFrozenCollectionFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsCheckFrozenCollectionFlagEnabledField
 }
+
+// IsSendAlwaysFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsSendAlwaysFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsSendAlwaysFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsSendAlwaysFlagEnabled() bool {
-	return false
+	return stub.IsSendAlwaysFlagEnabledField
 }
 
-// IsValueLengthCheckFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsValueLengthCheckFlagEnabled() bool {
-	return false
+// IsValueLengthCheckFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsValueLengthCheckFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsValueLengthCheckFlagEnabledField
 }
+
+// IsCheckTransferFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsCheckTransferFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsCheckTransferFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsCheckTransferFlagEnabled() bool {
-	return false
+	return stub.IsCheckTransferFlagEnabledField
 }
 
-// IsTransferToMetaFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsTransferToMetaFlagEnabled() bool {
-	return false
+// IsTransferToMetaFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsTransferToMetaFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsTransferToMetaFlagEnabledField
 }
+
+// IsESDTNFTImprovementV1FlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsESDTNFTImprovementV1FlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsESDTNFTImprovementV1FlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsESDTNFTImprovementV1FlagEnabled() bool {
-	return false
+	return stub.IsESDTNFTImprovementV1FlagEnabledField
 }
 
 // IsSetSenderInEeiOutputTransferFlagEnabled -
-func (eeh *EnableEpochsHandler) IsSetSenderInEeiOutputTransferFlagEnabled() bool {
-	return false
+func (stub *EnableEpochsHandlerStub) IsSetSenderInEeiOutputTransferFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsSetSenderInEeiOutputTransferFlagEnabledField
 }
 
 // IsChangeDelegationOwnerFlagEnabled -
-func (eeh *EnableEpochsHandler) IsChangeDelegationOwnerFlagEnabled() bool {
-	return false
+func (stub *EnableEpochsHandlerStub) IsChangeDelegationOwnerFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsChangeDelegationOwnerFlagEnabledField
 }
 
-// IsRefactorPeersMiniBlocksFlagEnabled returns false
-func (eeh *EnableEpochsHandler) IsRefactorPeersMiniBlocksFlagEnabled() bool {
-	return false
+// IsRefactorPeersMiniBlocksFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsRefactorPeersMiniBlocksFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsRefactorPeersMiniBlocksFlagEnabledField
 }
 
 // IsFixAsyncCallBackArgsListFlagEnabled -
-func (eeh *EnableEpochsHandler) IsFixAsyncCallBackArgsListFlagEnabled() bool {
-	return false
+func (stub *EnableEpochsHandlerStub) IsFixAsyncCallBackArgsListFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsFixAsyncCallBackArgsListFlagEnabledField
 }
 
 // IsFixOldTokenLiquidityEnabled -
-func (eeh *EnableEpochsHandler) IsFixOldTokenLiquidityEnabled() bool {
-	return false
-}
+func (stub *EnableEpochsHandlerStub) IsFixOldTokenLiquidityEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsMaxBlockchainHookCountersFlagEnabled -
-func (eeh *EnableEpochsHandler) IsMaxBlockchainHookCountersFlagEnabled() bool {
-	return false
+	return stub.IsFixOldTokenLiquidityEnabledField
 }
 
 // IsRuntimeMemStoreLimitEnabled -
-func (eeh *EnableEpochsHandler) IsRuntimeMemStoreLimitEnabled() bool {
-	return false
-}
+func (stub *EnableEpochsHandlerStub) IsRuntimeMemStoreLimitEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
 
-// IsWipeSingleNFTLiquidityDecreaseEnabled -
-func (eeh *EnableEpochsHandler) IsWipeSingleNFTLiquidityDecreaseEnabled() bool {
-	return false
-}
-
-// IsAlwaysSaveTokenMetaDataEnabled -
-func (eeh *EnableEpochsHandler) IsAlwaysSaveTokenMetaDataEnabled() bool {
-	return false
+	return stub.IsRuntimeMemStoreLimitEnabledField
 }
 
 // IsRuntimeCodeSizeFixEnabled -
-func (eeh *EnableEpochsHandler) IsRuntimeCodeSizeFixEnabled() bool {
-	return false
+func (stub *EnableEpochsHandlerStub) IsRuntimeCodeSizeFixEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsRuntimeCodeSizeFixEnabledField
 }
 
-// IsInterfaceNil returns true if there is no value under the interface
-func (eeh *EnableEpochsHandler) IsInterfaceNil() bool {
-	return eeh == nil
+// IsMaxBlockchainHookCountersFlagEnabled -
+func (stub *EnableEpochsHandlerStub) IsMaxBlockchainHookCountersFlagEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsMaxBlockchainHookCountersFlagEnabledField
+}
+
+// IsWipeSingleNFTLiquidityDecreaseEnabled -
+func (stub *EnableEpochsHandlerStub) IsWipeSingleNFTLiquidityDecreaseEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsWipeSingleNFTLiquidityDecreaseEnabledField
+}
+
+// IsAlwaysSaveTokenMetaDataEnabled -
+func (stub *EnableEpochsHandlerStub) IsAlwaysSaveTokenMetaDataEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsAlwaysSaveTokenMetaDataEnabledField
+}
+
+// IsSetGuardianEnabled -
+func (stub *EnableEpochsHandlerStub) IsSetGuardianEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsSetGuardianEnabledField
+}
+
+// IsKeepExecOrderOnCreatedSCRsEnabled -
+func (stub *EnableEpochsHandlerStub) IsKeepExecOrderOnCreatedSCRsEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsKeepExecOrderOnCreatedSCRsEnabledField
+}
+
+// IsMultiClaimOnDelegationEnabled -
+func (stub *EnableEpochsHandlerStub) IsMultiClaimOnDelegationEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsMultiClaimOnDelegationEnabledField
+}
+
+// IsChangeUsernameEnabled -
+func (stub *EnableEpochsHandlerStub) IsChangeUsernameEnabled() bool {
+	stub.RLock()
+	defer stub.RUnlock()
+
+	return stub.IsChangeUsernameEnabledField
+}
+
+// IsInterfaceNil -
+func (stub *EnableEpochsHandlerStub) IsInterfaceNil() bool {
+	return stub == nil
 }
