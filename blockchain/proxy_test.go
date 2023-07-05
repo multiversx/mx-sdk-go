@@ -674,8 +674,8 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		t.Parallel()
 
 		httpClient := createMockClientRespondingBytes(make([]byte, 0))
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetESDTTokenData(context.Background(), nil, token)
 		assert.Nil(t, tokenData)
@@ -685,8 +685,8 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		t.Parallel()
 
 		httpClient := createMockClientRespondingBytes(make([]byte, 0))
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		address := data.NewAddressFromBytes([]byte("invalid"))
 		tokenData, err := ep.GetESDTTokenData(context.Background(), address, token)
@@ -697,8 +697,8 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		t.Parallel()
 
 		httpClient := createMockClientRespondingError(expectedErr)
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
 		assert.Nil(t, tokenData)
@@ -708,8 +708,8 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		t.Parallel()
 
 		httpClient := createMockClientRespondingBytesWithStatus(make([]byte, 0), http.StatusNotFound)
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
 		assert.Nil(t, tokenData)
@@ -719,8 +719,8 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		t.Parallel()
 
 		httpClient := createMockClientRespondingBytes([]byte("invalid json"))
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
 		assert.Nil(t, tokenData)
@@ -735,8 +735,8 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		responseBytes, _ := json.Marshal(response)
 
 		httpClient := createMockClientRespondingBytes(responseBytes)
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
 		assert.Nil(t, tokenData)
@@ -761,8 +761,8 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		responseBytes, _ := json.Marshal(response)
 
 		httpClient := createMockClientRespondingBytes(responseBytes)
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
 		assert.NotNil(t, tokenData)
@@ -783,8 +783,8 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		t.Parallel()
 
 		httpClient := createMockClientRespondingBytes(make([]byte, 0))
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetNFTTokenData(context.Background(), nil, token, nonce)
 		assert.Nil(t, tokenData)
@@ -794,8 +794,8 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		t.Parallel()
 
 		httpClient := createMockClientRespondingBytes(make([]byte, 0))
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		address := data.NewAddressFromBytes([]byte("invalid"))
 		tokenData, err := ep.GetNFTTokenData(context.Background(), address, token, nonce)
@@ -806,8 +806,8 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		t.Parallel()
 
 		httpClient := createMockClientRespondingError(expectedErr)
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
 		assert.Nil(t, tokenData)
@@ -817,8 +817,8 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		t.Parallel()
 
 		httpClient := createMockClientRespondingBytesWithStatus(make([]byte, 0), http.StatusNotFound)
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
 		assert.Nil(t, tokenData)
@@ -828,8 +828,8 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		t.Parallel()
 
 		httpClient := createMockClientRespondingBytes([]byte("invalid json"))
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
 		assert.Nil(t, tokenData)
@@ -844,8 +844,8 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		responseBytes, _ := json.Marshal(response)
 
 		httpClient := createMockClientRespondingBytes(responseBytes)
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
 		assert.Nil(t, tokenData)
@@ -877,8 +877,8 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		responseBytes, _ := json.Marshal(response)
 
 		httpClient := createMockClientRespondingBytes(responseBytes)
-		args := createMockArgsElrondProxy(httpClient)
-		ep, _ := NewElrondProxy(args)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
 
 		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
 		assert.NotNil(t, tokenData)

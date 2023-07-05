@@ -560,7 +560,7 @@ func (ep *proxy) GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]
 }
 
 // GetESDTTokenData returns the address' fungible token data
-func (ep *elrondProxy) GetESDTTokenData(ctx context.Context, address erdgoCore.AddressHandler, tokenIdentifier string) (*data.ESDTFungibleTokenData, error) {
+func (ep *proxy) GetESDTTokenData(ctx context.Context, address erdgoCore.AddressHandler, tokenIdentifier string) (*data.ESDTFungibleTokenData, error) {
 	if check.IfNil(address) {
 		return nil, ErrNilAddress
 	}
@@ -586,7 +586,7 @@ func (ep *elrondProxy) GetESDTTokenData(ctx context.Context, address erdgoCore.A
 }
 
 // GetNFTTokenData returns the address' NFT/SFT/MetaESDT token data
-func (ep *elrondProxy) GetNFTTokenData(ctx context.Context, address erdgoCore.AddressHandler, tokenIdentifier string, nonce uint64) (*data.ESDTNFTTokenData, error) {
+func (ep *proxy) GetNFTTokenData(ctx context.Context, address erdgoCore.AddressHandler, tokenIdentifier string, nonce uint64) (*data.ESDTNFTTokenData, error) {
 	if check.IfNil(address) {
 		return nil, ErrNilAddress
 	}
