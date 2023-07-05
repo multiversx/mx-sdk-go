@@ -1,16 +1,19 @@
 package factory
 
 import (
-	"github.com/ElrondNetwork/elrond-go-core/core"
-	"github.com/ElrondNetwork/elrond-go-core/core/pubkeyConverter"
-	"github.com/ElrondNetwork/elrond-go-core/hashing"
-	hasherFactory "github.com/ElrondNetwork/elrond-go-core/hashing/factory"
-	"github.com/ElrondNetwork/elrond-go-core/marshal"
-	marshalizerFactory "github.com/ElrondNetwork/elrond-go-core/marshal/factory"
-	"github.com/ElrondNetwork/elrond-go/config"
-	"github.com/ElrondNetwork/elrond-go/process/rating"
-	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/pubkeyConverter"
+	"github.com/multiversx/mx-chain-core-go/hashing"
+	hasherFactory "github.com/multiversx/mx-chain-core-go/hashing/factory"
+	"github.com/multiversx/mx-chain-core-go/marshal"
+	marshalizerFactory "github.com/multiversx/mx-chain-core-go/marshal/factory"
+	"github.com/multiversx/mx-chain-go/common"
+	"github.com/multiversx/mx-chain-go/common/enablers"
+	"github.com/multiversx/mx-chain-go/config"
+	"github.com/multiversx/mx-chain-go/process/rating"
+	"github.com/multiversx/mx-chain-go/sharding/nodesCoordinator"
+	"github.com/multiversx/mx-sdk-go/data"
+	"github.com/multiversx/mx-sdk-go/disabled"
 )
 
 const (
@@ -20,16 +23,18 @@ const (
 )
 
 type coreComponents struct {
-	Marshaller      marshal.Marshalizer
-	Hasher          hashing.Hasher
-	Rater           nodesCoordinator.ChanceComputer
-	PubKeyConverter core.PubkeyConverter
+	Marshaller          marshal.Marshalizer
+	Hasher              hashing.Hasher
+	Rater               nodesCoordinator.ChanceComputer
+	PubKeyConverter     core.PubkeyConverter
+	EnableEpochsHandler common.EnableEpochsHandler
 }
 
 // CreateCoreComponents creates core components needed for header verification
 func CreateCoreComponents(
 	ratingsConfig *data.RatingsConfig,
 	networkConfig *data.NetworkConfig,
+	enableEpochsConfig *data.EnableEpochsConfig,
 ) (*coreComponents, error) {
 	marshalizer, err := marshalizerFactory.NewMarshalizer(marshalizerType)
 	if err != nil {
@@ -51,11 +56,17 @@ func CreateCoreComponents(
 		return nil, err
 	}
 
+	enableEpochsHandler, err := enablers.NewEnableEpochsHandler(enableEpochsConfig.EnableEpochs, &disabled.EpochNotifier{})
+	if err != nil {
+		return nil, err
+	}
+
 	return &coreComponents{
-		Marshaller:      marshalizer,
-		Hasher:          hasher,
-		Rater:           rater,
-		PubKeyConverter: converter,
+		Marshaller:          marshalizer,
+		Hasher:              hasher,
+		Rater:               rater,
+		PubKeyConverter:     converter,
+		EnableEpochsHandler: enableEpochsHandler,
 	}, nil
 }
 
@@ -65,9 +76,9 @@ func createRater(rc *data.RatingsConfig, nc *data.NetworkConfig) (nodesCoordinat
 	ratingDataArgs := rating.RatingsDataArg{
 		Config:                   ratingsConfig,
 		ShardConsensusSize:       uint32(nc.ShardConsensusGroupSize),
-		MetaConsensusSize:        uint32(nc.MetaConsensusGroup),
-		ShardMinNodes:            uint32(nc.NumNodesInShard),
-		MetaMinNodes:             uint32(nc.NumMetachainNodes),
+		MetaConsensusSize:        nc.MetaConsensusGroup,
+		ShardMinNodes:            nc.NumNodesInShard,
+		MetaMinNodes:             nc.NumMetachainNodes,
 		RoundDurationMiliseconds: uint64(nc.RoundDuration),
 	}
 

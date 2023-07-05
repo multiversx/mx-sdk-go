@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestAddress_GetShard(t *testing.T) {
 	_, _ = rand.Read(pubkey)
 
 	numShardsWithoutMeta := uint32(2)
-	shardCoordinator, _ := NewShardCoordinator(numShardsWithoutMeta, 0)
+	shardCoordinatorInstance, _ := NewShardCoordinator(numShardsWithoutMeta, 0)
 
 	pubkey[31] &= 0xFE
 	addr0 := data.NewAddressFromBytes(pubkey)
@@ -25,10 +25,10 @@ func TestAddress_GetShard(t *testing.T) {
 	pubkey[31] |= 0x01
 	addr1 := data.NewAddressFromBytes(pubkey)
 
-	sh0, err := shardCoordinator.ComputeShardId(addr0)
+	sh0, err := shardCoordinatorInstance.ComputeShardId(addr0)
 	assert.Nil(t, err)
 
-	sh1, err := shardCoordinator.ComputeShardId(addr1)
+	sh1, err := shardCoordinatorInstance.ComputeShardId(addr1)
 	assert.Nil(t, err)
 
 	assert.Equal(t, sh0, uint32(0))

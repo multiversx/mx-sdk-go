@@ -4,20 +4,27 @@ import (
 	"context"
 	"time"
 
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/examples"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/interactors"
+	"github.com/multiversx/mx-chain-crypto-go/signing"
+	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-sdk-go/blockchain"
+	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
+	"github.com/multiversx/mx-sdk-go/builders"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/examples"
+	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/examples/examplesTransaction")
+var (
+	suite  = ed25519.NewEd25519()
+	keyGen = signing.NewKeyGenerator(suite)
+	log    = logger.GetOrCreate("mx-sdk-go/examples/examplesTransaction")
+)
 
 func main() {
 	_ = logger.SetLogLevel("*:DEBUG")
 
-	args := blockchain.ArgsElrondProxy{
+	args := blockchain.ArgsProxy{
 		ProxyURL:            examples.TestnetGateway,
 		Client:              nil,
 		SameScState:         false,
@@ -26,7 +33,7 @@ func main() {
 		CacheExpirationTime: time.Minute,
 		EntityType:          core.Proxy,
 	}
-	ep, err := blockchain.NewElrondProxy(args)
+	ep, err := blockchain.NewProxy(args)
 	if err != nil {
 		log.Error("error creating proxy", "error", err)
 		return
@@ -54,16 +61,17 @@ func main() {
 		return
 	}
 
-	transactionArguments, err := ep.GetDefaultTransactionArguments(context.Background(), address, netConfigs)
+	tx, _, err := ep.GetDefaultTransactionArguments(context.Background(), address, netConfigs)
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return
 	}
 
-	transactionArguments.RcvAddr = address.AddressAsBech32String() // send to self
-	transactionArguments.Value = "1000000000000000000"             // 1EGLD
+	tx.Receiver = address.AddressAsBech32String() // send to self
+	tx.Value = "1000000000000000000"              // 1EGLD
 
-	txBuilder, err := builders.NewTxBuilder(blockchain.NewTxSigner())
+	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, privateKey)
+	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewSigner())
 	if err != nil {
 		log.Error("unable to prepare the transaction creation arguments", "error", err)
 		return
@@ -75,25 +83,25 @@ func main() {
 		return
 	}
 
-	tx, err := ti.ApplySignatureAndGenerateTx(privateKey, transactionArguments)
+	err = ti.ApplySignature(holder, &tx)
 	if err != nil {
-		log.Error("error creating transaction", "error", err)
+		log.Error("error signing transaction", "error", err)
 		return
 	}
-	ti.AddTransaction(tx)
+	ti.AddTransaction(&tx)
 
 	// a new transaction with the signature done on the hash of the transaction
 	// it's ok to reuse the arguments here, they will be copied, anyway
-	transactionArguments.Version = 2
-	transactionArguments.Options = 1
-	transactionArguments.Nonce++ // do not forget to increment the nonce, otherwise you will get 2 transactions
+	tx.Version = 2
+	tx.Options = 1
+	tx.Nonce++ // do not forget to increment the nonce, otherwise you will get 2 transactions
 	// with the same nonce (only one of them will get executed)
-	txSigOnHash, err := ti.ApplySignatureAndGenerateTx(privateKey, transactionArguments)
+	err = ti.ApplySignature(holder, &tx)
 	if err != nil {
 		log.Error("error creating transaction", "error", err)
 		return
 	}
-	ti.AddTransaction(txSigOnHash)
+	ti.AddTransaction(&tx)
 
 	hashes, err := ti.SendTransactionsAsBunch(context.Background(), 100)
 	if err != nil {

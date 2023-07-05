@@ -3,14 +3,14 @@ package headerCheck
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-go-core/core"
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	coreData "github.com/ElrondNetwork/elrond-go-core/data"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-go/sharding/nodesCoordinator"
+	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	coreData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-go/sharding/nodesCoordinator"
+	logger "github.com/multiversx/mx-chain-logger-go"
 )
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/headerCheck")
+var log = logger.GetOrCreate("mx-sdk-go/headerCheck")
 
 // ArgsHeaderVerifier holds all dependencies required by headerVerifier in
 // order to create a new instance
@@ -54,9 +54,9 @@ func checkArguments(arguments ArgsHeaderVerifier) error {
 	return nil
 }
 
-// VerifyHeaderByHash verifies wether a header signature matches by providing
+// VerifyHeaderSignatureByHash verifies whether a header signature matches by providing
 // the hash and shard where the header belongs to
-func (hch *headerVerifier) VerifyHeaderByHash(ctx context.Context, shardId uint32, hash string) (bool, error) {
+func (hch *headerVerifier) VerifyHeaderSignatureByHash(ctx context.Context, shardId uint32, hash string) (bool, error) {
 	header, err := hch.fetchHeaderByHashAndShard(ctx, shardId, hash)
 	if err != nil {
 		return false, err
@@ -67,9 +67,9 @@ func (hch *headerVerifier) VerifyHeaderByHash(ctx context.Context, shardId uint3
 
 	if !hch.nodesCoordinator.IsEpochInConfig(headerEpoch) {
 		log.Info("nodes config is set for epoch", "epoch", headerEpoch)
-		err := hch.updateNodesConfigPerEpoch(ctx, headerEpoch)
-		if err != nil {
-			return false, err
+		errUpdate := hch.updateNodesConfigPerEpoch(ctx, headerEpoch)
+		if errUpdate != nil {
+			return false, errUpdate
 		}
 	}
 

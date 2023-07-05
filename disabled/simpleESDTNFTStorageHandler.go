@@ -1,9 +1,9 @@
 package disabled
 
 import (
-	"github.com/ElrondNetwork/elrond-go-core/data"
-	"github.com/ElrondNetwork/elrond-go-core/data/esdt"
-	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
+	"github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-core-go/data/esdt"
+	vmcommon "github.com/multiversx/mx-chain-vm-common-go"
 )
 
 // SimpleESDTNFTStorageHandler is a disabled implementation of SimpleESDTNFTStorageHandler interface
@@ -11,12 +11,12 @@ type SimpleESDTNFTStorageHandler struct {
 }
 
 // GetESDTNFTTokenOnDestination returns nil
-func (sns *SimpleESDTNFTStorageHandler) GetESDTNFTTokenOnDestination(accnt vmcommon.UserAccountHandler, esdtTokenKey []byte, nonce uint64) (*esdt.ESDigitalToken, bool, error) {
+func (sns *SimpleESDTNFTStorageHandler) GetESDTNFTTokenOnDestination(_ vmcommon.UserAccountHandler, _ []byte, _ uint64) (*esdt.ESDigitalToken, bool, error) {
 	return nil, false, nil
 }
 
 // SaveNFTMetaDataToSystemAccount returns nil
-func (sns *SimpleESDTNFTStorageHandler) SaveNFTMetaDataToSystemAccount(tx data.TransactionHandler) error {
+func (sns *SimpleESDTNFTStorageHandler) SaveNFTMetaDataToSystemAccount(_ data.TransactionHandler) error {
 	return nil
 }
 

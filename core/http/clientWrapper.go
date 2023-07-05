@@ -7,12 +7,12 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/multiversx/mx-chain-core-go/core/check"
 )
 
 const (
 	httpUserAgentKey = "User-Agent"
-	httpUserAgent    = "Elrond go SDK / 1.0.0 <Posting to nodes>"
+	httpUserAgent    = "MultiversX/1.0.1 (GO SDK tools)"
 
 	httpAcceptTypeKey = "Accept"
 	httpAcceptType    = "application/json"

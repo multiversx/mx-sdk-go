@@ -6,13 +6,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	logger "github.com/multiversx/mx-chain-logger-go"
 )
 
 const minResultsNum = 1
 
-var log = logger.GetOrCreate("elrond-sdk-erdgo/aggregator")
+var log = logger.GetOrCreate("mx-sdk-go/aggregator")
 
 // ArgsPriceAggregator is the DTO used in the NewPriceAggregator function
 type ArgsPriceAggregator struct {
@@ -69,6 +69,15 @@ func (pa *priceAggregator) FetchPrice(ctx context.Context, base string, quote st
 		go func(priceFetcher PriceFetcher) {
 			defer wg.Done()
 			price, err := priceFetcher.FetchPrice(ctx, baseUpper, quoteUpper)
+
+			if err == ErrPairNotSupported {
+				log.Trace("pair not supported",
+					"price fetcher", priceFetcher.Name(),
+					"base", baseUpper,
+					"quote", quoteUpper,
+				)
+				return
+			}
 
 			if err != nil {
 				log.Debug("failed to fetch price",

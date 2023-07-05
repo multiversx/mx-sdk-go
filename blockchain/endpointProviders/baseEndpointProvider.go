@@ -3,23 +3,25 @@ package endpointProviders
 import "fmt"
 
 const (
-	networkConfig            = "network/config"
-	networkEconomics         = "network/economics"
-	ratingsConfig            = "network/ratings"
-	enableEpochsConfig       = "network/enable-epochs"
-	account                  = "address/%s"
-	esdt                     = "address/%s/esdt/%s"
-	nft                      = "address/%s/nft/%s/nonce/%d"
-	costTransaction          = "transaction/cost"
-	sendTransaction          = "transaction/send"
-	sendMultipleTransactions = "transaction/send-multiple"
-	transactionStatus        = "transaction/%s/status"
-	transactionInfo          = "transaction/%s"
-	hyperBlockByNonce        = "hyperblock/by-nonce/%d"
-	hyperBlockByHash         = "hyperblock/by-hash/%s"
-	vmValues                 = "vm-values/query"
-	genesisNodesConfig       = "network/genesis-nodes"
-	rawStartOfEpochMetaBlock = "internal/raw/startofepoch/metablock/by-epoch/%d"
+	networkConfig              = "network/config"
+	networkEconomics           = "network/economics"
+	ratingsConfig              = "network/ratings"
+	enableEpochsConfig         = "network/enable-epochs"
+	account                    = "address/%s"
+	costTransaction            = "transaction/cost"
+	sendTransaction            = "transaction/send"
+	sendMultipleTransactions   = "transaction/send-multiple"
+	transactionStatus          = "transaction/%s/status"
+	processedTransactionStatus = "transaction/%s/process-status"
+	transactionInfo            = "transaction/%s"
+	hyperBlockByNonce          = "hyperblock/by-nonce/%d"
+	hyperBlockByHash           = "hyperblock/by-hash/%s"
+	vmValues                   = "vm-values/query"
+	genesisNodesConfig         = "network/genesis-nodes"
+	rawStartOfEpochMetaBlock   = "internal/raw/startofepoch/metablock/by-epoch/%d"
+	rawStartOfEpochValidators  = "internal/json/startofepoch/validators/by-epoch/%d"
+	esdt                       = "address/%s/esdt/%s"
+	nft                        = "address/%s/nft/%s/nonce/%d"
 )
 
 type baseEndpointProvider struct{}
@@ -79,6 +81,11 @@ func (base *baseEndpointProvider) GetTransactionStatus(hexHash string) string {
 	return fmt.Sprintf(transactionStatus, hexHash)
 }
 
+// GetProcessedTransactionStatus returns the transaction status endpoint
+func (base *baseEndpointProvider) GetProcessedTransactionStatus(hexHash string) string {
+	return fmt.Sprintf(processedTransactionStatus, hexHash)
+}
+
 // GetTransactionInfo returns the transaction info endpoint
 func (base *baseEndpointProvider) GetTransactionInfo(hexHash string) string {
 	return fmt.Sprintf(transactionInfo, hexHash)
@@ -107,4 +114,9 @@ func (base *baseEndpointProvider) GetGenesisNodesConfig() string {
 // GetRawStartOfEpochMetaBlock returns the raw start of epoch metablock endpoint
 func (base *baseEndpointProvider) GetRawStartOfEpochMetaBlock(epoch uint32) string {
 	return fmt.Sprintf(rawStartOfEpochMetaBlock, epoch)
+}
+
+// GetValidatorsInfo returns the validators endpoint
+func (base *baseEndpointProvider) GetValidatorsInfo(epoch uint32) string {
+	return fmt.Sprintf(rawStartOfEpochValidators, epoch)
 }

@@ -3,8 +3,8 @@ package testsCommon
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-go-core/data"
-	state "github.com/ElrondNetwork/elrond-go/state"
+	"github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-go/state"
 )
 
 // RawHeaderHandlerStub -

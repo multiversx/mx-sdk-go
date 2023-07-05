@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/multiversx/mx-sdk-go/core"
 )
 
 const dataSeparator = "@"
@@ -65,13 +65,27 @@ func (builder *txDataBuilder) ArgBytes(bytes []byte) TxDataBuilder {
 	return builder
 }
 
+// ArgBytesList adds the provided list of bytes. Each argument from the list should contain at least one byte
+func (builder *txDataBuilder) ArgBytesList(list [][]byte) TxDataBuilder {
+	for _, arg := range list {
+		builder.addArgBytes(arg)
+	}
+
+	return builder
+}
+
 // ToDataString returns the formatted data string ready to be used in a transaction call
 func (builder *txDataBuilder) ToDataString() (string, error) {
 	if builder.err != nil {
 		return "", builder.err
 	}
 
-	parts := append([]string{builder.function}, builder.args...)
+	var parts []string
+	if len(builder.function) > 0 {
+		parts = append(parts, builder.function)
+	}
+
+	parts = append(parts, builder.args...)
 
 	return strings.Join(parts, dataSeparator), nil
 }

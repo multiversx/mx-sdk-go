@@ -1,19 +1,22 @@
 package testsCommon
 
-import "github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+import (
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+)
 
 // TxBuilderStub -
 type TxBuilderStub struct {
-	ApplySignatureAndGenerateTxCalled func(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error)
+	ApplySignatureCalled func(cryptoHolder erdgoCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
 }
 
-// ApplySignatureAndGenerateTx -
-func (stub *TxBuilderStub) ApplySignatureAndGenerateTx(skBytes []byte, arg data.ArgCreateTransaction) (*data.Transaction, error) {
-	if stub.ApplySignatureAndGenerateTxCalled != nil {
-		return stub.ApplySignatureAndGenerateTxCalled(skBytes, arg)
+// ApplySignature -
+func (stub *TxBuilderStub) ApplySignature(cryptoHolder erdgoCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error {
+	if stub.ApplySignatureCalled != nil {
+		return stub.ApplySignatureCalled(cryptoHolder, tx)
 	}
 
-	return &data.Transaction{}, nil
+	return nil
 }
 
 // IsInterfaceNil -

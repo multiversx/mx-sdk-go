@@ -1,6 +1,6 @@
 package data
 
-import "github.com/ElrondNetwork/elrond-go-core/data/transaction"
+import "github.com/multiversx/mx-chain-core-go/data/transaction"
 
 // SendTransactionResponse holds the response received from the network when broadcasting a transaction
 type SendTransactionResponse struct {
@@ -21,25 +21,19 @@ type SendTransactionsResponse struct {
 	Code  string `json:"code"`
 }
 
-// Transaction holds the fields of a transaction to be broadcasted to the network
-type Transaction struct {
-	Nonce     uint64 `json:"nonce"`
-	Value     string `json:"value"`
-	RcvAddr   string `json:"receiver"`
-	SndAddr   string `json:"sender"`
-	GasPrice  uint64 `json:"gasPrice,omitempty"`
-	GasLimit  uint64 `json:"gasLimit,omitempty"`
-	Data      []byte `json:"data,omitempty"`
-	Signature string `json:"signature,omitempty"`
-	ChainID   string `json:"chainID"`
-	Version   uint32 `json:"version"`
-	Options   uint32 `json:"options,omitempty"`
-}
-
 // TransactionStatus holds a transaction's status response from the network
 type TransactionStatus struct {
 	Data struct {
 		Status string `json:"status"`
+	} `json:"data"`
+	Error string `json:"error"`
+	Code  string `json:"code"`
+}
+
+// ProcessedTransactionStatus holds a transaction's processed status response from the network
+type ProcessedTransactionStatus struct {
+	Data struct {
+		ProcessedStatus string `json:"status"`
 	} `json:"data"`
 	Error string `json:"error"`
 	Code  string `json:"code"`
@@ -56,24 +50,34 @@ type TransactionInfo struct {
 
 // TransactionOnNetwork holds a transaction's info entry in a hyper block
 type TransactionOnNetwork struct {
-	Type             string                                `json:"type"`
-	Hash             string                                `json:"hash"`
-	Nonce            uint64                                `json:"nonce"`
-	Value            string                                `json:"value"`
-	Receiver         string                                `json:"receiver"`
-	Sender           string                                `json:"sender"`
-	GasPrice         uint64                                `json:"gasPrice"`
-	GasLimit         uint64                                `json:"gasLimit"`
-	Data             []byte                                `json:"data"`
-	Signature        string                                `json:"signature"`
-	SourceShard      uint32                                `json:"sourceShard"`
-	DestinationShard uint32                                `json:"destinationShard"`
-	MiniblockType    string                                `json:"miniblockType"`
-	MiniblockHash    string                                `json:"miniblockHash"`
-	Status           string                                `json:"status"`
-	HyperBlockNonce  uint64                                `json:"hyperblockNonce"`
-	HyperBlockHash   string                                `json:"hyperblockHash"`
-	ScResults        []*transaction.ApiSmartContractResult `json:"smartContractResults,omitempty"`
+	Type                              string                                `json:"type"`
+	ProcessingTypeOnSource            string                                `json:"processingTypeOnSource,omitempty"`
+	ProcessingTypeOnDestination       string                                `json:"processingTypeOnDestination,omitempty"`
+	Hash                              string                                `json:"hash"`
+	Nonce                             uint64                                `json:"nonce"`
+	Value                             string                                `json:"value"`
+	Receiver                          string                                `json:"receiver"`
+	Sender                            string                                `json:"sender"`
+	GasPrice                          uint64                                `json:"gasPrice"`
+	GasLimit                          uint64                                `json:"gasLimit"`
+	Data                              []byte                                `json:"data"`
+	Signature                         string                                `json:"signature"`
+	SourceShard                       uint32                                `json:"sourceShard"`
+	DestinationShard                  uint32                                `json:"destinationShard"`
+	BlockNonce                        uint64                                `json:"blockNonce"`
+	BlockHash                         string                                `json:"blockHash"`
+	MiniblockType                     string                                `json:"miniblockType"`
+	MiniblockHash                     string                                `json:"miniblockHash"`
+	Timestamp                         uint64                                `json:"timestamp"`
+	Status                            string                                `json:"status"`
+	HyperBlockNonce                   uint64                                `json:"hyperblockNonce"`
+	HyperBlockHash                    string                                `json:"hyperblockHash"`
+	NotarizedAtSourceInMetaNonce      uint64                                `json:"notarizedAtSourceInMetaNonce,omitempty"`
+	NotarizedAtSourceInMetaHash       string                                `json:"NotarizedAtSourceInMetaHash,omitempty"`
+	NotarizedAtDestinationInMetaNonce uint64                                `json:"notarizedAtDestinationInMetaNonce,omitempty"`
+	NotarizedAtDestinationInMetaHash  string                                `json:"notarizedAtDestinationInMetaHash,omitempty"`
+	ScResults                         []*transaction.ApiSmartContractResult `json:"smartContractResults,omitempty"`
+	Logs                              *transaction.ApiLogs                  `json:"logs,omitempty"`
 }
 
 // TxCostResponseData follows the format of the data field of a transaction cost request
@@ -87,20 +91,4 @@ type ResponseTxCost struct {
 	Data  TxCostResponseData `json:"data"`
 	Error string             `json:"error"`
 	Code  string             `json:"code"`
-}
-
-// ArgCreateTransaction will hold the transaction fields
-type ArgCreateTransaction struct {
-	Nonce            uint64
-	Value            string
-	RcvAddr          string
-	SndAddr          string
-	GasPrice         uint64
-	GasLimit         uint64
-	Data             []byte
-	Signature        string
-	ChainID          string
-	Version          uint32
-	Options          uint32
-	AvailableBalance string
 }

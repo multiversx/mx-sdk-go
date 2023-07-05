@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,6 +32,22 @@ func TestWallet_GetPrivateKeyFromMnemonic(t *testing.T) {
 	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privKey))
 
 	privKey = w.GetPrivateKeyFromMnemonic(mnemonic, 0, 1)
+	expectedHexPrivKey = "1648ad209d6b157a289884933e3bb30f161ec7113221ec16f87c3578b05830b0"
+	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privKey))
+}
+
+func TestWallet_CreateSeedFromMnemonicThenGetPrivateKeyFromSeed(t *testing.T) {
+	t.Parallel()
+
+	w := NewWallet()
+	mnemonic := data.Mnemonic("acid twice post genre topic observe valid viable gesture fortune funny dawn around blood enemy page update reduce decline van bundle zebra rookie real")
+	seed := w.CreateSeedFromMnemonic(mnemonic)
+
+	privKey := w.GetPrivateKeyFromSeed(seed, 0, 0)
+	expectedHexPrivKey := "0b7966138e80b8f3bb64046f56aea4250fd7bacad6ed214165cea6767fd0bc2c"
+	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privKey))
+
+	privKey = w.GetPrivateKeyFromSeed(seed, 0, 1)
 	expectedHexPrivKey = "1648ad209d6b157a289884933e3bb30f161ec7113221ec16f87c3578b05830b0"
 	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privKey))
 }
@@ -73,6 +89,21 @@ func TestWallet_LoadPrivateKeyFromJsonFile(t *testing.T) {
 	require.Nil(t, err)
 	expectedHexPrivKey := "15cfe2140ee9821f706423036ba58d1e6ec13dbc4ebf206732ad40b5236af403"
 	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privkey))
+}
+
+func TestWallet_LoadPrivateKeyFromJsonFileWithKind(t *testing.T) {
+	t.Parallel()
+
+	filename := "testdata/testWithKind.json"
+	password := "password"
+	w := NewWallet()
+	privkey, err := w.LoadPrivateKeyFromJsonFile(filename, password)
+	require.Nil(t, err)
+	expectedHexPrivKey := "413f42575f7f26fad3317a778771212fdb80245850981e48b58a4f25e344e8f9"
+	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privkey))
+
+	address, _ := w.GetAddressFromPrivateKey(privkey)
+	require.Equal(t, "erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th", address.AddressAsBech32String())
 }
 
 func TestWallet_SavePrivateKeyToJsonFile(t *testing.T) {

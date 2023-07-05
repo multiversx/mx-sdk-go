@@ -3,16 +3,17 @@ package blockchain
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
-// Proxy holds the primitive functions that the elrond proxy engine supports & implements
+// Proxy holds the primitive functions that the multiversx proxy engine supports & implements
 type Proxy interface {
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
 	GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error)
-	SendTransaction(ctx context.Context, tx *data.Transaction) (string, error)
-	SendTransactions(ctx context.Context, txs []*data.Transaction) ([]string, error)
+	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
+	SendTransactions(ctx context.Context, txs []*transaction.FrontendTransaction) ([]string, error)
 	ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
 	IsInterfaceNil() bool
 }
@@ -46,6 +47,8 @@ type EndpointProvider interface {
 	GetRawBlockByNonce(shardID uint32, nonce uint64) string
 	GetRawMiniBlockByHash(shardID uint32, hexHash string, epoch uint32) string
 	GetRestAPIEntityType() core.RestAPIEntityType
+	GetValidatorsInfo(epoch uint32) string
+	GetProcessedTransactionStatus(hexHash string) string
 	GetESDTTokenData(addressAsBech32 string, tokenIdentifier string) string
 	GetNFTTokenData(addressAsBech32 string, tokenIdentifier string, nonce uint64) string
 	IsInterfaceNil() bool

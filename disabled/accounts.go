@@ -1,14 +1,30 @@
 package disabled
 
 import (
-	"github.com/ElrondNetwork/elrond-go-core/core"
-	"github.com/ElrondNetwork/elrond-go/common"
-	"github.com/ElrondNetwork/elrond-go/state"
-	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
+	"context"
+
+	"github.com/multiversx/mx-chain-go/common"
+	"github.com/multiversx/mx-chain-go/state"
+	vmcommon "github.com/multiversx/mx-chain-vm-common-go"
 )
 
 // Accounts is a disabled implementation of the AccountAdapter interface
 type Accounts struct {
+}
+
+// SetSyncer returns nil
+func (a *Accounts) SetSyncer(_ state.AccountsDBSyncer) error {
+	return nil
+}
+
+// StartSnapshotIfNeeded returns nil
+func (a *Accounts) StartSnapshotIfNeeded() error {
+	return nil
+}
+
+// RecreateTrieFromEpoch returns nil
+func (a *Accounts) RecreateTrieFromEpoch(_ common.RootHashHolder) error {
+	return nil
 }
 
 // GetStackDebugFirstEntry return nil
@@ -50,9 +66,9 @@ func (a *Accounts) SaveAccount(_ vmcommon.AccountHandler) error {
 	return nil
 }
 
-// GetAllLeaves returns a nil channel and nil error
-func (a *Accounts) GetAllLeaves(_ []byte) (chan core.KeyValueHolder, error) {
-	return nil, nil
+// GetAllLeaves returns nil
+func (a *Accounts) GetAllLeaves(_ *common.TrieIteratorChannels, _ context.Context, _ []byte) error {
+	return nil
 }
 
 // Commit returns nil byte slice and nil
@@ -96,7 +112,7 @@ func (a *Accounts) RecreateTrie(_ []byte) error {
 }
 
 // PruneTrie does nothing
-func (a *Accounts) PruneTrie(_ []byte, _ state.TriePruningIdentifier) {
+func (a *Accounts) PruneTrie(_ []byte, _ state.TriePruningIdentifier, _ state.PruningHandler) {
 }
 
 // CancelPrune does nothing

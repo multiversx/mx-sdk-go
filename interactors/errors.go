@@ -28,3 +28,9 @@ var ErrNilTransaction = errors.New("nil transaction")
 
 // ErrTxAlreadySent signals that a transaction was already sent
 var ErrTxAlreadySent = errors.New("transaction already sent")
+
+// ErrGapNonce signals that a gap nonce between the lowest nonce of the transactions from the cache and the blockchain nonce has been detected
+var ErrGapNonce = errors.New("gap nonce detected")
+
+// ErrNilAddressNonceHandlerCreator signals that a nil AddressNonceHandlerCreator was provided
+var ErrNilAddressNonceHandlerCreator = errors.New("nil AddressNonceHandlerCreator")

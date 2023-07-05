@@ -3,7 +3,7 @@ package aggregator_test
 import (
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/aggregator"
+	"github.com/multiversx/mx-sdk-go/aggregator"
 	"github.com/stretchr/testify/assert"
 )
 

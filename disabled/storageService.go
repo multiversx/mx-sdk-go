@@ -1,8 +1,8 @@
 package disabled
 
 import (
-	"github.com/ElrondNetwork/elrond-go/dataRetriever"
-	"github.com/ElrondNetwork/elrond-go/storage"
+	"github.com/multiversx/mx-chain-go/dataRetriever"
+	"github.com/multiversx/mx-chain-go/storage"
 )
 
 // StorageService is a disabled implementation of the StorageService interface
@@ -15,8 +15,8 @@ func (ss *StorageService) GetAllStorers() map[dataRetriever.UnitType]storage.Sto
 }
 
 // GetStorer returns nil
-func (ss *StorageService) GetStorer(_ dataRetriever.UnitType) storage.Storer {
-	return nil
+func (ss *StorageService) GetStorer(_ dataRetriever.UnitType) (storage.Storer, error) {
+	return nil, nil
 }
 
 // AddStorer does nothing

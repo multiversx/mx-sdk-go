@@ -9,20 +9,22 @@ import (
 	"sort"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-core/core"
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/blockchain/factory"
-	erdgoCore "github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	erdgoHttp "github.com/ElrondNetwork/elrond-sdk-erdgo/core/http"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-go/state"
+	"github.com/multiversx/mx-sdk-go/blockchain/factory"
+	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+	erdgoHttp "github.com/multiversx/mx-sdk-go/core/http"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 const (
 	withResultsQueryParam = "?withResults=true"
 )
 
-// ArgsElrondProxy is the DTO used in the elrond proxy constructor
-type ArgsElrondProxy struct {
+// ArgsProxy is the DTO used in the multiversx proxy constructor
+type ArgsProxy struct {
 	ProxyURL            string
 	Client              erdgoHttp.Client
 	SameScState         bool
@@ -33,9 +35,9 @@ type ArgsElrondProxy struct {
 	EntityType          erdgoCore.RestAPIEntityType
 }
 
-// elrondProxy implements basic functions for interacting with an Elrond Proxy
-type elrondProxy struct {
-	*elrondBaseProxy
+// proxy implements basic functions for interacting with a multiversx Proxy
+type proxy struct {
+	*baseProxy
 	sameScState         bool
 	shouldBeSynced      bool
 	finalityCheck       bool
@@ -43,8 +45,8 @@ type elrondProxy struct {
 	finalityProvider    FinalityProvider
 }
 
-// NewElrondProxy initializes and returns an ElrondProxy object
-func NewElrondProxy(args ArgsElrondProxy) (*elrondProxy, error) {
+// NewProxy initializes and returns a proxy object
+func NewProxy(args ArgsProxy) (*proxy, error) {
 	err := checkArgsProxy(args)
 	if err != nil {
 		return nil, err
@@ -56,23 +58,23 @@ func NewElrondProxy(args ArgsElrondProxy) (*elrondProxy, error) {
 	}
 
 	clientWrapper := erdgoHttp.NewHttpClientWrapper(args.Client, args.ProxyURL)
-	baseArgs := argsElrondBaseProxy{
+	baseArgs := argsBaseProxy{
 		httpClientWrapper: clientWrapper,
 		expirationTime:    args.CacheExpirationTime,
 		endpointProvider:  endpointProvider,
 	}
-	baseProxy, err := newElrondBaseProxy(baseArgs)
+	baseProxyInstance, err := newBaseProxy(baseArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	finalityProvider, err := factory.CreateFinalityProvider(baseProxy, args.FinalityCheck)
+	finalityProvider, err := factory.CreateFinalityProvider(baseProxyInstance, args.FinalityCheck)
 	if err != nil {
 		return nil, err
 	}
 
-	ep := &elrondProxy{
-		elrondBaseProxy:     baseProxy,
+	ep := &proxy{
+		baseProxy:           baseProxyInstance,
 		sameScState:         args.SameScState,
 		shouldBeSynced:      args.ShouldBeSynced,
 		finalityCheck:       args.FinalityCheck,
@@ -83,7 +85,7 @@ func NewElrondProxy(args ArgsElrondProxy) (*elrondProxy, error) {
 	return ep, nil
 }
 
-func checkArgsProxy(args ArgsElrondProxy) error {
+func checkArgsProxy(args ArgsProxy) error {
 	if args.FinalityCheck {
 		if args.AllowedDeltaToFinal < erdgoCore.MinAllowedDeltaToFinal {
 			return fmt.Errorf("%w, provided: %d, minimum: %d",
@@ -95,7 +97,7 @@ func checkArgsProxy(args ArgsElrondProxy) error {
 }
 
 // ExecuteVMQuery retrieves data from existing SC trie through the use of a VM
-func (ep *elrondProxy) ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
+func (ep *proxy) ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error) {
 	err := ep.checkFinalState(ctx, vmRequest.Address)
 	if err != nil {
 		return nil, err
@@ -128,7 +130,7 @@ func (ep *elrondProxy) ExecuteVMQuery(ctx context.Context, vmRequest *data.VmVal
 	return &response.Data, nil
 }
 
-func (ep *elrondProxy) checkFinalState(ctx context.Context, address string) error {
+func (ep *proxy) checkFinalState(ctx context.Context, address string) error {
 	if !ep.finalityCheck {
 		return nil
 	}
@@ -142,7 +144,7 @@ func (ep *elrondProxy) checkFinalState(ctx context.Context, address string) erro
 }
 
 // GetNetworkEconomics retrieves the network economics from the proxy
-func (ep *elrondProxy) GetNetworkEconomics(ctx context.Context) (*data.NetworkEconomics, error) {
+func (ep *proxy) GetNetworkEconomics(ctx context.Context) (*data.NetworkEconomics, error) {
 	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetNetworkEconomics())
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
@@ -161,41 +163,40 @@ func (ep *elrondProxy) GetNetworkEconomics(ctx context.Context) (*data.NetworkEc
 }
 
 // GetDefaultTransactionArguments will prepare the transaction creation argument by querying the account's info
-func (ep *elrondProxy) GetDefaultTransactionArguments(
+func (ep *proxy) GetDefaultTransactionArguments(
 	ctx context.Context,
 	address erdgoCore.AddressHandler,
 	networkConfigs *data.NetworkConfig,
-) (data.ArgCreateTransaction, error) {
+) (transaction.FrontendTransaction, string, error) {
 	if networkConfigs == nil {
-		return data.ArgCreateTransaction{}, ErrNilNetworkConfigs
+		return transaction.FrontendTransaction{}, "", ErrNilNetworkConfigs
 	}
 	if check.IfNil(address) {
-		return data.ArgCreateTransaction{}, ErrNilAddress
+		return transaction.FrontendTransaction{}, "", ErrNilAddress
 	}
 
 	account, err := ep.GetAccount(ctx, address)
 	if err != nil {
-		return data.ArgCreateTransaction{}, err
+		return transaction.FrontendTransaction{}, "", err
 	}
 
-	return data.ArgCreateTransaction{
-		Nonce:            account.Nonce,
-		Value:            "",
-		RcvAddr:          "",
-		SndAddr:          address.AddressAsBech32String(),
-		GasPrice:         networkConfigs.MinGasPrice,
-		GasLimit:         networkConfigs.MinGasLimit,
-		Data:             nil,
-		Signature:        "",
-		ChainID:          networkConfigs.ChainID,
-		Version:          networkConfigs.MinTransactionVersion,
-		Options:          0,
-		AvailableBalance: account.Balance,
-	}, nil
+	return transaction.FrontendTransaction{
+		Nonce:     account.Nonce,
+		Value:     "",
+		Receiver:  "",
+		Sender:    address.AddressAsBech32String(),
+		GasPrice:  networkConfigs.MinGasPrice,
+		GasLimit:  networkConfigs.MinGasLimit,
+		Data:      nil,
+		Signature: "",
+		ChainID:   networkConfigs.ChainID,
+		Version:   networkConfigs.MinTransactionVersion,
+		Options:   0,
+	}, account.Balance, nil
 }
 
 // GetAccount retrieves an account info from the network (nonce, balance)
-func (ep *elrondProxy) GetAccount(ctx context.Context, address erdgoCore.AddressHandler) (*data.Account, error) {
+func (ep *proxy) GetAccount(ctx context.Context, address erdgoCore.AddressHandler) (*data.Account, error) {
 	err := ep.checkFinalState(ctx, address.AddressAsBech32String())
 	if err != nil {
 		return nil, err
@@ -227,13 +228,13 @@ func (ep *elrondProxy) GetAccount(ctx context.Context, address erdgoCore.Address
 }
 
 // SendTransaction broadcasts a transaction to the network and returns the txhash if successful
-func (ep *elrondProxy) SendTransaction(ctx context.Context, tx *data.Transaction) (string, error) {
+func (ep *proxy) SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 	jsonTx, err := json.Marshal(tx)
 	if err != nil {
 		return "", err
 	}
 	buff, code, err := ep.PostHTTP(ctx, ep.endpointProvider.GetSendTransaction(), jsonTx)
-	if err != nil || code != http.StatusOK {
+	if err != nil {
 		return "", createHTTPStatusError(code, err)
 	}
 
@@ -250,7 +251,7 @@ func (ep *elrondProxy) SendTransaction(ctx context.Context, tx *data.Transaction
 }
 
 // SendTransactions broadcasts the provided transactions to the network and returns the txhashes if successful
-func (ep *elrondProxy) SendTransactions(ctx context.Context, txs []*data.Transaction) ([]string, error) {
+func (ep *proxy) SendTransactions(ctx context.Context, txs []*transaction.FrontendTransaction) ([]string, error) {
 	jsonTx, err := json.Marshal(txs)
 	if err != nil {
 		return nil, err
@@ -272,7 +273,7 @@ func (ep *elrondProxy) SendTransactions(ctx context.Context, txs []*data.Transac
 	return ep.postProcessSendMultipleTxsResult(response)
 }
 
-func (ep *elrondProxy) postProcessSendMultipleTxsResult(response *data.SendTransactionsResponse) ([]string, error) {
+func (ep *proxy) postProcessSendMultipleTxsResult(response *data.SendTransactionsResponse) ([]string, error) {
 	txHashes := make([]string, 0, len(response.Data.TxsHashes))
 	indexes := make([]int, 0, len(response.Data.TxsHashes))
 	for index := range response.Data.TxsHashes {
@@ -291,7 +292,7 @@ func (ep *elrondProxy) postProcessSendMultipleTxsResult(response *data.SendTrans
 }
 
 // GetTransactionStatus retrieves a transaction's status from the network
-func (ep *elrondProxy) GetTransactionStatus(ctx context.Context, hash string) (string, error) {
+func (ep *proxy) GetTransactionStatus(ctx context.Context, hash string) (string, error) {
 	endpoint := ep.endpointProvider.GetTransactionStatus(hash)
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
@@ -311,16 +312,16 @@ func (ep *elrondProxy) GetTransactionStatus(ctx context.Context, hash string) (s
 }
 
 // GetTransactionInfo retrieves a transaction's details from the network
-func (ep *elrondProxy) GetTransactionInfo(ctx context.Context, hash string) (*data.TransactionInfo, error) {
+func (ep *proxy) GetTransactionInfo(ctx context.Context, hash string) (*data.TransactionInfo, error) {
 	return ep.getTransactionInfo(ctx, hash, false)
 }
 
 // GetTransactionInfoWithResults retrieves a transaction's details from the network with events
-func (ep *elrondProxy) GetTransactionInfoWithResults(ctx context.Context, hash string) (*data.TransactionInfo, error) {
+func (ep *proxy) GetTransactionInfoWithResults(ctx context.Context, hash string) (*data.TransactionInfo, error) {
 	return ep.getTransactionInfo(ctx, hash, true)
 }
 
-func (ep *elrondProxy) getTransactionInfo(ctx context.Context, hash string, withResults bool) (*data.TransactionInfo, error) {
+func (ep *proxy) getTransactionInfo(ctx context.Context, hash string, withResults bool) (*data.TransactionInfo, error) {
 	endpoint := ep.endpointProvider.GetTransactionInfo(hash)
 	if withResults {
 		endpoint += withResultsQueryParam
@@ -344,7 +345,7 @@ func (ep *elrondProxy) getTransactionInfo(ctx context.Context, hash string, with
 }
 
 // RequestTransactionCost retrieves how many gas a transaction will consume
-func (ep *elrondProxy) RequestTransactionCost(ctx context.Context, tx *data.Transaction) (*data.TxCostResponseData, error) {
+func (ep *proxy) RequestTransactionCost(ctx context.Context, tx *transaction.FrontendTransaction) (*data.TxCostResponseData, error) {
 	jsonTx, err := json.Marshal(tx)
 	if err != nil {
 		return nil, err
@@ -367,7 +368,7 @@ func (ep *elrondProxy) RequestTransactionCost(ctx context.Context, tx *data.Tran
 }
 
 // GetLatestHyperBlockNonce retrieves the latest hyper block (metachain) nonce from the network
-func (ep *elrondProxy) GetLatestHyperBlockNonce(ctx context.Context) (uint64, error) {
+func (ep *proxy) GetLatestHyperBlockNonce(ctx context.Context) (uint64, error) {
 	response, err := ep.GetNetworkStatus(ctx, core.MetachainShardId)
 	if err != nil {
 		return 0, err
@@ -377,20 +378,20 @@ func (ep *elrondProxy) GetLatestHyperBlockNonce(ctx context.Context) (uint64, er
 }
 
 // GetHyperBlockByNonce retrieves a hyper block's info by nonce from the network
-func (ep *elrondProxy) GetHyperBlockByNonce(ctx context.Context, nonce uint64) (*data.HyperBlock, error) {
+func (ep *proxy) GetHyperBlockByNonce(ctx context.Context, nonce uint64) (*data.HyperBlock, error) {
 	endpoint := ep.endpointProvider.GetHyperBlockByNonce(nonce)
 
 	return ep.getHyperBlock(ctx, endpoint)
 }
 
 // GetHyperBlockByHash retrieves a hyper block's info by hash from the network
-func (ep *elrondProxy) GetHyperBlockByHash(ctx context.Context, hash string) (*data.HyperBlock, error) {
+func (ep *proxy) GetHyperBlockByHash(ctx context.Context, hash string) (*data.HyperBlock, error) {
 	endpoint := ep.endpointProvider.GetHyperBlockByHash(hash)
 
 	return ep.getHyperBlock(ctx, endpoint)
 }
 
-func (ep *elrondProxy) getHyperBlock(ctx context.Context, endpoint string) (*data.HyperBlock, error) {
+func (ep *proxy) getHyperBlock(ctx context.Context, endpoint string) (*data.HyperBlock, error) {
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
@@ -409,27 +410,27 @@ func (ep *elrondProxy) getHyperBlock(ctx context.Context, endpoint string) (*dat
 }
 
 // GetRawBlockByHash retrieves a raw block by hash from the network
-func (ep *elrondProxy) GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error) {
+func (ep *proxy) GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error) {
 	endpoint := ep.endpointProvider.GetRawBlockByHash(shardId, hash)
 
 	return ep.getRawBlock(ctx, endpoint)
 }
 
 // GetRawBlockByNonce retrieves a raw block by hash from the network
-func (ep *elrondProxy) GetRawBlockByNonce(ctx context.Context, shardId uint32, nonce uint64) ([]byte, error) {
+func (ep *proxy) GetRawBlockByNonce(ctx context.Context, shardId uint32, nonce uint64) ([]byte, error) {
 	endpoint := ep.endpointProvider.GetRawBlockByNonce(shardId, nonce)
 
 	return ep.getRawBlock(ctx, endpoint)
 }
 
 // GetRawStartOfEpochMetaBlock retrieves a raw block by hash from the network
-func (ep *elrondProxy) GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error) {
+func (ep *proxy) GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error) {
 	endpoint := ep.endpointProvider.GetRawStartOfEpochMetaBlock(epoch)
 
 	return ep.getRawBlock(ctx, endpoint)
 }
 
-func (ep *elrondProxy) getRawBlock(ctx context.Context, endpoint string) ([]byte, error) {
+func (ep *proxy) getRawBlock(ctx context.Context, endpoint string) ([]byte, error) {
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
@@ -448,13 +449,13 @@ func (ep *elrondProxy) getRawBlock(ctx context.Context, endpoint string) ([]byte
 }
 
 // GetRawMiniBlockByHash retrieves a raw block by hash from the network
-func (ep *elrondProxy) GetRawMiniBlockByHash(ctx context.Context, shardId uint32, hash string, epoch uint32) ([]byte, error) {
+func (ep *proxy) GetRawMiniBlockByHash(ctx context.Context, shardId uint32, hash string, epoch uint32) ([]byte, error) {
 	endpoint := ep.endpointProvider.GetRawMiniBlockByHash(shardId, hash, epoch)
 
 	return ep.getRawMiniBlock(ctx, endpoint)
 }
 
-func (ep *elrondProxy) getRawMiniBlock(ctx context.Context, endpoint string) ([]byte, error) {
+func (ep *proxy) getRawMiniBlock(ctx context.Context, endpoint string) ([]byte, error) {
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
@@ -473,7 +474,7 @@ func (ep *elrondProxy) getRawMiniBlock(ctx context.Context, endpoint string) ([]
 }
 
 // GetNonceAtEpochStart retrieves the start of epoch nonce from hyper block (metachain)
-func (ep *elrondProxy) GetNonceAtEpochStart(ctx context.Context, shardId uint32) (uint64, error) {
+func (ep *proxy) GetNonceAtEpochStart(ctx context.Context, shardId uint32) (uint64, error) {
 	response, err := ep.GetNetworkStatus(ctx, shardId)
 	if err != nil {
 		return 0, err
@@ -483,7 +484,7 @@ func (ep *elrondProxy) GetNonceAtEpochStart(ctx context.Context, shardId uint32)
 }
 
 // GetRatingsConfig retrieves the ratings configuration from the proxy
-func (ep *elrondProxy) GetRatingsConfig(ctx context.Context) (*data.RatingsConfig, error) {
+func (ep *proxy) GetRatingsConfig(ctx context.Context) (*data.RatingsConfig, error) {
 	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetRatingsConfig())
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
@@ -502,7 +503,7 @@ func (ep *elrondProxy) GetRatingsConfig(ctx context.Context) (*data.RatingsConfi
 }
 
 // GetEnableEpochsConfig retrieves the ratings configuration from the proxy
-func (ep *elrondProxy) GetEnableEpochsConfig(ctx context.Context) (*data.EnableEpochsConfig, error) {
+func (ep *proxy) GetEnableEpochsConfig(ctx context.Context) (*data.EnableEpochsConfig, error) {
 	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetEnableEpochsConfig())
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
@@ -521,7 +522,7 @@ func (ep *elrondProxy) GetEnableEpochsConfig(ctx context.Context) (*data.EnableE
 }
 
 // GetGenesisNodesPubKeys retrieves genesis nodes configuration from proxy
-func (ep *elrondProxy) GetGenesisNodesPubKeys(ctx context.Context) (*data.GenesisNodes, error) {
+func (ep *proxy) GetGenesisNodesPubKeys(ctx context.Context) (*data.GenesisNodes, error) {
 	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetGenesisNodesConfig())
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
@@ -537,6 +538,25 @@ func (ep *elrondProxy) GetGenesisNodesPubKeys(ctx context.Context) (*data.Genesi
 	}
 
 	return response.Data.Nodes, nil
+}
+
+// GetValidatorsInfoByEpoch retrieves the validators info by epoch
+func (ep *proxy) GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error) {
+	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetValidatorsInfo(epoch))
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	response := &data.ValidatorsInfoResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.ValidatorsInfo, nil
 }
 
 // GetESDTTokenData returns the address' fungible token data
@@ -592,6 +612,6 @@ func (ep *elrondProxy) GetNFTTokenData(ctx context.Context, address erdgoCore.Ad
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (ep *elrondProxy) IsInterfaceNil() bool {
+func (ep *proxy) IsInterfaceNil() bool {
 	return ep == nil
 }

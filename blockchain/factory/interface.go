@@ -3,8 +3,8 @@ package factory
 import (
 	"context"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 type proxy interface {
@@ -36,6 +36,8 @@ type EndpointProvider interface {
 	GetRawBlockByNonce(shardID uint32, nonce uint64) string
 	GetRawMiniBlockByHash(shardID uint32, hexHash string, epoch uint32) string
 	GetRestAPIEntityType() core.RestAPIEntityType
+	GetValidatorsInfo(epoch uint32) string
+	GetProcessedTransactionStatus(hexHash string) string
 	GetESDTTokenData(addressAsBech32 string, tokenIdentifier string) string
 	GetNFTTokenData(addressAsBech32 string, tokenIdentifier string, nonce uint64) string
 	IsInterfaceNil() bool

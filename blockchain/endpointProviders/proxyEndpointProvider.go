@@ -3,7 +3,7 @@ package endpointProviders
 import (
 	"fmt"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
+	"github.com/multiversx/mx-sdk-go/core"
 )
 
 const (
@@ -13,7 +13,7 @@ const (
 	proxyRawMiniBlockByHash = "internal/%d/raw/miniblock/by-hash/%s/epoch/%d"
 )
 
-// proxyEndpointProvider is suitable to work with an Elrond Proxy
+// proxyEndpointProvider is suitable to work with a MultiversX Proxy
 type proxyEndpointProvider struct {
 	*baseEndpointProvider
 }

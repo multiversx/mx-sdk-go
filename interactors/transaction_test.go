@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/builders"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-sdk-go/builders"
+	"github.com/multiversx/mx-sdk-go/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 	t.Parallel()
 
 	proxy := &testsCommon.ProxyStub{
-		SendTransactionsCalled: func(tx []*data.Transaction) ([]string, error) {
+		SendTransactionsCalled: func(tx []*transaction.FrontendTransaction) ([]string, error) {
 			var msgs []string
 			for i := 0; i < len(tx); i++ {
 				msgs = append(msgs, "SUCCESS")
@@ -26,16 +26,22 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 		},
 	}
 
-	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
+	holder := &testsCommon.CryptoComponentsHolderStub{
+		GetBech32Called: func() string {
+			return "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq"
+		},
+	}
+
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.SignerStub{})
 
 	ti, err := NewTransactionInteractor(proxy, txBuilder)
 	assert.Nil(t, err, "Error on transaction interactor constructor")
 
 	value := big.NewInt(999)
-	args := data.ArgCreateTransaction{
+	tx := &transaction.FrontendTransaction{
 		Value:     value.String(),
-		RcvAddr:   "erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
-		SndAddr:   "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
+		Receiver:  "erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
+		Sender:    holder.GetBech32(),
 		GasPrice:  10,
 		GasLimit:  100000,
 		Data:      []byte(""),
@@ -43,7 +49,8 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 		ChainID:   "integration test chain id",
 		Version:   uint32(1),
 	}
-	tx, err := ti.ApplySignatureAndGenerateTx(make([]byte, 0), args)
+
+	err = ti.ApplySignature(holder, tx)
 	require.Nil(t, err)
 	ti.AddTransaction(tx)
 
@@ -56,7 +63,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 	t.Parallel()
 
 	proxy := &testsCommon.ProxyStub{
-		SendTransactionsCalled: func(tx []*data.Transaction) ([]string, error) {
+		SendTransactionsCalled: func(tx []*transaction.FrontendTransaction) ([]string, error) {
 			var msgs []string
 			for i := 0; i < len(tx); i++ {
 				msgs = append(msgs, "SUCCESS")
@@ -65,7 +72,13 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 		},
 	}
 
-	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
+	holder := &testsCommon.CryptoComponentsHolderStub{
+		GetBech32Called: func() string {
+			return "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq"
+		},
+	}
+
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.SignerStub{})
 
 	ti, err := NewTransactionInteractor(proxy, txBuilder)
 	assert.Nil(t, err, "Error on transaction interactor constructor")
@@ -74,11 +87,11 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 	nonce := uint64(0)
 	ti.SetTimeBetweenBunches(time.Millisecond)
 	for nonce < 10000 {
-		args := data.ArgCreateTransaction{
+		tx := &transaction.FrontendTransaction{
 			Nonce:     nonce,
 			Value:     value.String(),
-			RcvAddr:   "erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
-			SndAddr:   "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
+			Receiver:  "erd12dnfhej64s6c56ka369gkyj3hwv5ms0y5rxgsk2k7hkd2vuk7rvqxkalsa",
+			Sender:    "erd1l20m7kzfht5rhdnd4zvqr82egk7m4nvv3zk06yw82zqmrt9kf0zsf9esqq",
 			GasPrice:  10,
 			GasLimit:  100000,
 			Data:      []byte(""),
@@ -86,7 +99,8 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 			ChainID:   "integration test chain id",
 			Version:   uint32(1),
 		}
-		tx, errGenerate := ti.ApplySignatureAndGenerateTx(make([]byte, 0), args)
+
+		errGenerate := ti.ApplySignature(holder, tx)
 		require.Nil(t, errGenerate)
 		ti.AddTransaction(tx)
 		nonce++
@@ -102,17 +116,17 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 
 	sendCalled := 0
 	proxy := &testsCommon.ProxyStub{
-		SendTransactionsCalled: func(txs []*data.Transaction) ([]string, error) {
+		SendTransactionsCalled: func(txs []*transaction.FrontendTransaction) ([]string, error) {
 			sendCalled++
 
 			return make([]string, len(txs)), nil
 		},
 	}
-	txBuilder, _ := builders.NewTxBuilder(&testsCommon.TxSignerStub{})
+	txBuilder, _ := builders.NewTxBuilder(&testsCommon.SignerStub{})
 	ti, _ := NewTransactionInteractor(proxy, txBuilder)
 	ti.SetTimeBetweenBunches(time.Millisecond)
 
-	ti.AddTransaction(&data.Transaction{})
+	ti.AddTransaction(&transaction.FrontendTransaction{})
 	hashes, err := ti.SendTransactionsAsBunch(context.Background(), 0)
 	assert.Nil(t, hashes)
 	assert.Equal(t, ErrInvalidValue, err)
@@ -129,7 +143,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 	assert.Nil(t, err)
 
 	sendCalled = 0
-	ti.AddTransaction(&data.Transaction{})
+	ti.AddTransaction(&transaction.FrontendTransaction{})
 	hashes, err = ti.SendTransactionsAsBunch(context.Background(), 2)
 	assert.Equal(t, 1, len(hashes))
 	assert.Equal(t, 1, sendCalled)
@@ -138,7 +152,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 	sendCalled = 0
 	numTxs := 2
 	for i := 0; i < numTxs; i++ {
-		ti.AddTransaction(&data.Transaction{})
+		ti.AddTransaction(&transaction.FrontendTransaction{})
 	}
 	hashes, err = ti.SendTransactionsAsBunch(context.Background(), 2)
 	assert.Equal(t, numTxs, len(hashes))
@@ -148,7 +162,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch(t *testing.T) {
 	sendCalled = 0
 	numTxs = 101
 	for i := 0; i < numTxs; i++ {
-		ti.AddTransaction(&data.Transaction{})
+		ti.AddTransaction(&transaction.FrontendTransaction{})
 	}
 	hashes, err = ti.SendTransactionsAsBunch(context.Background(), 2)
 	assert.Equal(t, numTxs, len(hashes))

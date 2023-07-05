@@ -6,11 +6,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-core/data/block"
-	"github.com/ElrondNetwork/elrond-go/state"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/headerCheck"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/testsCommon"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-go/state"
+	"github.com/multiversx/mx-sdk-go/headerCheck"
+	"github.com/multiversx/mx-sdk-go/testsCommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -176,9 +176,10 @@ func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 
 	expectedRandomness := []byte("prev rand seed")
 
+	expEpoch := uint32(1)
 	metaBlock := &block.MetaBlock{
 		Nonce:            1,
-		Epoch:            1,
+		Epoch:            expEpoch,
 		PrevRandSeed:     expectedRandomness,
 		MiniBlockHeaders: miniBlockHeaders,
 	}
@@ -188,24 +189,16 @@ func TestGetValidatorsInfoPerEpoch_ShouldWork(t *testing.T) {
 		PublicKey: []byte("public key 1"),
 		ShardId:   0,
 	}
-	vidBytes, _ := json.Marshal(vid)
 
 	expectedValidatorsInfo := []*state.ShardValidatorInfo{vid}
 
-	miniBlock := &block.MiniBlock{
-		TxHashes:        [][]byte{vidBytes},
-		ReceiverShardID: 0,
-		SenderShardID:   0,
-		Type:            block.PeerBlock,
-	}
-	miniBlockBytes, _ := json.Marshal(miniBlock)
-
 	proxy := &testsCommon.ProxyStub{
-		GetRawMiniBlockByHashCalled: func(shardId uint32, hash string, epoch uint32) ([]byte, error) {
-			return miniBlockBytes, nil
-		},
 		GetRawStartOfEpochMetaBlockCalled: func(epoch uint32) ([]byte, error) {
 			return metaBlockBytes, nil
+		},
+		GetValidatorsInfoByEpochCalled: func(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error) {
+			assert.Equal(t, expEpoch, epoch)
+			return expectedValidatorsInfo, nil
 		},
 	}
 

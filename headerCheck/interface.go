@@ -3,9 +3,9 @@ package headerCheck
 import (
 	"context"
 
-	coreData "github.com/ElrondNetwork/elrond-go-core/data"
-	"github.com/ElrondNetwork/elrond-go/state"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	coreData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-go/state"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // Proxy holds the behaviour needed for header verifier in order to interact with proxy
@@ -19,6 +19,7 @@ type Proxy interface {
 	GetRawBlockByHash(ctx context.Context, shardId uint32, hash string) ([]byte, error)
 	GetRawStartOfEpochMetaBlock(ctx context.Context, epoch uint32) ([]byte, error)
 	GetGenesisNodesPubKeys(ctx context.Context) (*data.GenesisNodes, error)
+	GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
 	IsInterfaceNil() bool
 }
 
@@ -32,7 +33,7 @@ type RawHeaderHandler interface {
 
 // HeaderVerifier defines the functions needed for verifying headers
 type HeaderVerifier interface {
-	VerifyHeaderByHash(ctx context.Context, shardId uint32, hash string) (bool, error)
+	VerifyHeaderSignatureByHash(ctx context.Context, shardId uint32, hash string) (bool, error)
 	IsInterfaceNil() bool
 }
 

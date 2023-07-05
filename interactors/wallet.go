@@ -16,10 +16,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/ElrondNetwork/elrond-go-crypto/signing"
-	"github.com/ElrondNetwork/elrond-go-crypto/signing/ed25519"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-chain-crypto-go/signing"
+	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/pborman/uuid"
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/crypto/scrypt"
@@ -36,6 +36,7 @@ const (
 	scryptP         = 1
 	scryptDKLen     = 32
 	addressLen      = 32
+	mnemonicKind    = "mnemonic"
 )
 
 type bip32Path []uint32
@@ -51,6 +52,7 @@ var keyGenerator = signing.NewKeyGenerator(suite)
 type encryptedKeyJSONV4 struct {
 	Address string `json:"address"`
 	Bech32  string `json:"bech32"`
+	Kind    string `json:"kind"`
 	Crypto  struct {
 		Cipher       string `json:"cipher"`
 		CipherText   string `json:"ciphertext"`
@@ -96,6 +98,13 @@ func (w *wallet) GenerateMnemonic() (data.Mnemonic, error) {
 
 // GetPrivateKeyFromMnemonic generates a private key based on mnemonic, account and address index
 func (w *wallet) GetPrivateKeyFromMnemonic(mnemonic data.Mnemonic, account, addressIndex uint32) []byte {
+	seed := w.CreateSeedFromMnemonic(mnemonic)
+	privateKey := w.GetPrivateKeyFromSeed(seed, account, addressIndex)
+	return privateKey
+}
+
+// GetPrivateKeyFromSeed generates a private key based on seed, account and address index
+func (w *wallet) GetPrivateKeyFromSeed(seed []byte, account, addressIndex uint32) []byte {
 	var egldPath = bip32Path{
 		44 | hardened,
 		egldCoinType | hardened,
@@ -104,12 +113,17 @@ func (w *wallet) GetPrivateKeyFromMnemonic(mnemonic data.Mnemonic, account, addr
 		hardened, // addressIndex
 	}
 
-	seed := bip39.NewSeed(string(mnemonic), "")
 	egldPath[2] = account | hardened
 	egldPath[4] = addressIndex | hardened
 	keyData := derivePrivateKey(seed, egldPath)
 
 	return keyData.Key
+}
+
+// CreateSeedFromMnemonic creates a seed for a given mnemonic
+func (w *wallet) CreateSeedFromMnemonic(mnemonic data.Mnemonic) []byte {
+	seed := bip39.NewSeed(string(mnemonic), "")
+	return seed
 }
 
 func derivePrivateKey(seed []byte, path bip32Path) *bip32 {
@@ -211,16 +225,23 @@ func (w *wallet) LoadPrivateKeyFromJsonFile(filename string, password string) ([
 	}
 
 	stream := cipher.NewCTR(aesBlock, iv)
-	privateKey := make([]byte, len(cipherText))
-	stream.XORKeyStream(privateKey, cipherText)
+	decryptedData := make([]byte, len(cipherText))
+	stream.XORKeyStream(decryptedData, cipherText)
 
-	if len(privateKey) > 32 {
-		privateKey = privateKey[:32]
+	if key.Kind != mnemonicKind { // wallets with the old JSON format
+		return w.secretKeyAfterChecks(key, decryptedData)
+	} else {
+		return w.secretKeyFromMnemonic(decryptedData), nil
 	}
+}
 
-	address, err := w.GetAddressFromPrivateKey(privateKey)
-	if err != nil {
-		return nil, err
+func (w *wallet) secretKeyAfterChecks(key *encryptedKeyJSONV4, secretKey []byte) ([]byte, error) {
+	if len(secretKey) > 32 {
+		secretKey = secretKey[:32]
+	}
+	address, errGetAddr := w.GetAddressFromPrivateKey(secretKey)
+	if errGetAddr != nil {
+		return nil, errGetAddr
 	}
 
 	isSameAccount := hex.EncodeToString(address.AddressBytes()) == key.Address &&
@@ -228,7 +249,12 @@ func (w *wallet) LoadPrivateKeyFromJsonFile(filename string, password string) ([
 	if !isSameAccount {
 		return nil, ErrDifferentAccountRecovered
 	}
-	return privateKey, nil
+
+	return secretKey, nil
+}
+
+func (w *wallet) secretKeyFromMnemonic(mnemonic []byte) []byte {
+	return w.GetPrivateKeyFromMnemonic(data.Mnemonic(mnemonic), 0, 0)
 }
 
 // SavePrivateKeyToJsonFile saves a password encrypted private key to a .json file

@@ -3,8 +3,10 @@ package builders
 import (
 	"math/big"
 
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/core"
-	"github.com/ElrondNetwork/elrond-sdk-erdgo/data"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	crypto "github.com/multiversx/mx-chain-crypto-go"
+	"github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 // TxDataBuilder defines the behavior of a transaction data builder
@@ -16,6 +18,7 @@ type TxDataBuilder interface {
 	ArgBigInt(value *big.Int) TxDataBuilder
 	ArgInt64(value int64) TxDataBuilder
 	ArgBytes(bytes []byte) TxDataBuilder
+	ArgBytesList(list [][]byte) TxDataBuilder
 
 	ToDataString() (string, error)
 	ToDataBytes() ([]byte, error)
@@ -40,9 +43,11 @@ type VMQueryBuilder interface {
 	IsInterfaceNil() bool
 }
 
-// TxSigner defines the method used by a struct used to create valid signatures
-type TxSigner interface {
-	SignMessage(msg []byte, skBytes []byte) ([]byte, error)
-	GeneratePkBytes(skBytes []byte) ([]byte, error)
+// Signer defines the method used by a struct used to create valid signatures
+type Signer interface {
+	SignMessage(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
+	VerifyMessage(msg []byte, publicKey crypto.PublicKey, sig []byte) error
+	SignTransaction(tx *transaction.FrontendTransaction, privateKey crypto.PrivateKey) ([]byte, error)
+	SignByteSlice(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
 	IsInterfaceNil() bool
 }
