@@ -15,6 +15,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/api"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/config"
 	"github.com/multiversx/mx-chain-go/state"
@@ -30,6 +31,25 @@ const testHttpURL = "https://test.org"
 const networkConfigEndpoint = "network/config"
 const getNetworkStatusEndpoint = "network/status/%d"
 const getNodeStatusEndpoint = "node/status"
+
+// not a real-world valid test query option but rather a test one to check all fields are properly set
+var testQueryOptions = api.AccountQueryOptions{
+	OnFinalBlock: true,
+	OnStartOfEpoch: core.OptionalUint32{
+		Value:    3737,
+		HasValue: true,
+	},
+	BlockNonce: core.OptionalUint64{
+		Value:    3838,
+		HasValue: true,
+	},
+	BlockHash:     []byte("block hash"),
+	BlockRootHash: []byte("block root hash"),
+	HintEpoch: core.OptionalUint32{
+		Value:    3939,
+		HasValue: true,
+	},
+}
 
 type testStruct struct {
 	Nonce int
@@ -670,6 +690,7 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 	token := "TKN-001122"
 	expectedErr := errors.New("expected error")
 	validAddress := data.NewAddressFromBytes(bytes.Repeat([]byte("1"), 32))
+	emptyQueryOptions := api.AccountQueryOptions{}
 	t.Run("nil address, should error", func(t *testing.T) {
 		t.Parallel()
 
@@ -677,7 +698,7 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetESDTTokenData(context.Background(), nil, token)
+		tokenData, err := ep.GetESDTTokenData(context.Background(), nil, token, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.Equal(t, ErrNilAddress, err)
 	})
@@ -689,7 +710,7 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		ep, _ := NewProxy(args)
 
 		address := data.NewAddressFromBytes([]byte("invalid"))
-		tokenData, err := ep.GetESDTTokenData(context.Background(), address, token)
+		tokenData, err := ep.GetESDTTokenData(context.Background(), address, token, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.Equal(t, ErrInvalidAddress, err)
 	})
@@ -700,7 +721,7 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.ErrorIs(t, err, expectedErr)
 	})
@@ -711,7 +732,7 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.ErrorIs(t, err, ErrHTTPStatusCodeIsNotOK)
 	})
@@ -722,7 +743,7 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.NotNil(t, err)
 	})
@@ -738,7 +759,7 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.NotNil(t, err)
 		assert.Equal(t, expectedErr.Error(), err.Error())
@@ -764,7 +785,44 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, emptyQueryOptions)
+		assert.NotNil(t, tokenData)
+		assert.Nil(t, err)
+		assert.Equal(t, responseTokenData, tokenData)
+		assert.False(t, responseTokenData == tokenData) // pointer testing
+	})
+	t.Run("should work with query options", func(t *testing.T) {
+		t.Parallel()
+
+		responseTokenData := &data.ESDTFungibleTokenData{
+			TokenIdentifier: "identifier",
+			Balance:         "balance",
+			Properties:      "properties",
+		}
+		response := &data.ESDTFungibleResponse{
+			Data: struct {
+				TokenData *data.ESDTFungibleTokenData `json:"tokenData"`
+			}{
+				TokenData: responseTokenData,
+			},
+		}
+		responseBytes, _ := json.Marshal(response)
+		expectedSuffix := "?blockHash=626c6f636b2068617368&blockNonce=3838&blockRootHash=626c6f636b20726f6f742068617368&hintEpoch=3939&onFinalBlock=true&onStartOfEpoch=3737"
+
+		httpClient := &mockHTTPClient{
+			doCalled: func(req *http.Request) (*http.Response, error) {
+				assert.True(t, strings.HasSuffix(req.URL.String(), expectedSuffix))
+
+				return &http.Response{
+					Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+					StatusCode: http.StatusOK,
+				}, nil
+			},
+		}
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, testQueryOptions)
 		assert.NotNil(t, tokenData)
 		assert.Nil(t, err)
 		assert.Equal(t, responseTokenData, tokenData)
@@ -779,6 +837,7 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 	nonce := uint64(37)
 	expectedErr := errors.New("expected error")
 	validAddress := data.NewAddressFromBytes(bytes.Repeat([]byte("1"), 32))
+	emptyQueryOptions := api.AccountQueryOptions{}
 	t.Run("nil address, should error", func(t *testing.T) {
 		t.Parallel()
 
@@ -786,7 +845,7 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetNFTTokenData(context.Background(), nil, token, nonce)
+		tokenData, err := ep.GetNFTTokenData(context.Background(), nil, token, nonce, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.Equal(t, ErrNilAddress, err)
 	})
@@ -798,7 +857,7 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		ep, _ := NewProxy(args)
 
 		address := data.NewAddressFromBytes([]byte("invalid"))
-		tokenData, err := ep.GetNFTTokenData(context.Background(), address, token, nonce)
+		tokenData, err := ep.GetNFTTokenData(context.Background(), address, token, nonce, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.Equal(t, ErrInvalidAddress, err)
 	})
@@ -809,7 +868,7 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.ErrorIs(t, err, expectedErr)
 	})
@@ -820,7 +879,7 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.ErrorIs(t, err, ErrHTTPStatusCodeIsNotOK)
 	})
@@ -831,7 +890,7 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.NotNil(t, err)
 	})
@@ -847,7 +906,7 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, emptyQueryOptions)
 		assert.Nil(t, tokenData)
 		assert.NotNil(t, err)
 		assert.Equal(t, expectedErr.Error(), err.Error())
@@ -880,7 +939,51 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 		args := createMockArgsProxy(httpClient)
 		ep, _ := NewProxy(args)
 
-		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, emptyQueryOptions)
+		assert.NotNil(t, tokenData)
+		assert.Nil(t, err)
+		assert.Equal(t, responseTokenData, tokenData)
+		assert.False(t, responseTokenData == tokenData) // pointer testing
+	})
+	t.Run("should work with query options", func(t *testing.T) {
+		t.Parallel()
+
+		responseTokenData := &data.ESDTNFTTokenData{
+			TokenIdentifier: "identifier",
+			Balance:         "balance",
+			Properties:      "properties",
+			Name:            "name",
+			Nonce:           nonce,
+			Creator:         "creator",
+			Royalties:       "royalties",
+			Hash:            []byte("hash"),
+			URIs:            [][]byte{[]byte("uri1"), []byte("uri2")},
+			Attributes:      []byte("attributes"),
+		}
+		response := &data.ESDTNFTResponse{
+			Data: struct {
+				TokenData *data.ESDTNFTTokenData `json:"tokenData"`
+			}{
+				TokenData: responseTokenData,
+			},
+		}
+		responseBytes, _ := json.Marshal(response)
+		expectedSuffix := "?blockHash=626c6f636b2068617368&blockNonce=3838&blockRootHash=626c6f636b20726f6f742068617368&hintEpoch=3939&onFinalBlock=true&onStartOfEpoch=3737"
+
+		httpClient := &mockHTTPClient{
+			doCalled: func(req *http.Request) (*http.Response, error) {
+				assert.True(t, strings.HasSuffix(req.URL.String(), expectedSuffix))
+
+				return &http.Response{
+					Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+					StatusCode: http.StatusOK,
+				}, nil
+			},
+		}
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, testQueryOptions)
 		assert.NotNil(t, tokenData)
 		assert.Nil(t, err)
 		assert.Equal(t, responseTokenData, tokenData)

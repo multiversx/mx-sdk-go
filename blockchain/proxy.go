@@ -11,6 +11,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/api"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/state"
 	"github.com/multiversx/mx-sdk-go/blockchain/factory"
@@ -560,7 +561,12 @@ func (ep *proxy) GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]
 }
 
 // GetESDTTokenData returns the address' fungible token data
-func (ep *proxy) GetESDTTokenData(ctx context.Context, address erdgoCore.AddressHandler, tokenIdentifier string) (*data.ESDTFungibleTokenData, error) {
+func (ep *proxy) GetESDTTokenData(
+	ctx context.Context,
+	address erdgoCore.AddressHandler,
+	tokenIdentifier string,
+	queryOptions api.AccountQueryOptions, // TODO: provide AccountQueryOptions on all accounts-related getters
+) (*data.ESDTFungibleTokenData, error) {
 	if check.IfNil(address) {
 		return nil, ErrNilAddress
 	}
@@ -568,7 +574,9 @@ func (ep *proxy) GetESDTTokenData(ctx context.Context, address erdgoCore.Address
 		return nil, ErrInvalidAddress
 	}
 
-	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetESDTTokenData(address.AddressAsBech32String(), tokenIdentifier))
+	endpoint := ep.endpointProvider.GetESDTTokenData(address.AddressAsBech32String(), tokenIdentifier)
+	endpoint = erdgoCore.BuildUrlWithAccountQueryOptions(endpoint, queryOptions)
+	buff, code, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
 	}
@@ -586,7 +594,13 @@ func (ep *proxy) GetESDTTokenData(ctx context.Context, address erdgoCore.Address
 }
 
 // GetNFTTokenData returns the address' NFT/SFT/MetaESDT token data
-func (ep *proxy) GetNFTTokenData(ctx context.Context, address erdgoCore.AddressHandler, tokenIdentifier string, nonce uint64) (*data.ESDTNFTTokenData, error) {
+func (ep *proxy) GetNFTTokenData(
+	ctx context.Context,
+	address erdgoCore.AddressHandler,
+	tokenIdentifier string,
+	nonce uint64,
+	queryOptions api.AccountQueryOptions, // TODO: provide AccountQueryOptions on all accounts-related getters
+) (*data.ESDTNFTTokenData, error) {
 	if check.IfNil(address) {
 		return nil, ErrNilAddress
 	}
@@ -594,7 +608,9 @@ func (ep *proxy) GetNFTTokenData(ctx context.Context, address erdgoCore.AddressH
 		return nil, ErrInvalidAddress
 	}
 
-	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetNFTTokenData(address.AddressAsBech32String(), tokenIdentifier, nonce))
+	endpoint := ep.endpointProvider.GetNFTTokenData(address.AddressAsBech32String(), tokenIdentifier, nonce)
+	endpoint = erdgoCore.BuildUrlWithAccountQueryOptions(endpoint, queryOptions)
+	buff, code, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)
 	}
