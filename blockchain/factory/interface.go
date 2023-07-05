@@ -36,6 +36,8 @@ type EndpointProvider interface {
 	GetRawBlockByNonce(shardID uint32, nonce uint64) string
 	GetRawMiniBlockByHash(shardID uint32, hexHash string, epoch uint32) string
 	GetRestAPIEntityType() core.RestAPIEntityType
+	GetESDTTokenData(addressAsBech32 string, tokenIdentifier string) string
+	GetNFTTokenData(addressAsBech32 string, tokenIdentifier string, nonce uint64) string
 	IsInterfaceNil() bool
 }
 

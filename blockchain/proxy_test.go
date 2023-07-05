@@ -56,6 +56,25 @@ func createMockClientRespondingBytes(responseBytes []byte) *mockHTTPClient {
 	}
 }
 
+func createMockClientRespondingBytesWithStatus(responseBytes []byte, status int) *mockHTTPClient {
+	return &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+				StatusCode: status,
+			}, nil
+		},
+	}
+}
+
+func createMockClientRespondingError(err error) *mockHTTPClient {
+	return &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return nil, err
+		},
+	}
+}
+
 func createMockArgsElrondProxy(httpClient erdgoHttp.Client) ArgsElrondProxy {
 	return ArgsElrondProxy{
 		ProxyURL:            testHttpURL,
@@ -608,4 +627,228 @@ func TestElrondProxy_GetGenesisNodesPubKeys(t *testing.T) {
 	require.Nil(t, err)
 
 	require.Equal(t, expectedGenesisNodes, response)
+}
+
+func TestElrondProxy_GetESDTTokenData(t *testing.T) {
+	t.Parallel()
+
+	token := "TKN-001122"
+	expectedErr := errors.New("expected error")
+	validAddress := data.NewAddressFromBytes(bytes.Repeat([]byte("1"), 32))
+	t.Run("nil address, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes(make([]byte, 0))
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), nil, token)
+		assert.Nil(t, tokenData)
+		assert.Equal(t, ErrNilAddress, err)
+	})
+	t.Run("invalid address, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes(make([]byte, 0))
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		address := data.NewAddressFromBytes([]byte("invalid"))
+		tokenData, err := ep.GetESDTTokenData(context.Background(), address, token)
+		assert.Nil(t, tokenData)
+		assert.Equal(t, ErrInvalidAddress, err)
+	})
+	t.Run("http client errors, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingError(expectedErr)
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
+		assert.Nil(t, tokenData)
+		assert.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("invalid status, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytesWithStatus(make([]byte, 0), http.StatusNotFound)
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
+		assert.Nil(t, tokenData)
+		assert.ErrorIs(t, err, ErrHTTPStatusCodeIsNotOK)
+	})
+	t.Run("invalid response bytes, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes([]byte("invalid json"))
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
+		assert.Nil(t, tokenData)
+		assert.NotNil(t, err)
+	})
+	t.Run("response returned error, should error", func(t *testing.T) {
+		t.Parallel()
+
+		response := &data.ESDTFungibleResponse{
+			Error: expectedErr.Error(),
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
+		assert.Nil(t, tokenData)
+		assert.NotNil(t, err)
+		assert.Equal(t, expectedErr.Error(), err.Error())
+	})
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		responseTokenData := &data.ESDTFungibleTokenData{
+			TokenIdentifier: "identifier",
+			Balance:         "balance",
+			Properties:      "properties",
+		}
+		response := &data.ESDTFungibleResponse{
+			Data: struct {
+				TokenData *data.ESDTFungibleTokenData `json:"tokenData"`
+			}{
+				TokenData: responseTokenData,
+			},
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token)
+		assert.NotNil(t, tokenData)
+		assert.Nil(t, err)
+		assert.Equal(t, responseTokenData, tokenData)
+		assert.False(t, responseTokenData == tokenData) // pointer testing
+	})
+}
+
+func TestElrondProxy_GetNFTTokenData(t *testing.T) {
+	t.Parallel()
+
+	token := "TKN-001122"
+	nonce := uint64(37)
+	expectedErr := errors.New("expected error")
+	validAddress := data.NewAddressFromBytes(bytes.Repeat([]byte("1"), 32))
+	t.Run("nil address, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes(make([]byte, 0))
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), nil, token, nonce)
+		assert.Nil(t, tokenData)
+		assert.Equal(t, ErrNilAddress, err)
+	})
+	t.Run("invalid address, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes(make([]byte, 0))
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		address := data.NewAddressFromBytes([]byte("invalid"))
+		tokenData, err := ep.GetNFTTokenData(context.Background(), address, token, nonce)
+		assert.Nil(t, tokenData)
+		assert.Equal(t, ErrInvalidAddress, err)
+	})
+	t.Run("http client errors, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingError(expectedErr)
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
+		assert.Nil(t, tokenData)
+		assert.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("invalid status, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytesWithStatus(make([]byte, 0), http.StatusNotFound)
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
+		assert.Nil(t, tokenData)
+		assert.ErrorIs(t, err, ErrHTTPStatusCodeIsNotOK)
+	})
+	t.Run("invalid response bytes, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes([]byte("invalid json"))
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
+		assert.Nil(t, tokenData)
+		assert.NotNil(t, err)
+	})
+	t.Run("response returned error, should error", func(t *testing.T) {
+		t.Parallel()
+
+		response := &data.ESDTNFTResponse{
+			Error: expectedErr.Error(),
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
+		assert.Nil(t, tokenData)
+		assert.NotNil(t, err)
+		assert.Equal(t, expectedErr.Error(), err.Error())
+	})
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		responseTokenData := &data.ESDTNFTTokenData{
+			TokenIdentifier: "identifier",
+			Balance:         "balance",
+			Properties:      "properties",
+			Name:            "name",
+			Nonce:           nonce,
+			Creator:         "creator",
+			Royalties:       "royalties",
+			Hash:            []byte("hash"),
+			URIs:            [][]byte{[]byte("uri1"), []byte("uri2")},
+			Attributes:      []byte("attributes"),
+		}
+		response := &data.ESDTNFTResponse{
+			Data: struct {
+				TokenData *data.ESDTNFTTokenData `json:"tokenData"`
+			}{
+				TokenData: responseTokenData,
+			},
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsElrondProxy(httpClient)
+		ep, _ := NewElrondProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce)
+		assert.NotNil(t, tokenData)
+		assert.Nil(t, err)
+		assert.Equal(t, responseTokenData, tokenData)
+		assert.False(t, responseTokenData == tokenData) // pointer testing
+	})
 }

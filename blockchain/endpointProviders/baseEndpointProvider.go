@@ -8,6 +8,8 @@ const (
 	ratingsConfig            = "network/ratings"
 	enableEpochsConfig       = "network/enable-epochs"
 	account                  = "address/%s"
+	esdt                     = "address/%s/esdt/%s"
+	nft                      = "address/%s/nft/%s/nonce/%d"
 	costTransaction          = "transaction/cost"
 	sendTransaction          = "transaction/send"
 	sendMultipleTransactions = "transaction/send-multiple"
@@ -45,6 +47,16 @@ func (base *baseEndpointProvider) GetEnableEpochsConfig() string {
 // GetAccount returns the account endpoint
 func (base *baseEndpointProvider) GetAccount(addressAsBech32 string) string {
 	return fmt.Sprintf(account, addressAsBech32)
+}
+
+// GetESDTTokenData returns the esdt endpoint
+func (base *baseEndpointProvider) GetESDTTokenData(addressAsBech32 string, tokenIdentifier string) string {
+	return fmt.Sprintf(esdt, addressAsBech32, tokenIdentifier)
+}
+
+// GetNFTTokenData returns the NFT/SFT/MetaESDT endpoint
+func (base *baseEndpointProvider) GetNFTTokenData(addressAsBech32 string, tokenIdentifier string, nonce uint64) string {
+	return fmt.Sprintf(nft, addressAsBech32, tokenIdentifier, nonce)
 }
 
 // GetCostTransaction returns the transaction cost endpoint

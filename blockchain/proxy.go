@@ -539,6 +539,58 @@ func (ep *elrondProxy) GetGenesisNodesPubKeys(ctx context.Context) (*data.Genesi
 	return response.Data.Nodes, nil
 }
 
+// GetESDTTokenData returns the address' fungible token data
+func (ep *elrondProxy) GetESDTTokenData(ctx context.Context, address erdgoCore.AddressHandler, tokenIdentifier string) (*data.ESDTFungibleTokenData, error) {
+	if check.IfNil(address) {
+		return nil, ErrNilAddress
+	}
+	if !address.IsValid() {
+		return nil, ErrInvalidAddress
+	}
+
+	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetESDTTokenData(address.AddressAsBech32String(), tokenIdentifier))
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	response := &data.ESDTFungibleResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.TokenData, nil
+}
+
+// GetNFTTokenData returns the address' NFT/SFT/MetaESDT token data
+func (ep *elrondProxy) GetNFTTokenData(ctx context.Context, address erdgoCore.AddressHandler, tokenIdentifier string, nonce uint64) (*data.ESDTNFTTokenData, error) {
+	if check.IfNil(address) {
+		return nil, ErrNilAddress
+	}
+	if !address.IsValid() {
+		return nil, ErrInvalidAddress
+	}
+
+	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetNFTTokenData(address.AddressAsBech32String(), tokenIdentifier, nonce))
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	response := &data.ESDTNFTResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.TokenData, nil
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (ep *elrondProxy) IsInterfaceNil() bool {
 	return ep == nil
