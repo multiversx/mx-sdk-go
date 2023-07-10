@@ -19,8 +19,8 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/config"
 	"github.com/multiversx/mx-chain-go/state"
-	erdgoCore "github.com/multiversx/mx-sdk-go/core"
-	erdgoHttp "github.com/multiversx/mx-sdk-go/core/http"
+	sdkCore "github.com/multiversx/mx-sdk-go/core"
+	sdkHttp "github.com/multiversx/mx-sdk-go/core/http"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/testsCommon"
 	"github.com/stretchr/testify/assert"
@@ -98,7 +98,7 @@ func createMockClientRespondingError(err error) *mockHTTPClient {
 	}
 }
 
-func createMockArgsProxy(httpClient erdgoHttp.Client) ArgsProxy {
+func createMockArgsProxy(httpClient sdkHttp.Client) ArgsProxy {
 	return ArgsProxy{
 		ProxyURL:            testHttpURL,
 		Client:              httpClient,
@@ -107,7 +107,7 @@ func createMockArgsProxy(httpClient erdgoHttp.Client) ArgsProxy {
 		FinalityCheck:       false,
 		AllowedDeltaToFinal: 1,
 		CacheExpirationTime: time.Second,
-		EntityType:          erdgoCore.ObserverNode,
+		EntityType:          sdkCore.ObserverNode,
 	}
 }
 
