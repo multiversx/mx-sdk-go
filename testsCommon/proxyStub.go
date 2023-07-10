@@ -6,7 +6,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/state"
-	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+	sdkCore "github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
@@ -15,7 +15,7 @@ type ProxyStub struct {
 	GetNetworkConfigCalled               func() (*data.NetworkConfig, error)
 	GetRatingsConfigCalled               func() (*data.RatingsConfig, error)
 	GetEnableEpochsConfigCalled          func() (*data.EnableEpochsConfig, error)
-	GetAccountCalled                     func(address erdgoCore.AddressHandler) (*data.Account, error)
+	GetAccountCalled                     func(address sdkCore.AddressHandler) (*data.Account, error)
 	SendTransactionCalled                func(tx *transaction.FrontendTransaction) (string, error)
 	SendTransactionsCalled               func(txs []*transaction.FrontendTransaction) ([]string, error)
 	ExecuteVMQueryCalled                 func(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
@@ -27,10 +27,10 @@ type ProxyStub struct {
 	GetGenesisNodesPubKeysCalled         func() (*data.GenesisNodes, error)
 	GetNetworkStatusCalled               func(ctx context.Context, shardID uint32) (*data.NetworkStatus, error)
 	GetShardOfAddressCalled              func(ctx context.Context, bech32Address string) (uint32, error)
-	GetRestAPIEntityTypeCalled           func() erdgoCore.RestAPIEntityType
+	GetRestAPIEntityTypeCalled           func() sdkCore.RestAPIEntityType
 	GetLatestHyperBlockNonceCalled       func(ctx context.Context) (uint64, error)
 	GetHyperBlockByNonceCalled           func(ctx context.Context, nonce uint64) (*data.HyperBlock, error)
-	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error)
+	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address sdkCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error)
 	GetValidatorsInfoByEpochCalled       func(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
 }
 
@@ -71,7 +71,7 @@ func (stub *ProxyStub) GetEnableEpochsConfig(_ context.Context) (*data.EnableEpo
 }
 
 // GetAccount -
-func (stub *ProxyStub) GetAccount(_ context.Context, address erdgoCore.AddressHandler) (*data.Account, error) {
+func (stub *ProxyStub) GetAccount(_ context.Context, address sdkCore.AddressHandler) (*data.Account, error) {
 	if stub.GetAccountCalled != nil {
 		return stub.GetAccountCalled(address)
 	}
@@ -168,7 +168,7 @@ func (stub *ProxyStub) GetShardOfAddress(ctx context.Context, bech32Address stri
 }
 
 // GetRestAPIEntityType -
-func (stub *ProxyStub) GetRestAPIEntityType() erdgoCore.RestAPIEntityType {
+func (stub *ProxyStub) GetRestAPIEntityType() sdkCore.RestAPIEntityType {
 	if stub.GetRestAPIEntityTypeCalled != nil {
 		return stub.GetRestAPIEntityTypeCalled()
 	}
@@ -193,7 +193,7 @@ func (stub *ProxyStub) GetHyperBlockByNonce(ctx context.Context, nonce uint64) (
 }
 
 // GetDefaultTransactionArguments -
-func (stub *ProxyStub) GetDefaultTransactionArguments(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error) {
+func (stub *ProxyStub) GetDefaultTransactionArguments(ctx context.Context, address sdkCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error) {
 	if stub.GetDefaultTransactionArgumentsCalled != nil {
 		return stub.GetDefaultTransactionArgumentsCalled(ctx, address, networkConfigs)
 	}

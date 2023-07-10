@@ -47,3 +47,42 @@ func (a *Account) GetBalance(decimals int) (float64, error) {
 
 	return floatBalance, nil
 }
+
+// ESDTFungibleResponse holds the ESDT (fungible) token data endpoint response
+type ESDTFungibleResponse struct {
+	Data struct {
+		TokenData *ESDTFungibleTokenData `json:"tokenData"`
+	} `json:"data"`
+	Error string `json:"error"`
+	Code  string `json:"code"`
+}
+
+// ESDTFungibleTokenData holds the ESDT (fungible) token data definition
+type ESDTFungibleTokenData struct {
+	TokenIdentifier string `json:"tokenIdentifier"`
+	Balance         string `json:"balance"`
+	Properties      string `json:"properties"`
+}
+
+// ESDTNFTResponse holds the NFT token data endpoint response
+type ESDTNFTResponse struct {
+	Data struct {
+		TokenData *ESDTNFTTokenData `json:"tokenData"`
+	} `json:"data"`
+	Error string `json:"error"`
+	Code  string `json:"code"`
+}
+
+// ESDTNFTTokenData holds the ESDT (NDT, SFT or MetaESDT) token data definition
+type ESDTNFTTokenData struct {
+	TokenIdentifier string   `json:"tokenIdentifier"`
+	Balance         string   `json:"balance"`
+	Properties      string   `json:"properties,omitempty"`
+	Name            string   `json:"name,omitempty"`
+	Nonce           uint64   `json:"nonce,omitempty"`
+	Creator         string   `json:"creator,omitempty"`
+	Royalties       string   `json:"royalties,omitempty"`
+	Hash            []byte   `json:"hash,omitempty"`
+	URIs            [][]byte `json:"uris,omitempty"`
+	Attributes      []byte   `json:"attributes,omitempty"`
+}

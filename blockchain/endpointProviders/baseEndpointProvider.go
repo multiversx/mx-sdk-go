@@ -20,6 +20,8 @@ const (
 	genesisNodesConfig         = "network/genesis-nodes"
 	rawStartOfEpochMetaBlock   = "internal/raw/startofepoch/metablock/by-epoch/%d"
 	rawStartOfEpochValidators  = "internal/json/startofepoch/validators/by-epoch/%d"
+	esdt                       = "address/%s/esdt/%s"
+	nft                        = "address/%s/nft/%s/nonce/%d"
 )
 
 type baseEndpointProvider struct{}
@@ -47,6 +49,16 @@ func (base *baseEndpointProvider) GetEnableEpochsConfig() string {
 // GetAccount returns the account endpoint
 func (base *baseEndpointProvider) GetAccount(addressAsBech32 string) string {
 	return fmt.Sprintf(account, addressAsBech32)
+}
+
+// GetESDTTokenData returns the esdt endpoint
+func (base *baseEndpointProvider) GetESDTTokenData(addressAsBech32 string, tokenIdentifier string) string {
+	return fmt.Sprintf(esdt, addressAsBech32, tokenIdentifier)
+}
+
+// GetNFTTokenData returns the NFT/SFT/MetaESDT endpoint
+func (base *baseEndpointProvider) GetNFTTokenData(addressAsBech32 string, tokenIdentifier string, nonce uint64) string {
+	return fmt.Sprintf(nft, addressAsBech32, tokenIdentifier, nonce)
 }
 
 // GetCostTransaction returns the transaction cost endpoint
