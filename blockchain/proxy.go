@@ -628,7 +628,7 @@ func (ep *proxy) GetNFTTokenData(
 }
 
 // IsDataTrieMigrated returns true if the data trie of the given account is migrated
-func (ep *proxy) IsDataTrieMigrated(ctx context.Context, address erdgoCore.AddressHandler) (bool, error) {
+func (ep *proxy) IsDataTrieMigrated(ctx context.Context, address sdkCore.AddressHandler) (bool, error) {
 	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.IsDataTrieMigrated(address.AddressAsBech32String()))
 	if err != nil || code != http.StatusOK {
 		return false, createHTTPStatusError(code, err)
