@@ -11,11 +11,12 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/api"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/state"
 	"github.com/multiversx/mx-sdk-go/blockchain/factory"
-	erdgoCore "github.com/multiversx/mx-sdk-go/core"
-	erdgoHttp "github.com/multiversx/mx-sdk-go/core/http"
+	sdkCore "github.com/multiversx/mx-sdk-go/core"
+	sdkHttp "github.com/multiversx/mx-sdk-go/core/http"
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
@@ -26,13 +27,13 @@ const (
 // ArgsProxy is the DTO used in the multiversx proxy constructor
 type ArgsProxy struct {
 	ProxyURL            string
-	Client              erdgoHttp.Client
+	Client              sdkHttp.Client
 	SameScState         bool
 	ShouldBeSynced      bool
 	FinalityCheck       bool
 	AllowedDeltaToFinal int
 	CacheExpirationTime time.Duration
-	EntityType          erdgoCore.RestAPIEntityType
+	EntityType          sdkCore.RestAPIEntityType
 }
 
 // proxy implements basic functions for interacting with a multiversx Proxy
@@ -57,7 +58,7 @@ func NewProxy(args ArgsProxy) (*proxy, error) {
 		return nil, err
 	}
 
-	clientWrapper := erdgoHttp.NewHttpClientWrapper(args.Client, args.ProxyURL)
+	clientWrapper := sdkHttp.NewHttpClientWrapper(args.Client, args.ProxyURL)
 	baseArgs := argsBaseProxy{
 		httpClientWrapper: clientWrapper,
 		expirationTime:    args.CacheExpirationTime,
@@ -87,9 +88,9 @@ func NewProxy(args ArgsProxy) (*proxy, error) {
 
 func checkArgsProxy(args ArgsProxy) error {
 	if args.FinalityCheck {
-		if args.AllowedDeltaToFinal < erdgoCore.MinAllowedDeltaToFinal {
+		if args.AllowedDeltaToFinal < sdkCore.MinAllowedDeltaToFinal {
 			return fmt.Errorf("%w, provided: %d, minimum: %d",
-				ErrInvalidAllowedDeltaToFinal, args.AllowedDeltaToFinal, erdgoCore.MinAllowedDeltaToFinal)
+				ErrInvalidAllowedDeltaToFinal, args.AllowedDeltaToFinal, sdkCore.MinAllowedDeltaToFinal)
 		}
 	}
 
@@ -165,7 +166,7 @@ func (ep *proxy) GetNetworkEconomics(ctx context.Context) (*data.NetworkEconomic
 // GetDefaultTransactionArguments will prepare the transaction creation argument by querying the account's info
 func (ep *proxy) GetDefaultTransactionArguments(
 	ctx context.Context,
-	address erdgoCore.AddressHandler,
+	address sdkCore.AddressHandler,
 	networkConfigs *data.NetworkConfig,
 ) (transaction.FrontendTransaction, string, error) {
 	if networkConfigs == nil {
@@ -196,7 +197,7 @@ func (ep *proxy) GetDefaultTransactionArguments(
 }
 
 // GetAccount retrieves an account info from the network (nonce, balance)
-func (ep *proxy) GetAccount(ctx context.Context, address erdgoCore.AddressHandler) (*data.Account, error) {
+func (ep *proxy) GetAccount(ctx context.Context, address sdkCore.AddressHandler) (*data.Account, error) {
 	err := ep.checkFinalState(ctx, address.AddressAsBech32String())
 	if err != nil {
 		return nil, err
@@ -557,6 +558,73 @@ func (ep *proxy) GetValidatorsInfoByEpoch(ctx context.Context, epoch uint32) ([]
 	}
 
 	return response.Data.ValidatorsInfo, nil
+}
+
+// GetESDTTokenData returns the address' fungible token data
+func (ep *proxy) GetESDTTokenData(
+	ctx context.Context,
+	address sdkCore.AddressHandler,
+	tokenIdentifier string,
+	queryOptions api.AccountQueryOptions, // TODO: provide AccountQueryOptions on all accounts-related getters
+) (*data.ESDTFungibleTokenData, error) {
+	if check.IfNil(address) {
+		return nil, ErrNilAddress
+	}
+	if !address.IsValid() {
+		return nil, ErrInvalidAddress
+	}
+
+	endpoint := ep.endpointProvider.GetESDTTokenData(address.AddressAsBech32String(), tokenIdentifier)
+	endpoint = sdkCore.BuildUrlWithAccountQueryOptions(endpoint, queryOptions)
+	buff, code, err := ep.GetHTTP(ctx, endpoint)
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	response := &data.ESDTFungibleResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.TokenData, nil
+}
+
+// GetNFTTokenData returns the address' NFT/SFT/MetaESDT token data
+func (ep *proxy) GetNFTTokenData(
+	ctx context.Context,
+	address sdkCore.AddressHandler,
+	tokenIdentifier string,
+	nonce uint64,
+	queryOptions api.AccountQueryOptions, // TODO: provide AccountQueryOptions on all accounts-related getters
+) (*data.ESDTNFTTokenData, error) {
+	if check.IfNil(address) {
+		return nil, ErrNilAddress
+	}
+	if !address.IsValid() {
+		return nil, ErrInvalidAddress
+	}
+
+	endpoint := ep.endpointProvider.GetNFTTokenData(address.AddressAsBech32String(), tokenIdentifier, nonce)
+	endpoint = sdkCore.BuildUrlWithAccountQueryOptions(endpoint, queryOptions)
+	buff, code, err := ep.GetHTTP(ctx, endpoint)
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	response := &data.ESDTNFTResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.TokenData, nil
 }
 
 // IsDataTrieMigrated returns true if the data trie of the given account is migrated

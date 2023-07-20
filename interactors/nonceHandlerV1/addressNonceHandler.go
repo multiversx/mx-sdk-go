@@ -7,7 +7,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
-	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+	sdkCore "github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
@@ -20,14 +20,14 @@ import (
 // because they were executed. This struct is concurrent safe.
 type addressNonceHandler struct {
 	mut                 sync.RWMutex
-	address             erdgoCore.AddressHandler
+	address             sdkCore.AddressHandler
 	proxy               interactors.Proxy
 	computedNonceWasSet bool
 	computedNonce       uint64
 	transactions        map[uint64]*transaction.FrontendTransaction
 }
 
-func newAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) *addressNonceHandler {
+func newAddressNonceHandler(proxy interactors.Proxy, address sdkCore.AddressHandler) *addressNonceHandler {
 	return &addressNonceHandler{
 		address:      address,
 		proxy:        proxy,

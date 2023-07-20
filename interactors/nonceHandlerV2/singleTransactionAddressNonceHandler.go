@@ -7,13 +7,13 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
-	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+	sdkCore "github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
 type singleTransactionAddressNonceHandler struct {
 	mut                    sync.RWMutex
-	address                erdgoCore.AddressHandler
+	address                sdkCore.AddressHandler
 	transaction            *transaction.FrontendTransaction
 	gasPrice               uint64
 	nonceUntilGasIncreased uint64
@@ -21,7 +21,7 @@ type singleTransactionAddressNonceHandler struct {
 }
 
 // NewSingleTransactionAddressNonceHandler returns a new instance of a singleTransactionAddressNonceHandler
-func NewSingleTransactionAddressNonceHandler(proxy interactors.Proxy, address erdgoCore.AddressHandler) (*singleTransactionAddressNonceHandler, error) {
+func NewSingleTransactionAddressNonceHandler(proxy interactors.Proxy, address sdkCore.AddressHandler) (*singleTransactionAddressNonceHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, interactors.ErrNilProxy
 	}

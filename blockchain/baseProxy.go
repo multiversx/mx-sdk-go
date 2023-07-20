@@ -20,10 +20,6 @@ var log = logger.GetOrCreate("mx-sdk-go/blockchain")
 
 const (
 	minimumCachingInterval = time.Second
-	txCompleted            = "completedTxEvent"
-	txFailed               = "signalError"
-	scDeploy               = "SCDeploy"
-	moveBalanceTransaction = "MoveBalance"
 )
 
 type argsBaseProxy struct {
@@ -233,42 +229,24 @@ func (proxy *baseProxy) GetRestAPIEntityType() core.RestAPIEntityType {
 }
 
 // ProcessTransactionStatus will parse the provided transaction info and return its status accordingly
-// TODO move this in proxy, directly
-func (proxy *baseProxy) ProcessTransactionStatus(txInfo data.TransactionInfo) transaction.TxStatus {
-	if txInfo.Data.Transaction.Status != string(transaction.TxStatusSuccess) {
-		return transaction.TxStatus(txInfo.Data.Transaction.Status)
-	}
-	if findIdentifierInLogs(txInfo, txFailed) {
-		return transaction.TxStatusFail
-	}
-	containsCompletion := findIdentifierInLogs(txInfo, txCompleted) || findIdentifierInLogs(txInfo, scDeploy)
-	if containsCompletion {
-		return transaction.TxStatus(txInfo.Data.Transaction.Status)
+func (proxy *baseProxy) ProcessTransactionStatus(ctx context.Context, hexTxHash string) (transaction.TxStatus, error) {
+	endpoint := proxy.endpointProvider.GetProcessedTransactionStatus(hexTxHash)
+	buff, code, err := proxy.GetHTTP(ctx, endpoint)
+	if err != nil || code != http.StatusOK {
+		wrappedErr := fmt.Errorf("%w, please make sure you run the proxy version v1.1.38 or higher", err)
+		return transaction.TxStatusFail, createHTTPStatusError(code, wrappedErr)
 	}
 
-	isNotarized := txInfo.Data.Transaction.NotarizedAtSourceInMetaNonce > 0 && txInfo.Data.Transaction.NotarizedAtDestinationInMetaNonce > 0
-	isNotarizedMoveBalanceTransaction := isNotarized &&
-		txInfo.Data.Transaction.ProcessingTypeOnSource == moveBalanceTransaction &&
-		txInfo.Data.Transaction.ProcessingTypeOnDestination == moveBalanceTransaction
-	if isNotarizedMoveBalanceTransaction {
-		return transaction.TxStatus(txInfo.Data.Transaction.Status)
+	response := &data.ProcessedTransactionStatus{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return transaction.TxStatusFail, err
+	}
+	if response.Error != "" {
+		return transaction.TxStatusFail, errors.New(response.Error)
 	}
 
-	return transaction.TxStatusPending
-}
-
-func findIdentifierInLogs(txInfo data.TransactionInfo, identifier string) bool {
-	if txInfo.Data.Transaction.Logs == nil {
-		return false
-	}
-
-	for _, event := range txInfo.Data.Transaction.Logs.Events {
-		if event.Identifier == identifier {
-			return true
-		}
-	}
-
-	return false
+	return transaction.TxStatus(response.Data.ProcessedStatus), nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

@@ -2,16 +2,16 @@ package testsCommon
 
 import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
-	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+	sdkCore "github.com/multiversx/mx-sdk-go/core"
 )
 
 // TxBuilderStub -
 type TxBuilderStub struct {
-	ApplySignatureCalled func(cryptoHolder erdgoCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
+	ApplySignatureCalled func(cryptoHolder sdkCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
 }
 
 // ApplySignature -
-func (stub *TxBuilderStub) ApplySignature(cryptoHolder erdgoCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error {
+func (stub *TxBuilderStub) ApplySignature(cryptoHolder sdkCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error {
 	if stub.ApplySignatureCalled != nil {
 		return stub.ApplySignatureCalled(cryptoHolder, tx)
 	}

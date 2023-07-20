@@ -15,11 +15,12 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/api"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/config"
 	"github.com/multiversx/mx-chain-go/state"
-	erdgoCore "github.com/multiversx/mx-sdk-go/core"
-	erdgoHttp "github.com/multiversx/mx-sdk-go/core/http"
+	sdkCore "github.com/multiversx/mx-sdk-go/core"
+	sdkHttp "github.com/multiversx/mx-sdk-go/core/http"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/testsCommon"
 	"github.com/stretchr/testify/assert"
@@ -30,6 +31,25 @@ const testHttpURL = "https://test.org"
 const networkConfigEndpoint = "network/config"
 const getNetworkStatusEndpoint = "network/status/%d"
 const getNodeStatusEndpoint = "node/status"
+
+// not a real-world valid test query option but rather a test one to check all fields are properly set
+var testQueryOptions = api.AccountQueryOptions{
+	OnFinalBlock: true,
+	OnStartOfEpoch: core.OptionalUint32{
+		Value:    3737,
+		HasValue: true,
+	},
+	BlockNonce: core.OptionalUint64{
+		Value:    3838,
+		HasValue: true,
+	},
+	BlockHash:     []byte("block hash"),
+	BlockRootHash: []byte("block root hash"),
+	HintEpoch: core.OptionalUint32{
+		Value:    3939,
+		HasValue: true,
+	},
+}
 
 type testStruct struct {
 	Nonce int
@@ -59,7 +79,26 @@ func createMockClientRespondingBytes(responseBytes []byte) *mockHTTPClient {
 	}
 }
 
-func createMockArgsProxy(httpClient erdgoHttp.Client) ArgsProxy {
+func createMockClientRespondingBytesWithStatus(responseBytes []byte, status int) *mockHTTPClient {
+	return &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+				StatusCode: status,
+			}, nil
+		},
+	}
+}
+
+func createMockClientRespondingError(err error) *mockHTTPClient {
+	return &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			return nil, err
+		},
+	}
+}
+
+func createMockArgsProxy(httpClient sdkHttp.Client) ArgsProxy {
 	return ArgsProxy{
 		ProxyURL:            testHttpURL,
 		Client:              httpClient,
@@ -68,7 +107,7 @@ func createMockArgsProxy(httpClient erdgoHttp.Client) ArgsProxy {
 		FinalityCheck:       false,
 		AllowedDeltaToFinal: 1,
 		CacheExpirationTime: time.Second,
-		EntityType:          erdgoCore.ObserverNode,
+		EntityType:          sdkCore.ObserverNode,
 	}
 }
 
@@ -643,4 +682,311 @@ func TestProxy_GetValidatorsInfoByEpoch(t *testing.T) {
 	require.Nil(t, err)
 
 	require.Equal(t, expectedValidatorsInfo, response)
+}
+
+func TestElrondProxy_GetESDTTokenData(t *testing.T) {
+	t.Parallel()
+
+	token := "TKN-001122"
+	expectedErr := errors.New("expected error")
+	validAddress := data.NewAddressFromBytes(bytes.Repeat([]byte("1"), 32))
+	emptyQueryOptions := api.AccountQueryOptions{}
+	t.Run("nil address, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes(make([]byte, 0))
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), nil, token, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.Equal(t, ErrNilAddress, err)
+	})
+	t.Run("invalid address, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes(make([]byte, 0))
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		address := data.NewAddressFromBytes([]byte("invalid"))
+		tokenData, err := ep.GetESDTTokenData(context.Background(), address, token, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.Equal(t, ErrInvalidAddress, err)
+	})
+	t.Run("http client errors, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingError(expectedErr)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("invalid status, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytesWithStatus(make([]byte, 0), http.StatusNotFound)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.ErrorIs(t, err, ErrHTTPStatusCodeIsNotOK)
+	})
+	t.Run("invalid response bytes, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes([]byte("invalid json"))
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.NotNil(t, err)
+	})
+	t.Run("response returned error, should error", func(t *testing.T) {
+		t.Parallel()
+
+		response := &data.ESDTFungibleResponse{
+			Error: expectedErr.Error(),
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.NotNil(t, err)
+		assert.Equal(t, expectedErr.Error(), err.Error())
+	})
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		responseTokenData := &data.ESDTFungibleTokenData{
+			TokenIdentifier: "identifier",
+			Balance:         "balance",
+			Properties:      "properties",
+		}
+		response := &data.ESDTFungibleResponse{
+			Data: struct {
+				TokenData *data.ESDTFungibleTokenData `json:"tokenData"`
+			}{
+				TokenData: responseTokenData,
+			},
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, emptyQueryOptions)
+		assert.NotNil(t, tokenData)
+		assert.Nil(t, err)
+		assert.Equal(t, responseTokenData, tokenData)
+		assert.False(t, responseTokenData == tokenData) // pointer testing
+	})
+	t.Run("should work with query options", func(t *testing.T) {
+		t.Parallel()
+
+		responseTokenData := &data.ESDTFungibleTokenData{
+			TokenIdentifier: "identifier",
+			Balance:         "balance",
+			Properties:      "properties",
+		}
+		response := &data.ESDTFungibleResponse{
+			Data: struct {
+				TokenData *data.ESDTFungibleTokenData `json:"tokenData"`
+			}{
+				TokenData: responseTokenData,
+			},
+		}
+		responseBytes, _ := json.Marshal(response)
+		expectedSuffix := "?blockHash=626c6f636b2068617368&blockNonce=3838&blockRootHash=626c6f636b20726f6f742068617368&hintEpoch=3939&onFinalBlock=true&onStartOfEpoch=3737"
+
+		httpClient := &mockHTTPClient{
+			doCalled: func(req *http.Request) (*http.Response, error) {
+				assert.True(t, strings.HasSuffix(req.URL.String(), expectedSuffix))
+
+				return &http.Response{
+					Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+					StatusCode: http.StatusOK,
+				}, nil
+			},
+		}
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetESDTTokenData(context.Background(), validAddress, token, testQueryOptions)
+		assert.NotNil(t, tokenData)
+		assert.Nil(t, err)
+		assert.Equal(t, responseTokenData, tokenData)
+		assert.False(t, responseTokenData == tokenData) // pointer testing
+	})
+}
+
+func TestElrondProxy_GetNFTTokenData(t *testing.T) {
+	t.Parallel()
+
+	token := "TKN-001122"
+	nonce := uint64(37)
+	expectedErr := errors.New("expected error")
+	validAddress := data.NewAddressFromBytes(bytes.Repeat([]byte("1"), 32))
+	emptyQueryOptions := api.AccountQueryOptions{}
+	t.Run("nil address, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes(make([]byte, 0))
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), nil, token, nonce, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.Equal(t, ErrNilAddress, err)
+	})
+	t.Run("invalid address, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes(make([]byte, 0))
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		address := data.NewAddressFromBytes([]byte("invalid"))
+		tokenData, err := ep.GetNFTTokenData(context.Background(), address, token, nonce, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.Equal(t, ErrInvalidAddress, err)
+	})
+	t.Run("http client errors, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingError(expectedErr)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("invalid status, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytesWithStatus(make([]byte, 0), http.StatusNotFound)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.ErrorIs(t, err, ErrHTTPStatusCodeIsNotOK)
+	})
+	t.Run("invalid response bytes, should error", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes([]byte("invalid json"))
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.NotNil(t, err)
+	})
+	t.Run("response returned error, should error", func(t *testing.T) {
+		t.Parallel()
+
+		response := &data.ESDTNFTResponse{
+			Error: expectedErr.Error(),
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, emptyQueryOptions)
+		assert.Nil(t, tokenData)
+		assert.NotNil(t, err)
+		assert.Equal(t, expectedErr.Error(), err.Error())
+	})
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		responseTokenData := &data.ESDTNFTTokenData{
+			TokenIdentifier: "identifier",
+			Balance:         "balance",
+			Properties:      "properties",
+			Name:            "name",
+			Nonce:           nonce,
+			Creator:         "creator",
+			Royalties:       "royalties",
+			Hash:            []byte("hash"),
+			URIs:            [][]byte{[]byte("uri1"), []byte("uri2")},
+			Attributes:      []byte("attributes"),
+		}
+		response := &data.ESDTNFTResponse{
+			Data: struct {
+				TokenData *data.ESDTNFTTokenData `json:"tokenData"`
+			}{
+				TokenData: responseTokenData,
+			},
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, emptyQueryOptions)
+		assert.NotNil(t, tokenData)
+		assert.Nil(t, err)
+		assert.Equal(t, responseTokenData, tokenData)
+		assert.False(t, responseTokenData == tokenData) // pointer testing
+	})
+	t.Run("should work with query options", func(t *testing.T) {
+		t.Parallel()
+
+		responseTokenData := &data.ESDTNFTTokenData{
+			TokenIdentifier: "identifier",
+			Balance:         "balance",
+			Properties:      "properties",
+			Name:            "name",
+			Nonce:           nonce,
+			Creator:         "creator",
+			Royalties:       "royalties",
+			Hash:            []byte("hash"),
+			URIs:            [][]byte{[]byte("uri1"), []byte("uri2")},
+			Attributes:      []byte("attributes"),
+		}
+		response := &data.ESDTNFTResponse{
+			Data: struct {
+				TokenData *data.ESDTNFTTokenData `json:"tokenData"`
+			}{
+				TokenData: responseTokenData,
+			},
+		}
+		responseBytes, _ := json.Marshal(response)
+		expectedSuffix := "?blockHash=626c6f636b2068617368&blockNonce=3838&blockRootHash=626c6f636b20726f6f742068617368&hintEpoch=3939&onFinalBlock=true&onStartOfEpoch=3737"
+
+		httpClient := &mockHTTPClient{
+			doCalled: func(req *http.Request) (*http.Response, error) {
+				assert.True(t, strings.HasSuffix(req.URL.String(), expectedSuffix))
+
+				return &http.Response{
+					Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+					StatusCode: http.StatusOK,
+				}, nil
+			},
+		}
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		tokenData, err := ep.GetNFTTokenData(context.Background(), validAddress, token, nonce, testQueryOptions)
+		assert.NotNil(t, tokenData)
+		assert.Nil(t, err)
+		assert.Equal(t, responseTokenData, tokenData)
+		assert.False(t, responseTokenData == tokenData) // pointer testing
+	})
 }

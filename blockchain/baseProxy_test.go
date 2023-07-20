@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -594,75 +593,124 @@ func TestBaseProxy_GetRestAPIEntityType(t *testing.T) {
 	assert.Equal(t, args.endpointProvider.GetRestAPIEntityType(), baseProxyInstance.GetRestAPIEntityType())
 }
 
-func loadJsonIntoTransactionInfo(tb testing.TB, path string) data.TransactionInfo {
-	txInfo := &data.TransactionInfo{}
-	buff, err := ioutil.ReadFile(path)
-	require.Nil(tb, err)
-
-	err = json.Unmarshal(buff, txInfo)
-	require.Nil(tb, err)
-
-	return *txInfo
-}
-
 func TestBaseProxyInstance_ProcessTransactionStatus(t *testing.T) {
 	t.Parallel()
 
-	args := createMockArgsBaseProxy()
-	baseProxyInstance, _ := newBaseProxy(args)
+	expectedErr := errors.New("expected error")
+	t.Run("proxy errors when calling the API endpoint - StatusNotFound", func(t *testing.T) {
+		t.Parallel()
 
-	t.Run("Move balance", func(t *testing.T) {
-		t.Run("pending", func(t *testing.T) {
-			t.Parallel()
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return nil, http.StatusNotFound, nil
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
 
-			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/pendingNewMoveBalance.json")
-			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-			require.Equal(t, transaction.TxStatusPending, status)
-		})
-		t.Run("executed", func(t *testing.T) {
-			t.Parallel()
-
-			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedOKMoveBalance.json")
-			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-			require.Equal(t, transaction.TxStatusSuccess, status)
-		})
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusFail, txStatus)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "returned http status: 404")
+		assert.Contains(t, err.Error(), "please make sure you run the proxy version v1.1.38 or higher")
 	})
-	t.Run("SC calls", func(t *testing.T) {
-		t.Run("pending new", func(t *testing.T) {
-			t.Parallel()
+	t.Run("proxy errors when calling the API endpoint, internal error", func(t *testing.T) {
+		t.Parallel()
 
-			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/pendingNewSCCall.json")
-			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-			require.Equal(t, transaction.TxStatusPending, status)
-		})
-		t.Run("executing", func(t *testing.T) {
-			t.Parallel()
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return nil, http.StatusOK, expectedErr
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
 
-			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/executingSCCall.json")
-			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-			require.Equal(t, transaction.TxStatusPending, status)
-		})
-		t.Run("tx info ok", func(t *testing.T) {
-			t.Parallel()
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusFail, txStatus)
+		assert.NotNil(t, err)
+		assert.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("proxy errors when calling the API endpoint, internal error", func(t *testing.T) {
+		t.Parallel()
 
-			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedOKSCCall.json")
-			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-			require.Equal(t, transaction.TxStatusSuccess, status)
-		})
-		t.Run("tx info ok but with nil logs", func(t *testing.T) {
-			t.Parallel()
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return nil, http.StatusOK, expectedErr
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
 
-			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedOKSCCall.json")
-			txInfo.Data.Transaction.Logs = nil
-			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-			require.Equal(t, transaction.TxStatusPending, status)
-		})
-		t.Run("tx info failed", func(t *testing.T) {
-			t.Parallel()
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusFail, txStatus)
+		assert.NotNil(t, err)
+		assert.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("proxy returns a malformed response", func(t *testing.T) {
+		t.Parallel()
 
-			txInfo := loadJsonIntoTransactionInfo(t, "./testdata/finishedFailedSCCall.json")
-			status := baseProxyInstance.ProcessTransactionStatus(txInfo)
-			require.Equal(t, transaction.TxStatusFail, status)
-		})
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return []byte("not a correct buffer"), http.StatusOK, nil
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
+
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusFail, txStatus)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "invalid character")
+	})
+	t.Run("proxy returns a valid response but with an error", func(t *testing.T) {
+		t.Parallel()
+
+		response := &data.ProcessedTransactionStatus{
+			Data: struct {
+				ProcessedStatus string `json:"status"`
+			}{},
+			Error: expectedErr.Error(),
+			Code:  "",
+		}
+
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				buff, _ := json.Marshal(response)
+				return buff, http.StatusOK, nil
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
+
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusFail, txStatus)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), expectedErr.Error())
+	})
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		response := &data.ProcessedTransactionStatus{
+			Data: struct {
+				ProcessedStatus string `json:"status"`
+			}{
+				ProcessedStatus: transaction.TxStatusSuccess.String(),
+			},
+			Error: "",
+			Code:  "",
+		}
+
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				buff, _ := json.Marshal(response)
+				return buff, http.StatusOK, nil
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
+
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusSuccess, txStatus)
+		assert.Nil(t, err)
 	})
 }
