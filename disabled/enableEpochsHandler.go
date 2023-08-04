@@ -4,6 +4,43 @@ package disabled
 type EnableEpochsHandler struct {
 }
 
+func (eeh *EnableEpochsHandler) IsSCProcessorV2FlagEnabled() bool {
+	return false
+}
+
+func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
+	return false
+}
+
+func (eeh *EnableEpochsHandler) IsRelayedNonceFixEnabled() bool {
+	return false
+}
+
+func (eeh *EnableEpochsHandler) IsKeepExecOrderOnCreatedSCRsEnabled() bool {
+	return false
+}
+
+func (eeh *EnableEpochsHandler) IsMultiClaimOnDelegationEnabled() bool {
+	return false
+}
+
+func (eeh *EnableEpochsHandler) IsChangeUsernameEnabled() bool {
+	return false
+}
+
+func (eeh *EnableEpochsHandler) IsConsistentTokensValuesLengthCheckEnabled() bool {
+	return false
+}
+
+func (eeh *EnableEpochsHandler) IsAutoBalanceDataTriesEnabled() bool {
+	return false
+}
+
+// FixDelegationChangeOwnerOnAccountEnabled -
+func (eeh *EnableEpochsHandler) FixDelegationChangeOwnerOnAccountEnabled() bool {
+	return false
+}
+
 // BlockGasAndFeesReCheckEnableEpoch returns 0
 func (eeh *EnableEpochsHandler) BlockGasAndFeesReCheckEnableEpoch() uint32 {
 	return 0

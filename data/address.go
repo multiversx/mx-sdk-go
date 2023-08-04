@@ -29,7 +29,7 @@ func NewAddressFromBech32String(bech32 string) (*address, error) {
 }
 
 // AddressAsBech32String returns the address as a bech32 string
-func (a *address) AddressAsBech32String() string {
+func (a *address) AddressAsBech32String() (string, error) {
 	return core.AddressPublicKeyConverter.Encode(a.bytes)
 }
 

@@ -91,7 +91,12 @@ func (anh *singleTransactionAddressNonceHandler) ReSendTransactionsIfRequired(ct
 		return err
 	}
 
-	log.Debug("resent transaction", "address", anh.address.AddressAsBech32String(), "hash", hash)
+	addressAsBech32String, err := anh.address.AddressAsBech32String()
+	if err != nil {
+		return err
+	}
+
+	log.Debug("resent transaction", "address", addressAsBech32String, "hash", hash)
 
 	return nil
 }

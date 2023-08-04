@@ -18,6 +18,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var testAddressAsBech32String = "erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht"
+
 func TestNewNonceTransactionHandlerV1(t *testing.T) {
 	t.Parallel()
 
@@ -40,13 +42,14 @@ func TestNewNonceTransactionHandlerV1(t *testing.T) {
 func TestNonceTransactionsHandlerV1_GetNonce(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
+	testAddress, _ := data.NewAddressFromBech32String(testAddressAsBech32String)
 	currentNonce := uint64(664)
 
 	numCalls := 0
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
-			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
+			addressAsBech32String, _ := address.AddressAsBech32String()
+			if addressAsBech32String != testAddressAsBech32String {
 				return nil, errors.New("unexpected address")
 			}
 
@@ -79,7 +82,7 @@ func TestNonceTransactionsHandlerV1_GetNonce(t *testing.T) {
 func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminatingOne(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
+	testAddress, _ := data.NewAddressFromBech32String(testAddressAsBech32String)
 	currentNonce := uint64(664)
 
 	mutSentTransactions := sync.Mutex{}
@@ -87,7 +90,8 @@ func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminating
 	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
-			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
+			addressAsBech32String, _ := address.AddressAsBech32String()
+			if addressAsBech32String != testAddressAsBech32String {
 				return nil, errors.New("unexpected address")
 			}
 
@@ -142,7 +146,7 @@ func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminating
 func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminatingAll(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
+	testAddress, _ := data.NewAddressFromBech32String(testAddressAsBech32String)
 	currentNonce := uint64(664)
 
 	mutSentTransactions := sync.Mutex{}
@@ -150,7 +154,8 @@ func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminating
 	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
-			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
+			addressAsBech32String, _ := address.AddressAsBech32String()
+			if addressAsBech32String != testAddressAsBech32String {
 				return nil, errors.New("unexpected address")
 			}
 
@@ -192,7 +197,7 @@ func TestNonceTransactionsHandlerV1_SendMultipleTransactionsResendingEliminating
 func TestNonceTransactionsHandlerV1_SendTransactionResendingEliminatingAll(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
+	testAddress, _ := data.NewAddressFromBech32String(testAddressAsBech32String)
 	currentNonce := uint64(664)
 
 	mutSentTransactions := sync.Mutex{}
@@ -200,7 +205,8 @@ func TestNonceTransactionsHandlerV1_SendTransactionResendingEliminatingAll(t *te
 	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
-			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
+			addressAsBech32String, _ := address.AddressAsBech32String()
+			if addressAsBech32String != testAddressAsBech32String {
 				return nil, errors.New("unexpected address")
 			}
 
@@ -242,13 +248,14 @@ func TestNonceTransactionsHandlerV1_SendTransactionResendingEliminatingAll(t *te
 func TestNonceTransactionsHandlerV1_SendTransactionErrors(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
+	testAddress, _ := data.NewAddressFromBech32String(testAddressAsBech32String)
 	currentNonce := uint64(664)
 
 	var errSent error
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
-			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
+			addressAsBech32String, _ := address.AddressAsBech32String()
+			if addressAsBech32String != testAddressAsBech32String {
 				return nil, errors.New("unexpected address")
 			}
 
@@ -278,12 +285,14 @@ func TestNonceTransactionsHandlerV1_SendTransactionErrors(t *testing.T) {
 
 func createMockTransactions(addr core.AddressHandler, numTxs int, startNonce uint64) []*transaction.FrontendTransaction {
 	txs := make([]*transaction.FrontendTransaction, 0, numTxs)
+
+	addrAsBech32String, _ := addr.AddressAsBech32String()
 	for i := 0; i < numTxs; i++ {
 		tx := &transaction.FrontendTransaction{
 			Nonce:     startNonce,
 			Value:     "1",
-			Receiver:  addr.AddressAsBech32String(),
-			Sender:    addr.AddressAsBech32String(),
+			Receiver:  addrAsBech32String,
+			Sender:    addrAsBech32String,
 			GasPrice:  100000,
 			GasLimit:  50000,
 			Data:      nil,
@@ -302,7 +311,7 @@ func createMockTransactions(addr core.AddressHandler, numTxs int, startNonce uin
 func TestNonceTransactionsHandlerV1_SendTransactionsWithGetNonce(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
+	testAddress, _ := data.NewAddressFromBech32String(testAddressAsBech32String)
 	currentNonce := uint64(664)
 
 	mutSentTransactions := sync.Mutex{}
@@ -310,7 +319,8 @@ func TestNonceTransactionsHandlerV1_SendTransactionsWithGetNonce(t *testing.T) {
 	sentTransactions := make(map[int][]*transaction.FrontendTransaction)
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
-			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
+			addressAsBech32String, _ := address.AddressAsBech32String()
+			if addressAsBech32String != testAddressAsBech32String {
 				return nil, errors.New("unexpected address")
 			}
 
@@ -350,13 +360,15 @@ func TestNonceTransactionsHandlerV1_SendTransactionsWithGetNonce(t *testing.T) {
 }
 
 func TestNonceTransactionsHandlerV1_SendDuplicateTransactions(t *testing.T) {
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
+
+	testAddress, _ := data.NewAddressFromBech32String(testAddressAsBech32String)
 	currentNonce := uint64(664)
 
 	numCalls := 0
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
-			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
+			addressAsBech32String, _ := address.AddressAsBech32String()
+			if addressAsBech32String != testAddressAsBech32String {
 				return nil, errors.New("unexpected address")
 			}
 
@@ -378,8 +390,8 @@ func TestNonceTransactionsHandlerV1_SendDuplicateTransactions(t *testing.T) {
 	tx := &transaction.FrontendTransaction{
 		Nonce:     nonce,
 		Value:     "1",
-		Receiver:  testAddress.AddressAsBech32String(),
-		Sender:    testAddress.AddressAsBech32String(),
+		Receiver:  testAddressAsBech32String,
+		Sender:    testAddressAsBech32String,
 		GasPrice:  100000,
 		GasLimit:  50000,
 		Data:      nil,
@@ -411,6 +423,7 @@ func createMockTransactionsWithGetNonce(
 	nth interactors.TransactionNonceHandlerV1,
 ) []*transaction.FrontendTransaction {
 	txs := make([]*transaction.FrontendTransaction, 0, numTxs)
+	addrAsBech32String, _ := addr.AddressAsBech32String()
 	for i := 0; i < numTxs; i++ {
 		nonce, err := nth.GetNonce(context.Background(), addr)
 		require.Nil(tb, err)
@@ -418,8 +431,8 @@ func createMockTransactionsWithGetNonce(
 		tx := &transaction.FrontendTransaction{
 			Nonce:     nonce,
 			Value:     "1",
-			Receiver:  addr.AddressAsBech32String(),
-			Sender:    addr.AddressAsBech32String(),
+			Receiver:  addrAsBech32String,
+			Sender:    addrAsBech32String,
 			GasPrice:  100000,
 			GasLimit:  50000,
 			Data:      nil,
@@ -437,12 +450,13 @@ func createMockTransactionsWithGetNonce(
 func TestNonceTransactionsHandlerV1_ForceNonceReFetch(t *testing.T) {
 	t.Parallel()
 
-	testAddress, _ := data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
+	testAddress, _ := data.NewAddressFromBech32String(testAddressAsBech32String)
 	currentNonce := uint64(664)
 
 	proxy := &testsCommon.ProxyStub{
 		GetAccountCalled: func(address core.AddressHandler) (*data.Account, error) {
-			if address.AddressAsBech32String() != testAddress.AddressAsBech32String() {
+			addressAsBech32String, _ := address.AddressAsBech32String()
+			if addressAsBech32String != testAddressAsBech32String {
 				return nil, errors.New("unexpected address")
 			}
 

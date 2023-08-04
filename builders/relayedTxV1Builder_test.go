@@ -80,9 +80,12 @@ func getAccount(t *testing.T, mnemonic string) (*data.Account, []byte) {
 	address, err := wallet.GetAddressFromPrivateKey(privKey)
 	require.NoError(t, err)
 
+	addressAsBech32String, err := address.AddressAsBech32String()
+	require.NoError(t, err)
+
 	account := &data.Account{
 		Nonce:   37,
-		Address: address.AddressAsBech32String(),
+		Address: addressAsBech32String,
 	}
 
 	return account, privKey
