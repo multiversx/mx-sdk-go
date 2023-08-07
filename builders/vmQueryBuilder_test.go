@@ -46,7 +46,10 @@ func TestTxDataBuilder_Address(t *testing.T) {
 		builder.Address(address)
 		valueRequest, err := builder.ToVmValueRequest()
 		assert.Nil(t, err)
-		assert.Equal(t, address.AddressAsBech32String(), valueRequest.Address)
+
+		addressAsBech32String, err := address.AddressAsBech32String()
+		assert.Nil(t, err)
+		assert.Equal(t, addressAsBech32String, valueRequest.Address)
 	})
 }
 
@@ -75,7 +78,9 @@ func TestTxDataBuilder_CallerAddress(t *testing.T) {
 		builder.CallerAddress(address)
 		valueRequest, err := builder.ToVmValueRequest()
 		assert.Nil(t, err)
-		assert.Equal(t, address.AddressAsBech32String(), valueRequest.CallerAddr)
+		addressAsBech32String, err := address.AddressAsBech32String()
+		assert.Nil(t, err)
+		assert.Equal(t, addressAsBech32String, valueRequest.CallerAddr)
 	})
 }
 
