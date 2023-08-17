@@ -67,7 +67,7 @@ func (a *Accounts) SaveAccount(_ vmcommon.AccountHandler) error {
 }
 
 // GetAllLeaves returns nil
-func (a *Accounts) GetAllLeaves(_ *common.TrieIteratorChannels, _ context.Context, _ []byte) error {
+func (a *Accounts) GetAllLeaves(_ *common.TrieIteratorChannels, _ context.Context, _ []byte, _ common.TrieLeafParser) error {
 	return nil
 }
 

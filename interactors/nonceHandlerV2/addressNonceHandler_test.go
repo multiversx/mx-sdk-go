@@ -15,7 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testAddress, _ = data.NewAddressFromBech32String("erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht")
+var testAddressAsBech32String = "erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht"
+var testAddress, _ = data.NewAddressFromBech32String(testAddressAsBech32String)
 var expectedErr = errors.New("expected error")
 
 func TestAddressNonceHandler_NewAddressNonceHandlerWithPrivateAccess(t *testing.T) {
@@ -353,8 +354,8 @@ func TestAddressNonceHandler_fetchGasPriceIfRequired(t *testing.T) {
 func createDefaultTx() transaction.FrontendTransaction {
 	return transaction.FrontendTransaction{
 		Value:    "1",
-		Receiver: testAddress.AddressAsBech32String(),
-		Sender:   testAddress.AddressAsBech32String(),
+		Receiver: testAddressAsBech32String,
+		Sender:   testAddressAsBech32String,
 		GasPrice: 100000,
 		GasLimit: 50000,
 		Data:     nil,

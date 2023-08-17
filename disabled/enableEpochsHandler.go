@@ -4,6 +4,51 @@ package disabled
 type EnableEpochsHandler struct {
 }
 
+// IsSCProcessorV2FlagEnabled returns false
+func (eeh *EnableEpochsHandler) IsSCProcessorV2FlagEnabled() bool {
+	return false
+}
+
+// IsSetGuardianEnabled returns false
+func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
+	return false
+}
+
+// IsRelayedNonceFixEnabled returns false
+func (eeh *EnableEpochsHandler) IsRelayedNonceFixEnabled() bool {
+	return false
+}
+
+// IsKeepExecOrderOnCreatedSCRsEnabled returns false
+func (eeh *EnableEpochsHandler) IsKeepExecOrderOnCreatedSCRsEnabled() bool {
+	return false
+}
+
+// IsMultiClaimOnDelegationEnabled returns false
+func (eeh *EnableEpochsHandler) IsMultiClaimOnDelegationEnabled() bool {
+	return false
+}
+
+// IsChangeUsernameEnabled returns false
+func (eeh *EnableEpochsHandler) IsChangeUsernameEnabled() bool {
+	return false
+}
+
+// IsConsistentTokensValuesLengthCheckEnabled returns false
+func (eeh *EnableEpochsHandler) IsConsistentTokensValuesLengthCheckEnabled() bool {
+	return false
+}
+
+// IsAutoBalanceDataTriesEnabled returns false
+func (eeh *EnableEpochsHandler) IsAutoBalanceDataTriesEnabled() bool {
+	return false
+}
+
+// FixDelegationChangeOwnerOnAccountEnabled -
+func (eeh *EnableEpochsHandler) FixDelegationChangeOwnerOnAccountEnabled() bool {
+	return false
+}
+
 // BlockGasAndFeesReCheckEnableEpoch returns 0
 func (eeh *EnableEpochsHandler) BlockGasAndFeesReCheckEnableEpoch() uint32 {
 	return 0

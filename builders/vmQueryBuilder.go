@@ -71,7 +71,13 @@ func (builder *vmQueryBuilder) CallerAddress(address core.AddressHandler) VMQuer
 		return builder
 	}
 
-	builder.callerAddr = address.AddressAsBech32String()
+	addressAsBech32String, err := address.AddressAsBech32String()
+	if err != nil {
+		builder.err = err
+		return builder
+	}
+
+	builder.callerAddr = addressAsBech32String
 
 	return builder
 }
@@ -84,7 +90,13 @@ func (builder *vmQueryBuilder) Address(address core.AddressHandler) VMQueryBuild
 		return builder
 	}
 
-	builder.address = address.AddressAsBech32String()
+	addressAsBech32String, err := address.AddressAsBech32String()
+	if err != nil {
+		builder.err = err
+		return builder
+	}
+
+	builder.address = addressAsBech32String
 
 	return builder
 }

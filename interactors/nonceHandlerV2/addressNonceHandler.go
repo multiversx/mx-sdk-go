@@ -160,7 +160,12 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 		return err
 	}
 
-	log.Debug("resent transactions", "address", anh.address.AddressAsBech32String(), "total txs", len(resendableTxs), "received hashes", len(hashes))
+	addressAsBech32String, err := anh.address.AddressAsBech32String()
+	if err != nil {
+		return err
+	}
+
+	log.Debug("resent transactions", "address", addressAsBech32String, "total txs", len(resendableTxs), "received hashes", len(hashes))
 
 	return nil
 }

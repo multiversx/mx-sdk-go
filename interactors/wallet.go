@@ -244,8 +244,13 @@ func (w *wallet) secretKeyAfterChecks(key *encryptedKeyJSONV4, secretKey []byte)
 		return nil, errGetAddr
 	}
 
+	addressAsBech32String, err := address.AddressAsBech32String()
+	if err != nil {
+		return nil, err
+	}
+
 	isSameAccount := hex.EncodeToString(address.AddressBytes()) == key.Address &&
-		address.AddressAsBech32String() == key.Bech32
+		addressAsBech32String == key.Bech32
 	if !isSameAccount {
 		return nil, ErrDifferentAccountRecovered
 	}
@@ -299,8 +304,13 @@ func (w *wallet) SavePrivateKeyToJsonFile(privateKey []byte, password string, fi
 		return err
 	}
 
+	addressAsBech32String, err := address.AddressAsBech32String()
+	if err != nil {
+		return err
+	}
+
 	keystoreJson := &encryptedKeyJSONV4{
-		Bech32:  address.AddressAsBech32String(),
+		Bech32:  addressAsBech32String,
 		Address: hex.EncodeToString(address.AddressBytes()),
 		Version: keystoreVersion,
 		Id:      uuid.New(),
@@ -358,8 +368,14 @@ func (w *wallet) SavePrivateKeyToPemFile(privateKey []byte, filename string) err
 	if len(privateKey) == addressLen {
 		privateKey = append(privateKey, address.AddressBytes()...)
 	}
+
+	addressAsBech32String, err := address.AddressAsBech32String()
+	if err != nil {
+		return err
+	}
+
 	blk := pem.Block{
-		Type:  "PRIVATE KEY for " + address.AddressAsBech32String(),
+		Type:  "PRIVATE KEY for " + addressAsBech32String,
 		Bytes: []byte(hex.EncodeToString(privateKey)),
 	}
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0600)

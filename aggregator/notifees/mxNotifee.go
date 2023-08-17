@@ -101,10 +101,15 @@ func (en *mxNotifee) PriceChanged(ctx context.Context, priceChanges []*aggregato
 		return err
 	}
 
+	receiverAddressAsBech32, err := en.contractAddress.AddressAsBech32String()
+	if err != nil {
+		return err
+	}
+
 	gasLimit := en.baseGasLimit + uint64(len(priceChanges))*en.gasLimitForEach
 	tx := &transaction.FrontendTransaction{
 		Value:    zeroString,
-		Receiver: en.contractAddress.AddressAsBech32String(),
+		Receiver: receiverAddressAsBech32,
 		GasPrice: networkConfigs.MinGasPrice,
 		GasLimit: gasLimit,
 		Data:     txData,
