@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        runs-on: [ubuntu-20.04, macos-11,  windows-2019]
+        runs-on: [ubuntu-22.04, macos-11,  windows-2019]
     runs-on: ${{ matrix.runs-on }}
     name: Build
     steps:
@@ -20,7 +20,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.17.6
+        go-version: 1.20.7
       id: go
 
     - name: Check out code into the Go module directory
