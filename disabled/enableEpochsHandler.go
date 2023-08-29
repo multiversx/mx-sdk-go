@@ -4,18 +4,18 @@ package disabled
 type EnableEpochsHandler struct {
 }
 
+// IsScToScEventLogEnabled returns false
+func (eeh *EnableEpochsHandler) IsScToScEventLogEnabled() bool {
+	return false
+}
+
+// IsDynamicGasCostForDataTrieStorageLoadEnabled returns false
+func (eeh *EnableEpochsHandler) IsDynamicGasCostForDataTrieStorageLoadEnabled() bool {
+	return false
+}
+
 // IsSCProcessorV2FlagEnabled returns false
 func (eeh *EnableEpochsHandler) IsSCProcessorV2FlagEnabled() bool {
-	return false
-}
-
-// IsSetGuardianEnabled returns false
-func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
-	return false
-}
-
-// IsRelayedNonceFixEnabled returns false
-func (eeh *EnableEpochsHandler) IsRelayedNonceFixEnabled() bool {
 	return false
 }
 
