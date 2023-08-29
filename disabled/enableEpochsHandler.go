@@ -608,6 +608,21 @@ func (eeh *EnableEpochsHandler) IsRuntimeCodeSizeFixEnabled() bool {
 	return false
 }
 
+// IsRelayedNonceFixEnabled -
+func (eeh *EnableEpochsHandler) IsRelayedNonceFixEnabled() bool {
+	return false
+}
+
+// IsSetGuardianEnabled -
+func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
+	return false
+}
+
+// IsDeterministicSortOnValidatorsInfoFixEnabled -
+func (eeh *EnableEpochsHandler) IsDeterministicSortOnValidatorsInfoFixEnabled() bool {
+	return false
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (eeh *EnableEpochsHandler) IsInterfaceNil() bool {
 	return eeh == nil
