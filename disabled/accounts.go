@@ -33,7 +33,7 @@ func (a *Accounts) GetStackDebugFirstEntry() []byte {
 }
 
 // SnapshotState does nothing
-func (a *Accounts) SnapshotState(_ []byte) {
+func (a *Accounts) SnapshotState(_ []byte, _ uint32) {
 }
 
 // GetTrie returns nil trie and nil error
