@@ -648,6 +648,39 @@ func (ep *proxy) GetNFTTokenData(
 	return response.Data.TokenData, nil
 }
 
+// IsDataTrieMigrated returns true if the data trie of the given account is migrated
+func (ep *proxy) IsDataTrieMigrated(ctx context.Context, address sdkCore.AddressHandler) (bool, error) {
+	if check.IfNil(address) {
+		return false, ErrNilAddress
+	}
+
+	bech32Address, err := address.AddressAsBech32String()
+	if err != nil {
+		return false, err
+	}
+
+	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.IsDataTrieMigrated(bech32Address))
+	if err != nil || code != http.StatusOK {
+		return false, createHTTPStatusError(code, err)
+	}
+
+	response := &data.IsDataTrieMigratedResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return false, err
+	}
+	if response.Error != "" {
+		return false, errors.New(response.Error)
+	}
+
+	isMigrated, ok := response.Data["isMigrated"]
+	if !ok {
+		return false, errors.New("isMigrated key not found in response map")
+	}
+
+	return isMigrated, nil
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (ep *proxy) IsInterfaceNil() bool {
 	return ep == nil
