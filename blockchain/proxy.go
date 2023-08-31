@@ -650,6 +650,10 @@ func (ep *proxy) GetNFTTokenData(
 
 // IsDataTrieMigrated returns true if the data trie of the given account is migrated
 func (ep *proxy) IsDataTrieMigrated(ctx context.Context, address sdkCore.AddressHandler) (bool, error) {
+	if check.IfNil(address) {
+		return false, ErrNilAddress
+	}
+
 	bech32Address, err := address.AddressAsBech32String()
 	if err != nil {
 		return false, err
@@ -671,7 +675,7 @@ func (ep *proxy) IsDataTrieMigrated(ctx context.Context, address sdkCore.Address
 
 	isMigrated, ok := response.Data["isMigrated"]
 	if !ok {
-		return false, errors.New("invalid response")
+		return false, errors.New("isMigrated key not found in response map")
 	}
 
 	return isMigrated, nil
