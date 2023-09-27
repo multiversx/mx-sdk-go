@@ -6,9 +6,9 @@ require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/websocket v1.5.0
-	github.com/multiversx/mx-chain-core-go v1.2.14
+	github.com/multiversx/mx-chain-core-go v1.2.17-0.20230926094053-ab2114ef6c28
 	github.com/multiversx/mx-chain-crypto-go v1.2.8
-	github.com/multiversx/mx-chain-go v1.5.14-0.20230828081445-1dd8735adb18
+	github.com/multiversx/mx-chain-go v1.6.2-0.20230926102410-81603cc781a6
 	github.com/multiversx/mx-chain-logger-go v1.0.13
 	github.com/multiversx/mx-chain-vm-common-go v1.5.5
 	github.com/pborman/uuid v1.2.1
@@ -110,8 +110,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/multiversx/concurrent-map v0.1.4 // indirect
 	github.com/multiversx/mx-chain-communication-go v1.0.6 // indirect
-	github.com/multiversx/mx-chain-storage-go v1.0.12 // indirect
-	github.com/nxadm/tail v1.4.8 // indirect
+	github.com/multiversx/mx-chain-storage-go v1.0.13 // indirect
 	github.com/onsi/ginkgo/v2 v2.9.7 // indirect
 	github.com/opencontainers/runtime-spec v1.0.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -133,7 +132,7 @@ require (
 	github.com/raulk/go-watchdog v1.3.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
+	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tklauser/go-sysconf v0.3.4 // indirect
 	github.com/tklauser/numcpus v0.2.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
