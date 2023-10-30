@@ -4,6 +4,11 @@ package disabled
 type EnableEpochsHandler struct {
 }
 
+// NFTStopCreateEnabled returns false
+func (eeh *EnableEpochsHandler) NFTStopCreateEnabled() bool {
+	return false
+}
+
 // IsScToScEventLogEnabled returns false
 func (eeh *EnableEpochsHandler) IsScToScEventLogEnabled() bool {
 	return false
