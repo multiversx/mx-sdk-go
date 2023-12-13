@@ -29,8 +29,8 @@ func TestTransactionComputer_ComputeBytesForSigning(t *testing.T) {
 
 	fmt.Println(string(serializedTx))
 
-	expectedResults := `{"sender":"erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th","receiver":"erd1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqzu66jx","gas_limit":50000,"chain_id":"D","nonce":90,"value":{},"gas_price":1000000000,"version":1}`
-	require.Equal(t, string(serializedTx), expectedResults)
+	expectedResults := `{"sender":"erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th","receiver":"erd1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqzu66jx","gas_limit":50000,"chain_id":"D","nonce":90,"value":0,"gas_price":1000000000,"version":1}`
+	require.Equal(t, expectedResults, string(serializedTx))
 }
 
 func TestComputeTransactionHash(t *testing.T) {
@@ -52,5 +52,5 @@ func TestComputeTransactionHash(t *testing.T) {
 	tc := NewTransactionComputer()
 	hash, err := tc.ComputeTransactionHash(tx)
 	require.NoError(t, err, "failed to compute transaction hash")
-	require.Equal(t, hex.EncodeToString(hash), "169b76b752b220a76a93aeebc462a1192db1dc2ec9d17e6b4d7b0dcc91792f03")
+	require.Equal(t, "169b76b752b220a76a93aeebc462a1192db1dc2ec9d17e6b4d7b0dcc91792f03", hex.EncodeToString(hash))
 }
