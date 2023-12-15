@@ -16,6 +16,13 @@ type AccountResponse struct {
 	Code  string `json:"code"`
 }
 
+// IsDataTrieMigratedResponse holds the IsDataTrieMigrated endpoint response
+type IsDataTrieMigratedResponse struct {
+	Data  map[string]bool `json:"data"`
+	Error string          `json:"error"`
+	Code  string          `json:"code"`
+}
+
 // Account holds an Account's information
 type Account struct {
 	Address         string `json:"address"`

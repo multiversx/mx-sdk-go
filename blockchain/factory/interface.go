@@ -40,6 +40,7 @@ type EndpointProvider interface {
 	GetProcessedTransactionStatus(hexHash string) string
 	GetESDTTokenData(addressAsBech32 string, tokenIdentifier string) string
 	GetNFTTokenData(addressAsBech32 string, tokenIdentifier string, nonce uint64) string
+	IsDataTrieMigrated(addressAsBech32 string) string
 	IsInterfaceNil() bool
 }
 

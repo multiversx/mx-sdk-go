@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"bytes"
-
 	mxChainCore "github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/typeConverters/uint64ByteSlice"
@@ -38,23 +37,24 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 	builtInFuncs := &disabled.BuiltInFunctionContainer{}
 
 	var argsHook = hooks.ArgBlockChainHook{
-		Accounts:              &disabled.Accounts{},
-		PubkeyConv:            core.AddressPublicKeyConverter,
-		StorageService:        &disabled.StorageService{},
-		BlockChain:            &disabled.Blockchain{},
-		ShardCoordinator:      &disabled.ShardCoordinator{},
-		Marshalizer:           &marshal.JsonMarshalizer{},
-		Uint64Converter:       uint64ByteSlice.NewBigEndianConverter(),
-		BuiltInFunctions:      builtInFuncs,
-		DataPool:              &disabled.DataPool{},
-		CompiledSCPool:        storage.NewMapCacher(),
-		NilCompiledSCStore:    true,
-		NFTStorageHandler:     &disabled.SimpleESDTNFTStorageHandler{},
-		EpochNotifier:         &disabled.EpochNotifier{},
-		GlobalSettingsHandler: &disabled.GlobalSettingsHandler{},
-		EnableEpochsHandler:   &disabled.EnableEpochsHandler{},
-		GasSchedule:           &disabled.GasScheduleNotifier{},
-		Counter:               &disabled.BlockChainHookCounter{},
+		Accounts:                 &disabled.Accounts{},
+		PubkeyConv:               core.AddressPublicKeyConverter,
+		StorageService:           &disabled.StorageService{},
+		BlockChain:               &disabled.Blockchain{},
+		ShardCoordinator:         &disabled.ShardCoordinator{},
+		Marshalizer:              &marshal.JsonMarshalizer{},
+		Uint64Converter:          uint64ByteSlice.NewBigEndianConverter(),
+		BuiltInFunctions:         builtInFuncs,
+		DataPool:                 &disabled.DataPool{},
+		CompiledSCPool:           storage.NewMapCacher(),
+		NilCompiledSCStore:       true,
+		NFTStorageHandler:        &disabled.SimpleESDTNFTStorageHandler{},
+		EpochNotifier:            &disabled.EpochNotifier{},
+		GlobalSettingsHandler:    &disabled.GlobalSettingsHandler{},
+		EnableEpochsHandler:      &disabled.EnableEpochsHandler{},
+		GasSchedule:              &disabled.GasScheduleNotifier{},
+		Counter:                  &disabled.BlockChainHookCounter{},
+		MissingTrieNodesNotifier: &disabled.MissingTrieNodesNotifier{},
 	}
 	blockchainHook, err := hooks.NewBlockChainHookImpl(argsHook)
 	if err != nil {

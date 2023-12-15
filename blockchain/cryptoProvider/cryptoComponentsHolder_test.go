@@ -52,7 +52,11 @@ func TestNewCryptoComponentsHolder(t *testing.T) {
 
 		privateKey := &testsCommon.PrivateKeyStub{
 			GeneratePublicCalled: func() crypto.PublicKey {
-				return &testsCommon.PublicKeyStub{}
+				return &testsCommon.PublicKeyStub{
+					ToByteArrayCalled: func() ([]byte, error) {
+						return make([]byte, 32), nil
+					},
+				}
 			},
 		}
 		keyGenInstance := &cryptoMocks.KeyGenStub{
@@ -82,7 +86,11 @@ func TestNewCryptoComponentsHolder(t *testing.T) {
 
 		bech32Address := holder.GetBech32()
 		addressHandler := holder.GetAddressHandler()
-		require.Equal(t, addressHandler.AddressAsBech32String(), bech32Address)
+
+		addressAsBech32String, err := addressHandler.AddressAsBech32String()
+		require.Nil(t, err)
+
+		require.Equal(t, addressAsBech32String, bech32Address)
 		require.Equal(t, "erd1j84k44nsqsme8r6e5aawutx0z2cd6cyx3wprkzdh73x2cf0kqvksa3snnq", bech32Address)
 	})
 }

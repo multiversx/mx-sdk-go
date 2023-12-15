@@ -25,11 +25,17 @@ func main() {
 		return
 	}
 
+	address0AsBech32String, err := address0.AddressAsBech32String()
+	if err != nil {
+		log.Error("error getting address0 as bech32 string", "error", err)
+		return
+	}
+
 	log.Info("generated private/public key",
 		"private key", privateKey0,
 		"index", index0,
 		"address as hex", address0.AddressBytes(),
-		"address as bech32", address0.AddressAsBech32String(),
+		"address as bech32", address0AsBech32String,
 	)
 
 	// generating the private key from the same mnemonic using index 1
@@ -41,10 +47,16 @@ func main() {
 		return
 	}
 
+	address1AsBech32String, err := address1.AddressAsBech32String()
+	if err != nil {
+		log.Error("error getting address1 as bech32 string", "error", err)
+		return
+	}
+
 	log.Info("generated private/public key",
 		"private key", privateKey1,
 		"index", index1,
 		"address as hex", address1.AddressBytes(),
-		"address as bech32", address1.AddressAsBech32String(),
+		"address as bech32", address1AsBech32String,
 	)
 }

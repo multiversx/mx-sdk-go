@@ -181,11 +181,16 @@ func (ep *proxy) GetDefaultTransactionArguments(
 		return transaction.FrontendTransaction{}, "", err
 	}
 
+	addressAsBech32String, err := address.AddressAsBech32String()
+	if err != nil {
+		return transaction.FrontendTransaction{}, "", err
+	}
+
 	return transaction.FrontendTransaction{
 		Nonce:     account.Nonce,
 		Value:     "",
 		Receiver:  "",
-		Sender:    address.AddressAsBech32String(),
+		Sender:    addressAsBech32String,
 		GasPrice:  networkConfigs.MinGasPrice,
 		GasLimit:  networkConfigs.MinGasLimit,
 		Data:      nil,
@@ -198,18 +203,24 @@ func (ep *proxy) GetDefaultTransactionArguments(
 
 // GetAccount retrieves an account info from the network (nonce, balance)
 func (ep *proxy) GetAccount(ctx context.Context, address sdkCore.AddressHandler) (*data.Account, error) {
-	err := ep.checkFinalState(ctx, address.AddressAsBech32String())
-	if err != nil {
-		return nil, err
-	}
-
 	if check.IfNil(address) {
 		return nil, ErrNilAddress
 	}
 	if !address.IsValid() {
 		return nil, ErrInvalidAddress
 	}
-	endpoint := ep.endpointProvider.GetAccount(address.AddressAsBech32String())
+
+	addressAsBech32, err := address.AddressAsBech32String()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ep.checkFinalState(ctx, addressAsBech32)
+	if err != nil {
+		return nil, err
+	}
+
+	endpoint := ep.endpointProvider.GetAccount(addressAsBech32)
 
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
@@ -574,7 +585,12 @@ func (ep *proxy) GetESDTTokenData(
 		return nil, ErrInvalidAddress
 	}
 
-	endpoint := ep.endpointProvider.GetESDTTokenData(address.AddressAsBech32String(), tokenIdentifier)
+	addressAsBech32String, err := address.AddressAsBech32String()
+	if err != nil {
+		return nil, err
+	}
+
+	endpoint := ep.endpointProvider.GetESDTTokenData(addressAsBech32String, tokenIdentifier)
 	endpoint = sdkCore.BuildUrlWithAccountQueryOptions(endpoint, queryOptions)
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
@@ -608,7 +624,12 @@ func (ep *proxy) GetNFTTokenData(
 		return nil, ErrInvalidAddress
 	}
 
-	endpoint := ep.endpointProvider.GetNFTTokenData(address.AddressAsBech32String(), tokenIdentifier, nonce)
+	addressAsBech32String, err := address.AddressAsBech32String()
+	if err != nil {
+		return nil, err
+	}
+
+	endpoint := ep.endpointProvider.GetNFTTokenData(addressAsBech32String, tokenIdentifier, nonce)
 	endpoint = sdkCore.BuildUrlWithAccountQueryOptions(endpoint, queryOptions)
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
@@ -625,6 +646,39 @@ func (ep *proxy) GetNFTTokenData(
 	}
 
 	return response.Data.TokenData, nil
+}
+
+// IsDataTrieMigrated returns true if the data trie of the given account is migrated
+func (ep *proxy) IsDataTrieMigrated(ctx context.Context, address sdkCore.AddressHandler) (bool, error) {
+	if check.IfNil(address) {
+		return false, ErrNilAddress
+	}
+
+	bech32Address, err := address.AddressAsBech32String()
+	if err != nil {
+		return false, err
+	}
+
+	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.IsDataTrieMigrated(bech32Address))
+	if err != nil || code != http.StatusOK {
+		return false, createHTTPStatusError(code, err)
+	}
+
+	response := &data.IsDataTrieMigratedResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return false, err
+	}
+	if response.Error != "" {
+		return false, errors.New(response.Error)
+	}
+
+	isMigrated, ok := response.Data["isMigrated"]
+	if !ok {
+		return false, errors.New("isMigrated key not found in response map")
+	}
+
+	return isMigrated, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
