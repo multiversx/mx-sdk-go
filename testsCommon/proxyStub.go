@@ -32,9 +32,9 @@ type ProxyStub struct {
 	GetLatestHyperBlockNonceCalled       func(ctx context.Context) (uint64, error)
 	GetHyperBlockByNonceCalled           func(ctx context.Context, nonce uint64) (*data.HyperBlock, error)
 	GetHyperBlockByHashCalled            func(ctx context.Context, hash string) (*data.HyperBlock, error)
-	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address erdgoCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error)
+	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address sdkCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error)
 	GetValidatorsInfoByEpochCalled       func(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
-	GetGuardianDataCalled                func(ctx context.Context, address erdgoCore.AddressHandler) (*api.GuardianData, error)
+	GetGuardianDataCalled                func(ctx context.Context, address sdkCore.AddressHandler) (*api.GuardianData, error)
 }
 
 // ExecuteVMQuery -
@@ -221,7 +221,7 @@ func (stub *ProxyStub) GetValidatorsInfoByEpoch(ctx context.Context, epoch uint3
 }
 
 // GetGuardianData -
-func (stub *ProxyStub) GetGuardianData(ctx context.Context, address erdgoCore.AddressHandler) (*api.GuardianData, error) {
+func (stub *ProxyStub) GetGuardianData(ctx context.Context, address sdkCore.AddressHandler) (*api.GuardianData, error) {
 	if stub.GetGuardianDataCalled != nil {
 		return stub.GetGuardianDataCalled(ctx, address)
 	}
