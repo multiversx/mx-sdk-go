@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
@@ -225,6 +226,27 @@ func (proxy *baseProxy) checkReceivedNodeStatus(networkStatus *data.NetworkStatu
 // GetRestAPIEntityType returns the REST API entity type that this implementation works with
 func (proxy *baseProxy) GetRestAPIEntityType() core.RestAPIEntityType {
 	return proxy.endpointProvider.GetRestAPIEntityType()
+}
+
+// ProcessTransactionStatus will parse the provided transaction info and return its status accordingly
+func (proxy *baseProxy) ProcessTransactionStatus(ctx context.Context, hexTxHash string) (transaction.TxStatus, error) {
+	endpoint := proxy.endpointProvider.GetProcessedTransactionStatus(hexTxHash)
+	buff, code, err := proxy.GetHTTP(ctx, endpoint)
+	if err != nil || code != http.StatusOK {
+		wrappedErr := fmt.Errorf("%w, please make sure you run the proxy version v1.1.38 or higher", err)
+		return transaction.TxStatusFail, createHTTPStatusError(code, wrappedErr)
+	}
+
+	response := &data.ProcessedTransactionStatus{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return transaction.TxStatusFail, err
+	}
+	if response.Error != "" {
+		return transaction.TxStatusFail, errors.New(response.Error)
+	}
+
+	return transaction.TxStatus(response.Data.ProcessedStatus), nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

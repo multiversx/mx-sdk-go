@@ -3,7 +3,7 @@ package blockchain
 import (
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-go/sharding"
-	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+	sdkCore "github.com/multiversx/mx-sdk-go/core"
 )
 
 type shardCoordinator struct {
@@ -23,7 +23,7 @@ func NewShardCoordinator(numOfShardsWithoutMeta uint32, currentShard uint32) (*s
 }
 
 // ComputeShardId computes the shard ID of a provided address
-func (sc *shardCoordinator) ComputeShardId(address erdgoCore.AddressHandler) (uint32, error) {
+func (sc *shardCoordinator) ComputeShardId(address sdkCore.AddressHandler) (uint32, error) {
 	if check.IfNil(address) {
 		return 0, ErrNilAddress
 	}

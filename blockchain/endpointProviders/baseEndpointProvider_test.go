@@ -25,5 +25,7 @@ func TestBaseEndpointProvider(t *testing.T) {
 	assert.Equal(t, vmValues, base.GetVmValues())
 	assert.Equal(t, genesisNodesConfig, base.GetGenesisNodesConfig())
 	assert.Equal(t, "internal/raw/startofepoch/metablock/by-epoch/5", base.GetRawStartOfEpochMetaBlock(5))
+	assert.Equal(t, "address/erd1address/esdt/TKN-001122", base.GetESDTTokenData("erd1address", "TKN-001122"))
+	assert.Equal(t, "address/erd1address/nft/TKN-001122/nonce/37", base.GetNFTTokenData("erd1address", "TKN-001122", 37))
 	assert.Equal(t, "address/dummyAddress/guardian-data", base.GetGuardianData("dummyAddress"))
 }

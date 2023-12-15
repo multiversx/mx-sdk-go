@@ -11,6 +11,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/blockchain/endpointProviders"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/testsCommon"
@@ -590,4 +591,126 @@ func TestBaseProxy_GetRestAPIEntityType(t *testing.T) {
 	baseProxyInstance, _ := newBaseProxy(args)
 
 	assert.Equal(t, args.endpointProvider.GetRestAPIEntityType(), baseProxyInstance.GetRestAPIEntityType())
+}
+
+func TestBaseProxyInstance_ProcessTransactionStatus(t *testing.T) {
+	t.Parallel()
+
+	expectedErr := errors.New("expected error")
+	t.Run("proxy errors when calling the API endpoint - StatusNotFound", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return nil, http.StatusNotFound, nil
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
+
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusFail, txStatus)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "returned http status: 404")
+		assert.Contains(t, err.Error(), "please make sure you run the proxy version v1.1.38 or higher")
+	})
+	t.Run("proxy errors when calling the API endpoint, internal error", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return nil, http.StatusOK, expectedErr
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
+
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusFail, txStatus)
+		assert.NotNil(t, err)
+		assert.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("proxy errors when calling the API endpoint, internal error", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return nil, http.StatusOK, expectedErr
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
+
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusFail, txStatus)
+		assert.NotNil(t, err)
+		assert.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("proxy returns a malformed response", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				return []byte("not a correct buffer"), http.StatusOK, nil
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
+
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusFail, txStatus)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "invalid character")
+	})
+	t.Run("proxy returns a valid response but with an error", func(t *testing.T) {
+		t.Parallel()
+
+		response := &data.ProcessedTransactionStatus{
+			Data: struct {
+				ProcessedStatus string `json:"status"`
+			}{},
+			Error: expectedErr.Error(),
+			Code:  "",
+		}
+
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				buff, _ := json.Marshal(response)
+				return buff, http.StatusOK, nil
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
+
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusFail, txStatus)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), expectedErr.Error())
+	})
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		response := &data.ProcessedTransactionStatus{
+			Data: struct {
+				ProcessedStatus string `json:"status"`
+			}{
+				ProcessedStatus: transaction.TxStatusSuccess.String(),
+			},
+			Error: "",
+			Code:  "",
+		}
+
+		args := createMockArgsBaseProxy()
+		args.httpClientWrapper = &testsCommon.HTTPClientWrapperStub{
+			GetHTTPCalled: func(ctx context.Context, endpoint string) ([]byte, int, error) {
+				buff, _ := json.Marshal(response)
+				return buff, http.StatusOK, nil
+			},
+		}
+		baseProxyInstance, _ := newBaseProxy(args)
+
+		txStatus, err := baseProxyInstance.ProcessTransactionStatus(context.Background(), "tx hash")
+		assert.Equal(t, transaction.TxStatusSuccess, txStatus)
+		assert.Nil(t, err)
+	})
 }
