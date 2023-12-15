@@ -31,7 +31,7 @@ type TokenIdentifierParts struct {
 
 type TokenTransfer struct {
 	Token  Token
-	Amount Amount
+	Amount *Amount
 }
 
 type TokenComputer interface {
@@ -161,7 +161,7 @@ func (t *tokenComputer) ComputeExtendedIdentifierFromIdentifierAndNonce(identifi
 		return identifier, nil
 	}
 
-	encodedNonce := encodeUnsignedNumber(nonce)
+	encodedNonce := EncodeUnsignedNumber(nonce)
 
 	return fmt.Sprintf("%s-%s", identifier, hex.EncodeToString(encodedNonce)), nil
 }
@@ -224,7 +224,7 @@ func isUpper(str string) bool {
 	return true
 }
 
-func encodeUnsignedNumber(arg uint64) []byte {
+func EncodeUnsignedNumber(arg uint64) []byte {
 	// Determine the maximum number of bytes needed based on the size of int
 	const IntegerMaxNumBytes = 8 // Assuming a 64-bit integer
 
@@ -245,5 +245,61 @@ func removeLeadingZeros(data []byte) []byte {
 			return data[i:]
 		}
 	}
-	return []byte{0} // If all bytes are zero, return a single zero byte
+	return []byte{} // If all bytes are zero, return a single zero byte
+}
+
+type TokenTransfersDataBuilder interface {
+	BuildArgsForESDTTransfer(transfer *TokenTransfer) ([]string, error)
+	BuildArgsForSingleESDTNFTTransfer(transfer *TokenTransfer, receiver Address) ([]string, error)
+	BuildArgsForMultiESDTNFTTransfer(receiver Address, transfers []*TokenTransfer) ([]string, error)
+}
+
+type tokenTransfersDataBuilder struct {
+	tokenComputer TokenComputer
+}
+
+func NewTokenTransferDataBuilder(computer TokenComputer) TokenTransfersDataBuilder {
+	return &tokenTransfersDataBuilder{computer}
+}
+
+func (t *tokenTransfersDataBuilder) BuildArgsForESDTTransfer(transfer *TokenTransfer) ([]string, error) {
+	args := []string{"ESDTTransfer"}
+	args = append(args, hex.EncodeToString([]byte(transfer.Token.Identifier)), hex.EncodeToString(transfer.Amount.Bytes()))
+	return args, nil
+}
+
+func (t *tokenTransfersDataBuilder) BuildArgsForSingleESDTNFTTransfer(
+	transfer *TokenTransfer,
+	receiver Address,
+) ([]string, error) {
+	args := []string{"ESDTNFTTransfer"}
+	token := transfer.Token
+	identifier, err := t.tokenComputer.ExtractIdentifierFromExtendedIdentifier(token.Identifier)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract identifier: %v", err)
+	}
+	args = append(args, hex.EncodeToString([]byte(identifier)), hex.EncodeToString(EncodeUnsignedNumber(transfer.Token.Nonce)),
+		hex.EncodeToString(transfer.Amount.Bytes()), receiver.ToHex())
+	return args, nil
+}
+
+func (t *tokenTransfersDataBuilder) BuildArgsForMultiESDTNFTTransfer(
+	receiver Address,
+	transfers []*TokenTransfer,
+) ([]string, error) {
+	encodedLength := EncodeUnsignedNumber(uint64(len(transfers)))
+	args := []string{"MultiESDTNFTTransfer", receiver.ToHex(), hex.EncodeToString(encodedLength)}
+
+	for _, transfer := range transfers {
+		identifier, err := t.tokenComputer.ExtractIdentifierFromExtendedIdentifier(transfer.Token.Identifier)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract identifier: %v", err)
+		}
+
+		args = append(args, hex.EncodeToString([]byte(identifier)),
+			hex.EncodeToString(EncodeUnsignedNumber(transfer.Token.Nonce)),
+			hex.EncodeToString(transfer.Amount.Bytes()))
+	}
+
+	return args, nil
 }
