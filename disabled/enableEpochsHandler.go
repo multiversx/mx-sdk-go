@@ -4,21 +4,6 @@ package disabled
 type EnableEpochsHandler struct {
 }
 
-// IsGuardAccountEnabled returns false
-func (eeh *EnableEpochsHandler) IsGuardAccountEnabled() bool {
-	return false
-}
-
-// IsSetGuardianEnabled returns false
-func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
-	return false
-}
-
-// IsWipeSingleNFTLiquidityDecreaseEnabled returns false
-func (eeh *EnableEpochsHandler) IsWipeSingleNFTLiquidityDecreaseEnabled() bool {
-	return false
-}
-
 // BlockGasAndFeesReCheckEnableEpoch returns 0
 func (eeh *EnableEpochsHandler) BlockGasAndFeesReCheckEnableEpoch() uint32 {
 	return 0
@@ -563,6 +548,11 @@ func (eeh *EnableEpochsHandler) IsRuntimeMemStoreLimitEnabled() bool {
 	return false
 }
 
+// IsWipeSingleNFTLiquidityDecreaseEnabled -
+func (eeh *EnableEpochsHandler) IsWipeSingleNFTLiquidityDecreaseEnabled() bool {
+	return false
+}
+
 // IsAlwaysSaveTokenMetaDataEnabled -
 func (eeh *EnableEpochsHandler) IsAlwaysSaveTokenMetaDataEnabled() bool {
 	return false
@@ -575,6 +565,21 @@ func (eeh *EnableEpochsHandler) IsRuntimeCodeSizeFixEnabled() bool {
 
 // IsRelayedNonceFixEnabled -
 func (eeh *EnableEpochsHandler) IsRelayedNonceFixEnabled() bool {
+	return false
+}
+
+// IsGuardAccountEnabled returns false
+func (eeh *EnableEpochsHandler) IsGuardAccountEnabled() bool {
+	return false
+}
+
+// IsSetGuardianEnabled -
+func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
+	return false
+}
+
+// IsDeterministicSortOnValidatorsInfoFixEnabled -
+func (eeh *EnableEpochsHandler) IsDeterministicSortOnValidatorsInfoFixEnabled() bool {
 	return false
 }
 

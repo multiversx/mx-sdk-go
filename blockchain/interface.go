@@ -51,6 +51,9 @@ type EndpointProvider interface {
 	GetGuardianData(address string) string
 	GetRestAPIEntityType() core.RestAPIEntityType
 	GetValidatorsInfo(epoch uint32) string
+	GetProcessedTransactionStatus(hexHash string) string
+	GetESDTTokenData(addressAsBech32 string, tokenIdentifier string) string
+	GetNFTTokenData(addressAsBech32 string, tokenIdentifier string, nonce uint64) string
 	IsInterfaceNil() bool
 }
 

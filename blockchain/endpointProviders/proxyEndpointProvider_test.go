@@ -5,7 +5,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	erdgoCore "github.com/multiversx/mx-sdk-go/core"
+	sdkCore "github.com/multiversx/mx-sdk-go/core"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +31,6 @@ func TestProxyEndpointProvider_Getters(t *testing.T) {
 	assert.Equal(t, "internal/2/raw/block/by-hash/hex", provider.GetRawBlockByHash(2, "hex"))
 	assert.Equal(t, "internal/2/raw/block/by-nonce/3", provider.GetRawBlockByNonce(2, 3))
 	assert.Equal(t, "internal/2/raw/miniblock/by-hash/hex/epoch/4", provider.GetRawMiniBlockByHash(2, "hex", 4))
-	assert.Equal(t, erdgoCore.Proxy, provider.GetRestAPIEntityType())
+	assert.Equal(t, sdkCore.Proxy, provider.GetRestAPIEntityType())
 	assert.False(t, provider.ShouldCheckShardIDForNodeStatus())
 }

@@ -102,9 +102,9 @@ func TestSigner_SignTransaction(t *testing.T) {
 	//	 "message":"0x6d657373616765",
 	//	 "signature":"0x546c6b6d6487852f54571ab2da81b48ff8f09bef71ba07b116fcf7203538cd64ea5f9bffcc13a0279a75ca3b1b0a1e478d23e1771d381011f8135e4372a9dd00",
 	//	 "version":1,
-	//	 "signer":"ErdJS"
+	//	 "signer":"sdk-js"
 	// }
-	t.Run("should work with signature generated using erdjs", func(t *testing.T) {
+	t.Run("should work with signature generated using sdk-js", func(t *testing.T) {
 		t.Parallel()
 
 		signerInstance := NewSigner()

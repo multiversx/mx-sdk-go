@@ -18,6 +18,7 @@ type TxDataBuilder interface {
 	ArgBigInt(value *big.Int) TxDataBuilder
 	ArgInt64(value int64) TxDataBuilder
 	ArgBytes(bytes []byte) TxDataBuilder
+	ArgBytesList(list [][]byte) TxDataBuilder
 
 	ToDataString() (string, error)
 	ToDataBytes() ([]byte, error)

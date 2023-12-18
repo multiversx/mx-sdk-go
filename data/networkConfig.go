@@ -27,4 +27,6 @@ type NetworkConfig struct {
 	StartTime                int64   `json:"erd_start_time"`
 	Adaptivity               bool    `json:"erd_adaptivity,string"`
 	Hysteresys               float32 `json:"erd_hysteresis,string"`
+	RoundsPerEpoch           uint32  `json:"erd_rounds_per_epoch"`
+	ExtraGasLimitGuardedTx   uint64  `json:"erd_extra_gas_limit_guarded_tx"`
 }
