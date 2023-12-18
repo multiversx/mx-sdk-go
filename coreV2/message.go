@@ -2,8 +2,9 @@ package coreV2
 
 import (
 	"encoding/hex"
-	"github.com/multiversx/mx-chain-core-go/hashing/keccak"
 	"strconv"
+
+	"github.com/multiversx/mx-chain-core-go/hashing/keccak"
 )
 
 type Message struct {

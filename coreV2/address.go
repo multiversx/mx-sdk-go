@@ -3,8 +3,9 @@ package coreV2
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/multiversx/mx-chain-core-go/core/pubkeyConverter"
 	"strings"
+
+	"github.com/multiversx/mx-chain-core-go/core/pubkeyConverter"
 )
 
 const (

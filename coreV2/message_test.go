@@ -2,8 +2,9 @@ package coreV2
 
 import (
 	"encoding/hex"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMessageComputer_ComputeBytesForSigning(t *testing.T) {

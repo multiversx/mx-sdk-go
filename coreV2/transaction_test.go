@@ -3,9 +3,10 @@ package coreV2
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestTransactionComputer_ComputeBytesForSigning(t *testing.T) {
