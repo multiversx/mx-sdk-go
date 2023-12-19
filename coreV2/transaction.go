@@ -132,13 +132,12 @@ const (
 )
 
 type Config struct {
-	ChainID                      string
-	MinGasLimit                  int
-	GasLimitPerByte              int
-	GasLimitESDTTransfer         int
-	GasLimitESDTNFTTransfer      int
-	GasLimitMultiESDTNFTTransfer int
+	// General-purpose configuration.
+	ChainID         string
+	MinGasLimit     int
+	GasLimitPerByte int
 
+	// Configuration for token operations.
 	GasLimitIssue                   int
 	GasLimitToggleBurnRoleGlobally  int
 	GasLimitESDTLocalMint           int
@@ -154,6 +153,20 @@ type Config struct {
 	GasLimitStorePerByte            int
 	IssueCost                       int
 	ESDTContractAddress             Address
+
+	// Configuration for delegation operations.
+	GasLimitStake                        int
+	GasLimitUnstake                      int
+	GasLimitUnbound                      int
+	GasLimitCreateDelegationContract     int
+	GasLimitDelegationOperations         int
+	AdditionalGasLimitPerValidatorNode   int
+	AdditionalGasForDelegationOperations int
+
+	// Configuration for token transfers.
+	GasLimitESDTTransfer         int
+	GasLimitESDTNFTTransfer      int
+	GasLimitMultiESDTNFTTransfer int
 }
 
 type transactionBuilder struct {
@@ -229,6 +242,11 @@ func (t *transactionBuilder) Build() (*Transaction, error) {
 
 	data := buildTransactionPayload(t.dataParts)
 	gasLimit := t.computeGasLimit(data)
+
+	amount := big.NewInt(0)
+	if t.amount == nil {
+		t.amount = amount
+	}
 
 	return &Transaction{
 		Sender:   sender,

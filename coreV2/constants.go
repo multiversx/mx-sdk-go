@@ -24,3 +24,7 @@ var (
 	// AddressPublicKeyConverter represents the default address public key converter
 	AddressPublicKeyConverter, _ = pubkeyConverter.NewBech32PubkeyConverter(AddressBytesLen, DefaultAddressPrefix)
 )
+
+func GetVMTypeWASMVM() []byte {
+	return []byte{0x05, 0x00}
+}
