@@ -153,11 +153,12 @@ func (s *smartContractTransactionsFactory) CreateTransactionForExecute(
 		}
 	}
 	if noOfTokens > 1 {
-		dataParts, err = s.dataArgsBuilder.BuildArgsForMultiESDTNFTTransfer(receiver, tokenTransfers)
+		var parts []string
+		parts, err = s.dataArgsBuilder.BuildArgsForMultiESDTNFTTransfer(receiver, tokenTransfers)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build args for multi-esdt-nft transfer")
 		}
-		dataParts = append(dataParts)
+		dataParts = append(parts)
 		receiver = sender
 	}
 
