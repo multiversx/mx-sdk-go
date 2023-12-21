@@ -13,7 +13,6 @@ import (
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
 	"github.com/multiversx/mx-sdk-go/testsCommon"
-	testsInteractors "github.com/multiversx/mx-sdk-go/testsCommon/interactors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,15 +28,6 @@ func TestNewNonceTransactionHandlerV2(t *testing.T) {
 		nth, err := NewNonceTransactionHandlerV2(args)
 		require.Nil(t, nth)
 		assert.Equal(t, interactors.ErrNilProxy, err)
-	})
-	t.Run("nil AddressNonceHandlerCreator", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNonceTransactionsHandlerV2()
-		args.Creator = nil
-		nth, err := NewNonceTransactionHandlerV2(args)
-		require.Nil(t, nth)
-		assert.Equal(t, interactors.ErrNilAddressNonceHandlerCreator, err)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
@@ -500,10 +490,5 @@ func createMockArgsNonceTransactionsHandlerV2() ArgsNonceTransactionsHandlerV2 {
 	return ArgsNonceTransactionsHandlerV2{
 		Proxy:            &testsCommon.ProxyStub{},
 		IntervalToResend: time.Second * 2,
-		Creator: &testsInteractors.AddressNonceHandlerCreatorStub{
-			CreateCalled: func(proxy interactors.Proxy, address core.AddressHandler) (interactors.AddressNonceHandler, error) {
-				return NewAddressNonceHandler(proxy, address)
-			},
-		},
 	}
 }

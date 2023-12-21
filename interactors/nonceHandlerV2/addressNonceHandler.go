@@ -12,9 +12,6 @@ import (
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
-//TODO EN-13182: create a baseAddressNonceHandler component that can remove the duplicate code as much as possible from the
-// addressNonceHandler and singleTransactionAddressNonceHandler
-
 // addressNonceHandler is the handler used for one address. It is able to handle the current
 // nonce as max(current_stored_nonce, account_nonce). After each call of the getNonce function
 // the current_stored_nonce is incremented. This will prevent "nonce too low in transaction"
@@ -193,7 +190,8 @@ func (anh *addressNonceHandler) isTxAlreadySent(tx *transaction.FrontendTransact
 	anh.mut.RLock()
 	defer anh.mut.RUnlock()
 	for _, oldTx := range anh.transactions {
-		isTheSameReceiverDataValue := oldTx.Receiver == tx.Receiver &&
+		isTheSameReceiverDataValue := tx.Nonce == oldTx.Nonce &&
+			oldTx.Receiver == tx.Receiver &&
 			bytes.Equal(oldTx.Data, tx.Data) &&
 			oldTx.Value == tx.Value
 		if isTheSameReceiverDataValue {

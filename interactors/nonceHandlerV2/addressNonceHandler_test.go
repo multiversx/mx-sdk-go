@@ -96,6 +96,22 @@ func TestAddressNonceHandler_ApplyNonceAndGasPrice(t *testing.T) {
 		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx)
 		require.Nil(t, err)
 	})
+	t.Run("same transaction but with different nonce should work", func(t *testing.T) {
+		t.Parallel()
+
+		tx1 := createDefaultTx()
+		tx2 := createDefaultTx()
+		tx2.Nonce++
+
+		anh, err := NewAddressNonceHandlerWithPrivateAccess(&testsCommon.ProxyStub{}, testAddress)
+		require.Nil(t, err)
+
+		_, err = anh.SendTransaction(context.Background(), &tx1)
+		require.Nil(t, err)
+
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx2)
+		require.Nil(t, err)
+	})
 }
 
 func TestAddressNonceHandler_getNonceUpdatingCurrent(t *testing.T) {

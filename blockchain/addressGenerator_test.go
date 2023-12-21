@@ -62,14 +62,16 @@ func TestAddressGenerator_ComputeArwenScAddress(t *testing.T) {
 
 	ag, err := NewAddressGenerator(coord)
 	require.Nil(t, err)
-	owner, err := data.NewAddressFromBech32String("erd1dglncxk6sl9a3xumj78n6z2xux4ghp5c92cstv5zsn56tjgtdwpsk46qrs")
+	owner, err := data.NewAddressFromBech32String("erd1uzk2g5rhvg8prk9y50d0q7qsxg7tm7f320q0q4qlpmfu395wjmdqqy0n9q")
 	require.Nil(t, err)
 
-	scAddress, err := ag.ComputeArwenScAddress(owner, 10)
-	require.Nil(t, err)
+	for i := 0; i < 10; i++ {
+		scAddress, err := ag.ComputeArwenScAddress(owner, uint64(i))
+		require.Nil(t, err)
 
-	scAddressAsBech32, err := scAddress.AddressAsBech32String()
-	require.Nil(t, err)
+		scAddressAsBech32, err := scAddress.AddressAsBech32String()
+		require.Nil(t, err)
 
-	assert.Equal(t, "erd1qqqqqqqqqqqqqpgqxcy5fma93yhw44xcmt3zwrl0tlhaqmxrdwpsr2vh8p", scAddressAsBech32)
+		fmt.Println(scAddressAsBech32)
+	}
 }

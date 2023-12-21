@@ -22,7 +22,6 @@ var log = logger.GetOrCreate("mx-sdk-go/interactors/nonceHandlerV2")
 type ArgsNonceTransactionsHandlerV2 struct {
 	Proxy            interactors.Proxy
 	IntervalToResend time.Duration
-	Creator          interactors.AddressNonceHandlerCreator
 }
 
 // nonceTransactionsHandlerV2 is the handler used for an unlimited number of addresses.
@@ -36,7 +35,6 @@ type ArgsNonceTransactionsHandlerV2 struct {
 type nonceTransactionsHandlerV2 struct {
 	proxy            interactors.Proxy
 	mutHandlers      sync.RWMutex
-	creator          interactors.AddressNonceHandlerCreator
 	handlers         map[string]interactors.AddressNonceHandler
 	cancelFunc       func()
 	intervalToResend time.Duration
@@ -51,15 +49,11 @@ func NewNonceTransactionHandlerV2(args ArgsNonceTransactionsHandlerV2) (*nonceTr
 	if args.IntervalToResend < minimumIntervalToResend {
 		return nil, fmt.Errorf("%w for intervalToResend in NewNonceTransactionHandlerV2", interactors.ErrInvalidValue)
 	}
-	if check.IfNil(args.Creator) {
-		return nil, interactors.ErrNilAddressNonceHandlerCreator
-	}
 
 	nth := &nonceTransactionsHandlerV2{
 		proxy:            args.Proxy,
 		handlers:         make(map[string]interactors.AddressNonceHandler),
 		intervalToResend: args.IntervalToResend,
-		creator:          args.Creator,
 	}
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -115,7 +109,8 @@ func (nth *nonceTransactionsHandlerV2) createAddressNonceHandler(address core.Ad
 	if found {
 		return anh, nil
 	}
-	anh, err := nth.creator.Create(nth.proxy, address)
+
+	anh, err := NewAddressNonceHandler(nth.proxy, address)
 	if err != nil {
 		return nil, err
 	}
