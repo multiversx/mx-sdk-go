@@ -11,7 +11,6 @@ import (
 	"github.com/multiversx/mx-chain-crypto-go/signing"
 	"github.com/multiversx/mx-chain-crypto-go/signing/ed25519"
 	"github.com/multiversx/mx-chain-go/testscommon"
-	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-sdk-go/authentication"
 	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
 	"github.com/multiversx/mx-sdk-go/data"
@@ -23,6 +22,7 @@ import (
 )
 
 var keyGen = signing.NewKeyGenerator(ed25519.NewEd25519())
+var hrp = "erd"
 
 func TestNativeserver_ClientServer(t *testing.T) {
 
@@ -80,7 +80,7 @@ func createNativeClient(pem string, proxy workflows.ProxyHandler, tokenHandler a
 }
 
 func createNativeServer(httpClientWrapper authentication.HttpClientWrapper, tokenHandler authentication.AuthTokenHandler) *authServer {
-	converter, _ := pubkeyConverter.NewBech32PubkeyConverter(32, logger.GetOrCreate("testscommon"))
+	converter, _ := pubkeyConverter.NewBech32PubkeyConverter(32, hrp)
 
 	serverArgs := ArgsNativeAuthServer{
 		HttpClientWrapper: httpClientWrapper,

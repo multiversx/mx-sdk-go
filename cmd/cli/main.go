@@ -269,7 +269,11 @@ func setSenderOption(td *testData, options *selectedOptions) error {
 	}
 
 	if selectedAddress != nil {
-		options.tx.Sender = selectedAddress.AddressAsBech32String()
+		options.tx.Sender, err = selectedAddress.AddressAsBech32String()
+		if err != nil {
+			return err
+		}
+
 		options.senderCryptoHolder, err = cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
 		if err != nil {
 			return err
@@ -284,11 +288,12 @@ func setReceiverOption(td *testData, options *selectedOptions) error {
 	if err != nil {
 		return err
 	}
+
 	if selectedAddress != nil {
-		options.tx.Receiver = selectedAddress.AddressAsBech32String()
+		options.tx.Receiver, err = selectedAddress.AddressAsBech32String()
 	}
 
-	return nil
+	return err
 }
 
 func setGuardianOption(td *testData, options *selectedOptions) error {
@@ -311,7 +316,11 @@ func setGuardedTxByOption(td *testData, options *selectedOptions) error {
 	}
 
 	if selectedAddress != nil {
-		options.tx.GuardianAddr = selectedAddress.AddressAsBech32String()
+		options.tx.GuardianAddr, err = selectedAddress.AddressAsBech32String()
+		if err != nil {
+			return err
+		}
+
 		options.guardianCryptoHolder, err = cryptoProvider.NewCryptoComponentsHolder(keyGen, sk)
 		if err != nil {
 			return err
@@ -404,7 +413,10 @@ func getDefaultOptions(td *testData, ep workflows.ProxyHandler, netConfigs *data
 		return nil, err
 	}
 	tx.Value = "0"
-	tx.Receiver = td.addressBob.AddressAsBech32String()
+	tx.Receiver, err = td.addressBob.AddressAsBech32String()
+	if err != nil {
+		return nil, err
+	}
 
 	aliceCryptoHolder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skAlice)
 	bobCryptoHolder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skBob)
@@ -505,7 +517,11 @@ func sendFundWalletsTxs(td *testData, proxy workflows.ProxyHandler, providedTx t
 	for _, addressHandler := range receivers {
 		tx := providedTx // copy
 
-		tx.Receiver = addressHandler.AddressAsBech32String()
+		tx.Receiver, err = addressHandler.AddressAsBech32String()
+		if err != nil {
+			return err
+		}
+
 		fundingWalletCryptoHolder, localErr := cryptoProvider.NewCryptoComponentsHolder(keyGen, td.skFunding)
 		if localErr != nil {
 			return localErr

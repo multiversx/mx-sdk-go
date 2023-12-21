@@ -656,12 +656,17 @@ func (ep *proxy) GetGuardianData(ctx context.Context, address sdkCore.AddressHan
 	if !address.IsValid() {
 		return nil, ErrInvalidAddress
 	}
-	err := ep.checkFinalState(ctx, address.AddressAsBech32String())
+	bech32Address, err := address.AddressAsBech32String()
 	if err != nil {
 		return nil, err
 	}
 
-	endpoint := ep.endpointProvider.GetGuardianData(address.AddressAsBech32String())
+	err = ep.checkFinalState(ctx, bech32Address)
+	if err != nil {
+		return nil, err
+	}
+
+	endpoint := ep.endpointProvider.GetGuardianData(bech32Address)
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
 	if err != nil || code != http.StatusOK {
 		return nil, createHTTPStatusError(code, err)

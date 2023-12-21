@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -72,7 +72,7 @@ func createMockClientRespondingBytes(responseBytes []byte) *mockHTTPClient {
 	return &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+				Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 				StatusCode: http.StatusOK,
 			}, nil
 		},
@@ -83,7 +83,7 @@ func createMockClientRespondingBytesWithStatus(responseBytes []byte, status int)
 	return &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+				Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 				StatusCode: status,
 			}, nil
 		},
@@ -174,7 +174,7 @@ func handleRequestNetworkConfigAndStatus(
 
 	buff, _ := json.Marshal(response)
 	return &http.Response{
-		Body:       ioutil.NopCloser(bytes.NewReader(buff)),
+		Body:       io.NopCloser(bytes.NewReader(buff)),
 		StatusCode: http.StatusOK,
 	}, handled, nil
 }
@@ -248,7 +248,7 @@ func TestGetAccount(t *testing.T) {
 			accountBytes, _ := json.Marshal(account)
 			atomic.AddUint32(&numAccountQueries, 1)
 			return &http.Response{
-				Body:       ioutil.NopCloser(bytes.NewReader(accountBytes)),
+				Body:       io.NopCloser(bytes.NewReader(accountBytes)),
 				StatusCode: http.StatusOK,
 			}, nil
 		},
@@ -450,7 +450,7 @@ func TestProxy_ExecuteVmQuery(t *testing.T) {
 				}
 
 				return &http.Response{
-					Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+					Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 					StatusCode: http.StatusOK,
 				}, nil
 			},
@@ -829,7 +829,7 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 				assert.True(t, strings.HasSuffix(req.URL.String(), expectedSuffix))
 
 				return &http.Response{
-					Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+					Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 					StatusCode: http.StatusOK,
 				}, nil
 			},
@@ -990,7 +990,7 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 				assert.True(t, strings.HasSuffix(req.URL.String(), expectedSuffix))
 
 				return &http.Response{
-					Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+					Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 					StatusCode: http.StatusOK,
 				}, nil
 			},
