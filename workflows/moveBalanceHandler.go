@@ -145,7 +145,7 @@ func (mbh *moveBalanceHandler) generateTransaction(ctx context.Context, address 
 		return err
 	}
 
-	err = mbh.txInteractor.ApplySignature(cryptoHolder, &tx)
+	err = mbh.txInteractor.ApplyUserSignature(cryptoHolder, &tx)
 	if err != nil {
 		return err
 	}
