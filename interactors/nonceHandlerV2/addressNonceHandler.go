@@ -1,7 +1,6 @@
 package nonceHandlerV2
 
 import (
-	"bytes"
 	"context"
 	"sync"
 
@@ -48,9 +47,9 @@ func NewAddressNonceHandler(proxy interactors.Proxy, address sdkCore.AddressHand
 
 // ApplyNonceAndGasPrice will apply the computed nonce to the given FrontendTransaction
 func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, tx *transaction.FrontendTransaction) error {
-	oldTx, alreadyExists := anh.isTxAlreadySent(tx)
-	if alreadyExists {
-		err := anh.handleTxAlreadyExists(oldTx, tx)
+	oldTx := anh.getOlderTxWithSameNonce(tx)
+	if oldTx != nil {
+		err := anh.handleTxWithSameNonce(oldTx, tx)
 		if err != nil {
 			return err
 		}
@@ -67,7 +66,7 @@ func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, tx *t
 	return nil
 }
 
-func (anh *addressNonceHandler) handleTxAlreadyExists(oldTx *transaction.FrontendTransaction, tx *transaction.FrontendTransaction) error {
+func (anh *addressNonceHandler) handleTxWithSameNonce(oldTx *transaction.FrontendTransaction, tx *transaction.FrontendTransaction) error {
 	if oldTx.GasPrice < tx.GasPrice {
 		return nil
 	}
@@ -76,7 +75,7 @@ func (anh *addressNonceHandler) handleTxAlreadyExists(oldTx *transaction.Fronten
 		return nil
 	}
 
-	return interactors.ErrTxAlreadySent
+	return interactors.ErrTxWithSameNonceAndGasPriceAlreadySent
 }
 
 func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context, nonce uint64) {
@@ -186,19 +185,16 @@ func (anh *addressNonceHandler) DropTransactions() {
 	anh.mut.Unlock()
 }
 
-func (anh *addressNonceHandler) isTxAlreadySent(tx *transaction.FrontendTransaction) (*transaction.FrontendTransaction, bool) {
+func (anh *addressNonceHandler) getOlderTxWithSameNonce(tx *transaction.FrontendTransaction) *transaction.FrontendTransaction {
 	anh.mut.RLock()
 	defer anh.mut.RUnlock()
+
 	for _, oldTx := range anh.transactions {
-		isTheSameReceiverDataValue := tx.Nonce == oldTx.Nonce &&
-			oldTx.Receiver == tx.Receiver &&
-			bytes.Equal(oldTx.Data, tx.Data) &&
-			oldTx.Value == tx.Value
-		if isTheSameReceiverDataValue {
-			return oldTx, true
+		if oldTx.Nonce == tx.Nonce {
+			return oldTx
 		}
 	}
-	return nil, false
+	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

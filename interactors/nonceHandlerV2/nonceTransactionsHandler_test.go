@@ -415,7 +415,7 @@ func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
 	// and computedNonce shall not increase
 	tx.Nonce = 0
 	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, tx)
-	require.Equal(t, err, interactors.ErrTxAlreadySent)
+	require.Equal(t, err, interactors.ErrTxWithSameNonceAndGasPriceAlreadySent)
 	require.Equal(t, tx.Nonce, uint64(0))
 	require.Equal(t, accWithPrivateAccess.computedNonce+1, currentNonce)
 }
