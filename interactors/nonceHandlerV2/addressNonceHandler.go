@@ -189,12 +189,9 @@ func (anh *addressNonceHandler) getOlderTxWithSameNonce(tx *transaction.Frontend
 	anh.mut.RLock()
 	defer anh.mut.RUnlock()
 
-	for _, oldTx := range anh.transactions {
-		if oldTx.Nonce == tx.Nonce {
-			return oldTx
-		}
-	}
-	return nil
+	olderTx, _ := anh.transactions[tx.Nonce]
+
+	return olderTx
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

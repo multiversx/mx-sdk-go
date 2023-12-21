@@ -365,7 +365,8 @@ func TestNonceTransactionsHandlerV2_SendTransactionsWithGetNonce(t *testing.T) {
 }
 
 func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
-	currentNonce := uint64(664)
+	initialNonce := uint64(664)
+	currentNonce := initialNonce
 
 	numCalls := 0
 
@@ -383,7 +384,7 @@ func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
 		},
 		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			require.LessOrEqual(t, numCalls, 1)
-			currentNonce++
+			atomic.AddUint64(&currentNonce, 1)
 			return "", nil
 		},
 	}
@@ -409,15 +410,15 @@ func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
 	require.True(t, ok)
 
 	// after sending first tx, nonce shall increase
-	require.Equal(t, accWithPrivateAccess.computedNonce+1, currentNonce)
+	require.Equal(t, atomic.LoadUint64(&currentNonce), accWithPrivateAccess.computedNonce+1)
 
 	// trying to apply nonce for the same tx, NonceTransactionHandler shall return ErrTxAlreadySent
 	// and computedNonce shall not increase
-	tx.Nonce = 0
+	tx.Nonce = initialNonce
 	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, tx)
-	require.Equal(t, err, interactors.ErrTxWithSameNonceAndGasPriceAlreadySent)
-	require.Equal(t, tx.Nonce, uint64(0))
-	require.Equal(t, accWithPrivateAccess.computedNonce+1, currentNonce)
+	require.Equal(t, interactors.ErrTxWithSameNonceAndGasPriceAlreadySent, err)
+	require.Equal(t, initialNonce, tx.Nonce)
+	require.Equal(t, currentNonce, accWithPrivateAccess.computedNonce+1)
 }
 
 func createMockTransactionsWithGetNonce(

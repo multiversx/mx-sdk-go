@@ -125,7 +125,11 @@ func (nth *nonceTransactionsHandlerV2) SendTransaction(ctx context.Context, tx *
 		return "", interactors.ErrNilTransaction
 	}
 
-	addrAsBech32 := tx.Sender
+	// Work with a full copy of the provided transaction so the provided one can change without affecting this component.
+	// Abnormal and unpredictable behaviors due to the resending mechanism are prevented this way
+	txCopy := *tx
+
+	addrAsBech32 := txCopy.Sender
 	address, err := data.NewAddressFromBech32String(addrAsBech32)
 	if err != nil {
 		return "", fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)
@@ -136,7 +140,7 @@ func (nth *nonceTransactionsHandlerV2) SendTransaction(ctx context.Context, tx *
 		return "", err
 	}
 
-	sentHash, err := anh.SendTransaction(ctx, tx)
+	sentHash, err := anh.SendTransaction(ctx, &txCopy)
 	if err != nil {
 		return "", fmt.Errorf("%w while sending transaction for address %s", err, addrAsBech32)
 	}
