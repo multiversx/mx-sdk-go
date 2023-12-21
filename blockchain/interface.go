@@ -3,6 +3,7 @@ package blockchain
 import (
 	"context"
 
+	"github.com/multiversx/mx-chain-core-go/data/api"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
@@ -14,6 +15,7 @@ type Proxy interface {
 	GetAccount(ctx context.Context, address core.AddressHandler) (*data.Account, error)
 	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
 	SendTransactions(ctx context.Context, txs []*transaction.FrontendTransaction) ([]string, error)
+	GetGuardianData(ctx context.Context, address core.AddressHandler) (*api.GuardianData, error)
 	ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
 	IsInterfaceNil() bool
 }
@@ -46,6 +48,7 @@ type EndpointProvider interface {
 	GetRawBlockByHash(shardID uint32, hexHash string) string
 	GetRawBlockByNonce(shardID uint32, nonce uint64) string
 	GetRawMiniBlockByHash(shardID uint32, hexHash string, epoch uint32) string
+	GetGuardianData(address string) string
 	GetRestAPIEntityType() core.RestAPIEntityType
 	GetValidatorsInfo(epoch uint32) string
 	GetProcessedTransactionStatus(hexHash string) string

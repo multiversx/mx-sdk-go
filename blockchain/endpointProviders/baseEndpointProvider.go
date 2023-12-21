@@ -22,6 +22,7 @@ const (
 	rawStartOfEpochValidators  = "internal/json/startofepoch/validators/by-epoch/%d"
 	esdt                       = "address/%s/esdt/%s"
 	nft                        = "address/%s/nft/%s/nonce/%d"
+	nodeGetGuardianData       = "address/%s/guardian-data"
 )
 
 type baseEndpointProvider struct{}
@@ -109,6 +110,11 @@ func (base *baseEndpointProvider) GetVmValues() string {
 // GetGenesisNodesConfig returns the genesis nodes config endpoint
 func (base *baseEndpointProvider) GetGenesisNodesConfig() string {
 	return genesisNodesConfig
+}
+
+// GetGuardianData returns the guardian data endpoint
+func (base *baseEndpointProvider) GetGuardianData(address string) string {
+	return fmt.Sprintf(nodeGetGuardianData, address)
 }
 
 // GetRawStartOfEpochMetaBlock returns the raw start of epoch metablock endpoint

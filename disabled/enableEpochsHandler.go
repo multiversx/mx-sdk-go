@@ -568,6 +568,11 @@ func (eeh *EnableEpochsHandler) IsRelayedNonceFixEnabled() bool {
 	return false
 }
 
+// IsGuardAccountEnabled returns false
+func (eeh *EnableEpochsHandler) IsGuardAccountEnabled() bool {
+	return false
+}
+
 // IsSetGuardianEnabled -
 func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
 	return false

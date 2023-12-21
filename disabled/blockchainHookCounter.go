@@ -24,7 +24,7 @@ func (bhc *BlockChainHookCounter) ResetCounters() {
 func (bhc *BlockChainHookCounter) SetMaximumValues(_ map[string]uint64) {
 }
 
-// GetCounterValues -
+// GetCounterValues returns an empty map
 func (bhc *BlockChainHookCounter) GetCounterValues() map[string]uint64 {
 	return make(map[string]uint64)
 }

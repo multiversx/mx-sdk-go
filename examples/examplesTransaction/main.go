@@ -83,7 +83,7 @@ func main() {
 		return
 	}
 
-	err = ti.ApplySignature(holder, &tx)
+	err = ti.ApplyUserSignature(holder, &tx)
 	if err != nil {
 		log.Error("error signing transaction", "error", err)
 		return
@@ -96,7 +96,7 @@ func main() {
 	tx.Options = 1
 	tx.Nonce++ // do not forget to increment the nonce, otherwise you will get 2 transactions
 	// with the same nonce (only one of them will get executed)
-	err = ti.ApplySignature(holder, &tx)
+	err = ti.ApplyUserSignature(holder, &tx)
 	if err != nil {
 		log.Error("error creating transaction", "error", err)
 		return

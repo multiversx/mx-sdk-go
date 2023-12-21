@@ -198,17 +198,17 @@ func (ep *proxy) GetDefaultTransactionArguments(
 
 // GetAccount retrieves an account info from the network (nonce, balance)
 func (ep *proxy) GetAccount(ctx context.Context, address sdkCore.AddressHandler) (*data.Account, error) {
-	err := ep.checkFinalState(ctx, address.AddressAsBech32String())
-	if err != nil {
-		return nil, err
-	}
-
 	if check.IfNil(address) {
 		return nil, ErrNilAddress
 	}
 	if !address.IsValid() {
 		return nil, ErrInvalidAddress
 	}
+	err := ep.checkFinalState(ctx, address.AddressAsBech32String())
+	if err != nil {
+		return nil, err
+	}
+
 	endpoint := ep.endpointProvider.GetAccount(address.AddressAsBech32String())
 
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
@@ -625,6 +625,37 @@ func (ep *proxy) GetNFTTokenData(
 	}
 
 	return response.Data.TokenData, nil
+}
+
+// GetGuardianData retrieves guardian data from proxy
+func (ep *proxy) GetGuardianData(ctx context.Context, address sdkCore.AddressHandler) (*api.GuardianData, error) {
+	if check.IfNil(address) {
+		return nil, ErrNilAddress
+	}
+	if !address.IsValid() {
+		return nil, ErrInvalidAddress
+	}
+	err := ep.checkFinalState(ctx, address.AddressAsBech32String())
+	if err != nil {
+		return nil, err
+	}
+
+	endpoint := ep.endpointProvider.GetGuardianData(address.AddressAsBech32String())
+	buff, code, err := ep.GetHTTP(ctx, endpoint)
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	response := &data.GuardianDataResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.GuardianData, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
