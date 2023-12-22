@@ -13,7 +13,6 @@ import (
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
 	"github.com/multiversx/mx-sdk-go/testsCommon"
-	testsInteractors "github.com/multiversx/mx-sdk-go/testsCommon/interactors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,15 +28,6 @@ func TestNewNonceTransactionHandlerV2(t *testing.T) {
 		nth, err := NewNonceTransactionHandlerV2(args)
 		require.Nil(t, nth)
 		assert.Equal(t, interactors.ErrNilProxy, err)
-	})
-	t.Run("nil AddressNonceHandlerCreator", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsNonceTransactionsHandlerV2()
-		args.Creator = nil
-		nth, err := NewNonceTransactionHandlerV2(args)
-		require.Nil(t, nth)
-		assert.Equal(t, interactors.ErrNilAddressNonceHandlerCreator, err)
 	})
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
@@ -375,7 +365,8 @@ func TestNonceTransactionsHandlerV2_SendTransactionsWithGetNonce(t *testing.T) {
 }
 
 func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
-	currentNonce := uint64(664)
+	initialNonce := uint64(664)
+	currentNonce := initialNonce
 
 	numCalls := 0
 
@@ -393,7 +384,7 @@ func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
 		},
 		SendTransactionCalled: func(tx *transaction.FrontendTransaction) (string, error) {
 			require.LessOrEqual(t, numCalls, 1)
-			currentNonce++
+			atomic.AddUint64(&currentNonce, 1)
 			return "", nil
 		},
 	}
@@ -419,15 +410,15 @@ func TestNonceTransactionsHandlerV2_SendDuplicateTransactions(t *testing.T) {
 	require.True(t, ok)
 
 	// after sending first tx, nonce shall increase
-	require.Equal(t, accWithPrivateAccess.computedNonce+1, currentNonce)
+	require.Equal(t, atomic.LoadUint64(&currentNonce), accWithPrivateAccess.computedNonce+1)
 
 	// trying to apply nonce for the same tx, NonceTransactionHandler shall return ErrTxAlreadySent
 	// and computedNonce shall not increase
-	tx.Nonce = 0
+	tx.Nonce = initialNonce
 	err = nth.ApplyNonceAndGasPrice(context.Background(), testAddress, tx)
-	require.Equal(t, err, interactors.ErrTxAlreadySent)
-	require.Equal(t, tx.Nonce, uint64(0))
-	require.Equal(t, accWithPrivateAccess.computedNonce+1, currentNonce)
+	require.Equal(t, interactors.ErrTxWithSameNonceAndGasPriceAlreadySent, err)
+	require.Equal(t, initialNonce, tx.Nonce)
+	require.Equal(t, currentNonce, accWithPrivateAccess.computedNonce+1)
 }
 
 func createMockTransactionsWithGetNonce(
@@ -500,10 +491,5 @@ func createMockArgsNonceTransactionsHandlerV2() ArgsNonceTransactionsHandlerV2 {
 	return ArgsNonceTransactionsHandlerV2{
 		Proxy:            &testsCommon.ProxyStub{},
 		IntervalToResend: time.Second * 2,
-		Creator: &testsInteractors.AddressNonceHandlerCreatorStub{
-			CreateCalled: func(proxy interactors.Proxy, address core.AddressHandler) (interactors.AddressNonceHandler, error) {
-				return NewAddressNonceHandler(proxy, address)
-			},
-		},
 	}
 }
