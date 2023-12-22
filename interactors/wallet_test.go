@@ -3,8 +3,8 @@ package interactors
 import (
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/multiversx/mx-sdk-go/data"
@@ -121,7 +121,10 @@ func TestWallet_LoadPrivateKeyFromJsonFileWithKind(t *testing.T) {
 func TestWallet_SavePrivateKeyToJsonFile(t *testing.T) {
 	t.Parallel()
 
-	file, err := ioutil.TempFile("", "temp-*.json")
+	dir := t.TempDir()
+	fileName := path.Join(dir, "temp.json")
+
+	file, err := os.Create(fileName)
 	require.Nil(t, err)
 	_ = file.Close() //close the file so the save can write in it
 
@@ -165,7 +168,9 @@ func TestWallet_LoadPrivateKeyFromPemFile(t *testing.T) {
 func TestWallet_SavePrivateKeyToPemFile(t *testing.T) {
 	t.Parallel()
 
-	file, err := ioutil.TempFile("", "temp-*.pem")
+	dir := t.TempDir()
+	fileName := path.Join(dir, "temp.json")
+	file, err := os.Create(fileName)
 	require.Nil(t, err)
 	_ = file.Close() //close the file so the save can write in it
 

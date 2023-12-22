@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/data/api"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/state"
 	sdkCore "github.com/multiversx/mx-sdk-go/core"
@@ -30,8 +31,10 @@ type ProxyStub struct {
 	GetRestAPIEntityTypeCalled           func() sdkCore.RestAPIEntityType
 	GetLatestHyperBlockNonceCalled       func(ctx context.Context) (uint64, error)
 	GetHyperBlockByNonceCalled           func(ctx context.Context, nonce uint64) (*data.HyperBlock, error)
+	GetHyperBlockByHashCalled            func(ctx context.Context, hash string) (*data.HyperBlock, error)
 	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address sdkCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error)
 	GetValidatorsInfoByEpochCalled       func(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
+	GetGuardianDataCalled                func(ctx context.Context, address sdkCore.AddressHandler) (*api.GuardianData, error)
 }
 
 // ExecuteVMQuery -
@@ -192,6 +195,14 @@ func (stub *ProxyStub) GetHyperBlockByNonce(ctx context.Context, nonce uint64) (
 	return &data.HyperBlock{}, nil
 }
 
+// GetHyperBlockByHash -
+func (stub *ProxyStub) GetHyperBlockByHash(ctx context.Context, hash string) (*data.HyperBlock, error) {
+	if stub.GetHyperBlockByHashCalled != nil {
+		return stub.GetHyperBlockByHashCalled(ctx, hash)
+	}
+	return &data.HyperBlock{}, nil
+}
+
 // GetDefaultTransactionArguments -
 func (stub *ProxyStub) GetDefaultTransactionArguments(ctx context.Context, address sdkCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error) {
 	if stub.GetDefaultTransactionArgumentsCalled != nil {
@@ -207,6 +218,15 @@ func (stub *ProxyStub) GetValidatorsInfoByEpoch(ctx context.Context, epoch uint3
 	}
 
 	return make([]*state.ShardValidatorInfo, 0), nil
+}
+
+// GetGuardianData -
+func (stub *ProxyStub) GetGuardianData(ctx context.Context, address sdkCore.AddressHandler) (*api.GuardianData, error) {
+	if stub.GetGuardianDataCalled != nil {
+		return stub.GetGuardianDataCalled(ctx, address)
+	}
+
+	return &api.GuardianData{}, nil
 }
 
 // IsInterfaceNil -
