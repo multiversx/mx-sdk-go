@@ -271,7 +271,7 @@ func TestMxNotifee_PriceChanged(t *testing.T) {
 			},
 		}
 		args.TxBuilder = &testsCommon.TxBuilderStub{
-			ApplySignatureCalled: func(cryptoHolder core.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error {
+			ApplyUserSignatureCalled: func(cryptoHolder core.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error {
 				return expectedErr
 			},
 		}

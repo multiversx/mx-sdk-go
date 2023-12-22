@@ -16,7 +16,7 @@ const defaultTimeBetweenBunches = time.Second
 
 type transactionInteractor struct {
 	Proxy
-	TxBuilder
+	GuardedTxBuilder
 	mutTxAccumulator      sync.RWMutex
 	mutTimeBetweenBunches sync.RWMutex
 	timeBetweenBunches    time.Duration
@@ -24,7 +24,7 @@ type transactionInteractor struct {
 }
 
 // NewTransactionInteractor will create an interactor that extends the proxy functionality with some transaction-oriented functionality
-func NewTransactionInteractor(proxy Proxy, txBuilder TxBuilder) (*transactionInteractor, error) {
+func NewTransactionInteractor(proxy Proxy, txBuilder GuardedTxBuilder) (*transactionInteractor, error) {
 	if check.IfNil(proxy) {
 		return nil, ErrNilProxy
 	}
@@ -34,7 +34,7 @@ func NewTransactionInteractor(proxy Proxy, txBuilder TxBuilder) (*transactionInt
 
 	return &transactionInteractor{
 		Proxy:              proxy,
-		TxBuilder:          txBuilder,
+		GuardedTxBuilder:   txBuilder,
 		timeBetweenBunches: defaultTimeBetweenBunches,
 	}, nil
 }

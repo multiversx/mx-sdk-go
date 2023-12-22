@@ -49,5 +49,6 @@ type Signer interface {
 	VerifyMessage(msg []byte, publicKey crypto.PublicKey, sig []byte) error
 	SignTransaction(tx *transaction.FrontendTransaction, privateKey crypto.PrivateKey) ([]byte, error)
 	SignByteSlice(msg []byte, privateKey crypto.PrivateKey) ([]byte, error)
+	VerifyByteSlice(msg []byte, publicKey crypto.PublicKey, sig []byte) error
 	IsInterfaceNil() bool
 }

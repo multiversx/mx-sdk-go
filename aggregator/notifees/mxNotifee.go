@@ -122,7 +122,7 @@ func (en *mxNotifee) PriceChanged(ctx context.Context, priceChanges []*aggregato
 		return err
 	}
 
-	err = en.txBuilder.ApplySignature(en.cryptoHolder, tx)
+	err = en.txBuilder.ApplyUserSignature(en.cryptoHolder, tx)
 	if err != nil {
 		return err
 	}

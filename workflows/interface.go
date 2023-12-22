@@ -27,6 +27,7 @@ type LastProcessedNonceHandler interface {
 type ProxyHandler interface {
 	GetLatestHyperBlockNonce(ctx context.Context) (uint64, error)
 	GetHyperBlockByNonce(ctx context.Context, nonce uint64) (*data.HyperBlock, error)
+	GetHyperBlockByHash(ctx context.Context, hash string) (*data.HyperBlock, error)
 	GetDefaultTransactionArguments(ctx context.Context, address sdkCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error)
 	GetNetworkConfig(ctx context.Context) (*data.NetworkConfig, error)
 	IsInterfaceNil() bool
@@ -35,6 +36,6 @@ type ProxyHandler interface {
 // TransactionInteractor defines the transaction interactor behavior used in workflows
 type TransactionInteractor interface {
 	AddTransaction(tx *transaction.FrontendTransaction)
-	ApplySignature(cryptoHolder sdkCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
+	ApplyUserSignature(cryptoHolder sdkCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
 	IsInterfaceNil() bool
 }

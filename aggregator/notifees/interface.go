@@ -10,7 +10,7 @@ import (
 
 // TxBuilder defines the component able to build & sign a transaction
 type TxBuilder interface {
-	ApplySignature(cryptoHolder core.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
+	ApplyUserSignature(cryptoHolder core.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
 	IsInterfaceNil() bool
 }
 
