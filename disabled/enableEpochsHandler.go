@@ -623,13 +623,23 @@ func (eeh *EnableEpochsHandler) IsGuardAccountEnabled() bool {
 	return false
 }
 
-// IsSetGuardianEnabled -
+// IsSetGuardianEnabled returns false
 func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
 	return false
 }
 
-// IsDeterministicSortOnValidatorsInfoFixEnabled -
+// IsDeterministicSortOnValidatorsInfoFixEnabled returns false
 func (eeh *EnableEpochsHandler) IsDeterministicSortOnValidatorsInfoFixEnabled() bool {
+	return false
+}
+
+// IsChangeOwnerAddressCrossShardThroughSCEnabled returns false
+func (eeh *EnableEpochsHandler) IsChangeOwnerAddressCrossShardThroughSCEnabled() bool {
+	return false
+}
+
+// FixGasRemainingForSaveKeyValueBuiltinFunctionEnabled returns false
+func (eeh *EnableEpochsHandler) FixGasRemainingForSaveKeyValueBuiltinFunctionEnabled() bool {
 	return false
 }
 
