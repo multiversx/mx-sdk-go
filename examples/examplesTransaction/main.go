@@ -67,8 +67,14 @@ func main() {
 		return
 	}
 
-	tx.Receiver = address.AddressAsBech32String() // send to self
-	tx.Value = "1000000000000000000"              // 1EGLD
+	receiverAsBech32String, err := address.AddressAsBech32String()
+	if err != nil {
+		log.Error("unable to get receiver address as bech 32 string", "error", err)
+		return
+	}
+
+	tx.Receiver = receiverAsBech32String // send to self
+	tx.Value = "1000000000000000000"     // 1EGLD
 
 	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, privateKey)
 	txBuilder, err := builders.NewTxBuilder(cryptoProvider.NewSigner())

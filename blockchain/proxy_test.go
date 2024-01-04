@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -72,7 +72,7 @@ func createMockClientRespondingBytes(responseBytes []byte) *mockHTTPClient {
 	return &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+				Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 				StatusCode: http.StatusOK,
 			}, nil
 		},
@@ -83,7 +83,7 @@ func createMockClientRespondingBytesWithStatus(responseBytes []byte, status int)
 	return &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+				Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 				StatusCode: status,
 			}, nil
 		},
@@ -174,7 +174,7 @@ func handleRequestNetworkConfigAndStatus(
 
 	buff, _ := json.Marshal(response)
 	return &http.Response{
-		Body:       ioutil.NopCloser(bytes.NewReader(buff)),
+		Body:       io.NopCloser(bytes.NewReader(buff)),
 		StatusCode: http.StatusOK,
 	}, handled, nil
 }
@@ -248,7 +248,7 @@ func TestGetAccount(t *testing.T) {
 			accountBytes, _ := json.Marshal(account)
 			atomic.AddUint32(&numAccountQueries, 1)
 			return &http.Response{
-				Body:       ioutil.NopCloser(bytes.NewReader(accountBytes)),
+				Body:       io.NopCloser(bytes.NewReader(accountBytes)),
 				StatusCode: http.StatusOK,
 			}, nil
 		},
@@ -450,7 +450,7 @@ func TestProxy_ExecuteVmQuery(t *testing.T) {
 				}
 
 				return &http.Response{
-					Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+					Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 					StatusCode: http.StatusOK,
 				}, nil
 			},
@@ -829,7 +829,7 @@ func TestElrondProxy_GetESDTTokenData(t *testing.T) {
 				assert.True(t, strings.HasSuffix(req.URL.String(), expectedSuffix))
 
 				return &http.Response{
-					Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+					Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 					StatusCode: http.StatusOK,
 				}, nil
 			},
@@ -990,7 +990,7 @@ func TestElrondProxy_GetNFTTokenData(t *testing.T) {
 				assert.True(t, strings.HasSuffix(req.URL.String(), expectedSuffix))
 
 				return &http.Response{
-					Body:       ioutil.NopCloser(bytes.NewReader(responseBytes)),
+					Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 					StatusCode: http.StatusOK,
 				}, nil
 			},
@@ -1064,5 +1064,143 @@ func TestProxy_GetGuardianData(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, expectedGuardianData, response)
+	})
+}
+
+func TestProxy_IsDataTrieMigrated(t *testing.T) {
+	t.Parallel()
+
+	expectedErr := errors.New("expected error")
+	validAddress := data.NewAddressFromBytes(bytes.Repeat([]byte("1"), 32))
+	t.Run("nil address", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes(make([]byte, 0))
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		isMigrated, err := ep.IsDataTrieMigrated(context.Background(), nil)
+		assert.False(t, isMigrated)
+		assert.Equal(t, ErrNilAddress, err)
+	})
+	t.Run("invalid bech32 address", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes(make([]byte, 0))
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		invalidAddress := data.NewAddressFromBytes([]byte("invalid"))
+
+		isMigrated, err := ep.IsDataTrieMigrated(context.Background(), invalidAddress)
+		assert.False(t, isMigrated)
+		assert.True(t, strings.Contains(err.Error(), "wrong size when encoding address"))
+	})
+	t.Run("http client errors", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingError(expectedErr)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		isMigrated, err := ep.IsDataTrieMigrated(context.Background(), validAddress)
+		assert.False(t, isMigrated)
+		assert.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("invalid status", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytesWithStatus(make([]byte, 0), http.StatusNotFound)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		isMigrated, err := ep.IsDataTrieMigrated(context.Background(), validAddress)
+		assert.False(t, isMigrated)
+		assert.ErrorIs(t, err, ErrHTTPStatusCodeIsNotOK)
+	})
+	t.Run("invalid response bytes", func(t *testing.T) {
+		t.Parallel()
+
+		httpClient := createMockClientRespondingBytes([]byte("invalid json"))
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		isMigrated, err := ep.IsDataTrieMigrated(context.Background(), validAddress)
+		assert.False(t, isMigrated)
+		assert.NotNil(t, err)
+	})
+	t.Run("response returned error", func(t *testing.T) {
+		t.Parallel()
+
+		response := &data.IsDataTrieMigratedResponse{
+			Error: expectedErr.Error(),
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		isMigrated, err := ep.IsDataTrieMigrated(context.Background(), validAddress)
+		assert.False(t, isMigrated)
+		assert.NotNil(t, err)
+		assert.Equal(t, expectedErr.Error(), err.Error())
+	})
+	t.Run("isMigrated key not found in map", func(t *testing.T) {
+		t.Parallel()
+
+		responseMap := make(map[string]bool)
+		responseMap["random key"] = true
+
+		response := &data.IsDataTrieMigratedResponse{
+			Data: responseMap,
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		isMigrated, err := ep.IsDataTrieMigrated(context.Background(), validAddress)
+		assert.False(t, isMigrated)
+		assert.Contains(t, err.Error(), "isMigrated key not found in response map")
+	})
+	t.Run("migrated trie", func(t *testing.T) {
+		t.Parallel()
+
+		responseMap := make(map[string]bool)
+		responseMap["isMigrated"] = true
+
+		response := &data.IsDataTrieMigratedResponse{
+			Data: responseMap,
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		isMigrated, err := ep.IsDataTrieMigrated(context.Background(), validAddress)
+		assert.True(t, isMigrated)
+		assert.Nil(t, err)
+	})
+	t.Run("not migrated trie", func(t *testing.T) {
+		t.Parallel()
+
+		responseMap := make(map[string]bool)
+		responseMap["isMigrated"] = false
+
+		response := &data.IsDataTrieMigratedResponse{
+			Data: responseMap,
+		}
+		responseBytes, _ := json.Marshal(response)
+
+		httpClient := createMockClientRespondingBytes(responseBytes)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		isMigrated, err := ep.IsDataTrieMigrated(context.Background(), validAddress)
+		assert.False(t, isMigrated)
+		assert.Nil(t, err)
 	})
 }

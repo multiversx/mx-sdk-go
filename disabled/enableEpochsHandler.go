@@ -4,6 +4,56 @@ package disabled
 type EnableEpochsHandler struct {
 }
 
+// NFTStopCreateEnabled returns false
+func (eeh *EnableEpochsHandler) NFTStopCreateEnabled() bool {
+	return false
+}
+
+// IsScToScEventLogEnabled returns false
+func (eeh *EnableEpochsHandler) IsScToScEventLogEnabled() bool {
+	return false
+}
+
+// IsDynamicGasCostForDataTrieStorageLoadEnabled returns false
+func (eeh *EnableEpochsHandler) IsDynamicGasCostForDataTrieStorageLoadEnabled() bool {
+	return false
+}
+
+// IsSCProcessorV2FlagEnabled returns false
+func (eeh *EnableEpochsHandler) IsSCProcessorV2FlagEnabled() bool {
+	return false
+}
+
+// IsKeepExecOrderOnCreatedSCRsEnabled returns false
+func (eeh *EnableEpochsHandler) IsKeepExecOrderOnCreatedSCRsEnabled() bool {
+	return false
+}
+
+// IsMultiClaimOnDelegationEnabled returns false
+func (eeh *EnableEpochsHandler) IsMultiClaimOnDelegationEnabled() bool {
+	return false
+}
+
+// IsChangeUsernameEnabled returns false
+func (eeh *EnableEpochsHandler) IsChangeUsernameEnabled() bool {
+	return false
+}
+
+// IsConsistentTokensValuesLengthCheckEnabled returns false
+func (eeh *EnableEpochsHandler) IsConsistentTokensValuesLengthCheckEnabled() bool {
+	return false
+}
+
+// IsAutoBalanceDataTriesEnabled returns false
+func (eeh *EnableEpochsHandler) IsAutoBalanceDataTriesEnabled() bool {
+	return false
+}
+
+// FixDelegationChangeOwnerOnAccountEnabled -
+func (eeh *EnableEpochsHandler) FixDelegationChangeOwnerOnAccountEnabled() bool {
+	return false
+}
+
 // BlockGasAndFeesReCheckEnableEpoch returns 0
 func (eeh *EnableEpochsHandler) BlockGasAndFeesReCheckEnableEpoch() uint32 {
 	return 0
@@ -573,13 +623,23 @@ func (eeh *EnableEpochsHandler) IsGuardAccountEnabled() bool {
 	return false
 }
 
-// IsSetGuardianEnabled -
+// IsSetGuardianEnabled returns false
 func (eeh *EnableEpochsHandler) IsSetGuardianEnabled() bool {
 	return false
 }
 
-// IsDeterministicSortOnValidatorsInfoFixEnabled -
+// IsDeterministicSortOnValidatorsInfoFixEnabled returns false
 func (eeh *EnableEpochsHandler) IsDeterministicSortOnValidatorsInfoFixEnabled() bool {
+	return false
+}
+
+// IsChangeOwnerAddressCrossShardThroughSCEnabled returns false
+func (eeh *EnableEpochsHandler) IsChangeOwnerAddressCrossShardThroughSCEnabled() bool {
+	return false
+}
+
+// FixGasRemainingForSaveKeyValueBuiltinFunctionEnabled returns false
+func (eeh *EnableEpochsHandler) FixGasRemainingForSaveKeyValueBuiltinFunctionEnabled() bool {
 	return false
 }
 

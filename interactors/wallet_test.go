@@ -3,8 +3,8 @@ package interactors
 import (
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/multiversx/mx-sdk-go/data"
@@ -62,7 +62,11 @@ func TestWallet_GetAddressFromMnemonicWalletIntegration(t *testing.T) {
 	address, err := w.GetAddressFromPrivateKey(privKey)
 	assert.Nil(t, err)
 	expectedBech32Addr := "erd1h692scsz3um6e5qwzts4yjrewxqxwcwxzavl5n9q8sprussx8fqsu70jf5"
-	assert.Equal(t, expectedBech32Addr, address.AddressAsBech32String())
+
+	addressAsBech32String, err := address.AddressAsBech32String()
+	assert.Nil(t, err)
+
+	assert.Equal(t, expectedBech32Addr, addressAsBech32String)
 }
 
 func TestWallet_GetAddressFromPrivateKey(t *testing.T) {
@@ -76,7 +80,11 @@ func TestWallet_GetAddressFromPrivateKey(t *testing.T) {
 	address, err := w.GetAddressFromPrivateKey(privKey)
 	assert.Nil(t, err)
 	expectedBech32Addr := "erd1mlh7q3fcgrjeq0et65vaaxcw6m5ky8jhu296pdxpk9g32zga6uhsemxx2a"
-	assert.Equal(t, expectedBech32Addr, address.AddressAsBech32String())
+
+	addressAsBech32String, err := address.AddressAsBech32String()
+	assert.Nil(t, err)
+
+	assert.Equal(t, expectedBech32Addr, addressAsBech32String)
 }
 
 func TestWallet_LoadPrivateKeyFromJsonFile(t *testing.T) {
@@ -103,13 +111,20 @@ func TestWallet_LoadPrivateKeyFromJsonFileWithKind(t *testing.T) {
 	assert.Equal(t, expectedHexPrivKey, hex.EncodeToString(privkey))
 
 	address, _ := w.GetAddressFromPrivateKey(privkey)
-	require.Equal(t, "erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th", address.AddressAsBech32String())
+
+	addressAsBech32String, err := address.AddressAsBech32String()
+	assert.Nil(t, err)
+
+	require.Equal(t, "erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th", addressAsBech32String)
 }
 
 func TestWallet_SavePrivateKeyToJsonFile(t *testing.T) {
 	t.Parallel()
 
-	file, err := ioutil.TempFile("", "temp-*.json")
+	dir := t.TempDir()
+	fileName := path.Join(dir, "temp.json")
+
+	file, err := os.Create(fileName)
 	require.Nil(t, err)
 	_ = file.Close() //close the file so the save can write in it
 
@@ -143,13 +158,19 @@ func TestWallet_LoadPrivateKeyFromPemFile(t *testing.T) {
 	require.Nil(t, err)
 
 	expectedBech32Address := "erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht"
-	assert.Equal(t, expectedBech32Address, address.AddressAsBech32String())
+
+	addressAsBech32String, err := address.AddressAsBech32String()
+	require.Nil(t, err)
+
+	assert.Equal(t, expectedBech32Address, addressAsBech32String)
 }
 
 func TestWallet_SavePrivateKeyToPemFile(t *testing.T) {
 	t.Parallel()
 
-	file, err := ioutil.TempFile("", "temp-*.pem")
+	dir := t.TempDir()
+	fileName := path.Join(dir, "temp.json")
+	file, err := os.Create(fileName)
 	require.Nil(t, err)
 	_ = file.Close() //close the file so the save can write in it
 

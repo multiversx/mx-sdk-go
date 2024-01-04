@@ -33,7 +33,7 @@ func (a *Accounts) GetStackDebugFirstEntry() []byte {
 }
 
 // SnapshotState does nothing
-func (a *Accounts) SnapshotState(_ []byte) {
+func (a *Accounts) SnapshotState(_ []byte, _ uint32) {
 }
 
 // GetTrie returns nil trie and nil error
@@ -67,7 +67,7 @@ func (a *Accounts) SaveAccount(_ vmcommon.AccountHandler) error {
 }
 
 // GetAllLeaves returns nil
-func (a *Accounts) GetAllLeaves(_ *common.TrieIteratorChannels, _ context.Context, _ []byte) error {
+func (a *Accounts) GetAllLeaves(_ *common.TrieIteratorChannels, _ context.Context, _ []byte, _ common.TrieLeafParser) error {
 	return nil
 }
 

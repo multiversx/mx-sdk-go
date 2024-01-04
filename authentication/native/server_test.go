@@ -171,7 +171,7 @@ func TestNativeserver_Validate(t *testing.T) {
 				return buff, http.StatusOK, nil
 			},
 		}
-		args.PubKeyConverter = &genesisMock.PubkeyConverterStub{
+		args.PubKeyConverter = &testscommon.PubkeyConverterStub{
 			DecodeCalled: func(humanReadable string) ([]byte, error) {
 				return nil, expectedErr
 			},
@@ -204,7 +204,7 @@ func TestNativeserver_Validate(t *testing.T) {
 				return nil, expectedErr
 			},
 		}
-		args.PubKeyConverter = &genesisMock.PubkeyConverterStub{
+		args.PubKeyConverter = &testscommon.PubkeyConverterStub{
 			DecodeCalled: func(humanReadable string) ([]byte, error) {
 				return nil, nil
 			},
@@ -363,7 +363,7 @@ func createMockArgsNativeAuthServer() ArgsNativeAuthServer {
 		HttpClientWrapper: &testsCommon.HTTPClientWrapperStub{},
 		TokenHandler:      &mock.AuthTokenHandlerStub{},
 		Signer:            &testsCommon.SignerStub{},
-		PubKeyConverter:   &genesisMock.PubkeyConverterStub{},
+		PubKeyConverter:   &testscommon.PubkeyConverterStub{},
 		KeyGenerator:      &genesisMock.KeyGeneratorStub{},
 		TimestampsCacher:  &testscommon.CacherStub{},
 	}

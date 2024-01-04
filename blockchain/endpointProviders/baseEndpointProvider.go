@@ -23,6 +23,7 @@ const (
 	esdt                       = "address/%s/esdt/%s"
 	nft                        = "address/%s/nft/%s/nonce/%d"
 	nodeGetGuardianData       = "address/%s/guardian-data"
+	isDataTrieMigrated         = "address/%s/is-data-trie-migrated"
 )
 
 type baseEndpointProvider struct{}
@@ -125,4 +126,9 @@ func (base *baseEndpointProvider) GetRawStartOfEpochMetaBlock(epoch uint32) stri
 // GetValidatorsInfo returns the validators endpoint
 func (base *baseEndpointProvider) GetValidatorsInfo(epoch uint32) string {
 	return fmt.Sprintf(rawStartOfEpochValidators, epoch)
+}
+
+// IsDataTrieMigrated returns true if the data trie of the given address is migrated
+func (base *baseEndpointProvider) IsDataTrieMigrated(addressAsBech32 string) string {
+	return fmt.Sprintf(isDataTrieMigrated, addressAsBech32)
 }

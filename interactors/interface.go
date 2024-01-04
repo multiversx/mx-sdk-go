@@ -56,9 +56,3 @@ type TransactionNonceHandlerV2 interface {
 	Close() error
 	IsInterfaceNil() bool
 }
-
-// AddressNonceHandlerCreator defines the component able to create AddressNonceHandler instances
-type AddressNonceHandlerCreator interface {
-	Create(proxy Proxy, address core.AddressHandler) (AddressNonceHandler, error)
-	IsInterfaceNil() bool
-}
