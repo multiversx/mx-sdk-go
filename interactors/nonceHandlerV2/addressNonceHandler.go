@@ -7,6 +7,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+
 	sdkCore "github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
@@ -120,6 +121,16 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 
 // ReSendTransactionsIfRequired will resend the cached transactions that still have a nonce greater that the one fetched from the blockchain
 func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context) error {
+	// No need to go further if there aren't any cached transactions. First acquire a RLock on the map containing
+	// the transactions of the handler and saving the length to a variable. Finally check whether it is equal to 0.
+	anh.mut.RLock()
+	noCachedTransactions := len(anh.transactions)
+	anh.mut.RUnlock()
+
+	if noCachedTransactions == 0 {
+		return nil
+	}
+
 	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
 		return err
