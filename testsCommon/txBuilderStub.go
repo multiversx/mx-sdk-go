@@ -7,13 +7,13 @@ import (
 
 // TxBuilderStub -
 type TxBuilderStub struct {
-	ApplySignatureCalled func(cryptoHolder sdkCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
+	ApplyUserSignatureCalled func(cryptoHolder sdkCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
 }
 
-// ApplySignature -
-func (stub *TxBuilderStub) ApplySignature(cryptoHolder sdkCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error {
-	if stub.ApplySignatureCalled != nil {
-		return stub.ApplySignatureCalled(cryptoHolder, tx)
+// ApplyUserSignature -
+func (stub *TxBuilderStub) ApplyUserSignature(cryptoHolder sdkCore.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error {
+	if stub.ApplyUserSignatureCalled != nil {
+		return stub.ApplyUserSignatureCalled(cryptoHolder, tx)
 	}
 
 	return nil

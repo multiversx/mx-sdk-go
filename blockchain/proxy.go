@@ -648,6 +648,42 @@ func (ep *proxy) GetNFTTokenData(
 	return response.Data.TokenData, nil
 }
 
+// GetGuardianData retrieves guardian data from proxy
+func (ep *proxy) GetGuardianData(ctx context.Context, address sdkCore.AddressHandler) (*api.GuardianData, error) {
+	if check.IfNil(address) {
+		return nil, ErrNilAddress
+	}
+	if !address.IsValid() {
+		return nil, ErrInvalidAddress
+	}
+	bech32Address, err := address.AddressAsBech32String()
+	if err != nil {
+		return nil, err
+	}
+
+	err = ep.checkFinalState(ctx, bech32Address)
+	if err != nil {
+		return nil, err
+	}
+
+	endpoint := ep.endpointProvider.GetGuardianData(bech32Address)
+	buff, code, err := ep.GetHTTP(ctx, endpoint)
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	response := &data.GuardianDataResponse{}
+	err = json.Unmarshal(buff, response)
+	if err != nil {
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return response.Data.GuardianData, nil
+}
+
 // IsDataTrieMigrated returns true if the data trie of the given account is migrated
 func (ep *proxy) IsDataTrieMigrated(ctx context.Context, address sdkCore.AddressHandler) (bool, error) {
 	if check.IfNil(address) {

@@ -1,7 +1,6 @@
 package nonceHandlerV2
 
 import (
-	"bytes"
 	"context"
 	"sync"
 
@@ -12,9 +11,6 @@ import (
 	sdkCore "github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
-
-//TODO EN-13182: create a baseAddressNonceHandler component that can remove the duplicate code as much as possible from the
-// addressNonceHandler and singleTransactionAddressNonceHandler
 
 // addressNonceHandler is the handler used for one address. It is able to handle the current
 // nonce as max(current_stored_nonce, account_nonce). After each call of the getNonce function
@@ -52,9 +48,9 @@ func NewAddressNonceHandler(proxy interactors.Proxy, address sdkCore.AddressHand
 
 // ApplyNonceAndGasPrice will apply the computed nonce to the given FrontendTransaction
 func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, tx *transaction.FrontendTransaction) error {
-	oldTx, alreadyExists := anh.isTxAlreadySent(tx)
-	if alreadyExists {
-		err := anh.handleTxAlreadyExists(oldTx, tx)
+	oldTx := anh.getOlderTxWithSameNonce(tx)
+	if oldTx != nil {
+		err := anh.handleTxWithSameNonce(oldTx, tx)
 		if err != nil {
 			return err
 		}
@@ -71,7 +67,7 @@ func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, tx *t
 	return nil
 }
 
-func (anh *addressNonceHandler) handleTxAlreadyExists(oldTx *transaction.FrontendTransaction, tx *transaction.FrontendTransaction) error {
+func (anh *addressNonceHandler) handleTxWithSameNonce(oldTx *transaction.FrontendTransaction, tx *transaction.FrontendTransaction) error {
 	if oldTx.GasPrice < tx.GasPrice {
 		return nil
 	}
@@ -80,7 +76,7 @@ func (anh *addressNonceHandler) handleTxAlreadyExists(oldTx *transaction.Fronten
 		return nil
 	}
 
-	return interactors.ErrTxAlreadySent
+	return interactors.ErrTxWithSameNonceAndGasPriceAlreadySent
 }
 
 func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context, nonce uint64) {
@@ -195,18 +191,11 @@ func (anh *addressNonceHandler) DropTransactions() {
 	anh.mut.Unlock()
 }
 
-func (anh *addressNonceHandler) isTxAlreadySent(tx *transaction.FrontendTransaction) (*transaction.FrontendTransaction, bool) {
+func (anh *addressNonceHandler) getOlderTxWithSameNonce(tx *transaction.FrontendTransaction) *transaction.FrontendTransaction {
 	anh.mut.RLock()
 	defer anh.mut.RUnlock()
-	for _, oldTx := range anh.transactions {
-		isTheSameReceiverDataValue := oldTx.Receiver == tx.Receiver &&
-			bytes.Equal(oldTx.Data, tx.Data) &&
-			oldTx.Value == tx.Value
-		if isTheSameReceiverDataValue {
-			return oldTx, true
-		}
-	}
-	return nil, false
+
+	return anh.transactions[tx.Nonce]
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

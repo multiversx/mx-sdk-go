@@ -50,7 +50,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_OneTransaction(t *testing
 		Version:   uint32(1),
 	}
 
-	err = ti.ApplySignature(holder, tx)
+	err = ti.ApplyUserSignature(holder, tx)
 	require.Nil(t, err)
 	ti.AddTransaction(tx)
 
@@ -100,7 +100,7 @@ func TestTransactionInteractor_SendTransactionsAsBunch_MultipleTransactions(t *t
 			Version:   uint32(1),
 		}
 
-		errGenerate := ti.ApplySignature(holder, tx)
+		errGenerate := ti.ApplyUserSignature(holder, tx)
 		require.Nil(t, errGenerate)
 		ti.AddTransaction(tx)
 		nonce++

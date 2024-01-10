@@ -15,6 +15,7 @@ import (
 	"github.com/multiversx/mx-sdk-go/aggregator"
 	"github.com/multiversx/mx-sdk-go/aggregator/mock"
 	"github.com/multiversx/mx-sdk-go/authentication"
+	"github.com/multiversx/mx-sdk-go/authentication/native"
 	"github.com/multiversx/mx-sdk-go/blockchain"
 	"github.com/multiversx/mx-sdk-go/blockchain/cryptoProvider"
 	"github.com/multiversx/mx-sdk-go/core"
@@ -69,16 +70,17 @@ func createAuthClient() (authentication.AuthClient, error) {
 
 	keyGen := signing.NewKeyGenerator(ed25519.NewEd25519())
 	holder, _ := cryptoProvider.NewCryptoComponentsHolder(keyGen, privateKeyBytes)
-	args := authentication.ArgsNativeAuthClient{
+	args := native.ArgsNativeAuthClient{
 		Signer:                 cryptoProvider.NewSigner(),
-		ExtraInfo:              nil,
+		ExtraInfo:              struct{}{},
 		Proxy:                  proxy,
 		CryptoComponentsHolder: holder,
 		TokenExpiryInSeconds:   60 * 60 * 24,
 		Host:                   "oracle",
+		TokenHandler:           native.NewAuthTokenHandler(),
 	}
 
-	authClient, err := authentication.NewNativeAuthClient(args)
+	authClient, err := native.NewNativeAuthClient(args)
 	if err != nil {
 		return nil, err
 	}

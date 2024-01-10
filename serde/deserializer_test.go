@@ -1,8 +1,8 @@
 package serde
 
 import (
-	"io/ioutil"
 	"math/big"
+	"os"
 	"testing"
 
 	"github.com/multiversx/mx-sdk-go/serde/testingMocks"
@@ -18,7 +18,7 @@ const (
 func TestDeserializer_CreateStruct_BasicTypes(t *testing.T) {
 	t.Parallel()
 
-	data, err := ioutil.ReadFile(srcBasicTypes)
+	data, err := os.ReadFile(srcBasicTypes)
 	assert.Nil(t, err)
 	assert.NotNil(t, data)
 
@@ -55,7 +55,7 @@ func TestDeserializer_CreateStruct_BasicTypes(t *testing.T) {
 func TestDeserializer_CreateStruct_NestedStructures(t *testing.T) {
 	t.Parallel()
 
-	data, err := ioutil.ReadFile(srcNestedStructures)
+	data, err := os.ReadFile(srcNestedStructures)
 	assert.Nil(t, err)
 	assert.NotNil(t, data)
 
@@ -88,7 +88,7 @@ func TestDeserializer_CreateStruct_NestedStructures(t *testing.T) {
 func Test_deserializer_CreatePrimitiveDataType(t *testing.T) {
 	t.Parallel()
 
-	data, err := ioutil.ReadFile(srcPrimitive)
+	data, err := os.ReadFile(srcPrimitive)
 	assert.Nil(t, err)
 	assert.NotNil(t, data)
 

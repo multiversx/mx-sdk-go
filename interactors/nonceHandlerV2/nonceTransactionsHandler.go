@@ -23,7 +23,6 @@ var log = logger.GetOrCreate("mx-sdk-go/interactors/nonceHandlerV2")
 type ArgsNonceTransactionsHandlerV2 struct {
 	Proxy            interactors.Proxy
 	IntervalToResend time.Duration
-	Creator          interactors.AddressNonceHandlerCreator
 }
 
 // nonceTransactionsHandlerV2 is the handler used for an unlimited number of addresses.
@@ -37,7 +36,6 @@ type ArgsNonceTransactionsHandlerV2 struct {
 type nonceTransactionsHandlerV2 struct {
 	proxy            interactors.Proxy
 	mutHandlers      sync.RWMutex
-	creator          interactors.AddressNonceHandlerCreator
 	handlers         map[string]interactors.AddressNonceHandler
 	cancelFunc       func()
 	intervalToResend time.Duration
@@ -52,15 +50,11 @@ func NewNonceTransactionHandlerV2(args ArgsNonceTransactionsHandlerV2) (*nonceTr
 	if args.IntervalToResend < minimumIntervalToResend {
 		return nil, fmt.Errorf("%w for intervalToResend in NewNonceTransactionHandlerV2", interactors.ErrInvalidValue)
 	}
-	if check.IfNil(args.Creator) {
-		return nil, interactors.ErrNilAddressNonceHandlerCreator
-	}
 
 	nth := &nonceTransactionsHandlerV2{
 		proxy:            args.Proxy,
 		handlers:         make(map[string]interactors.AddressNonceHandler),
 		intervalToResend: args.IntervalToResend,
-		creator:          args.Creator,
 	}
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
@@ -116,7 +110,8 @@ func (nth *nonceTransactionsHandlerV2) createAddressNonceHandler(address core.Ad
 	if found {
 		return anh, nil
 	}
-	anh, err := nth.creator.Create(nth.proxy, address)
+
+	anh, err := NewAddressNonceHandler(nth.proxy, address)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +126,11 @@ func (nth *nonceTransactionsHandlerV2) SendTransaction(ctx context.Context, tx *
 		return "", interactors.ErrNilTransaction
 	}
 
-	addrAsBech32 := tx.Sender
+	// Work with a full copy of the provided transaction so the provided one can change without affecting this component.
+	// Abnormal and unpredictable behaviors due to the resending mechanism are prevented this way
+	txCopy := *tx
+
+	addrAsBech32 := txCopy.Sender
 	address, err := data.NewAddressFromBech32String(addrAsBech32)
 	if err != nil {
 		return "", fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)
@@ -142,7 +141,7 @@ func (nth *nonceTransactionsHandlerV2) SendTransaction(ctx context.Context, tx *
 		return "", err
 	}
 
-	sentHash, err := anh.SendTransaction(ctx, tx)
+	sentHash, err := anh.SendTransaction(ctx, &txCopy)
 	if err != nil {
 		return "", fmt.Errorf("%w while sending transaction for address %s", err, addrAsBech32)
 	}
