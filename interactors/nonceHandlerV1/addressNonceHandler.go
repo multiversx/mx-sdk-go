@@ -58,15 +58,6 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 }
 
 func (anh *addressNonceHandler) reSendTransactionsIfRequired(ctx context.Context) error {
-	// No need to go further if there are no cached transactions.
-	anh.mut.RLock()
-	noCachedTransactions := len(anh.transactions)
-	anh.mut.RUnlock()
-
-	if noCachedTransactions == 0 {
-		return nil
-	}
-
 	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
 		return err
