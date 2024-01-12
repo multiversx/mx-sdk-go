@@ -1,4 +1,4 @@
-package nonceHandlerV2
+package nonceHandlerV3
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 
 const minimumIntervalToResend = time.Second
 
-var log = logger.GetOrCreate("mx-sdk-go/interactors/nonceHandlerV2")
+var log = logger.GetOrCreate("mx-sdk-go/interactors/nonceHandlerV3")
 
 // ArgsNonceTransactionsHandlerV3 is the argument DTO for a nonce transactions handler component
 type ArgsNonceTransactionsHandlerV3 struct {
@@ -41,9 +41,9 @@ type nonceTransactionsHandlerV3 struct {
 	intervalToResend time.Duration
 }
 
-// NewNonceTransactionHandlerV2 will create a new instance of the nonceTransactionsHandlerV3. It requires a Proxy implementation
+// NewNonceTransactionHandlerV3 will create a new instance of the nonceTransactionsHandlerV3. It requires a Proxy implementation
 // and an interval at which the transactions sent are rechecked and eventually, resent.
-func NewNonceTransactionHandlerV2(args ArgsNonceTransactionsHandlerV3) (*nonceTransactionsHandlerV3, error) {
+func NewNonceTransactionHandlerV3(args ArgsNonceTransactionsHandlerV3) (*nonceTransactionsHandlerV3, error) {
 	if check.IfNil(args.Proxy) {
 		return nil, interactors.ErrNilProxy
 	}
