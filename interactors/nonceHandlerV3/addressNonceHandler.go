@@ -153,7 +153,7 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 				return fmt.Errorf("failed to send transaction: %w", err)
 			}
 
-			log.Info(fmt.Sprintf("successfully resent transaction with nonce %q for address %q", t.Nonce, addressAsBech32String), "hash", hash)
+			log.Info(fmt.Sprintf("successfully resent transaction with nonce %d for address %q", t.Nonce, addressAsBech32String), "hash", hash)
 		}
 	}
 
