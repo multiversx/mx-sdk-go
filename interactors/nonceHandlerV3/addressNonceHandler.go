@@ -30,6 +30,8 @@ type addressNonceHandler struct {
 	gasPrice               uint64
 	nonceUntilGasIncreased uint64
 	transactions           *TransactionQueueHandler
+
+	hashChannel chan string
 }
 
 // NewAddressNonceHandler returns a new instance of a addressNonceHandler
@@ -152,7 +154,7 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 			if err != nil {
 				return fmt.Errorf("failed to send transaction: %w", err)
 			}
-
+			anh.hashChannel <- hash
 			log.Info(fmt.Sprintf("successfully resent transaction with nonce %d for address %q", t.Nonce, addressAsBech32String), "hash", hash)
 		}
 	}
@@ -194,7 +196,9 @@ func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *transac
 	anh.transactions.AddTransaction(tx)
 	anh.mut.Unlock()
 
-	return anh.proxy.SendTransaction(ctx, tx)
+	hash := <-anh.hashChannel
+
+	return hash, nil
 }
 
 // DropTransactions will delete the cached transactions and will try to replace the current transactions from the pool using more gas price
