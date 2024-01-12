@@ -46,6 +46,8 @@ func NewAddressNonceHandler(proxy interactors.Proxy, address sdkCore.AddressHand
 		address:      address,
 		proxy:        proxy,
 		transactions: NewTransactionQueueHandler(),
+
+		hashChannel: make(chan string),
 	}, nil
 }
 
