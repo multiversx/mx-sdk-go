@@ -37,7 +37,7 @@ func (tq TransactionQueue) Swap(a, b int) {
 // we flip the comparer (to greater than) because we need
 // the comparer to sort by highest prio, not lowest
 func (tq TransactionQueue) Less(a, b int) bool {
-	return tq[a].Nonce > tq[b].Nonce
+	return tq[a].Nonce < tq[b].Nonce
 }
 
 type TransactionQueueHandler struct {
