@@ -152,7 +152,7 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 		if t.Nonce > account.Nonce {
 			hash, err := anh.proxy.SendTransaction(ctx, t)
 			if err != nil {
-				return fmt.Errorf("failed to send transaction: %w", err)
+				log.Error("failed to send transaction: %w", err)
 			}
 			anh.hashChannel <- hash
 			log.Info(fmt.Sprintf("successfully resent transaction with nonce %d for address %q", t.Nonce, addressAsBech32String), "hash", hash)
