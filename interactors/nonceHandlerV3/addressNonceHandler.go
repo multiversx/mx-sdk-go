@@ -137,13 +137,6 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 	}
 
 	anh.mut.Lock()
-	if account.Nonce == anh.computedNonce {
-		anh.lowestNonce = anh.computedNonce
-		anh.transactions = NewTransactionQueueHandler()
-		anh.mut.Unlock()
-
-		return nil
-	}
 
 	//resendableTxs := make([]*transaction.FrontendTransaction, 0, anh.transactions.tq.Len())
 	//minNonce := anh.computedNonce
