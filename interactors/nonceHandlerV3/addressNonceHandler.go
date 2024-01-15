@@ -131,6 +131,7 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 
 // ReSendTransactionsIfRequired will resend the cached transactions that still have a nonce greater that the one fetched from the blockchain
 func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context) error {
+	defer close(anh.hashChannel)
 	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
 		return err
