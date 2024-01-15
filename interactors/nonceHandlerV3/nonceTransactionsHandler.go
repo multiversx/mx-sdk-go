@@ -178,6 +178,7 @@ func (nth *nonceTransactionsHandlerV3) resendTransactions(ctx context.Context) {
 
 		resendCtx, cancel := context.WithTimeout(ctx, nth.intervalToResend)
 		err := anh.ReSendTransactionsIfRequired(resendCtx)
+		fmt.Println("i got cancelled once")
 		log.LogIfError(err)
 		cancel()
 	}
