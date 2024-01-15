@@ -36,7 +36,7 @@ type addressNonceHandler struct {
 	nonceUntilGasIncreased uint64
 	transactions           *TransactionQueueHandler
 
-	hashChannel chan TransactionResponse
+	responsesChannels map[uint64]chan TransactionResponse
 }
 
 // NewAddressNonceHandler returns a new instance of a addressNonceHandler
@@ -52,7 +52,7 @@ func NewAddressNonceHandler(proxy interactors.Proxy, address sdkCore.AddressHand
 		proxy:        proxy,
 		transactions: NewTransactionQueueHandler(),
 
-		hashChannel: make(chan TransactionResponse),
+		responsesChannels: make(map[uint64]chan TransactionResponse),
 	}, nil
 }
 
@@ -131,7 +131,6 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 
 // ReSendTransactionsIfRequired will resend the cached transactions that still have a nonce greater that the one fetched from the blockchain
 func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context) error {
-	defer close(anh.hashChannel)
 	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
 		return err
@@ -162,11 +161,11 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 			if err != nil {
 				log.Error("failed to send transaction", "error", err.Error())
 				resp := TransactionResponse{TxHash: "", Error: err}
-				anh.hashChannel <- resp
+				anh.responsesChannels[t.Nonce] <- resp
 				return nil
 			}
 			resp := TransactionResponse{TxHash: hash, Error: nil}
-			anh.hashChannel <- resp
+			anh.responsesChannels[t.Nonce] <- resp
 			log.Info(fmt.Sprintf("successfully resent transaction with nonce %d for address %q", t.Nonce, addressAsBech32String), "hash", hash)
 		}
 	}
@@ -206,9 +205,11 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
 	anh.mut.Lock()
 	anh.transactions.AddTransaction(tx)
+	anh.responsesChannels[tx.Nonce] = make(chan TransactionResponse)
 	anh.mut.Unlock()
 
-	hash := <-anh.hashChannel
+	hash := <-anh.responsesChannels[tx.Nonce]
+	close(anh.responsesChannels[tx.Nonce])
 
 	return hash.TxHash, nil
 }
