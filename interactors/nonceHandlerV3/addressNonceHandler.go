@@ -13,6 +13,11 @@ import (
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
+type TransactionResponse struct {
+	TxHash string
+	Error  error
+}
+
 // addressNonceHandler is the handler used for one address. It is able to handle the current
 // nonce as max(current_stored_nonce, account_nonce). After each call of the getNonce function
 // the current_stored_nonce is incremented. This will prevent "nonce too low in transaction"
@@ -31,7 +36,7 @@ type addressNonceHandler struct {
 	nonceUntilGasIncreased uint64
 	transactions           *TransactionQueueHandler
 
-	hashChannel chan string
+	hashChannel chan TransactionResponse
 }
 
 // NewAddressNonceHandler returns a new instance of a addressNonceHandler
@@ -47,7 +52,7 @@ func NewAddressNonceHandler(proxy interactors.Proxy, address sdkCore.AddressHand
 		proxy:        proxy,
 		transactions: NewTransactionQueueHandler(),
 
-		hashChannel: make(chan string),
+		hashChannel: make(chan TransactionResponse),
 	}, nil
 }
 
@@ -155,8 +160,12 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 			hash, err := anh.proxy.SendTransaction(ctx, t)
 			if err != nil {
 				log.Error("failed to send transaction", "error", err.Error())
+				resp := TransactionResponse{TxHash: "", Error: err}
+				anh.hashChannel <- resp
+				return nil
 			}
-			anh.hashChannel <- hash
+			resp := TransactionResponse{TxHash: hash, Error: nil}
+			anh.hashChannel <- resp
 			log.Info(fmt.Sprintf("successfully resent transaction with nonce %d for address %q", t.Nonce, addressAsBech32String), "hash", hash)
 		}
 	}
@@ -200,7 +209,7 @@ func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *transac
 
 	hash := <-anh.hashChannel
 
-	return hash, nil
+	return hash.TxHash, nil
 }
 
 // DropTransactions will delete the cached transactions and will try to replace the current transactions from the pool using more gas price
