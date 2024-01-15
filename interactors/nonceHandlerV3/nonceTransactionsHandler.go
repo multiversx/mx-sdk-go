@@ -176,7 +176,8 @@ func (nth *nonceTransactionsHandlerV3) resendTransactions(ctx context.Context) {
 		default:
 		}
 
-		resendCtx, cancel := context.WithTimeout(ctx, nth.intervalToResend)
+		// TODO: this is a debug timeout.
+		resendCtx, cancel := context.WithTimeout(ctx, time.Minute)
 		err := anh.ReSendTransactionsIfRequired(resendCtx)
 		fmt.Println("i got cancelled once")
 		log.LogIfError(err)
