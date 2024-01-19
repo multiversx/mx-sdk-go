@@ -39,8 +39,6 @@ type nonceTransactionsHandlerV3 struct {
 	handlers        map[string]interactors.AddressNonceHandlerV2
 	cancelFunc      func()
 	pollingInterval time.Duration
-
-	forceNonce bool
 }
 
 // NewNonceTransactionHandlerV3 will create a new instance of the nonceTransactionsHandlerV3. It requires a Proxy implementation
