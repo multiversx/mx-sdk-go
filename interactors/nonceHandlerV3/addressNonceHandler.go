@@ -22,18 +22,16 @@ import (
 // having a function that sweeps the map in order to resend a transaction or remove them
 // because they were executed. This struct is concurrent safe.
 type addressNonceHandler struct {
-	mut                    sync.Mutex
-	address                sdkCore.AddressHandler
-	proxy                  interactors.Proxy
-	computedNonceWasSet    bool
-	computedNonce          uint64
-	gasPrice               uint64
-	nonceUntilGasIncreased uint64
-	transactionWorker      *workers.TransactionWorker
+	mut               sync.Mutex
+	address           sdkCore.AddressHandler
+	proxy             interactors.Proxy
+	gasPrice          uint64
+	transactionWorker *workers.TransactionWorker
+	parentContext     context.Context
 }
 
-// NewAddressNonceHandlerV2 returns a new instance of a addressNonceHandler
-func NewAddressNonceHandlerV2(proxy interactors.Proxy, address sdkCore.AddressHandler, pollingInterval time.Duration) (interactors.AddressNonceHandlerV2, error) {
+// NewAddressNonceHandlerV3 returns a new instance of a addressNonceHandler
+func NewAddressNonceHandlerV3(parentContext context.Context, proxy interactors.Proxy, address sdkCore.AddressHandler, pollingInterval time.Duration) (interactors.AddressNonceHandlerV3, error) {
 	if check.IfNil(proxy) {
 		return nil, interactors.ErrNilProxy
 	}
@@ -45,7 +43,8 @@ func NewAddressNonceHandlerV2(proxy interactors.Proxy, address sdkCore.AddressHa
 		mut:               sync.Mutex{},
 		address:           address,
 		proxy:             proxy,
-		transactionWorker: workers.NewTransactionWorker(proxy, pollingInterval),
+		transactionWorker: workers.NewTransactionWorker(parentContext, proxy, pollingInterval),
+		parentContext:     parentContext,
 	}
 
 	return anh, nil
@@ -53,9 +52,9 @@ func NewAddressNonceHandlerV2(proxy interactors.Proxy, address sdkCore.AddressHa
 
 // ApplyNonceAndGasPrice will apply the computed nonce to the given FrontendTransaction
 func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txs ...*transaction.FrontendTransaction) error {
-	for _, tx := range txs {
-		nonce, err := anh.getNonceUpdatingCurrent(ctx)
-		tx.Nonce = nonce
+	nonce, err := anh.fetchNonce(ctx)
+	for i, tx := range txs {
+		tx.Nonce = nonce + uint64(i)
 		if err != nil {
 			return err
 		}
@@ -64,7 +63,6 @@ func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txs .
 		tx.GasPrice = core.MaxUint64(anh.gasPrice, tx.GasPrice)
 	}
 
-	anh.computedNonceWasSet = false
 	return nil
 
 }
@@ -79,6 +77,10 @@ func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *transac
 
 	case <-ctx.Done():
 		return "", ctx.Err()
+
+	case <-anh.parentContext.Done():
+		return "", anh.parentContext.Err()
+
 	}
 }
 
@@ -88,7 +90,7 @@ func (anh *addressNonceHandler) IsInterfaceNil() bool {
 }
 
 func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context, nonce uint64) {
-	if nonce == anh.nonceUntilGasIncreased+1 || anh.gasPrice == 0 {
+	if anh.gasPrice == 0 {
 		networkConfig, err := anh.proxy.GetNetworkConfig(ctx)
 
 		anh.mut.Lock()
@@ -102,23 +104,11 @@ func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context, non
 	}
 }
 
-func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (uint64, error) {
+func (anh *addressNonceHandler) fetchNonce(ctx context.Context) (uint64, error) {
 	account, err := anh.proxy.GetAccount(ctx, anh.address)
 	if err != nil {
 		return 0, err
 	}
 
-	anh.mut.Lock()
-	defer anh.mut.Unlock()
-
-	if !anh.computedNonceWasSet {
-		anh.computedNonce = account.Nonce
-		anh.computedNonceWasSet = true
-
-		return anh.computedNonce, nil
-	}
-
-	anh.computedNonce++
-
-	return core.MaxUint64(anh.computedNonce, account.Nonce), nil
+	return account.Nonce, nil
 }

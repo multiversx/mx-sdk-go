@@ -9,6 +9,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
@@ -36,7 +37,8 @@ type ArgsNonceTransactionsHandlerV3 struct {
 type nonceTransactionsHandlerV3 struct {
 	proxy           interactors.Proxy
 	mutHandlers     sync.RWMutex
-	handlers        map[string]interactors.AddressNonceHandlerV2
+	handlers        map[string]interactors.AddressNonceHandlerV3
+	context         context.Context
 	cancelFunc      func()
 	pollingInterval time.Duration
 }
@@ -51,9 +53,12 @@ func NewNonceTransactionHandlerV3(args ArgsNonceTransactionsHandlerV3) (*nonceTr
 		return nil, fmt.Errorf("%w for pollingInterval in NewNonceTransactionHandlerV2", interactors.ErrInvalidValue)
 	}
 
+	ctx, cancelFunc := context.WithCancel(context.Background())
 	nth := &nonceTransactionsHandlerV3{
 		proxy:           args.Proxy,
-		handlers:        make(map[string]interactors.AddressNonceHandlerV2),
+		handlers:        make(map[string]interactors.AddressNonceHandlerV3),
+		context:         ctx,
+		cancelFunc:      cancelFunc,
 		pollingInterval: args.PollingInterval,
 	}
 
@@ -61,23 +66,33 @@ func NewNonceTransactionHandlerV3(args ArgsNonceTransactionsHandlerV3) (*nonceTr
 }
 
 // ApplyNonceAndGasPrice will apply the nonce to the given frontend transaction
-func (nth *nonceTransactionsHandlerV3) ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, tx ...*transaction.FrontendTransaction) error {
-	if check.IfNil(address) {
-		return interactors.ErrNilAddress
-	}
+func (nth *nonceTransactionsHandlerV3) ApplyNonceAndGasPrice(ctx context.Context, tx ...*transaction.FrontendTransaction) error {
 	if tx == nil {
 		return interactors.ErrNilTransaction
 	}
 
-	anh, err := nth.getOrCreateAddressNonceHandler(address)
-	if err != nil {
-		return err
+	mapAddressTransactions := nth.filterTransactionsBySenderAddress(tx)
+
+	for addressRawString, transactions := range mapAddressTransactions {
+		address, err := data.NewAddressFromBech32String(addressRawString)
+		if err != nil {
+			return err
+		}
+		anh, err := nth.getOrCreateAddressNonceHandler(address)
+		if err != nil {
+			return err
+		}
+
+		err = anh.ApplyNonceAndGasPrice(ctx, transactions...)
+		if err != nil {
+			return err
+		}
 	}
 
-	return anh.ApplyNonceAndGasPrice(ctx, tx...)
+	return nil
 }
 
-func (nth *nonceTransactionsHandlerV3) getOrCreateAddressNonceHandler(address core.AddressHandler) (interactors.AddressNonceHandlerV2, error) {
+func (nth *nonceTransactionsHandlerV3) getOrCreateAddressNonceHandler(address core.AddressHandler) (interactors.AddressNonceHandlerV3, error) {
 	anh := nth.getAddressNonceHandler(address)
 	if !check.IfNil(anh) {
 		return anh, nil
@@ -86,7 +101,7 @@ func (nth *nonceTransactionsHandlerV3) getOrCreateAddressNonceHandler(address co
 	return nth.createAddressNonceHandler(address)
 }
 
-func (nth *nonceTransactionsHandlerV3) getAddressNonceHandler(address core.AddressHandler) interactors.AddressNonceHandlerV2 {
+func (nth *nonceTransactionsHandlerV3) getAddressNonceHandler(address core.AddressHandler) interactors.AddressNonceHandlerV3 {
 	nth.mutHandlers.RLock()
 	defer nth.mutHandlers.RUnlock()
 
@@ -97,7 +112,7 @@ func (nth *nonceTransactionsHandlerV3) getAddressNonceHandler(address core.Addre
 	return nil
 }
 
-func (nth *nonceTransactionsHandlerV3) createAddressNonceHandler(address core.AddressHandler) (interactors.AddressNonceHandlerV2, error) {
+func (nth *nonceTransactionsHandlerV3) createAddressNonceHandler(address core.AddressHandler) (interactors.AddressNonceHandlerV3, error) {
 	nth.mutHandlers.Lock()
 	defer nth.mutHandlers.Unlock()
 
@@ -107,7 +122,7 @@ func (nth *nonceTransactionsHandlerV3) createAddressNonceHandler(address core.Ad
 		return anh, nil
 	}
 
-	anh, err := NewAddressNonceHandlerV2(nth.proxy, address, nth.pollingInterval)
+	anh, err := NewAddressNonceHandlerV3(nth.context, nth.proxy, address, nth.pollingInterval)
 	if err != nil {
 		return nil, err
 	}
@@ -116,33 +131,63 @@ func (nth *nonceTransactionsHandlerV3) createAddressNonceHandler(address core.Ad
 	return anh, nil
 }
 
-// SendTransaction will store and send the provided transaction
-func (nth *nonceTransactionsHandlerV3) SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
-	if tx == nil {
-		return "", interactors.ErrNilTransaction
+func (nth *nonceTransactionsHandlerV3) filterTransactionsBySenderAddress(transactions []*transaction.FrontendTransaction) map[string][]*transaction.FrontendTransaction {
+	filterMap := make(map[string][]*transaction.FrontendTransaction)
+	for _, tx := range transactions {
+		if entry, ok := filterMap[tx.Sender]; !ok {
+			transactionsPerAddress := make([]*transaction.FrontendTransaction, 0)
+			transactionsPerAddress = append(transactionsPerAddress, tx)
+			filterMap[tx.Sender] = transactionsPerAddress
+		} else {
+			entry = append(entry, tx)
+		}
 	}
 
-	// Work with a full copy of the provided transaction so the provided one can change without affecting this component.
-	// Abnormal and unpredictable behaviors due to the resending mechanism are prevented this way
-	txCopy := *tx
+	return filterMap
+}
 
-	addrAsBech32 := txCopy.Sender
-	address, err := data.NewAddressFromBech32String(addrAsBech32)
-	if err != nil {
-		return "", fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)
+// SendTransactions will store and send the provided transaction
+func (nth *nonceTransactionsHandlerV3) SendTransactions(ctx context.Context, txs ...*transaction.FrontendTransaction) ([]string, error) {
+	g, ctx := errgroup.WithContext(ctx)
+	sentHashes := make([]string, len(txs))
+	for i, tx := range txs {
+
+		if tx == nil {
+			return nil, interactors.ErrNilTransaction
+		}
+
+		// Work with a full copy of the provided transaction so the provided one can change without affecting this component.
+		// Abnormal and unpredictable behaviors due to the resending mechanism are prevented this way
+		txCopy := *tx
+
+		addrAsBech32 := txCopy.Sender
+		address, err := data.NewAddressFromBech32String(addrAsBech32)
+		if err != nil {
+			return nil, fmt.Errorf("%w while creating address handler for string %s", err, addrAsBech32)
+		}
+
+		anh, err := nth.getOrCreateAddressNonceHandler(address)
+		if err != nil {
+			return nil, err
+		}
+
+		i := i
+		g.Go(func() error {
+			sentHash, err := anh.SendTransaction(ctx, &txCopy)
+			if err != nil {
+				return fmt.Errorf("%w while sending transaction for address %s", err, addrAsBech32)
+			}
+
+			sentHashes[i] = sentHash
+			return nil
+		})
 	}
 
-	anh, err := nth.getOrCreateAddressNonceHandler(address)
-	if err != nil {
-		return "", err
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
-	sentHash, err := anh.SendTransaction(ctx, &txCopy)
-	if err != nil {
-		return "", fmt.Errorf("%w while sending transaction for address %s", err, addrAsBech32)
-	}
-
-	return sentHash, nil
+	return sentHashes, nil
 }
 
 // Close finishes the workers resend go routine

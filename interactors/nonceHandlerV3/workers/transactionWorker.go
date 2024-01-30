@@ -7,9 +7,12 @@ import (
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	logger "github.com/multiversx/mx-chain-logger-go"
 
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
+
+var log = logger.GetOrCreate("mx-sdk-go/interactors/workers/transactionWorker")
 
 // TransactionResponse wraps the results provided by the endpoint which will send the transaction in a struct.
 type TransactionResponse struct {
@@ -17,43 +20,55 @@ type TransactionResponse struct {
 	Error  error
 }
 
+type TransactionQueueItem struct {
+	tx    *transaction.FrontendTransaction
+	index int
+}
+
 type TransactionQueue interface {
-	Push(newTx interface{})
-	Pop() interface{}
+	Push(newTx any)
+	Pop() any
 	Len() int
 }
 
-type transactionQueue []*transaction.FrontendTransaction
+// A transactionQueue implements heap.Interface and holds Items. Acts like a priority queue.
+type transactionQueue []*TransactionQueueItem
 
 // Push required by the heap.Interface
-func (tq *transactionQueue) Push(newTx interface{}) {
-	tx := newTx.(*transaction.FrontendTransaction)
-	*tq = append(*tq, tx)
+func (tq *transactionQueue) Push(x any) {
+	n := len(*tq)
+	item := x.(*TransactionQueueItem)
+	item.index = n
+	*tq = append(*tq, item)
 }
 
 // Pop required by the heap.Interface
-func (tq *transactionQueue) Pop() interface{} {
-	currentQueue := *tq
-	n := len(currentQueue)
-	tx := currentQueue[n-1]
-	*tq = currentQueue[0 : n-1]
-	return tx
+func (tq *transactionQueue) Pop() any {
+	old := *tq
+	n := len(old)
+	item := old[n-1]
+	old[n-1] = nil  // avoid memory leak
+	item.index = -1 // for safety
+	*tq = old[0 : n-1]
+	return item
 }
 
 // Len required by sort.Interface
-func (tq *transactionQueue) Len() int {
-	return len(*tq)
+func (tq transactionQueue) Len() int {
+	return len(tq)
 }
 
 // Swap required by the sort.Interface
 func (tq transactionQueue) Swap(a, b int) {
 	tq[a], tq[b] = tq[b], tq[a]
+	tq[a].index = a
+	tq[b].index = b
 }
 
 // Less required by the sort.Interface
 // Meaning that in the heap, the transaction with the lowest nonce has priority.
 func (tq transactionQueue) Less(a, b int) bool {
-	return tq[a].Nonce < tq[b].Nonce
+	return tq[a].tx.Nonce < tq[b].tx.Nonce
 }
 
 // TransactionWorker handles all transaction stored inside a priority queue. The priority is given by the nonce, meaning
@@ -67,7 +82,7 @@ type TransactionWorker struct {
 }
 
 // NewTransactionWorker creates a new instance of TransactionWorker.
-func NewTransactionWorker(proxy interactors.Proxy, pollingInterval time.Duration) *TransactionWorker {
+func NewTransactionWorker(context context.Context, proxy interactors.Proxy, pollingInterval time.Duration) *TransactionWorker {
 	tw := &TransactionWorker{
 		mu:                sync.Mutex{},
 		tq:                make(transactionQueue, 0),
@@ -76,7 +91,7 @@ func NewTransactionWorker(proxy interactors.Proxy, pollingInterval time.Duration
 	}
 	heap.Init(&tw.tq)
 
-	tw.start(pollingInterval)
+	tw.start(context, pollingInterval)
 	return tw
 }
 
@@ -89,34 +104,41 @@ func (tw *TransactionWorker) AddTransaction(transaction *transaction.FrontendTra
 	r := make(chan *TransactionResponse)
 	tw.responsesChannels[transaction.Nonce] = r
 
-	heap.Push(&tw.tq, transaction)
+	heap.Push(&tw.tq, &TransactionQueueItem{tx: transaction})
 	return r
 }
 
 // start will spawn a goroutine tasked with iterating all the transactions inside the priority queue. The priority is
 // given by the nonce, meaning that transaction with lower nonce will be sent first.
-func (tw *TransactionWorker) start(pollingInterval time.Duration) {
+func (tw *TransactionWorker) start(ctx context.Context, pollingInterval time.Duration) {
 	go func() {
 		for {
-			// Retrieve the transaction in the queue with the lowest nonce.
-			tx := tw.nextTransaction()
+			select {
+			case <-ctx.Done():
+				log.Info("context cancelled - transaction worker has stopped")
+				return
 
-			// If there are no transaction in the queue, the result will be nil.
-			// That means there are no transactions to send.
-			if tx == nil {
-				time.Sleep(pollingInterval)
-				continue
+			default:
+				// Retrieve the transaction in the queue with the lowest nonce.
+				tx := tw.nextTransaction()
+
+				// If there are no transaction in the queue, the result will be nil.
+				// That means there are no transactions to send.
+				if tx == nil {
+					time.Sleep(pollingInterval)
+					continue
+				}
+
+				// We retrieve the channel where we will send the response.
+				// Everytime a transaction is added to the queue, such a channel is created and placed in a map.
+				tw.mu.Lock()
+				r := tw.responsesChannels[tx.Nonce]
+				tw.mu.Unlock()
+
+				// Send the transaction and forward the response on the channel promised.
+				txHash, err := tw.proxy.SendTransaction(ctx, tx)
+				r <- &TransactionResponse{TxHash: txHash, Error: err}
 			}
-
-			// We retrieve the channel where we will send the response.
-			// Everytime a transaction is added to the queue, such a channel is created and placed in a map.
-			tw.mu.Lock()
-			r := tw.responsesChannels[tx.Nonce]
-			tw.mu.Unlock()
-
-			// Send the transaction and forward the response on the channel promised.
-			txHash, err := tw.proxy.SendTransaction(context.TODO(), tx)
-			r <- &TransactionResponse{TxHash: txHash, Error: err}
 		}
 	}()
 }
@@ -131,5 +153,5 @@ func (tw *TransactionWorker) nextTransaction() *transaction.FrontendTransaction 
 	}
 
 	nextTransaction := heap.Pop(&tw.tq)
-	return nextTransaction.(*transaction.FrontendTransaction)
+	return nextTransaction.(*TransactionQueueItem).tx
 }

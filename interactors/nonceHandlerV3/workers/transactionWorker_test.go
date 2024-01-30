@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"context"
 	"strconv"
 	"sync"
 	"testing"
@@ -21,7 +22,7 @@ func TestTransactionWorker_AddTransaction(t *testing.T) {
 		},
 	}
 
-	w := NewTransactionWorker(proxy, 2*time.Second)
+	w := NewTransactionWorker(context.Background(), proxy, 2*time.Second)
 
 	// We add roughly at the same time un-ordered transactions.
 	w.AddTransaction(&transaction.FrontendTransaction{Nonce: 91})
@@ -47,7 +48,7 @@ func TestTransactionWorker_AddTransactionWithLowerNonceAfter(t *testing.T) {
 		},
 	}
 
-	w := NewTransactionWorker(proxy, 1*time.Second)
+	w := NewTransactionWorker(context.Background(), proxy, 1*time.Second)
 
 	// We add two ordered by nonce transactions roughly at the same time.
 	w.AddTransaction(&transaction.FrontendTransaction{Nonce: nonces[0]})
