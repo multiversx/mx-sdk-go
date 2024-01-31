@@ -38,8 +38,6 @@ type nonceTransactionsHandlerV3 struct {
 	proxy           interactors.Proxy
 	mutHandlers     sync.RWMutex
 	handlers        map[string]interactors.AddressNonceHandlerV3
-	context         context.Context
-	cancelFunc      func()
 	pollingInterval time.Duration
 }
 
@@ -53,12 +51,9 @@ func NewNonceTransactionHandlerV3(args ArgsNonceTransactionsHandlerV3) (*nonceTr
 		return nil, fmt.Errorf("%w for pollingInterval in NewNonceTransactionHandlerV2", interactors.ErrInvalidValue)
 	}
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
 	nth := &nonceTransactionsHandlerV3{
 		proxy:           args.Proxy,
 		handlers:        make(map[string]interactors.AddressNonceHandlerV3),
-		context:         ctx,
-		cancelFunc:      cancelFunc,
 		pollingInterval: args.PollingInterval,
 	}
 
@@ -122,7 +117,7 @@ func (nth *nonceTransactionsHandlerV3) createAddressNonceHandler(address core.Ad
 		return anh, nil
 	}
 
-	anh, err := NewAddressNonceHandlerV3(nth.context, nth.proxy, address, nth.pollingInterval)
+	anh, err := NewAddressNonceHandlerV3(nth.proxy, address, nth.pollingInterval)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +146,6 @@ func (nth *nonceTransactionsHandlerV3) SendTransactions(ctx context.Context, txs
 	g, ctx := errgroup.WithContext(ctx)
 	sentHashes := make([]string, len(txs))
 	for i, tx := range txs {
-
 		if tx == nil {
 			return nil, interactors.ErrNilTransaction
 		}
@@ -184,17 +178,19 @@ func (nth *nonceTransactionsHandlerV3) SendTransactions(ctx context.Context, txs
 	}
 
 	if err := g.Wait(); err != nil {
-		return nil, err
+		return sentHashes, err
 	}
 
 	return sentHashes, nil
 }
 
-// Close finishes the workers resend go routine
-func (nth *nonceTransactionsHandlerV3) Close() error {
-	nth.cancelFunc()
-
-	return nil
+// Close will cancel all related processes.
+func (nth *nonceTransactionsHandlerV3) Close() {
+	nth.mutHandlers.RLock()
+	defer nth.mutHandlers.RUnlock()
+	for _, handler := range nth.handlers {
+		handler.Close()
+	}
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

@@ -25,12 +25,6 @@ type TransactionQueueItem struct {
 	index int
 }
 
-type TransactionQueue interface {
-	Push(newTx any)
-	Pop() any
-	Len() int
-}
-
 // A transactionQueue implements heap.Interface and holds Items. Acts like a priority queue.
 type transactionQueue []*TransactionQueueItem
 
@@ -111,28 +105,49 @@ func (tw *TransactionWorker) AddTransaction(transaction *transaction.FrontendTra
 // start will spawn a goroutine tasked with iterating all the transactions inside the priority queue. The priority is
 // given by the nonce, meaning that transaction with lower nonce will be sent first.
 func (tw *TransactionWorker) start(ctx context.Context, pollingInterval time.Duration) {
+	ticker := time.NewTicker(pollingInterval)
+
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				log.Info("context cancelled - transaction worker has stopped")
+				tw.mu.Lock()
+				for _, ch := range tw.responsesChannels {
+					ch <- &TransactionResponse{TxHash: "", Error: ctx.Err()}
+				}
+				tw.mu.Unlock()
 				return
 
 			default:
 				// Retrieve the transaction in the queue with the lowest nonce.
-				tx := tw.nextTransaction()
+				tx := tw.peekNextTransaction()
 
 				// If there are no transaction in the queue, the result will be nil.
 				// That means there are no transactions to send.
 				if tx == nil {
-					time.Sleep(pollingInterval)
-					continue
+
+					// We create a poll where we peek at the queue for the first transaction. If such a transaction
+					//is found we break out of the poll.
+				poll:
+					for {
+						select {
+						case <-ticker.C:
+							tx = tw.peekNextTransaction()
+							if tx != nil {
+								break poll
+							}
+						}
+					}
 				}
+
+				tx = tw.nextTransaction()
 
 				// We retrieve the channel where we will send the response.
 				// Everytime a transaction is added to the queue, such a channel is created and placed in a map.
 				tw.mu.Lock()
 				r := tw.responsesChannels[tx.Nonce]
+				delete(tw.responsesChannels, tx.Nonce)
 				tw.mu.Unlock()
 
 				// Send the transaction and forward the response on the channel promised.
@@ -154,4 +169,15 @@ func (tw *TransactionWorker) nextTransaction() *transaction.FrontendTransaction 
 
 	nextTransaction := heap.Pop(&tw.tq)
 	return nextTransaction.(*TransactionQueueItem).tx
+}
+
+// peekNextTransaction will look at the first transaction in the queue without removing it from the underlying slice.
+func (tw *TransactionWorker) peekNextTransaction() *transaction.FrontendTransaction {
+	tw.mu.Lock()
+	defer tw.mu.Unlock()
+	if tw.tq.Len() == 0 {
+		return nil
+	}
+
+	return tw.tq[0].tx
 }

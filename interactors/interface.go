@@ -46,6 +46,7 @@ type AddressNonceHandlerV3 interface {
 	ApplyNonceAndGasPrice(ctx context.Context, tx ...*transaction.FrontendTransaction) error
 	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
 	IsInterfaceNil() bool
+	Close()
 }
 
 // TransactionNonceHandlerV1 defines the component able to manage transaction nonces
@@ -67,8 +68,8 @@ type TransactionNonceHandlerV2 interface {
 
 // TransactionNonceHandlerV3 defines the component able to apply nonce for a given frontend transaction.
 type TransactionNonceHandlerV3 interface {
-	ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, tx ...*transaction.FrontendTransaction) error
+	ApplyNonceAndGasPrice(ctx context.Context, tx ...*transaction.FrontendTransaction) error
 	SendTransactions(ctx context.Context, txs ...*transaction.FrontendTransaction) ([]string, error)
-	Close() error
+	Close()
 	IsInterfaceNil() bool
 }

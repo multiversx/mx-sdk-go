@@ -27,11 +27,11 @@ type addressNonceHandler struct {
 	proxy             interactors.Proxy
 	gasPrice          uint64
 	transactionWorker *workers.TransactionWorker
-	parentContext     context.Context
+	cancelFunc        func()
 }
 
 // NewAddressNonceHandlerV3 returns a new instance of a addressNonceHandler
-func NewAddressNonceHandlerV3(parentContext context.Context, proxy interactors.Proxy, address sdkCore.AddressHandler, pollingInterval time.Duration) (interactors.AddressNonceHandlerV3, error) {
+func NewAddressNonceHandlerV3(proxy interactors.Proxy, address sdkCore.AddressHandler, pollingInterval time.Duration) (*addressNonceHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, interactors.ErrNilProxy
 	}
@@ -39,12 +39,14 @@ func NewAddressNonceHandlerV3(parentContext context.Context, proxy interactors.P
 		return nil, interactors.ErrNilAddress
 	}
 
+	ctx, cancelFunc := context.WithCancel(context.Background())
+
 	anh := &addressNonceHandler{
 		mut:               sync.Mutex{},
 		address:           address,
 		proxy:             proxy,
-		transactionWorker: workers.NewTransactionWorker(parentContext, proxy, pollingInterval),
-		parentContext:     parentContext,
+		transactionWorker: workers.NewTransactionWorker(ctx, proxy, pollingInterval),
+		cancelFunc:        cancelFunc,
 	}
 
 	return anh, nil
@@ -59,7 +61,7 @@ func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txs .
 			return err
 		}
 
-		anh.fetchGasPriceIfRequired(ctx, nonce)
+		anh.fetchGasPriceIfRequired(ctx)
 		tx.GasPrice = core.MaxUint64(anh.gasPrice, tx.GasPrice)
 	}
 
@@ -77,10 +79,6 @@ func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *transac
 
 	case <-ctx.Done():
 		return "", ctx.Err()
-
-	case <-anh.parentContext.Done():
-		return "", anh.parentContext.Err()
-
 	}
 }
 
@@ -89,7 +87,12 @@ func (anh *addressNonceHandler) IsInterfaceNil() bool {
 	return anh == nil
 }
 
-func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context, nonce uint64) {
+// Close will cancel all related processes..
+func (anh *addressNonceHandler) Close() {
+	anh.cancelFunc()
+}
+
+func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context) {
 	if anh.gasPrice == 0 {
 		networkConfig, err := anh.proxy.GetNetworkConfig(ctx)
 
