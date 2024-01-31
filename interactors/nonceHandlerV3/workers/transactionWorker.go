@@ -95,7 +95,7 @@ func (tw *TransactionWorker) AddTransaction(transaction *transaction.FrontendTra
 	tw.mu.Lock()
 	defer tw.mu.Unlock()
 
-	r := make(chan *TransactionResponse)
+	r := make(chan *TransactionResponse, 1)
 	tw.responsesChannels[transaction.Nonce] = r
 
 	heap.Push(&tw.tq, &TransactionQueueItem{tx: transaction})
@@ -128,19 +128,17 @@ func (tw *TransactionWorker) start(ctx context.Context, pollingInterval time.Dur
 				if tx == nil {
 
 					// We create a poll where we peek at the queue for the first transaction. If such a transaction
-					//is found we break out of the poll.
-				poll:
-					for {
-						select {
-						case <-ticker.C:
-							tx = tw.peekNextTransaction()
-							if tx != nil {
-								break poll
-							}
+					// is found we break out of the poll. Otherwise, we keep polling with an interval set by
+					// the pollingInterval variable.
+					for range ticker.C {
+						tx = tw.peekNextTransaction()
+						if tx != nil {
+							break
 						}
 					}
 				}
 
+				// Retrieve the next transaction to be processed.
 				tx = tw.nextTransaction()
 
 				// We retrieve the channel where we will send the response.

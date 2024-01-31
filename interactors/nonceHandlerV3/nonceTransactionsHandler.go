@@ -129,12 +129,12 @@ func (nth *nonceTransactionsHandlerV3) createAddressNonceHandler(address core.Ad
 func (nth *nonceTransactionsHandlerV3) filterTransactionsBySenderAddress(transactions []*transaction.FrontendTransaction) map[string][]*transaction.FrontendTransaction {
 	filterMap := make(map[string][]*transaction.FrontendTransaction)
 	for _, tx := range transactions {
-		if entry, ok := filterMap[tx.Sender]; !ok {
+		if _, ok := filterMap[tx.Sender]; !ok {
 			transactionsPerAddress := make([]*transaction.FrontendTransaction, 0)
 			transactionsPerAddress = append(transactionsPerAddress, tx)
 			filterMap[tx.Sender] = transactionsPerAddress
 		} else {
-			entry = append(entry, tx)
+			filterMap[tx.Sender] = append(filterMap[tx.Sender], tx)
 		}
 	}
 

@@ -2,6 +2,7 @@ package workers
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"sync"
 	"testing"
@@ -70,4 +71,18 @@ func TestTransactionWorker_AddTransactionWithLowerNonceAfter(t *testing.T) {
 	// Even though the nonce was lower than the first two.
 	wg.Wait()
 	require.Equal(t, &TransactionResponse{TxHash: strconv.FormatUint(nonces[2], 10), Error: nil}, <-w.responsesChannels[nonces[2]])
+}
+
+func TestMe(t *testing.T) {
+
+	ticker := time.NewTicker(time.Second)
+	i := 0
+	for range ticker.C {
+		fmt.Println(i)
+		i++
+
+		if i == 5 {
+			break
+		}
+	}
 }
