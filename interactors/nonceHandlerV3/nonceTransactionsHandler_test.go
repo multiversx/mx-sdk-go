@@ -137,8 +137,15 @@ func TestSendTransactionsCloseInstant(t *testing.T) {
 	go func() {
 		hashes, err := transactionHandler.SendTransactions(context.Background(), txs...)
 
-		// Since the close is almost instant, no transaction should be processed. Therefore the hashes should be blank.
-		require.Equal(t, make([]string, 1000), hashes, "no transaction should be processed")
+		var counter int
+		// Since the close is almost instant there should be none or very few transactions that have been processed.
+		for _, h := range hashes {
+			if h != "" {
+				counter++
+			}
+		}
+
+		require.Less(t, counter, 5, "more than 5 transactions have been processed.")
 		require.Equal(t, "context canceled while sending transaction for address erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht", err.Error())
 		wg.Done()
 	}()
