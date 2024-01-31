@@ -2,7 +2,6 @@ package workers
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"sync"
 	"testing"
@@ -25,18 +24,20 @@ func TestTransactionWorker_AddTransaction(t *testing.T) {
 
 	w := NewTransactionWorker(context.Background(), proxy, 2*time.Second)
 
+	responseChannels := make([]<-chan *TransactionResponse, 7)
+
 	// We add roughly at the same time un-ordered transactions.
-	w.AddTransaction(&transaction.FrontendTransaction{Nonce: 91})
-	w.AddTransaction(&transaction.FrontendTransaction{Nonce: 1})
-	w.AddTransaction(&transaction.FrontendTransaction{Nonce: 13})
-	w.AddTransaction(&transaction.FrontendTransaction{Nonce: 10})
-	w.AddTransaction(&transaction.FrontendTransaction{Nonce: 99})
-	w.AddTransaction(&transaction.FrontendTransaction{Nonce: 8})
-	w.AddTransaction(&transaction.FrontendTransaction{Nonce: 7})
+	responseChannels[5] = w.AddTransaction(&transaction.FrontendTransaction{Nonce: 91})
+	responseChannels[0] = w.AddTransaction(&transaction.FrontendTransaction{Nonce: 1})
+	responseChannels[4] = w.AddTransaction(&transaction.FrontendTransaction{Nonce: 13})
+	responseChannels[3] = w.AddTransaction(&transaction.FrontendTransaction{Nonce: 10})
+	responseChannels[6] = w.AddTransaction(&transaction.FrontendTransaction{Nonce: 99})
+	responseChannels[2] = w.AddTransaction(&transaction.FrontendTransaction{Nonce: 8})
+	responseChannels[1] = w.AddTransaction(&transaction.FrontendTransaction{Nonce: 7})
 
 	// Verify that the results come in ordered.
-	for _, n := range sortedNonces {
-		require.Equal(t, &TransactionResponse{TxHash: strconv.FormatUint(n, 10), Error: nil}, <-w.responsesChannels[n])
+	for i, n := range sortedNonces {
+		require.Equal(t, &TransactionResponse{TxHash: strconv.FormatUint(n, 10), Error: nil}, <-responseChannels[i])
 	}
 }
 
@@ -52,37 +53,24 @@ func TestTransactionWorker_AddTransactionWithLowerNonceAfter(t *testing.T) {
 	w := NewTransactionWorker(context.Background(), proxy, 1*time.Second)
 
 	// We add two ordered by nonce transactions roughly at the same time.
-	w.AddTransaction(&transaction.FrontendTransaction{Nonce: nonces[0]})
-	w.AddTransaction(&transaction.FrontendTransaction{Nonce: nonces[1]})
+	r1 := w.AddTransaction(&transaction.FrontendTransaction{Nonce: nonces[0]})
+	r2 := w.AddTransaction(&transaction.FrontendTransaction{Nonce: nonces[1]})
 
 	// We add another transaction with a lower nonce after a while
 	var wg sync.WaitGroup
+	r3 := make(<-chan *TransactionResponse, 1)
 	wg.Add(1)
 	time.AfterFunc(2*time.Second, func() {
-		w.AddTransaction(&transaction.FrontendTransaction{Nonce: nonces[2]})
+		r3 = w.AddTransaction(&transaction.FrontendTransaction{Nonce: nonces[2]})
 		wg.Done()
 	})
 
 	// Verify that the transactions have been processed in the right order.
-	require.Equal(t, &TransactionResponse{TxHash: strconv.FormatUint(nonces[0], 10), Error: nil}, <-w.responsesChannels[nonces[0]])
-	require.Equal(t, &TransactionResponse{TxHash: strconv.FormatUint(nonces[1], 10), Error: nil}, <-w.responsesChannels[nonces[1]])
+	require.Equal(t, &TransactionResponse{TxHash: strconv.FormatUint(nonces[0], 10), Error: nil}, <-r1)
+	require.Equal(t, &TransactionResponse{TxHash: strconv.FormatUint(nonces[1], 10), Error: nil}, <-r2)
 
 	// Wait for the scheduled transaction to finish. After that we verify that the transaction it has been processed.
 	// Even though the nonce was lower than the first two.
 	wg.Wait()
-	require.Equal(t, &TransactionResponse{TxHash: strconv.FormatUint(nonces[2], 10), Error: nil}, <-w.responsesChannels[nonces[2]])
-}
-
-func TestMe(t *testing.T) {
-
-	ticker := time.NewTicker(time.Second)
-	i := 0
-	for range ticker.C {
-		fmt.Println(i)
-		i++
-
-		if i == 5 {
-			break
-		}
-	}
+	require.Equal(t, &TransactionResponse{TxHash: strconv.FormatUint(nonces[2], 10), Error: nil}, <-r3)
 }
