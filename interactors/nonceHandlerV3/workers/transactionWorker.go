@@ -20,6 +20,8 @@ type TransactionResponse struct {
 	Error  error
 }
 
+// TransactionQueueItem is a wrapper struct on the transaction itself that is used to encapsulate transactions in
+// the priority queue.
 type TransactionQueueItem struct {
 	tx    *transaction.FrontendTransaction
 	index int
@@ -119,12 +121,7 @@ func (tw *TransactionWorker) start(ctx context.Context, pollingInterval time.Dur
 			select {
 			case <-ctx.Done():
 				log.Info("context cancelled - transaction worker has stopped")
-				tw.mu.Lock()
-				for _, ch := range tw.responsesChannels {
-					ch <- &TransactionResponse{TxHash: "", Error: ctx.Err()}
-				}
-				tw.workerClosed = true
-				tw.mu.Unlock()
+				tw.closeAllChannels(ctx)
 				return
 			case <-ticker.C:
 				tw.processNextTransaction(ctx, chMoreWorkToDo)
@@ -141,12 +138,8 @@ func (tw *TransactionWorker) processNextTransaction(ctx context.Context, chMoreW
 		return
 	}
 
-	// We retrieve the channel where we will send the response.
-	// Everytime a transaction is added to the queue, such a channel is created and placed in a map.
-	tw.mu.Lock()
-	r := tw.responsesChannels[tx.Nonce]
-	delete(tw.responsesChannels, tx.Nonce)
-	tw.mu.Unlock()
+	// Retrieve channel where the response will be broadcast on.
+	r := tw.retrieveChannel(tx.Nonce)
 
 	// Send the transaction and forward the response on the channel promised.
 	txHash, err := tw.proxy.SendTransaction(ctx, tx)
@@ -167,13 +160,23 @@ func (tw *TransactionWorker) nextTransaction() *transaction.FrontendTransaction 
 	return nextTransaction.(*TransactionQueueItem).tx
 }
 
-// peekNextTransaction will look at the first transaction in the queue without removing it from the underlying slice.
-func (tw *TransactionWorker) peekNextTransaction() *transaction.FrontendTransaction {
+func (tw *TransactionWorker) closeAllChannels(ctx context.Context) {
 	tw.mu.Lock()
 	defer tw.mu.Unlock()
-	if tw.tq.Len() == 0 {
-		return nil
+	for _, ch := range tw.responsesChannels {
+		ch <- &TransactionResponse{TxHash: "", Error: ctx.Err()}
 	}
+	tw.workerClosed = true
+}
 
-	return tw.tq[0].tx
+func (tw *TransactionWorker) retrieveChannel(nonce uint64) chan *TransactionResponse {
+	// We retrieve the channel where we will send the response.
+	// Everytime a transaction is added to the queue, such a channel is created and placed in a map.
+	// After retrieving it, delete the entry from the map that stores all of them.
+	tw.mu.Lock()
+	r := tw.responsesChannels[nonce]
+	delete(tw.responsesChannels, nonce)
+	tw.mu.Unlock()
+
+	return r
 }

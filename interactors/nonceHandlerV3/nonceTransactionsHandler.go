@@ -129,13 +129,11 @@ func (nth *nonceTransactionsHandlerV3) createAddressNonceHandler(address core.Ad
 func (nth *nonceTransactionsHandlerV3) filterTransactionsBySenderAddress(transactions []*transaction.FrontendTransaction) map[string][]*transaction.FrontendTransaction {
 	filterMap := make(map[string][]*transaction.FrontendTransaction)
 	for _, tx := range transactions {
-		if _, ok := filterMap[tx.Sender]; !ok {
-			transactionsPerAddress := make([]*transaction.FrontendTransaction, 0)
-			transactionsPerAddress = append(transactionsPerAddress, tx)
-			filterMap[tx.Sender] = transactionsPerAddress
-		} else {
-			filterMap[tx.Sender] = append(filterMap[tx.Sender], tx)
+		transactionsPerAddress, ok := filterMap[tx.Sender]
+		if !ok {
+			transactionsPerAddress = make([]*transaction.FrontendTransaction, 0)
 		}
+		filterMap[tx.Sender] = append(transactionsPerAddress, tx)
 	}
 
 	return filterMap
@@ -165,23 +163,21 @@ func (nth *nonceTransactionsHandlerV3) SendTransactions(ctx context.Context, txs
 			return nil, err
 		}
 
-		i := i
+		idx := i
 		g.Go(func() error {
-			sentHash, err := anh.SendTransaction(ctx, &txCopy)
-			if err != nil {
-				return fmt.Errorf("%w while sending transaction for address %s", err, addrAsBech32)
+			sentHash, errSend := anh.SendTransaction(ctx, &txCopy)
+			if errSend != nil {
+				return fmt.Errorf("%w while sending transaction for address %s", errSend, addrAsBech32)
 			}
 
-			sentHashes[i] = sentHash
+			sentHashes[idx] = sentHash
 			return nil
 		})
 	}
 
-	if err := g.Wait(); err != nil {
-		return sentHashes, err
-	}
+	err := g.Wait()
 
-	return sentHashes, nil
+	return sentHashes, err
 }
 
 // Close will cancel all related processes.
