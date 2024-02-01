@@ -71,6 +71,7 @@ type TransactionWorker struct {
 	mu sync.Mutex
 	tq transactionQueue
 
+	workerClosed      bool
 	proxy             interactors.Proxy
 	responsesChannels map[uint64]chan *TransactionResponse
 }
@@ -96,6 +97,11 @@ func (tw *TransactionWorker) AddTransaction(transaction *transaction.FrontendTra
 	defer tw.mu.Unlock()
 
 	r := make(chan *TransactionResponse, 1)
+	if tw.workerClosed {
+		r <- &TransactionResponse{TxHash: "", Error: interactors.ErrWorkerClosed}
+		return r
+	}
+
 	tw.responsesChannels[transaction.Nonce] = r
 
 	heap.Push(&tw.tq, &TransactionQueueItem{tx: transaction})
@@ -117,6 +123,7 @@ func (tw *TransactionWorker) start(ctx context.Context, pollingInterval time.Dur
 				for _, ch := range tw.responsesChannels {
 					ch <- &TransactionResponse{TxHash: "", Error: ctx.Err()}
 				}
+				tw.workerClosed = true
 				tw.mu.Unlock()
 				return
 			case <-ticker.C:
