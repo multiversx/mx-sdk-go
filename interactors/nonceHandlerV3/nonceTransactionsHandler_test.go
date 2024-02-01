@@ -135,7 +135,10 @@ func TestSendTransactionsCloseInstant(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		hashes, err := transactionHandler.SendTransactions(context.Background(), txs...)
+		// make sure that the Close function is called before the send function
+		time.Sleep(time.Second)
+
+		hashes, errSend := transactionHandler.SendTransactions(context.Background(), txs...)
 
 		var counter int
 		// Since the close is almost instant there should be none or very few transactions that have been processed.
@@ -145,8 +148,8 @@ func TestSendTransactionsCloseInstant(t *testing.T) {
 			}
 		}
 
-		require.Less(t, counter, 5, "more than 5 transactions have been processed.")
-		require.Equal(t, "context canceled while sending transaction for address erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht", err.Error())
+		require.Equal(t, 0, counter)
+		require.NotNil(t, errSend)
 		wg.Done()
 	}()
 
@@ -211,11 +214,11 @@ func TestSendTransactionsCloseDelay(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		hashes, err := transactionHandler.SendTransactions(context.Background(), txs...)
+		hashes, errSend := transactionHandler.SendTransactions(context.Background(), txs...)
 
 		// Since the close is not instant. There should be some hashes that have been processed.
 		require.NotEmpty(t, hashes, "no transaction should be processed")
-		require.Equal(t, "context canceled while sending transaction for address erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht", err.Error())
+		require.Equal(t, "context canceled while sending transaction for address erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht", errSend.Error())
 		wg.Done()
 	}()
 

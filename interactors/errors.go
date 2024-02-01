@@ -35,5 +35,5 @@ var ErrTxWithSameNonceAndGasPriceAlreadySent = errors.New("transaction with the 
 // ErrGapNonce signals that a gap nonce between the lowest nonce of the transactions from the cache and the blockchain nonce has been detected
 var ErrGapNonce = errors.New("gap nonce detected")
 
-// ErrTxHasNoSenderAddress signals that the transaction does the SenderAddress field is empty.
-var ErrTxHasNoSenderAddress = errors.New("transaction does not have a sender address")
+// ErrWorkerClosed signals that the worker is closed
+var ErrWorkerClosed = errors.New("worker closed")
