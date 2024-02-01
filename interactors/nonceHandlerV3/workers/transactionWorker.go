@@ -108,6 +108,7 @@ func (tw *TransactionWorker) start(ctx context.Context, pollingInterval time.Dur
 	ticker := time.NewTicker(pollingInterval)
 
 	go func() {
+		chMoreWorkToDo := make(chan struct{}, 1)
 		for {
 			select {
 			case <-ctx.Done():
@@ -118,42 +119,32 @@ func (tw *TransactionWorker) start(ctx context.Context, pollingInterval time.Dur
 				}
 				tw.mu.Unlock()
 				return
-
-			default:
-				// Retrieve the transaction in the queue with the lowest nonce.
-				tx := tw.peekNextTransaction()
-
-				// If there are no transaction in the queue, the result will be nil.
-				// That means there are no transactions to send.
-				if tx == nil {
-
-					// We create a poll where we peek at the queue for the first transaction. If such a transaction
-					// is found we break out of the poll. Otherwise, we keep polling with an interval set by
-					// the pollingInterval variable.
-					for range ticker.C {
-						tx = tw.peekNextTransaction()
-						if tx != nil {
-							break
-						}
-					}
-				}
-
-				// Retrieve the next transaction to be processed.
-				tx = tw.nextTransaction()
-
-				// We retrieve the channel where we will send the response.
-				// Everytime a transaction is added to the queue, such a channel is created and placed in a map.
-				tw.mu.Lock()
-				r := tw.responsesChannels[tx.Nonce]
-				delete(tw.responsesChannels, tx.Nonce)
-				tw.mu.Unlock()
-
-				// Send the transaction and forward the response on the channel promised.
-				txHash, err := tw.proxy.SendTransaction(ctx, tx)
-				r <- &TransactionResponse{TxHash: txHash, Error: err}
+			case <-ticker.C:
+				tw.processNextTransaction(ctx, chMoreWorkToDo)
+			case <-chMoreWorkToDo:
+				tw.processNextTransaction(ctx, chMoreWorkToDo)
 			}
 		}
 	}()
+}
+
+func (tw *TransactionWorker) processNextTransaction(ctx context.Context, chMoreWorkToDo chan struct{}) {
+	tx := tw.nextTransaction()
+	if tx == nil {
+		return
+	}
+
+	// We retrieve the channel where we will send the response.
+	// Everytime a transaction is added to the queue, such a channel is created and placed in a map.
+	tw.mu.Lock()
+	r := tw.responsesChannels[tx.Nonce]
+	delete(tw.responsesChannels, tx.Nonce)
+	tw.mu.Unlock()
+
+	// Send the transaction and forward the response on the channel promised.
+	txHash, err := tw.proxy.SendTransaction(ctx, tx)
+	r <- &TransactionResponse{TxHash: txHash, Error: err}
+	chMoreWorkToDo <- struct{}{}
 }
 
 // nextTransaction will return the transaction stored in the priority queue (heap) with the lowest nonce.
