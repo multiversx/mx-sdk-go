@@ -55,8 +55,8 @@ type Signer interface {
 }
 
 type RelayedTxV1Builder interface {
-	SetInnerTransaction(tx *transaction.FrontendTransaction) *relayedTxV1Builder
-	SetRelayerAccount(account *data.Account) *relayedTxV1Builder
-	SetNetworkConfig(config *data.NetworkConfig) *relayedTxV1Builder
+	SetInnerTransaction(tx *transaction.FrontendTransaction) RelayedTxV1Builder
+	SetRelayerAccount(account *data.Account) RelayedTxV1Builder
+	SetNetworkConfig(config *data.NetworkConfig) RelayedTxV1Builder
 	Build() (*transaction.FrontendTransaction, error)
 }
