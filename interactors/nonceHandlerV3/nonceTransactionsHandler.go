@@ -16,7 +16,8 @@ import (
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
-const minimumIntervalToResend = time.Second
+// TODO: investigate this limit further. Currently tested with 10 transactions/second and it works.
+const minimumIntervalToResend = 100 * time.Millisecond
 
 var log = logger.GetOrCreate("mx-sdk-go/interactors/nonceHandlerV3")
 
@@ -47,8 +48,7 @@ func NewNonceTransactionHandlerV3(args ArgsNonceTransactionsHandlerV3) (*nonceTr
 	if check.IfNil(args.Proxy) {
 		return nil, interactors.ErrNilProxy
 	}
-	//TODO: investigate this limit further. Currently tested with 10 transactions/second and it works.
-	if args.PollingInterval < time.Millisecond*100 {
+	if args.PollingInterval < minimumIntervalToResend {
 		return nil, fmt.Errorf("%w for intervalToSend in NewNonceTransactionHandlerV2", interactors.ErrInvalidValue)
 	}
 
