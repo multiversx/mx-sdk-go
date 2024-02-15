@@ -242,7 +242,7 @@ func createMockArgsNonceTransactionsHandlerV3(getAccountCalled *bool) ArgsNonceT
 				return &data.Account{}, nil
 			},
 		},
-		PollingInterval: time.Second * 5,
+		PollingInterval: time.Millisecond * 100,
 	}
 }
 
