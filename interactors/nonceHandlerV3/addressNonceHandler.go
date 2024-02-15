@@ -2,6 +2,7 @@ package nonceHandlerV3
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -55,18 +56,19 @@ func NewAddressNonceHandlerV3(proxy interactors.Proxy, address sdkCore.AddressHa
 // ApplyNonceAndGasPrice will apply the computed nonce to the given FrontendTransaction
 func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txs ...*transaction.FrontendTransaction) error {
 	nonce, err := anh.fetchNonce(ctx)
-	for i, tx := range txs {
-		tx.Nonce = nonce + uint64(i)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return fmt.Errorf("failed to fetch nonce: %w", err)
+	}
 
-		anh.fetchGasPriceIfRequired(ctx)
-		tx.GasPrice = core.MaxUint64(anh.gasPrice, tx.GasPrice)
+	for i, tx := range txs {
+		anh.mut.Lock()
+		tx.Nonce = nonce + uint64(i)
+		anh.mut.Unlock()
+
+		anh.applyGasPriceIfRequired(ctx, tx)
 	}
 
 	return nil
-
 }
 
 // SendTransaction will save and propagate a transaction to the network
@@ -92,12 +94,13 @@ func (anh *addressNonceHandler) Close() {
 	anh.cancelFunc()
 }
 
-func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context) {
+func (anh *addressNonceHandler) applyGasPriceIfRequired(ctx context.Context, tx *transaction.FrontendTransaction) {
+	anh.mut.Lock()
+	defer anh.mut.Unlock()
+
 	if anh.gasPrice == 0 {
 		networkConfig, err := anh.proxy.GetNetworkConfig(ctx)
 
-		anh.mut.Lock()
-		defer anh.mut.Unlock()
 		if err != nil {
 			log.Error("%w: while fetching network config", err)
 			anh.gasPrice = 0
@@ -105,6 +108,7 @@ func (anh *addressNonceHandler) fetchGasPriceIfRequired(ctx context.Context) {
 		}
 		anh.gasPrice = networkConfig.MinGasPrice
 	}
+	tx.GasPrice = core.MaxUint64(anh.gasPrice, tx.GasPrice)
 }
 
 func (anh *addressNonceHandler) fetchNonce(ctx context.Context) (uint64, error) {

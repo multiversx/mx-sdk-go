@@ -35,10 +35,10 @@ type ArgsNonceTransactionsHandlerV3 struct {
 // nonceTransactionsHandlerV3 should be terminated and collected by the GC.
 // This struct is concurrent safe.
 type nonceTransactionsHandlerV3 struct {
-	proxy           interactors.Proxy
-	mutHandlers     sync.RWMutex
-	handlers        map[string]interactors.AddressNonceHandlerV3
-	pollingInterval time.Duration
+	proxy          interactors.Proxy
+	mutHandlers    sync.RWMutex
+	handlers       map[string]interactors.AddressNonceHandlerV3
+	intervalToSend time.Duration
 }
 
 // NewNonceTransactionHandlerV3 will create a new instance of the nonceTransactionsHandlerV3. It requires a Proxy implementation
@@ -47,14 +47,15 @@ func NewNonceTransactionHandlerV3(args ArgsNonceTransactionsHandlerV3) (*nonceTr
 	if check.IfNil(args.Proxy) {
 		return nil, interactors.ErrNilProxy
 	}
-	if args.PollingInterval < minimumIntervalToResend {
-		return nil, fmt.Errorf("%w for pollingInterval in NewNonceTransactionHandlerV2", interactors.ErrInvalidValue)
+	//TODO: investigate this limit further. Currently tested with 10 transactions/second and it works.
+	if args.PollingInterval < time.Millisecond*100 {
+		return nil, fmt.Errorf("%w for intervalToSend in NewNonceTransactionHandlerV2", interactors.ErrInvalidValue)
 	}
 
 	nth := &nonceTransactionsHandlerV3{
-		proxy:           args.Proxy,
-		handlers:        make(map[string]interactors.AddressNonceHandlerV3),
-		pollingInterval: args.PollingInterval,
+		proxy:          args.Proxy,
+		handlers:       make(map[string]interactors.AddressNonceHandlerV3),
+		intervalToSend: args.PollingInterval,
 	}
 
 	return nth, nil
@@ -117,7 +118,7 @@ func (nth *nonceTransactionsHandlerV3) createAddressNonceHandler(address core.Ad
 		return anh, nil
 	}
 
-	anh, err := NewAddressNonceHandlerV3(nth.proxy, address, nth.pollingInterval)
+	anh, err := NewAddressNonceHandlerV3(nth.proxy, address, nth.intervalToSend)
 	if err != nil {
 		return nil, err
 	}

@@ -79,7 +79,7 @@ type TransactionWorker struct {
 }
 
 // NewTransactionWorker creates a new instance of TransactionWorker.
-func NewTransactionWorker(context context.Context, proxy interactors.Proxy, pollingInterval time.Duration) *TransactionWorker {
+func NewTransactionWorker(context context.Context, proxy interactors.Proxy, intervalToSend time.Duration) *TransactionWorker {
 	tw := &TransactionWorker{
 		mu:                sync.Mutex{},
 		tq:                make(transactionQueue, 0),
@@ -88,7 +88,7 @@ func NewTransactionWorker(context context.Context, proxy interactors.Proxy, poll
 	}
 	heap.Init(&tw.tq)
 
-	tw.start(context, pollingInterval)
+	tw.start(context, intervalToSend)
 	return tw
 }
 
@@ -112,11 +112,11 @@ func (tw *TransactionWorker) AddTransaction(transaction *transaction.FrontendTra
 
 // start will spawn a goroutine tasked with iterating all the transactions inside the priority queue. The priority is
 // given by the nonce, meaning that transaction with lower nonce will be sent first.
-func (tw *TransactionWorker) start(ctx context.Context, pollingInterval time.Duration) {
-	ticker := time.NewTicker(pollingInterval)
+// All these transactions are send with an interval between them.
+func (tw *TransactionWorker) start(ctx context.Context, intervalToSend time.Duration) {
+	ticker := time.NewTicker(intervalToSend)
 
 	go func() {
-		chMoreWorkToDo := make(chan struct{}, 1)
 		for {
 			select {
 			case <-ctx.Done():
@@ -124,15 +124,13 @@ func (tw *TransactionWorker) start(ctx context.Context, pollingInterval time.Dur
 				tw.closeAllChannels(ctx)
 				return
 			case <-ticker.C:
-				tw.processNextTransaction(ctx, chMoreWorkToDo)
-			case <-chMoreWorkToDo:
-				tw.processNextTransaction(ctx, chMoreWorkToDo)
+				tw.processNextTransaction(ctx)
 			}
 		}
 	}()
 }
 
-func (tw *TransactionWorker) processNextTransaction(ctx context.Context, chMoreWorkToDo chan struct{}) {
+func (tw *TransactionWorker) processNextTransaction(ctx context.Context) {
 	tx := tw.nextTransaction()
 	if tx == nil {
 		return
@@ -144,7 +142,6 @@ func (tw *TransactionWorker) processNextTransaction(ctx context.Context, chMoreW
 	// Send the transaction and forward the response on the channel promised.
 	txHash, err := tw.proxy.SendTransaction(ctx, tx)
 	r <- &TransactionResponse{TxHash: txHash, Error: err}
-	chMoreWorkToDo <- struct{}{}
 }
 
 // nextTransaction will return the transaction stored in the priority queue (heap) with the lowest nonce.
