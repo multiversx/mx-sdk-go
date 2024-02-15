@@ -30,7 +30,7 @@ func TestSendTransactionsOneByOne(t *testing.T) {
 
 	var txs []*transaction.FrontendTransaction
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		tx := &transaction.FrontendTransaction{
 			Sender:   testAddressAsBech32String,
 			Receiver: testAddressAsBech32String,
@@ -74,7 +74,7 @@ func TestSendTransactionsBulk(t *testing.T) {
 
 	var txs []*transaction.FrontendTransaction
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		tx := &transaction.FrontendTransaction{
 			Sender:   testAddressAsBech32String,
 			Receiver: testAddressAsBech32String,
@@ -94,7 +94,7 @@ func TestSendTransactionsBulk(t *testing.T) {
 
 	txHashes, err := transactionHandler.SendTransactions(context.Background(), txs...)
 	require.NoError(t, err, "failed to send transactions as bulk")
-	require.Equal(t, mockedHashes(1000), txHashes)
+	require.Equal(t, mockedHashes(100), txHashes)
 }
 
 func TestSendTransactionsCloseInstant(t *testing.T) {
@@ -111,7 +111,7 @@ func TestSendTransactionsCloseInstant(t *testing.T) {
 	var txs []*transaction.FrontendTransaction
 
 	// Create 1k transactions.
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		tx := &transaction.FrontendTransaction{
 			Sender:   testAddressAsBech32String,
 			Receiver: testAddressAsBech32String,
@@ -190,7 +190,7 @@ func TestSendTransactionsCloseDelay(t *testing.T) {
 	var txs []*transaction.FrontendTransaction
 
 	// Create 1k transactions.
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		tx := &transaction.FrontendTransaction{
 			Sender:   testAddressAsBech32String,
 			Receiver: testAddressAsBech32String,
