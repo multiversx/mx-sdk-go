@@ -643,6 +643,10 @@ func (eeh *EnableEpochsHandler) FixGasRemainingForSaveKeyValueBuiltinFunctionEna
 	return false
 }
 
+func (eeh *EnableEpochsHandler) IsMigrateDataTrieEnabled() bool {
+	return false
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (eeh *EnableEpochsHandler) IsInterfaceNil() bool {
 	return eeh == nil
