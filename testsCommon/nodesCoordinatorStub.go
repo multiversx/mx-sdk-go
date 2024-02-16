@@ -15,6 +15,7 @@ type NodesCoordinatorStub struct {
 	ConsensusGroupSizeCalled               func(shardID uint32) int
 	SetNodesConfigFromValidatorsInfoCalled func(epoch uint32, randomness []byte, validatorsInfo []*state.ShardValidatorInfo) error
 	IsEpochInConfigCalled                  func(epoch uint32) bool
+	GetWaitingEpochsLeftForPublicKeyCalled func(publicKey []byte) (uint32, error)
 }
 
 // GetChance -
@@ -175,6 +176,13 @@ func (ncm *NodesCoordinatorStub) IsEpochInConfig(epoch uint32) bool {
 		return ncm.IsEpochInConfigCalled(epoch)
 	}
 	return false
+}
+
+func (ncm *NodesCoordinatorStub) GetWaitingEpochsLeftForPublicKey(publicKey []byte) (uint32, error) {
+	if ncm.IsEpochInConfigCalled != nil {
+		return ncm.GetWaitingEpochsLeftForPublicKeyCalled(publicKey)
+	}
+	return 0, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

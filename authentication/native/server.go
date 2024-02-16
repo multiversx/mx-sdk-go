@@ -9,8 +9,10 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	"github.com/multiversx/mx-chain-core-go/storage"
 	crypto "github.com/multiversx/mx-chain-crypto-go"
+
+	"github.com/multiversx/mx-chain-go/storage"
+
 	"github.com/multiversx/mx-sdk-go/authentication"
 	"github.com/multiversx/mx-sdk-go/builders"
 	"github.com/multiversx/mx-sdk-go/data"

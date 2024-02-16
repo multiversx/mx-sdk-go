@@ -1,7 +1,31 @@
 package disabled
 
+import (
+	"github.com/multiversx/mx-chain-core-go/core"
+)
+
 // EnableEpochsHandler is a disabled implementation of EnableEpochsHandler interface
 type EnableEpochsHandler struct {
+}
+
+func (eeh *EnableEpochsHandler) GetCurrentEpoch() uint32 {
+	return 0
+}
+
+func (eeh *EnableEpochsHandler) IsFlagDefined(flag core.EnableEpochFlag) bool {
+	return false
+}
+
+func (eeh *EnableEpochsHandler) IsFlagEnabled(flag core.EnableEpochFlag) bool {
+	return false
+}
+
+func (eeh *EnableEpochsHandler) IsFlagEnabledInEpoch(flag core.EnableEpochFlag, epoch uint32) bool {
+	return false
+}
+
+func (eeh *EnableEpochsHandler) GetActivationEpoch(flag core.EnableEpochFlag) uint32 {
+	return 0
 }
 
 // NFTStopCreateEnabled returns false
