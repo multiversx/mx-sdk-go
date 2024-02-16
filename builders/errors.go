@@ -41,6 +41,9 @@ var ErrInvalidGasLimitNeededForInnerTransaction = errors.New("invalid gas limit 
 // ErrGasLimitForInnerTransactionV2ShouldBeZero signals that the gas limit for the inner transaction should be zero
 var ErrGasLimitForInnerTransactionV2ShouldBeZero = errors.New("gas limit of the inner transaction should be 0")
 
+// ErrEmptyRelayerOnInnerTransaction signals that the inner transaction has an empty relayer
+var ErrEmptyRelayerOnInnerTransaction = errors.New("empty relayer on inner transaction")
+
 // ErrMissingGuardianOption signals that the guardian flag is missing in the transaction option field
 var ErrMissingGuardianOption = errors.New("guardian flag is missing in the option field")
 
