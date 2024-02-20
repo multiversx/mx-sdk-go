@@ -71,8 +71,14 @@ func (rtb *relayedTxV1Builder) Build() (*transaction.FrontendTransaction, error)
 	payload := []byte("relayedTx@" + innerTxHex)
 	gasLimit := rtb.networkConfig.MinGasLimit + rtb.networkConfig.GasPerDataByte*uint64(len(payload)) + rtb.innerTransaction.GasLimit
 
+	innerTxValue, ok := big.NewInt(0).SetString(rtb.innerTransaction.Value, 10)
+	if !ok {
+		return nil, ErrInvalidValue
+	}
+
 	relayedTx := &transaction.FrontendTransaction{
 		Nonce:    rtb.relayerAccount.Nonce,
+		Value:    innerTxValue.String(),
 		Receiver: rtb.innerTransaction.Sender,
 		Sender:   rtb.relayerAccount.Address,
 		GasPrice: rtb.innerTransaction.GasPrice,
