@@ -309,7 +309,7 @@ func TestApplyNonceAndGasPriceConcurrently(t *testing.T) {
 		return txs[i].Nonce < txs[j].Nonce
 	})
 	mockedNonces := mockedStrings(100)
-	for i, _ := range txs {
+	for i := range txs {
 		mockNonce, _ := strconv.ParseUint(mockedNonces[i], 10, 64)
 		require.Equal(t, mockNonce, txs[i].Nonce)
 	}
