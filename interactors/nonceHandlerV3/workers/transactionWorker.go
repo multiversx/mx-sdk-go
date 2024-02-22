@@ -3,6 +3,7 @@ package workers
 import (
 	"container/heap"
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -104,8 +105,14 @@ func (tw *TransactionWorker) AddTransaction(transaction *transaction.FrontendTra
 		return r
 	}
 
-	tw.responsesChannels[transaction.Nonce] = r
+	// check if a tx with the same nonce is currently being sent.
+	if _, ok := tw.responsesChannels[transaction.Nonce]; ok {
+		r <- &TransactionResponse{TxHash: "", Error: fmt.Errorf("transaction with nonce:"+
+			" %d has already been scheduled to send", transaction.Nonce)}
+		return r
+	}
 
+	tw.responsesChannels[transaction.Nonce] = r
 	heap.Push(&tw.tq, &TransactionQueueItem{tx: transaction})
 	return r
 }

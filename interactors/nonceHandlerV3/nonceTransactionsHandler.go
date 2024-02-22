@@ -23,8 +23,8 @@ var log = logger.GetOrCreate("mx-sdk-go/interactors/nonceHandlerV3")
 
 // ArgsNonceTransactionsHandlerV3 is the argument DTO for a nonce workers handler component
 type ArgsNonceTransactionsHandlerV3 struct {
-	Proxy           interactors.Proxy
-	PollingInterval time.Duration
+	Proxy          interactors.Proxy
+	IntervalToSend time.Duration
 }
 
 // nonceTransactionsHandlerV3 is the handler used for an unlimited number of addresses.
@@ -48,14 +48,14 @@ func NewNonceTransactionHandlerV3(args ArgsNonceTransactionsHandlerV3) (*nonceTr
 	if check.IfNil(args.Proxy) {
 		return nil, interactors.ErrNilProxy
 	}
-	if args.PollingInterval < minimumIntervalToResend {
+	if args.IntervalToSend < minimumIntervalToResend {
 		return nil, fmt.Errorf("%w for intervalToSend in NewNonceTransactionHandlerV2", interactors.ErrInvalidValue)
 	}
 
 	nth := &nonceTransactionsHandlerV3{
 		proxy:          args.Proxy,
 		handlers:       make(map[string]interactors.AddressNonceHandlerV3),
-		intervalToSend: args.PollingInterval,
+		intervalToSend: args.IntervalToSend,
 	}
 
 	return nth, nil

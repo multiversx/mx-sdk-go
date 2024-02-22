@@ -2,6 +2,8 @@ package nonceHandlerV3
 
 import (
 	"context"
+	"errors"
+	"sort"
 	"strconv"
 	"sync"
 	"testing"
@@ -94,7 +96,7 @@ func TestSendTransactionsBulk(t *testing.T) {
 
 	txHashes, err := transactionHandler.SendTransactions(context.Background(), txs...)
 	require.NoError(t, err, "failed to send transactions as bulk")
-	require.Equal(t, mockedHashes(100), txHashes)
+	require.Equal(t, mockedStrings(100), txHashes)
 }
 
 func TestSendTransactionsCloseInstant(t *testing.T) {
@@ -178,7 +180,7 @@ func TestSendTransactionsCloseDelay(t *testing.T) {
 				return &data.Account{}, nil
 			},
 		},
-		PollingInterval: time.Second * 5,
+		IntervalToSend: time.Second * 5,
 	}
 
 	// Since the endpoint to send workers for the nonce-management-service has the same definition as the one
@@ -231,6 +233,173 @@ func TestSendTransactionsCloseDelay(t *testing.T) {
 	require.NoError(t, err, "failed to send transactions as bulk")
 }
 
+func TestApplyNonceAndGasPriceConcurrently(t *testing.T) {
+	t.Parallel()
+
+	var getAccountCalled bool
+
+	transactionHandler, err := NewNonceTransactionHandlerV3(createMockArgsNonceTransactionsHandlerV3(&getAccountCalled))
+	require.NoError(t, err, "failed to create transaction handler")
+
+	var txs []*transaction.FrontendTransaction
+
+	for i := 0; i < 100; i++ {
+		tx := &transaction.FrontendTransaction{
+			Sender:   testAddressAsBech32String,
+			Receiver: testAddressAsBech32String,
+			GasLimit: 50000,
+			ChainID:  "T",
+			Value:    "5000000000000000000",
+			Nonce:    uint64(i),
+			GasPrice: 1000000000,
+			Version:  2,
+		}
+		txs = append(txs, tx)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[:20]...)
+		if err != nil {
+			panic(err)
+		}
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[20:40]...)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[40:60]...)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[60:80]...)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[80:]...)
+		if err != nil {
+			panic(err)
+		}
+	}()
+	wg.Wait()
+
+	// since we applied the nonces concurrently, the slice won't have all of them in order. therefore we sort them
+	// before comparing them to the expected output.
+	sort.SliceStable(txs, func(i, j int) bool {
+		return txs[i].Nonce < txs[j].Nonce
+	})
+	mockedNonces := mockedStrings(100)
+	for i, _ := range txs {
+		mockNonce, _ := strconv.ParseUint(mockedNonces[i], 10, 64)
+		require.Equal(t, mockNonce, txs[i].Nonce)
+	}
+}
+
+func TestSendDuplicateNonces(t *testing.T) {
+	t.Parallel()
+
+	var getAccountCalled bool
+
+	transactionHandler, err := NewNonceTransactionHandlerV3(createMockArgsNonceTransactionsHandlerV3(&getAccountCalled))
+	require.NoError(t, err, "failed to create transaction handler")
+
+	tx := &transaction.FrontendTransaction{
+		Sender:   testAddressAsBech32String,
+		Receiver: testAddressAsBech32String,
+		GasLimit: 50000,
+		ChainID:  "T",
+		Value:    "5000000000000000000",
+		Nonce:    0,
+		GasPrice: 1000000000,
+		Version:  2,
+	}
+
+	wg := sync.WaitGroup{}
+	var errCount int
+	var sentCount int
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		hashes, sendErr := transactionHandler.SendTransactions(context.Background(), tx)
+		if sendErr != nil {
+			errCount++
+		}
+
+		if hashes[0] != "" {
+			sentCount++
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		hashes, sendErr := transactionHandler.SendTransactions(context.Background(), tx)
+		if sendErr != nil {
+			errCount++
+		}
+
+		if hashes[0] != "" {
+			sentCount++
+		}
+	}()
+
+	wg.Wait()
+
+	require.Equal(t, 1, errCount)
+	require.Equal(t, 1, sentCount)
+}
+
+func TestSendDuplicateNoncesBatch(t *testing.T) {
+	t.Parallel()
+
+	var getAccountCalled bool
+
+	transactionHandler, err := NewNonceTransactionHandlerV3(createMockArgsNonceTransactionsHandlerV3(&getAccountCalled))
+	require.NoError(t, err, "failed to create transaction handler")
+
+	txs := make([]*transaction.FrontendTransaction, 0)
+	for i := 0; i < 100; i++ {
+		tx := &transaction.FrontendTransaction{
+			Sender:   testAddressAsBech32String,
+			Receiver: testAddressAsBech32String,
+			GasLimit: 50000,
+			ChainID:  "T",
+			Value:    "5000000000000000000",
+			Nonce:    0,
+			GasPrice: 1000000000,
+			Version:  2,
+		}
+		txs = append(txs, tx)
+	}
+
+	hashes, err := transactionHandler.SendTransactions(context.Background(), txs...)
+	for _, h := range hashes {
+		require.Equal(t, "", h, "a transaction has been sent")
+	}
+	require.Error(t, errors.New("transaction with nonce: 0 has already been scheduled to send while sending transaction for address erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht"), err)
+}
+
 func createMockArgsNonceTransactionsHandlerV3(getAccountCalled *bool) ArgsNonceTransactionsHandlerV3 {
 	return ArgsNonceTransactionsHandlerV3{
 		Proxy: &testsCommon.ProxyStub{
@@ -242,11 +411,11 @@ func createMockArgsNonceTransactionsHandlerV3(getAccountCalled *bool) ArgsNonceT
 				return &data.Account{}, nil
 			},
 		},
-		PollingInterval: time.Millisecond * 100,
+		IntervalToSend: time.Millisecond * 100,
 	}
 }
 
-func mockedHashes(index int) []string {
+func mockedStrings(index int) []string {
 	mock := make([]string, index)
 	for i := 0; i < index; i++ {
 		mock[i] = strconv.Itoa(i)

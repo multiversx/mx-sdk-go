@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/atomic"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 
@@ -23,9 +24,11 @@ import (
 // having a function that sweeps the map in order to resend a transaction or remove them
 // because they were executed. This struct is concurrent safe.
 type addressNonceHandler struct {
+	counter           atomic.Counter
 	mut               sync.Mutex
 	address           sdkCore.AddressHandler
 	proxy             interactors.Proxy
+	nonce             int64
 	gasPrice          uint64
 	transactionWorker *workers.TransactionWorker
 	cancelFunc        func()
@@ -45,6 +48,7 @@ func NewAddressNonceHandlerV3(proxy interactors.Proxy, address sdkCore.AddressHa
 	anh := &addressNonceHandler{
 		mut:               sync.Mutex{},
 		address:           address,
+		nonce:             -1,
 		proxy:             proxy,
 		transactionWorker: workers.NewTransactionWorker(ctx, proxy, pollingInterval),
 		cancelFunc:        cancelFunc,
@@ -55,15 +59,15 @@ func NewAddressNonceHandlerV3(proxy interactors.Proxy, address sdkCore.AddressHa
 
 // ApplyNonceAndGasPrice will apply the computed nonce to the given FrontendTransaction
 func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txs ...*transaction.FrontendTransaction) error {
-	nonce, err := anh.fetchNonce(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to fetch nonce: %w", err)
-	}
-
-	for i, tx := range txs {
-		anh.mut.Lock()
-		tx.Nonce = nonce + uint64(i)
-		anh.mut.Unlock()
+	for _, tx := range txs {
+		//anh.mut.Lock()
+		nonce, err := anh.fetchNonce(ctx)
+		if err != nil {
+			//anh.mut.Unlock()
+			return fmt.Errorf("failed to fetch nonce: %w", err)
+		}
+		tx.Nonce = uint64(nonce)
+		//anh.mut.Unlock()
 
 		anh.applyGasPriceIfRequired(ctx, tx)
 	}
@@ -77,6 +81,18 @@ func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *transac
 
 	select {
 	case response := <-ch:
+		if response.Error == nil {
+			// increase the cached nonce.
+			anh.mut.Lock()
+			anh.nonce++
+			anh.mut.Unlock()
+		} else {
+			// we invalidate the cache if there was an error sending the transaction.
+			anh.mut.Lock()
+			anh.nonce = -1
+			anh.mut.Unlock()
+		}
+
 		return response.TxHash, response.Error
 
 	case <-ctx.Done():
@@ -111,11 +127,20 @@ func (anh *addressNonceHandler) applyGasPriceIfRequired(ctx context.Context, tx 
 	tx.GasPrice = core.MaxUint64(anh.gasPrice, tx.GasPrice)
 }
 
-func (anh *addressNonceHandler) fetchNonce(ctx context.Context) (uint64, error) {
-	account, err := anh.proxy.GetAccount(ctx, anh.address)
-	if err != nil {
-		return 0, err
-	}
+func (anh *addressNonceHandler) fetchNonce(ctx context.Context) (int64, error) {
+	// if it is the first time applying nonces to this address, or if the cache was invalidated it will try to fetch
+	// the nonce from the chain.
+	anh.mut.Lock()
+	defer anh.mut.Unlock()
 
-	return account.Nonce, nil
+	if anh.nonce == -1 {
+		account, err := anh.proxy.GetAccount(ctx, anh.address)
+		if err != nil {
+			return -1, fmt.Errorf("failed to fetch nonce: %w", err)
+		}
+		anh.nonce = int64(account.Nonce)
+	} else {
+		anh.nonce++
+	}
+	return anh.nonce, nil
 }
