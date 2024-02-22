@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core"
-	"github.com/multiversx/mx-chain-core-go/core/atomic"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 
@@ -24,7 +23,6 @@ import (
 // having a function that sweeps the map in order to resend a transaction or remove them
 // because they were executed. This struct is concurrent safe.
 type addressNonceHandler struct {
-	counter           atomic.Counter
 	mut               sync.Mutex
 	address           sdkCore.AddressHandler
 	proxy             interactors.Proxy
