@@ -258,49 +258,20 @@ func TestApplyNonceAndGasPriceConcurrently(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[:20]...)
-		if err != nil {
-			panic(err)
-		}
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[20:40]...)
-		if err != nil {
-			panic(err)
-		}
-	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[40:60]...)
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[60:80]...)
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[80:]...)
-		if err != nil {
-			panic(err)
-		}
-	}()
+	// we apply the nonce on the initial transaction list in batches of 20. in order to test that the nonce handler is
+	// able to do it concurrently providing unique nonces for every transaction.
+	indices := []int{0, 19, 39, 59, 79, 99}
+	for i := 0; i < len(indices)-1; i++ {
+		wg.Add(1)
+		beginIdx := indices[i]
+		endIdx := indices[i+1]
+		go func() {
+			defer wg.Done()
+			err := transactionHandler.ApplyNonceAndGasPrice(context.Background(), txs[beginIdx:endIdx]...)
+			require.Nil(t, err, "error should be nil")
+		}()
+	}
 	wg.Wait()
 
 	// since we applied the nonces concurrently, the slice won't have all of them in order. therefore we sort them
@@ -309,9 +280,9 @@ func TestApplyNonceAndGasPriceConcurrently(t *testing.T) {
 		return txs[i].Nonce < txs[j].Nonce
 	})
 	mockedNonces := mockedStrings(100)
-	for i := range txs {
-		mockNonce, _ := strconv.ParseUint(mockedNonces[i], 10, 64)
-		require.Equal(t, mockNonce, txs[i].Nonce)
+	for idx := range txs {
+		mockNonce, _ := strconv.ParseUint(mockedNonces[idx], 10, 64)
+		require.Equal(t, mockNonce, txs[idx].Nonce)
 	}
 }
 
@@ -338,32 +309,20 @@ func TestSendDuplicateNonces(t *testing.T) {
 	var errCount int
 	var sentCount int
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		hashes, sendErr := transactionHandler.SendTransactions(context.Background(), tx)
-		if sendErr != nil {
-			errCount++
-		}
+	for i := 0; i < 2; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			hashes, sendErr := transactionHandler.SendTransactions(context.Background(), tx)
+			if sendErr != nil {
+				errCount++
+			}
 
-		if hashes[0] != "" {
-			sentCount++
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		hashes, sendErr := transactionHandler.SendTransactions(context.Background(), tx)
-		if sendErr != nil {
-			errCount++
-		}
-
-		if hashes[0] != "" {
-			sentCount++
-		}
-	}()
-
+			if hashes[0] != "" {
+				sentCount++
+			}
+		}()
+	}
 	wg.Wait()
 
 	require.Equal(t, 1, errCount)

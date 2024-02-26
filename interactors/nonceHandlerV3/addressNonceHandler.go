@@ -11,6 +11,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 
 	sdkCore "github.com/multiversx/mx-sdk-go/core"
+	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
 	"github.com/multiversx/mx-sdk-go/interactors/nonceHandlerV3/workers"
 )
@@ -58,14 +59,12 @@ func NewAddressNonceHandlerV3(proxy interactors.Proxy, address sdkCore.AddressHa
 // ApplyNonceAndGasPrice will apply the computed nonce to the given FrontendTransaction
 func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txs ...*transaction.FrontendTransaction) error {
 	for _, tx := range txs {
-		//anh.mut.Lock()
-		nonce, err := anh.fetchNonce(ctx)
+		nonce, err := anh.computeNonce(ctx)
 		if err != nil {
 			//anh.mut.Unlock()
 			return fmt.Errorf("failed to fetch nonce: %w", err)
 		}
 		tx.Nonce = uint64(nonce)
-		//anh.mut.Unlock()
 
 		anh.applyGasPriceIfRequired(ctx, tx)
 	}
@@ -79,23 +78,26 @@ func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *transac
 
 	select {
 	case response := <-ch:
-		if response.Error == nil {
-			// increase the cached nonce.
-			anh.mut.Lock()
-			anh.nonce++
-			anh.mut.Unlock()
-		} else {
-			// we invalidate the cache if there was an error sending the transaction.
-			anh.mut.Lock()
-			anh.nonce = -1
-			anh.mut.Unlock()
-		}
+		anh.adaptNonceBasedOnResponse(response)
 
 		return response.TxHash, response.Error
 
 	case <-ctx.Done():
 		return "", ctx.Err()
 	}
+}
+
+func (anh *addressNonceHandler) adaptNonceBasedOnResponse(response *workers.TransactionResponse) {
+	anh.mut.Lock()
+	defer anh.mut.Unlock()
+
+	// if the response did not contain any errors, increase the cached nonce.
+	if response.Error == nil {
+		anh.nonce++
+		return
+	}
+	// we invalidate the cache if there was an error sending the transaction.
+	anh.nonce = -1
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
@@ -109,23 +111,28 @@ func (anh *addressNonceHandler) Close() {
 }
 
 func (anh *addressNonceHandler) applyGasPriceIfRequired(ctx context.Context, tx *transaction.FrontendTransaction) {
+	var (
+		networkConfig *data.NetworkConfig
+		err           error
+	)
 	anh.mut.Lock()
-	defer anh.mut.Unlock()
+	gasPrice := anh.gasPrice
+	anh.mut.Unlock()
 
-	if anh.gasPrice == 0 {
-		networkConfig, err := anh.proxy.GetNetworkConfig(ctx)
+	if gasPrice == 0 {
+		networkConfig, err = anh.proxy.GetNetworkConfig(ctx)
 
 		if err != nil {
 			log.Error("%w: while fetching network config", err)
-			anh.gasPrice = 0
-			return
 		}
-		anh.gasPrice = networkConfig.MinGasPrice
 	}
+	anh.mut.Lock()
+	defer anh.mut.Unlock()
+	anh.gasPrice = networkConfig.MinGasPrice
 	tx.GasPrice = core.MaxUint64(anh.gasPrice, tx.GasPrice)
 }
 
-func (anh *addressNonceHandler) fetchNonce(ctx context.Context) (int64, error) {
+func (anh *addressNonceHandler) computeNonce(ctx context.Context) (int64, error) {
 	// if it is the first time applying nonces to this address, or if the cache was invalidated it will try to fetch
 	// the nonce from the chain.
 	anh.mut.Lock()
