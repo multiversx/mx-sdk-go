@@ -11,7 +11,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 
 	sdkCore "github.com/multiversx/mx-sdk-go/core"
-	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
 	"github.com/multiversx/mx-sdk-go/interactors/nonceHandlerV3/workers"
 )
@@ -24,7 +23,7 @@ import (
 // having a function that sweeps the map in order to resend a transaction or remove them
 // because they were executed. This struct is concurrent safe.
 type addressNonceHandler struct {
-	mut               sync.Mutex
+	mut               sync.RWMutex
 	address           sdkCore.AddressHandler
 	proxy             interactors.Proxy
 	nonce             int64
@@ -45,7 +44,7 @@ func NewAddressNonceHandlerV3(proxy interactors.Proxy, address sdkCore.AddressHa
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
 	anh := &addressNonceHandler{
-		mut:               sync.Mutex{},
+		mut:               sync.RWMutex{},
 		address:           address,
 		nonce:             -1,
 		proxy:             proxy,
@@ -111,25 +110,23 @@ func (anh *addressNonceHandler) Close() {
 }
 
 func (anh *addressNonceHandler) applyGasPriceIfRequired(ctx context.Context, tx *transaction.FrontendTransaction) {
-	var (
-		networkConfig *data.NetworkConfig
-		err           error
-	)
-	anh.mut.Lock()
+	anh.mut.RLock()
 	gasPrice := anh.gasPrice
-	anh.mut.Unlock()
+	anh.mut.RUnlock()
 
 	if gasPrice == 0 {
-		networkConfig, err = anh.proxy.GetNetworkConfig(ctx)
+		networkConfig, err := anh.proxy.GetNetworkConfig(ctx)
 
 		if err != nil {
 			log.Error("%w: while fetching network config", err)
 		}
+
+		gasPrice = networkConfig.MinGasPrice
 	}
 	anh.mut.Lock()
 	defer anh.mut.Unlock()
-	anh.gasPrice = networkConfig.MinGasPrice
-	tx.GasPrice = core.MaxUint64(anh.gasPrice, tx.GasPrice)
+	anh.gasPrice = gasPrice
+	tx.GasPrice = core.MaxUint64(gasPrice, tx.GasPrice)
 }
 
 func (anh *addressNonceHandler) computeNonce(ctx context.Context) (int64, error) {

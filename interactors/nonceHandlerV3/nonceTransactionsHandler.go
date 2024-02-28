@@ -16,8 +16,7 @@ import (
 	"github.com/multiversx/mx-sdk-go/interactors"
 )
 
-// TODO: investigate this limit further. Currently tested with 10 transactions/second and it works.
-const minimumIntervalToResend = 100 * time.Millisecond
+const minimumIntervalToResend = 1 * time.Millisecond
 
 var log = logger.GetOrCreate("mx-sdk-go/interactors/nonceHandlerV3")
 
