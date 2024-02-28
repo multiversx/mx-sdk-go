@@ -1,6 +1,6 @@
 package disabled
 
-import "github.com/multiversx/mx-chain-core-go/storage"
+import "github.com/multiversx/mx-chain-core-go/data"
 
 // Storer is a disabled implementation of Storer interface
 type Storer struct {
@@ -32,7 +32,7 @@ func (s *Storer) GetFromEpoch(_ []byte, _ uint32) ([]byte, error) {
 }
 
 // GetBulkFromEpoch returns nil
-func (s *Storer) GetBulkFromEpoch(_ [][]byte, _ uint32) ([]storage.KeyValuePair, error) {
+func (s *Storer) GetBulkFromEpoch(_ [][]byte, _ uint32) ([]data.KeyValuePair, error) {
 	return nil, nil
 }
 
