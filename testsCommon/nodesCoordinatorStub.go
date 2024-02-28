@@ -12,6 +12,7 @@ type NodesCoordinatorStub struct {
 	GetValidatorsRewardsAddressesCalled    func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]string, error)
 	GetValidatorWithPublicKeyCalled        func(publicKey []byte) (validator nodesCoordinator.Validator, shardId uint32, err error)
 	GetAllValidatorsPublicKeysCalled       func() (map[uint32][][]byte, error)
+	GetWaitingEpochsLeftForPublicKeyCalled func(publicKey []byte) (uint32, error)
 	ConsensusGroupSizeCalled               func(shardID uint32) int
 	SetNodesConfigFromValidatorsInfoCalled func(epoch uint32, randomness []byte, validatorsInfo []*state.ShardValidatorInfo) error
 	IsEpochInConfigCalled                  func(epoch uint32) bool
@@ -64,6 +65,14 @@ func (ncm *NodesCoordinatorStub) GetAllValidatorsPublicKeys(_ uint32) (map[uint3
 	}
 
 	return nil, nil
+}
+
+// GetWaitingEpochsLeftForPublicKey -
+func (ncm *NodesCoordinatorStub) GetWaitingEpochsLeftForPublicKey(publicKey []byte) (uint32, error) {
+	if ncm.GetWaitingEpochsLeftForPublicKeyCalled != nil {
+		return ncm.GetWaitingEpochsLeftForPublicKeyCalled(publicKey)
+	}
+	return 0, nil
 }
 
 // GetValidatorsIndexes -
