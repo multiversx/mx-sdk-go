@@ -2,6 +2,7 @@ package nonceHandlerV2
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/multiversx/mx-chain-core-go/core"
@@ -19,8 +20,10 @@ import (
 // having a function that sweeps the map in order to resend a transaction or remove them
 // because they were executed. This struct is concurrent safe.
 type addressNonceHandler struct {
-	mut                    sync.RWMutex
-	address                sdkCore.AddressHandler
+	mut     sync.RWMutex
+	address sdkCore.AddressHandler
+	// TODO: remove
+	addressBech32          string
 	proxy                  interactors.Proxy
 	computedNonceWasSet    bool
 	computedNonce          uint64
@@ -38,10 +41,15 @@ func NewAddressNonceHandler(proxy interactors.Proxy, address sdkCore.AddressHand
 	if check.IfNil(address) {
 		return nil, interactors.ErrNilAddress
 	}
+	addressBech32, err := address.AddressAsBech32String()
+	if err != nil {
+		return nil, err
+	}
 	return &addressNonceHandler{
-		address:      address,
-		proxy:        proxy,
-		transactions: make(map[uint64]*transaction.FrontendTransaction),
+		address:       address,
+		addressBech32: addressBech32,
+		proxy:         proxy,
+		transactions:  make(map[uint64]*transaction.FrontendTransaction),
 	}, nil
 }
 
@@ -67,6 +75,9 @@ func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, tx *t
 }
 
 func (anh *addressNonceHandler) handleTxWithSameNonce(oldTx *transaction.FrontendTransaction, tx *transaction.FrontendTransaction) error {
+	log.Debug("addressNonceHandler.handleTxWithSameNonce", "address", anh.addressBech32,
+		"found old tx", fmt.Sprintf("%+v", oldTx), "tx", fmt.Sprintf("%+v", tx))
+
 	if oldTx.GasPrice < tx.GasPrice {
 		return nil
 	}
@@ -99,12 +110,18 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 		return 0, err
 	}
 
+	log.Debug("addressNonceHandler.getNonceUpdatingCurrent", "address", anh.addressBech32,
+		"anh.lowestNonce", anh.lowestNonce, "account.Nonce", account.Nonce)
+
 	if anh.lowestNonce > account.Nonce {
 		return account.Nonce, interactors.ErrGapNonce
 	}
 
 	anh.mut.Lock()
 	defer anh.mut.Unlock()
+
+	log.Debug("addressNonceHandler.getNonceUpdatingCurrent - computed nonce", "address", anh.addressBech32,
+		"!anh.computedNonceWasSet", !anh.computedNonceWasSet)
 
 	if !anh.computedNonceWasSet {
 		anh.computedNonce = account.Nonce
@@ -114,6 +131,9 @@ func (anh *addressNonceHandler) getNonceUpdatingCurrent(ctx context.Context) (ui
 	}
 
 	anh.computedNonce++
+
+	log.Debug("addressNonceHandler.getNonceUpdatingCurrent - computed nonce incremented", "address", anh.addressBech32,
+		"anh.computedNonce", anh.computedNonce, "account.Nonce", account.Nonce)
 
 	return core.MaxUint64(anh.computedNonce, account.Nonce), nil
 }
@@ -168,6 +188,9 @@ func (anh *addressNonceHandler) ReSendTransactionsIfRequired(ctx context.Context
 
 // SendTransaction will save and propagate a transaction to the network
 func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error) {
+	log.Debug("addressNonceHandler.SendTransaction", "address", anh.addressBech32,
+		"transaction", fmt.Sprintf("%+v", tx))
+
 	anh.mut.Lock()
 	anh.transactions[tx.Nonce] = tx
 	anh.mut.Unlock()
@@ -177,6 +200,8 @@ func (anh *addressNonceHandler) SendTransaction(ctx context.Context, tx *transac
 
 // DropTransactions will delete the cached transactions and will try to replace the current transactions from the pool using more gas price
 func (anh *addressNonceHandler) DropTransactions() {
+	log.Debug("addressNonceHandler.DropTransactions", "address", anh.addressBech32)
+
 	anh.mut.Lock()
 	anh.transactions = make(map[uint64]*transaction.FrontendTransaction)
 	anh.computedNonceWasSet = false
