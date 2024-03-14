@@ -183,10 +183,8 @@ func (nth *nonceTransactionsHandlerV3) SendTransactions(ctx context.Context, txs
 // Close will cancel all related processes.
 func (nth *nonceTransactionsHandlerV3) Close() {
 	nth.mutHandlers.RLock()
-	handlers := nth.handlers
-	nth.mutHandlers.RUnlock()
-
-	for _, handler := range handlers {
+	defer nth.mutHandlers.RUnlock()
+	for _, handler := range nth.handlers {
 		handler.Close()
 	}
 }
