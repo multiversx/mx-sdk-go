@@ -33,7 +33,7 @@ type addressNonceHandler struct {
 }
 
 // NewAddressNonceHandlerV3 returns a new instance of a addressNonceHandler
-func NewAddressNonceHandlerV3(proxy interactors.Proxy, address sdkCore.AddressHandler, pollingInterval time.Duration) (*addressNonceHandler, error) {
+func NewAddressNonceHandlerV3(proxy interactors.Proxy, address sdkCore.AddressHandler, intervalToSend time.Duration) (*addressNonceHandler, error) {
 	if check.IfNil(proxy) {
 		return nil, interactors.ErrNilProxy
 	}
@@ -48,7 +48,7 @@ func NewAddressNonceHandlerV3(proxy interactors.Proxy, address sdkCore.AddressHa
 		address:           address,
 		nonce:             -1,
 		proxy:             proxy,
-		transactionWorker: workers.NewTransactionWorker(ctx, proxy, pollingInterval),
+		transactionWorker: workers.NewTransactionWorker(ctx, proxy, intervalToSend),
 		cancelFunc:        cancelFunc,
 	}
 
