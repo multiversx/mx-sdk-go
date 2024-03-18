@@ -60,7 +60,6 @@ func (anh *addressNonceHandler) ApplyNonceAndGasPrice(ctx context.Context, txs .
 	for _, tx := range txs {
 		nonce, err := anh.computeNonce(ctx)
 		if err != nil {
-			//anh.mut.Unlock()
 			return fmt.Errorf("failed to fetch nonce: %w", err)
 		}
 		tx.Nonce = uint64(nonce)
