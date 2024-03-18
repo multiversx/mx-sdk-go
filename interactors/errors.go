@@ -34,3 +34,6 @@ var ErrTxWithSameNonceAndGasPriceAlreadySent = errors.New("transaction with the 
 
 // ErrGapNonce signals that a gap nonce between the lowest nonce of the transactions from the cache and the blockchain nonce has been detected
 var ErrGapNonce = errors.New("gap nonce detected")
+
+// ErrWorkerClosed signals that the worker is closed
+var ErrWorkerClosed = errors.New("worker closed")

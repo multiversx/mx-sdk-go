@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 )
@@ -40,6 +41,14 @@ type AddressNonceHandler interface {
 	IsInterfaceNil() bool
 }
 
+// AddressNonceHandlerV3 defines the component able to handler address nonces
+type AddressNonceHandlerV3 interface {
+	ApplyNonceAndGasPrice(ctx context.Context, tx ...*transaction.FrontendTransaction) error
+	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
+	IsInterfaceNil() bool
+	Close()
+}
+
 // TransactionNonceHandlerV1 defines the component able to manage transaction nonces
 type TransactionNonceHandlerV1 interface {
 	GetNonce(ctx context.Context, address core.AddressHandler) (uint64, error)
@@ -49,10 +58,18 @@ type TransactionNonceHandlerV1 interface {
 	IsInterfaceNil() bool
 }
 
-// TransactionNonceHandlerV2 defines the component able to apply nonce for a given frontend transaction
+// TransactionNonceHandlerV2 defines the component able to apply nonce for a given frontend transaction.
 type TransactionNonceHandlerV2 interface {
 	ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error
 	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
 	Close() error
+	IsInterfaceNil() bool
+}
+
+// TransactionNonceHandlerV3 defines the component able to apply nonce for a given frontend transaction.
+type TransactionNonceHandlerV3 interface {
+	ApplyNonceAndGasPrice(ctx context.Context, tx ...*transaction.FrontendTransaction) error
+	SendTransactions(ctx context.Context, txs ...*transaction.FrontendTransaction) ([]string, error)
+	Close()
 	IsInterfaceNil() bool
 }
