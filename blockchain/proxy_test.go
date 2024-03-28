@@ -621,7 +621,6 @@ func TestProxy_GetEnableEpochsConfig(t *testing.T) {
 
 	enableEpochs := config.EnableEpochs{
 		BalanceWaitingListsEnableEpoch: 1,
-		WaitingListFixEnableEpoch:      1,
 	}
 
 	expectedEnableEpochsConfig := &data.EnableEpochsConfig{
