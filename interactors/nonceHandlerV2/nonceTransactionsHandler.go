@@ -9,6 +9,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
+
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/interactors"
@@ -149,14 +150,12 @@ func (nth *nonceTransactionsHandlerV2) SendTransaction(ctx context.Context, tx *
 }
 
 func (nth *nonceTransactionsHandlerV2) resendTransactionsLoop(ctx context.Context) {
-	timer := time.NewTimer(nth.intervalToResend)
-	defer timer.Stop()
+	ticker := time.NewTicker(nth.intervalToResend)
+	defer ticker.Stop()
 
 	for {
-		timer.Reset(nth.intervalToResend)
-
 		select {
-		case <-timer.C:
+		case <-ticker.C:
 			nth.resendTransactions(ctx)
 		case <-ctx.Done():
 			log.Debug("finishing nonceTransactionsHandlerV2.resendTransactionsLoop...")
