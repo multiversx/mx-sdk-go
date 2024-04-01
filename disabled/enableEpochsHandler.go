@@ -4,6 +4,11 @@ package disabled
 type EnableEpochsHandler struct {
 }
 
+// IsMigrateDataTrieEnabled returns false
+func (eeh *EnableEpochsHandler) IsMigrateDataTrieEnabled() bool {
+	return false
+}
+
 // NFTStopCreateEnabled returns false
 func (eeh *EnableEpochsHandler) NFTStopCreateEnabled() bool {
 	return false
