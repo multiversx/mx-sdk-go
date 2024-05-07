@@ -19,12 +19,13 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-go/config"
 	"github.com/multiversx/mx-chain-go/state"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	sdkCore "github.com/multiversx/mx-sdk-go/core"
 	sdkHttp "github.com/multiversx/mx-sdk-go/core/http"
 	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/multiversx/mx-sdk-go/testsCommon"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const testHttpURL = "https://test.org"
@@ -621,7 +622,6 @@ func TestProxy_GetEnableEpochsConfig(t *testing.T) {
 
 	enableEpochs := config.EnableEpochs{
 		BalanceWaitingListsEnableEpoch: 1,
-		WaitingListFixEnableEpoch:      1,
 	}
 
 	expectedEnableEpochsConfig := &data.EnableEpochsConfig{
