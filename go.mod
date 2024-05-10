@@ -6,17 +6,18 @@ require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/websocket v1.5.0
-	github.com/multiversx/mx-chain-core-go v1.2.19-0.20240222081523-011c96ab2548
-	github.com/multiversx/mx-chain-crypto-go v1.2.10-0.20231206065052-38843c1f1479
-	github.com/multiversx/mx-chain-go v1.7.7-0.20240308085429-629ebc91b1d7
-	github.com/multiversx/mx-chain-logger-go v1.0.14-0.20240129144507-d00e967c890c
-	github.com/multiversx/mx-chain-vm-common-go v1.5.12-0.20240305123516-2231c71162a2
+	github.com/multiversx/mx-chain-core-go v1.2.20
+	github.com/multiversx/mx-chain-crypto-go v1.2.11
+	github.com/multiversx/mx-chain-go v1.7.10
+	github.com/multiversx/mx-chain-logger-go v1.0.14
+	github.com/multiversx/mx-chain-vm-common-go v1.5.12
 	github.com/pborman/uuid v1.2.1
 	github.com/stretchr/testify v1.8.4
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/urfave/cli v1.22.10
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.21.0
 	golang.org/x/oauth2 v0.5.0
+	golang.org/x/sync v0.2.0
 )
 
 require (
@@ -111,8 +112,8 @@ require (
 	github.com/multiformats/go-multistream v0.4.1 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/multiversx/concurrent-map v0.1.4 // indirect
-	github.com/multiversx/mx-chain-communication-go v1.0.13-0.20240126121117-627adccf10ad // indirect
-	github.com/multiversx/mx-chain-storage-go v1.0.15-0.20240129144933-b1c0d642d7f8 // indirect
+	github.com/multiversx/mx-chain-communication-go v1.0.14 // indirect
+	github.com/multiversx/mx-chain-storage-go v1.0.15 // indirect
 	github.com/onsi/ginkgo/v2 v2.9.7 // indirect
 	github.com/opencontainers/runtime-spec v1.0.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -155,9 +156,8 @@ require (
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.9.1 // indirect
 	gonum.org/v1/gonum v0.11.0 // indirect
