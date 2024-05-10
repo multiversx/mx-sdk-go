@@ -7,14 +7,16 @@ import (
 
 // NodesCoordinatorStub -
 type NodesCoordinatorStub struct {
-	ComputeValidatorsGroupCalled           func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]nodesCoordinator.Validator, error)
-	GetValidatorsPublicKeysCalled          func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]string, error)
-	GetValidatorsRewardsAddressesCalled    func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]string, error)
-	GetValidatorWithPublicKeyCalled        func(publicKey []byte) (validator nodesCoordinator.Validator, shardId uint32, err error)
-	GetAllValidatorsPublicKeysCalled       func() (map[uint32][][]byte, error)
-	ConsensusGroupSizeCalled               func(shardID uint32) int
-	SetNodesConfigFromValidatorsInfoCalled func(epoch uint32, randomness []byte, validatorsInfo []*state.ShardValidatorInfo) error
-	IsEpochInConfigCalled                  func(epoch uint32) bool
+	ComputeValidatorsGroupCalled                func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]nodesCoordinator.Validator, error)
+	GetValidatorsPublicKeysCalled               func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]string, error)
+	GetValidatorsRewardsAddressesCalled         func(randomness []byte, round uint64, shardId uint32, epoch uint32) ([]string, error)
+	GetValidatorWithPublicKeyCalled             func(publicKey []byte) (validator nodesCoordinator.Validator, shardId uint32, err error)
+	GetAllValidatorsPublicKeysCalled            func() (map[uint32][][]byte, error)
+	ConsensusGroupSizeCalled                    func(shardID uint32) int
+	SetNodesConfigFromValidatorsInfoCalled      func(epoch uint32, randomness []byte, validatorsInfo []*state.ShardValidatorInfo) error
+	IsEpochInConfigCalled                       func(epoch uint32) bool
+	GetAllShuffledOutValidatorsPublicKeysCalled func(epoch uint32) (map[uint32][][]byte, error)
+	GetWaitingEpochsLeftForPublicKeyCalled      func(publicKey []byte) (uint32, error)
 }
 
 // GetChance -
@@ -175,6 +177,24 @@ func (ncm *NodesCoordinatorStub) IsEpochInConfig(epoch uint32) bool {
 		return ncm.IsEpochInConfigCalled(epoch)
 	}
 	return false
+}
+
+// GetAllShuffledOutValidatorsPublicKeys -
+func (ncm *NodesCoordinatorStub) GetAllShuffledOutValidatorsPublicKeys(epoch uint32) (map[uint32][][]byte, error) {
+	if ncm.GetAllShuffledOutValidatorsPublicKeysCalled != nil {
+		return ncm.GetAllShuffledOutValidatorsPublicKeysCalled(epoch)
+	}
+
+	return nil, nil
+}
+
+// GetWaitingEpochsLeftForPublicKey -
+func (ncm *NodesCoordinatorStub) GetWaitingEpochsLeftForPublicKey(publicKey []byte) (uint32, error) {
+	if ncm.GetWaitingEpochsLeftForPublicKeyCalled != nil {
+		return ncm.GetWaitingEpochsLeftForPublicKeyCalled(publicKey)
+	}
+
+	return 0, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
