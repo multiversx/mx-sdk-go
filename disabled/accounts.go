@@ -107,7 +107,7 @@ func (a *Accounts) RootHash() ([]byte, error) {
 }
 
 // RecreateTrie returns nil
-func (a *Accounts) RecreateTrie(_ []byte) error {
+func (a *Accounts) RecreateTrie(_ common.RootHashHolder) error {
 	return nil
 }
 
