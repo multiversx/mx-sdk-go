@@ -46,3 +46,9 @@ var ErrMissingGuardianOption = errors.New("guardian flag is missing in the optio
 
 // ErrGuardianDoesNotMatch signals a mismatch between the configured guardian in tx and the signing guardian address
 var ErrGuardianDoesNotMatch = errors.New("configured guardian does not match signing guardian")
+
+// ErrEmptyRelayerOnInnerTransaction signals that the inner transaction has an empty relayer
+var ErrEmptyRelayerOnInnerTransaction = errors.New("empty relayer on inner transaction")
+
+// ErrEmptyInnerTransactions signals that the inner transactions are empty
+var ErrEmptyInnerTransactions = errors.New("empty inner transactions")
