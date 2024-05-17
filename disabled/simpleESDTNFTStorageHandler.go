@@ -24,3 +24,8 @@ func (sns *SimpleESDTNFTStorageHandler) SaveNFTMetaDataToSystemAccount(_ data.Tr
 func (sns *SimpleESDTNFTStorageHandler) IsInterfaceNil() bool {
 	return sns == nil
 }
+
+// SaveNFTMetaData returns nil
+func (sns *SimpleESDTNFTStorageHandler) SaveNFTMetaData(tx data.TransactionHandler) error {
+	return nil
+}
