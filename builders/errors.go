@@ -49,3 +49,6 @@ var ErrGuardianDoesNotMatch = errors.New("configured guardian does not match sig
 
 // ErrEmptyRelayerOnInnerTransaction signals that the inner transaction has an empty relayer
 var ErrEmptyRelayerOnInnerTransaction = errors.New("empty relayer on inner transaction")
+
+// ErrEmptyInnerTransactions signals that the inner transactions are empty
+var ErrEmptyInnerTransactions = errors.New("empty inner transactions")

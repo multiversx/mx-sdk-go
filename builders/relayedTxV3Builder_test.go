@@ -39,11 +39,14 @@ func TestRelayedTxV3Builder(t *testing.T) {
 	innerTxSig := signTx(t, innerSenderPrivKey, innerTx)
 	innerTx.Signature = hex.EncodeToString(innerTxSig)
 
+	innerTxs := []*transaction.FrontendTransaction{innerTx}
+
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
+		innerTxsCopy := copySlice(innerTxs)
 		relayedV3Builder := NewRelayedTxV3Builder()
-		relayedV3Builder.SetInnerTransaction(innerTx)
+		relayedV3Builder.SetInnerTransactions(innerTxsCopy)
 		relayedV3Builder.SetRelayerAccount(relayerAcc)
 		relayedV3Builder.SetNetworkConfig(netConfig)
 
@@ -55,30 +58,39 @@ func TestRelayedTxV3Builder(t *testing.T) {
 
 		txJson, _ := json.Marshal(relayedTx)
 		require.Equal(t,
-			`{"nonce":37,"value":"0","receiver":"erd1mlh7q3fcgrjeq0et65vaaxcw6m5ky8jhu296pdxpk9g32zga6uhsemxx2a","sender":"erd1h692scsz3um6e5qwzts4yjrewxqxwcwxzavl5n9q8sprussx8fqsu70jf5",`+
-				`"gasPrice":1000000000,"gasLimit":100000,"signature":"4de727262dcdb8118d9df83cd1376ff0c920e4b8cd0e26f5041dca543aa8522def65e2f84ea6e85ee4a72a585749fd7896d879258a57792599ef81066b432c00",`+
-				`"chainID":"T","version":1,"innerTransaction":{"nonce":37,"value":"100000000","receiver":"erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th",`+
+			`{"nonce":37,"value":"0","receiver":"erd1h692scsz3um6e5qwzts4yjrewxqxwcwxzavl5n9q8sprussx8fqsu70jf5","sender":"erd1h692scsz3um6e5qwzts4yjrewxqxwcwxzavl5n9q8sprussx8fqsu70jf5",`+
+				`"gasPrice":1000000000,"gasLimit":150000,"signature":"cbe00bc33a5742e613d0593879273d916dea1752314b34991c5d291e702b2e37a8b22ac4cad249cfaa62614facdd1566ac2e4736c52b06eabe7b767cfb767006",`+
+				`"chainID":"T","version":1,"innerTransactions":[{"nonce":37,"value":"100000000","receiver":"erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th",`+
 				`"sender":"erd1mlh7q3fcgrjeq0et65vaaxcw6m5ky8jhu296pdxpk9g32zga6uhsemxx2a","gasPrice":1000000000,"gasLimit":50000,`+
 				`"signature":"907f6dc73f2218c91180be9b027a513e92f669c36bc26300f90f5bf9d7729328eefd7e098e6fbcf34f6b3b13466ee6fb8918f956ca8efd543a8d2bdffc9d680f","chainID":"T","version":1,`+
-				`"relayer":"erd1h692scsz3um6e5qwzts4yjrewxqxwcwxzavl5n9q8sprussx8fqsu70jf5"}}`,
+				`"relayer":"erd1h692scsz3um6e5qwzts4yjrewxqxwcwxzavl5n9q8sprussx8fqsu70jf5"}]}`,
 			string(txJson),
 		)
 	})
-	t.Run("nil inner tx should error", func(t *testing.T) {
+	t.Run("nil inner txs should error", func(t *testing.T) {
 		t.Parallel()
 
 		relayedV3Builder := NewRelayedTxV3Builder()
 		relayedTx, err := relayedV3Builder.Build()
-		require.Equal(t, ErrNilInnerTransaction, err)
+		require.Equal(t, ErrEmptyInnerTransactions, err)
+		require.Nil(t, relayedTx)
+	})
+	t.Run("nil empty inner txs should error", func(t *testing.T) {
+		t.Parallel()
+
+		relayedV3Builder := NewRelayedTxV3Builder()
+		relayedV3Builder.SetInnerTransactions([]*transaction.FrontendTransaction{})
+		relayedTx, err := relayedV3Builder.Build()
+		require.Equal(t, ErrEmptyInnerTransactions, err)
 		require.Nil(t, relayedTx)
 	})
 	t.Run("empty inner tx signature should error", func(t *testing.T) {
 		t.Parallel()
 
-		innerTxCopy := *innerTx
-		innerTxCopy.Signature = ""
+		innerTxsCopy := copySlice(innerTxs)
+		innerTxsCopy[0].Signature = ""
 		relayedV3Builder := NewRelayedTxV3Builder()
-		relayedV3Builder.SetInnerTransaction(&innerTxCopy)
+		relayedV3Builder.SetInnerTransactions(innerTxsCopy)
 		relayedTx, err := relayedV3Builder.Build()
 		require.Equal(t, ErrNilInnerTransactionSignature, err)
 		require.Nil(t, relayedTx)
@@ -86,10 +98,10 @@ func TestRelayedTxV3Builder(t *testing.T) {
 	t.Run("empty inner tx relayer should error", func(t *testing.T) {
 		t.Parallel()
 
-		innerTxCopy := *innerTx
-		innerTxCopy.Relayer = ""
+		innerTxsCopy := copySlice(innerTxs)
+		innerTxsCopy[0].Relayer = ""
 		relayedV3Builder := NewRelayedTxV3Builder()
-		relayedV3Builder.SetInnerTransaction(&innerTxCopy)
+		relayedV3Builder.SetInnerTransactions(innerTxsCopy)
 		relayedTx, err := relayedV3Builder.Build()
 		require.Equal(t, ErrEmptyRelayerOnInnerTransaction, err)
 		require.Nil(t, relayedTx)
@@ -98,7 +110,7 @@ func TestRelayedTxV3Builder(t *testing.T) {
 		t.Parallel()
 
 		relayedV3Builder := NewRelayedTxV3Builder()
-		relayedV3Builder.SetInnerTransaction(innerTx)
+		relayedV3Builder.SetInnerTransactions(innerTxs)
 		relayedTx, err := relayedV3Builder.Build()
 		require.Equal(t, ErrNilRelayerAccount, err)
 		require.Nil(t, relayedTx)
@@ -107,10 +119,20 @@ func TestRelayedTxV3Builder(t *testing.T) {
 		t.Parallel()
 
 		relayedV3Builder := NewRelayedTxV3Builder()
-		relayedV3Builder.SetInnerTransaction(innerTx)
+		relayedV3Builder.SetInnerTransactions(innerTxs)
 		relayedV3Builder.SetRelayerAccount(relayerAcc)
 		relayedTx, err := relayedV3Builder.Build()
 		require.Equal(t, ErrNilNetworkConfig, err)
 		require.Nil(t, relayedTx)
 	})
+}
+
+func copySlice(oldSlice []*transaction.FrontendTransaction) []*transaction.FrontendTransaction {
+	newSlice := make([]*transaction.FrontendTransaction, 0, len(oldSlice))
+	for _, sliceEntry := range oldSlice {
+		entryCopy := *sliceEntry
+		newSlice = append(newSlice, &entryCopy)
+	}
+
+	return newSlice
 }

@@ -6,23 +6,23 @@ import (
 )
 
 type relayedTxV3Builder struct {
-	innerTransaction *transaction.FrontendTransaction
-	relayerAccount   *data.Account
-	networkConfig    *data.NetworkConfig
+	innerTransactions []*transaction.FrontendTransaction
+	relayerAccount    *data.Account
+	networkConfig     *data.NetworkConfig
 }
 
 // NewRelayedTxV3Builder creates a new relayed transaction v2 builder
 func NewRelayedTxV3Builder() *relayedTxV3Builder {
 	return &relayedTxV3Builder{
-		innerTransaction: nil,
-		relayerAccount:   nil,
-		networkConfig:    nil,
+		innerTransactions: nil,
+		relayerAccount:    nil,
+		networkConfig:     nil,
 	}
 }
 
-// SetInnerTransaction sets the inner transaction to be relayed
-func (rtb *relayedTxV3Builder) SetInnerTransaction(tx *transaction.FrontendTransaction) *relayedTxV3Builder {
-	rtb.innerTransaction = tx
+// SetInnerTransactions sets the inner transactions to be relayed
+func (rtb *relayedTxV3Builder) SetInnerTransactions(innerTxs []*transaction.FrontendTransaction) *relayedTxV3Builder {
+	rtb.innerTransactions = innerTxs
 
 	return rtb
 }
@@ -44,15 +44,21 @@ func (rtb *relayedTxV3Builder) SetNetworkConfig(config *data.NetworkConfig) *rel
 // Build builds the relayed transaction v3
 // The returned transaction will not be signed
 func (rtb *relayedTxV3Builder) Build() (*transaction.FrontendTransaction, error) {
-	if rtb.innerTransaction == nil {
-		return nil, ErrNilInnerTransaction
+	if len(rtb.innerTransactions) == 0 {
+		return nil, ErrEmptyInnerTransactions
 	}
-	if len(rtb.innerTransaction.Signature) == 0 {
-		return nil, ErrNilInnerTransactionSignature
+	innerTxsGasLimit := uint64(0)
+	for _, innerTx := range rtb.innerTransactions {
+		if len(innerTx.Signature) == 0 {
+			return nil, ErrNilInnerTransactionSignature
+		}
+		if len(innerTx.Relayer) == 0 {
+			return nil, ErrEmptyRelayerOnInnerTransaction
+		}
+
+		innerTxsGasLimit += innerTx.GasLimit
 	}
-	if len(rtb.innerTransaction.Relayer) == 0 {
-		return nil, ErrEmptyRelayerOnInnerTransaction
-	}
+
 	if rtb.relayerAccount == nil {
 		return nil, ErrNilRelayerAccount
 	}
@@ -60,19 +66,21 @@ func (rtb *relayedTxV3Builder) Build() (*transaction.FrontendTransaction, error)
 		return nil, ErrNilNetworkConfig
 	}
 
-	gasLimit := rtb.networkConfig.MinGasLimit + rtb.innerTransaction.GasLimit
+	minGasLimit := rtb.networkConfig.MinGasLimit
+	moveBalancesGas := minGasLimit * uint64(len(rtb.innerTransactions))
+	gasLimit := minGasLimit + moveBalancesGas + innerTxsGasLimit
 
 	relayedTx := &transaction.FrontendTransaction{
-		Nonce:            rtb.relayerAccount.Nonce,
-		Value:            "0",
-		Receiver:         rtb.innerTransaction.Sender,
-		Sender:           rtb.relayerAccount.Address,
-		GasPrice:         rtb.innerTransaction.GasPrice,
-		GasLimit:         gasLimit,
-		Data:             []byte(""),
-		ChainID:          rtb.networkConfig.ChainID,
-		Version:          rtb.networkConfig.MinTransactionVersion,
-		InnerTransaction: rtb.innerTransaction,
+		Nonce:             rtb.relayerAccount.Nonce,
+		Value:             "0",
+		Receiver:          rtb.relayerAccount.Address,
+		Sender:            rtb.relayerAccount.Address,
+		GasPrice:          rtb.innerTransactions[0].GasPrice,
+		GasLimit:          gasLimit,
+		Data:              []byte(""),
+		ChainID:           rtb.networkConfig.ChainID,
+		Version:           rtb.networkConfig.MinTransactionVersion,
+		InnerTransactions: rtb.innerTransactions,
 	}
 
 	return relayedTx, nil
