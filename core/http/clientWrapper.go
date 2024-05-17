@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -57,7 +57,7 @@ func (wrapper *clientWrapper) GetHTTP(ctx context.Context, endpoint string) ([]b
 		_ = response.Body.Close()
 	}()
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, response.StatusCode, err
 	}
@@ -84,7 +84,7 @@ func (wrapper *clientWrapper) PostHTTP(ctx context.Context, endpoint string, dat
 		_ = response.Body.Close()
 	}()
 
-	buff, err := ioutil.ReadAll(response.Body)
+	buff, err := io.ReadAll(response.Body)
 
 	return buff, response.StatusCode, err
 }

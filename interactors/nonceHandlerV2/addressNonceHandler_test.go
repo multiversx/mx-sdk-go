@@ -58,12 +58,15 @@ func TestAddressNonceHandler_ApplyNonceAndGasPrice(t *testing.T) {
 		anh, err := NewAddressNonceHandlerWithPrivateAccess(&testsCommon.ProxyStub{}, testAddress)
 		require.Nil(t, err)
 
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx)
+		require.Nil(t, err)
+
 		_, err = anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 
 		anh.gasPrice = tx.GasPrice
 		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx)
-		require.Equal(t, interactors.ErrTxAlreadySent, err)
+		require.Equal(t, interactors.ErrTxWithSameNonceAndGasPriceAlreadySent, err)
 	})
 	t.Run("tx already sent; oldTx.GasPrice < txArgs.GasPrice", func(t *testing.T) {
 		t.Parallel()
@@ -75,11 +78,17 @@ func TestAddressNonceHandler_ApplyNonceAndGasPrice(t *testing.T) {
 		anh, err := NewAddressNonceHandlerWithPrivateAccess(&testsCommon.ProxyStub{}, testAddress)
 		require.Nil(t, err)
 
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx)
+		require.Nil(t, err)
+
 		_, err = anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 
 		anh.gasPrice = initialGasPrice
 		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx)
+		require.Nil(t, err)
+
+		_, err = anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 	})
 	t.Run("oldTx.GasPrice == txArgs.GasPrice && oldTx.GasPrice < anh.gasPrice", func(t *testing.T) {
@@ -89,11 +98,39 @@ func TestAddressNonceHandler_ApplyNonceAndGasPrice(t *testing.T) {
 		anh, err := NewAddressNonceHandlerWithPrivateAccess(&testsCommon.ProxyStub{}, testAddress)
 		require.Nil(t, err)
 
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx)
+		require.Nil(t, err)
+
 		_, err = anh.SendTransaction(context.Background(), &tx)
 		require.Nil(t, err)
 
 		anh.gasPrice = tx.GasPrice + 1
 		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx)
+		require.Nil(t, err)
+
+		_, err = anh.SendTransaction(context.Background(), &tx)
+		require.Nil(t, err)
+	})
+	t.Run("same transaction but with different nonce should work", func(t *testing.T) {
+		t.Parallel()
+
+		tx1 := createDefaultTx()
+		tx2 := createDefaultTx()
+		tx2.Nonce++
+
+		anh, err := NewAddressNonceHandlerWithPrivateAccess(&testsCommon.ProxyStub{}, testAddress)
+		require.Nil(t, err)
+
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx1)
+		require.Nil(t, err)
+
+		_, err = anh.SendTransaction(context.Background(), &tx1)
+		require.Nil(t, err)
+
+		err = anh.ApplyNonceAndGasPrice(context.Background(), &tx2)
+		require.Nil(t, err)
+
+		_, err = anh.SendTransaction(context.Background(), &tx2)
 		require.Nil(t, err)
 	})
 }

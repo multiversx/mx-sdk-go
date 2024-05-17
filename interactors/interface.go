@@ -20,7 +20,14 @@ type Proxy interface {
 
 // TxBuilder defines the component able to build & sign a transaction
 type TxBuilder interface {
-	ApplySignature(cryptoHolder core.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
+	ApplyUserSignature(cryptoHolder core.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
+	IsInterfaceNil() bool
+}
+
+// GuardedTxBuilder defines the component able to build and sign a guarded transaction
+type GuardedTxBuilder interface {
+	ApplyUserSignature(cryptoHolder core.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
+	ApplyGuardianSignature(cryptoHolderGuardian core.CryptoComponentsHolder, tx *transaction.FrontendTransaction) error
 	IsInterfaceNil() bool
 }
 
@@ -47,11 +54,5 @@ type TransactionNonceHandlerV2 interface {
 	ApplyNonceAndGasPrice(ctx context.Context, address core.AddressHandler, tx *transaction.FrontendTransaction) error
 	SendTransaction(ctx context.Context, tx *transaction.FrontendTransaction) (string, error)
 	Close() error
-	IsInterfaceNil() bool
-}
-
-// AddressNonceHandlerCreator defines the component able to create AddressNonceHandler instances
-type AddressNonceHandlerCreator interface {
-	Create(proxy Proxy, address core.AddressHandler) (AddressNonceHandler, error)
 	IsInterfaceNil() bool
 }

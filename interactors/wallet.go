@@ -13,7 +13,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"github.com/multiversx/mx-chain-crypto-go/signing"
@@ -168,7 +167,7 @@ func (w *wallet) GetAddressFromPrivateKey(privateKeyBytes []byte) (core.AddressH
 
 // LoadPrivateKeyFromJsonFile loads a password encrypted private key from a .json file
 func (w *wallet) LoadPrivateKeyFromJsonFile(filename string, password string) ([]byte, error) {
-	buff, err := ioutil.ReadFile(filename)
+	buff, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -331,12 +330,12 @@ func (w *wallet) SavePrivateKeyToJsonFile(privateKey []byte, password string, fi
 		return err
 	}
 
-	return ioutil.WriteFile(filename, buff, 0644)
+	return os.WriteFile(filename, buff, 0644)
 }
 
 // LoadPrivateKeyFromPemFile loads a private key from a .pem file
 func (w *wallet) LoadPrivateKeyFromPemFile(filename string) ([]byte, error) {
-	buff, err := ioutil.ReadFile(filename)
+	buff, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

@@ -1,8 +1,6 @@
 package main
 
-import (
-	"C"
-)
+import "C"
 
 func main() {
 }

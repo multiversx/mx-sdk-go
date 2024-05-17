@@ -1,13 +1,13 @@
-package authentication
+package native
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-sdk-go/authentication"
 	"github.com/multiversx/mx-sdk-go/builders"
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/workflows"
@@ -16,60 +16,64 @@ import (
 // ArgsNativeAuthClient is the DTO used in the native auth client constructor
 type ArgsNativeAuthClient struct {
 	Signer                 builders.Signer
-	ExtraInfo              interface{}
+	ExtraInfo              struct{}
 	Proxy                  workflows.ProxyHandler
 	CryptoComponentsHolder core.CryptoComponentsHolder
-	TokenExpiryInSeconds   uint64
+	TokenHandler           authentication.AuthTokenHandler
+	TokenExpiryInSeconds   int64
 	Host                   string
 }
 
-type nativeAuthClient struct {
+type authClient struct {
 	signer                 builders.Signer
-	encodedExtraInfo       string
+	extraInfo              []byte
 	proxy                  workflows.ProxyHandler
-	tokenExpiryInSeconds   uint64
 	cryptoComponentsHolder core.CryptoComponentsHolder
-	encodedHost            string
+	tokenExpiryInSeconds   int64
+	host                   []byte
 	token                  string
+	tokenHandler           authentication.AuthTokenHandler
 	tokenExpire            time.Time
 	getTimeHandler         func() time.Time
 }
 
 // NewNativeAuthClient will create a new native client able to create authentication tokens
-func NewNativeAuthClient(args ArgsNativeAuthClient) (*nativeAuthClient, error) {
+func NewNativeAuthClient(args ArgsNativeAuthClient) (*authClient, error) {
 	if check.IfNil(args.Signer) {
-		return nil, ErrNilTxSigner
+		return nil, authentication.ErrNilSigner
 	}
 
 	extraInfoBytes, err := json.Marshal(args.ExtraInfo)
 	if err != nil {
-		return nil, fmt.Errorf("%w while marshaling args.ExtraInfo", err)
+		return nil, fmt.Errorf("%w while marshaling args.extraInfo", err)
 	}
 
 	if check.IfNil(args.Proxy) {
-		return nil, ErrNilProxy
+		return nil, workflows.ErrNilProxy
+	}
+
+	if check.IfNil(args.TokenHandler) {
+		return nil, authentication.ErrNilTokenHandler
 	}
 
 	if check.IfNil(args.CryptoComponentsHolder) {
-		return nil, ErrNilCryptoComponentsHolder
+		return nil, authentication.ErrNilCryptoComponentsHolder
 	}
 
-	encodedHost := base64.StdEncoding.EncodeToString([]byte(args.Host))
-	encodedExtraInfo := base64.StdEncoding.EncodeToString(extraInfoBytes)
-
-	return &nativeAuthClient{
+	return &authClient{
 		signer:                 args.Signer,
-		encodedExtraInfo:       encodedExtraInfo,
+		extraInfo:              extraInfoBytes,
 		proxy:                  args.Proxy,
 		cryptoComponentsHolder: args.CryptoComponentsHolder,
-		encodedHost:            encodedHost,
+		host:                   []byte(args.Host),
+		tokenHandler:           args.TokenHandler,
 		tokenExpiryInSeconds:   args.TokenExpiryInSeconds,
 		getTimeHandler:         time.Now,
 	}, nil
 }
 
 // GetAccessToken returns an access token used for authentication into different MultiversX services
-func (nac *nativeAuthClient) GetAccessToken() (string, error) {
+func (nac *authClient) GetAccessToken() (string, error) {
 	now := nac.getTimeHandler()
 	noToken := nac.tokenExpire.IsZero()
 	tokenExpired := now.After(nac.tokenExpire)
@@ -82,7 +86,7 @@ func (nac *nativeAuthClient) GetAccessToken() (string, error) {
 	return nac.token, nil
 }
 
-func (nac *nativeAuthClient) createNewToken() error {
+func (nac *authClient) createNewToken() error {
 	nonce, err := nac.proxy.GetLatestHyperBlockNonce(context.Background())
 	if err != nil {
 		return err
@@ -93,24 +97,30 @@ func (nac *nativeAuthClient) createNewToken() error {
 		return err
 	}
 
-	token := fmt.Sprintf("%s.%s.%d.%s", nac.encodedHost, lastHyperblock.Hash, nac.tokenExpiryInSeconds, nac.encodedExtraInfo)
+	token := &AuthToken{
+		ttl:       nac.tokenExpiryInSeconds,
+		host:      nac.host,
+		extraInfo: nac.extraInfo,
+		blockHash: lastHyperblock.Hash,
+		address:   []byte(nac.cryptoComponentsHolder.GetBech32()),
+	}
 
-	signature, err := nac.signer.SignMessage([]byte(token), nac.cryptoComponentsHolder.GetPrivateKey())
+	unsignedToken := nac.tokenHandler.GetUnsignedToken(token)
+	signableMessage := nac.tokenHandler.GetSignableMessage(token.GetAddress(), unsignedToken)
+	token.signature, err = nac.signer.SignMessage(signableMessage, nac.cryptoComponentsHolder.GetPrivateKey())
 	if err != nil {
 		return err
 	}
 
-	encodedToken := base64.StdEncoding.EncodeToString([]byte(token))
-
-	encodedSignature := base64.StdEncoding.EncodeToString(signature)
-
-	encodedAddress := base64.StdEncoding.EncodeToString([]byte(nac.cryptoComponentsHolder.GetBech32()))
-	nac.token = fmt.Sprintf("%s.%s.%s", encodedAddress, encodedToken, encodedSignature)
+	nac.token, err = nac.tokenHandler.Encode(token)
+	if err != nil {
+		return err
+	}
 	nac.tokenExpire = nac.getTimeHandler().Add(time.Duration(nac.tokenExpiryInSeconds))
 	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (nac *nativeAuthClient) IsInterfaceNil() bool {
+func (nac *authClient) IsInterfaceNil() bool {
 	return nac == nil
 }

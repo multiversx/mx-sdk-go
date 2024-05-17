@@ -54,7 +54,7 @@ func TestGenerateSameDNSAddress(t *testing.T) {
 	assert.Equal(t, "erd1qqqqqqqqqqqqqpgqvrsdh798pvd4x09x0argyscxc9h7lzfhqz4sttlatg", newDnsAsBech32)
 }
 
-func TestAddressGenerator_ComputeArwenScAddress(t *testing.T) {
+func TestAddressGenerator_ComputeWasmVMScAddress(t *testing.T) {
 	t.Parallel()
 
 	coord, err := NewShardCoordinator(3, 0)
@@ -65,7 +65,7 @@ func TestAddressGenerator_ComputeArwenScAddress(t *testing.T) {
 	owner, err := data.NewAddressFromBech32String("erd1dglncxk6sl9a3xumj78n6z2xux4ghp5c92cstv5zsn56tjgtdwpsk46qrs")
 	require.Nil(t, err)
 
-	scAddress, err := ag.ComputeArwenScAddress(owner, 10)
+	scAddress, err := ag.ComputeWasmVMScAddress(owner, 10)
 	require.Nil(t, err)
 
 	scAddressAsBech32, err := scAddress.AddressAsBech32String()
