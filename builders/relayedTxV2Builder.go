@@ -6,11 +6,12 @@ import (
 	"math/big"
 
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
-type relayedTxV2Builder struct {
+type RelayedTxV2Builder struct {
 	innerTransaction                  *transaction.FrontendTransaction
 	gasLimitNeededForInnerTransaction uint64
 	relayerAccount                    *data.Account
@@ -18,8 +19,8 @@ type relayedTxV2Builder struct {
 }
 
 // NewRelayedTxV2Builder creates a new relayed transaction v2 builder
-func NewRelayedTxV2Builder() *relayedTxV2Builder {
-	return &relayedTxV2Builder{
+func NewRelayedTxV2Builder() *RelayedTxV2Builder {
+	return &RelayedTxV2Builder{
 		innerTransaction: nil,
 		relayerAccount:   nil,
 		networkConfig:    nil,
@@ -27,28 +28,28 @@ func NewRelayedTxV2Builder() *relayedTxV2Builder {
 }
 
 // SetInnerTransaction sets the inner transaction to be relayed
-func (rtb *relayedTxV2Builder) SetInnerTransaction(tx *transaction.FrontendTransaction) *relayedTxV2Builder {
+func (rtb *RelayedTxV2Builder) SetInnerTransaction(tx *transaction.FrontendTransaction) *RelayedTxV2Builder {
 	rtb.innerTransaction = tx
 
 	return rtb
 }
 
 // SetRelayerAccount sets the relayer account (that will send the wrapped transaction)
-func (rtb *relayedTxV2Builder) SetRelayerAccount(account *data.Account) *relayedTxV2Builder {
+func (rtb *RelayedTxV2Builder) SetRelayerAccount(account *data.Account) *RelayedTxV2Builder {
 	rtb.relayerAccount = account
 
 	return rtb
 }
 
 // SetGasLimitNeededForInnerTransaction sets the gas limit needed for the inner transaction
-func (rtb *relayedTxV2Builder) SetGasLimitNeededForInnerTransaction(gasLimit uint64) *relayedTxV2Builder {
+func (rtb *RelayedTxV2Builder) SetGasLimitNeededForInnerTransaction(gasLimit uint64) *RelayedTxV2Builder {
 	rtb.gasLimitNeededForInnerTransaction = gasLimit
 
 	return rtb
 }
 
 // SetNetworkConfig sets the network config
-func (rtb *relayedTxV2Builder) SetNetworkConfig(config *data.NetworkConfig) *relayedTxV2Builder {
+func (rtb *RelayedTxV2Builder) SetNetworkConfig(config *data.NetworkConfig) *RelayedTxV2Builder {
 	rtb.networkConfig = config
 
 	return rtb
@@ -56,7 +57,7 @@ func (rtb *relayedTxV2Builder) SetNetworkConfig(config *data.NetworkConfig) *rel
 
 // Build builds the relayed transaction v1
 // The returned transaction will not be signed
-func (rtb *relayedTxV2Builder) Build() (*transaction.FrontendTransaction, error) {
+func (rtb *RelayedTxV2Builder) Build() (*transaction.FrontendTransaction, error) {
 	if rtb.innerTransaction == nil {
 		return nil, ErrNilInnerTransaction
 	}
