@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
-	"github.com/multiversx/mx-sdk-go/data"
 	"github.com/stretchr/testify/require"
+
+	"github.com/multiversx/mx-sdk-go/data"
 )
 
 func TestRelayedTxV3Builder(t *testing.T) {
@@ -59,7 +60,7 @@ func TestRelayedTxV3Builder(t *testing.T) {
 		txJson, _ := json.Marshal(relayedTx)
 		require.Equal(t,
 			`{"nonce":37,"value":"0","receiver":"erd1h692scsz3um6e5qwzts4yjrewxqxwcwxzavl5n9q8sprussx8fqsu70jf5","sender":"erd1h692scsz3um6e5qwzts4yjrewxqxwcwxzavl5n9q8sprussx8fqsu70jf5",`+
-				`"gasPrice":1000000000,"gasLimit":150000,"signature":"cbe00bc33a5742e613d0593879273d916dea1752314b34991c5d291e702b2e37a8b22ac4cad249cfaa62614facdd1566ac2e4736c52b06eabe7b767cfb767006",`+
+				`"gasPrice":1000000000,"gasLimit":100000,"signature":"7c1209358717816092d0dfd6b5448018048520d5af73233bd130276e1e621b3aabbc21bd6c0b501b073c97b3b11036416a0ce1e65280e2e6cebefab6ffab2c05",`+
 				`"chainID":"T","version":1,"innerTransactions":[{"nonce":37,"value":"100000000","receiver":"erd1qyu5wthldzr8wx5c9ucg8kjagg0jfs53s8nr3zpz3hypefsdd8ssycr6th",`+
 				`"sender":"erd1mlh7q3fcgrjeq0et65vaaxcw6m5ky8jhu296pdxpk9g32zga6uhsemxx2a","gasPrice":1000000000,"gasLimit":50000,`+
 				`"signature":"907f6dc73f2218c91180be9b027a513e92f669c36bc26300f90f5bf9d7729328eefd7e098e6fbcf34f6b3b13466ee6fb8918f956ca8efd543a8d2bdffc9d680f","chainID":"T","version":1,`+

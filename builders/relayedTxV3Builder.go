@@ -70,7 +70,7 @@ func (rtb *RelayedTxV3Builder) Build() (*transaction.FrontendTransaction, error)
 
 	minGasLimit := rtb.networkConfig.MinGasLimit
 	moveBalancesGas := minGasLimit * uint64(len(rtb.innerTransactions))
-	gasLimit := minGasLimit + moveBalancesGas + innerTxsGasLimit
+	gasLimit := moveBalancesGas + innerTxsGasLimit
 
 	relayedTx := &transaction.FrontendTransaction{
 		Nonce:             rtb.relayerAccount.Nonce,
