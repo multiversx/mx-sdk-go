@@ -6,19 +6,21 @@ import (
 	"math/big"
 
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+
 	"github.com/multiversx/mx-sdk-go/core"
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
-type relayedTxV1Builder struct {
+// RelayedTxV1Builder is a builder for relayed transaction v1
+type RelayedTxV1Builder struct {
 	innerTransaction *transaction.FrontendTransaction
 	relayerAccount   *data.Account
 	networkConfig    *data.NetworkConfig
 }
 
 // NewRelayedTxV1Builder creates a new relayed transaction v1 builder
-func NewRelayedTxV1Builder() *relayedTxV1Builder {
-	return &relayedTxV1Builder{
+func NewRelayedTxV1Builder() *RelayedTxV1Builder {
+	return &RelayedTxV1Builder{
 		innerTransaction: nil,
 		relayerAccount:   nil,
 		networkConfig:    nil,
@@ -26,21 +28,21 @@ func NewRelayedTxV1Builder() *relayedTxV1Builder {
 }
 
 // SetInnerTransaction sets the inner transaction to be relayed
-func (rtb *relayedTxV1Builder) SetInnerTransaction(tx *transaction.FrontendTransaction) *relayedTxV1Builder {
+func (rtb *RelayedTxV1Builder) SetInnerTransaction(tx *transaction.FrontendTransaction) *RelayedTxV1Builder {
 	rtb.innerTransaction = tx
 
 	return rtb
 }
 
 // SetRelayerAccount sets the relayer account
-func (rtb *relayedTxV1Builder) SetRelayerAccount(account *data.Account) *relayedTxV1Builder {
+func (rtb *RelayedTxV1Builder) SetRelayerAccount(account *data.Account) *RelayedTxV1Builder {
 	rtb.relayerAccount = account
 
 	return rtb
 }
 
 // SetNetworkConfig sets the network config
-func (rtb *relayedTxV1Builder) SetNetworkConfig(config *data.NetworkConfig) *relayedTxV1Builder {
+func (rtb *RelayedTxV1Builder) SetNetworkConfig(config *data.NetworkConfig) *RelayedTxV1Builder {
 	rtb.networkConfig = config
 
 	return rtb
@@ -48,7 +50,7 @@ func (rtb *relayedTxV1Builder) SetNetworkConfig(config *data.NetworkConfig) *rel
 
 // Build builds the relayed transaction v1
 // The returned transaction will not be signed
-func (rtb *relayedTxV1Builder) Build() (*transaction.FrontendTransaction, error) {
+func (rtb *RelayedTxV1Builder) Build() (*transaction.FrontendTransaction, error) {
 	if rtb.innerTransaction == nil {
 		return nil, ErrNilInnerTransaction
 	}
