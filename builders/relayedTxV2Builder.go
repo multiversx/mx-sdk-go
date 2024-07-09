@@ -11,6 +11,7 @@ import (
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
+// RelayedTxV2Builder is a builder for relayed transaction v2
 type RelayedTxV2Builder struct {
 	innerTransaction                  *transaction.FrontendTransaction
 	gasLimitNeededForInnerTransaction uint64

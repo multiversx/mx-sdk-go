@@ -6,13 +6,7 @@ import (
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
-type RelayedV3TxBuilderIf interface {
-	SetInnerTransactions(innerTxs []*transaction.FrontendTransaction) *RelayedTxV3Builder
-	SetRelayerAccount(account *data.Account) *RelayedTxV3Builder
-	Build() (*transaction.FrontendTransaction, error)
-	SetNetworkConfig(networkConfig *data.NetworkConfig) *RelayedTxV3Builder
-}
-
+// RelayedTxV3Builder is a builder for relayed transactions v3
 type RelayedTxV3Builder struct {
 	innerTransactions []*transaction.FrontendTransaction
 	relayerAccount    *data.Account

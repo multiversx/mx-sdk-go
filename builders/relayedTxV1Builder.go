@@ -11,6 +11,7 @@ import (
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
+// RelayedTxV1Builder is a builder for relayed transaction v1
 type RelayedTxV1Builder struct {
 	innerTransaction *transaction.FrontendTransaction
 	relayerAccount   *data.Account
