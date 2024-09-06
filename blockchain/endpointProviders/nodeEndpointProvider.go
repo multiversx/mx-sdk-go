@@ -11,6 +11,8 @@ const (
 	nodeRawBlockByHashEndpoint     = "internal/raw/block/by-hash/%s"
 	nodeRawBlockByNonceEndpoint    = "internal/raw/block/by-nonce/%d"
 	nodeRawMiniBlockByHashEndpoint = "internal/raw/miniblock/by-hash/%s/epoch/%d"
+	nodeBlockByNonceEndpoint       = "block/by-nonce/%d"
+	nodeGetBlockByHashEndpoint     = "block/by-hash/%s"
 )
 
 // nodeEndpointProvider is suitable to work with a MultiversX node (observer)
@@ -56,4 +58,14 @@ func (node *nodeEndpointProvider) GetRestAPIEntityType() core.RestAPIEntityType 
 // IsInterfaceNil returns true if there is no value under the interface
 func (node *nodeEndpointProvider) IsInterfaceNil() bool {
 	return node == nil
+}
+
+// GetBlockByNonce returns the block with the given nonce
+func (node *nodeEndpointProvider) GetBlockByNonce(_ uint32, nonce uint64) string {
+	return fmt.Sprintf(nodeBlockByNonceEndpoint, nonce)
+}
+
+// GetBlockByHash returns the block with the given hash
+func (node *nodeEndpointProvider) GetBlockByHash(_ uint32, hash string) string {
+	return fmt.Sprintf(nodeGetBlockByHashEndpoint, hash)
 }

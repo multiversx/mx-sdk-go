@@ -1,6 +1,7 @@
 package data
 
 import (
+	"github.com/multiversx/mx-chain-core-go/data/api"
 	"github.com/multiversx/mx-chain-core-go/data/vm"
 )
 
@@ -14,6 +15,16 @@ type ResponseVmValue struct {
 	Data  VmValuesResponseData `json:"data"`
 	Error string               `json:"error"`
 	Code  string               `json:"code"`
+}
+
+type BlockDataResponse struct {
+	Block *api.Block `json:"block"`
+}
+
+type BlockResponse struct {
+	Data  BlockDataResponse `json:"data"`
+	Error string            `json:"error"`
+	Code  string            `json:"code"`
 }
 
 // VmValueRequest defines the request struct for values available in a VM

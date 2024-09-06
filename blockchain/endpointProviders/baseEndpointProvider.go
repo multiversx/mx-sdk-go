@@ -22,7 +22,7 @@ const (
 	rawStartOfEpochValidators  = "internal/json/startofepoch/validators/by-epoch/%d"
 	esdt                       = "address/%s/esdt/%s"
 	nft                        = "address/%s/nft/%s/nonce/%d"
-	nodeGetGuardianData       = "address/%s/guardian-data"
+	nodeGetGuardianData        = "address/%s/guardian-data"
 	isDataTrieMigrated         = "address/%s/is-data-trie-migrated"
 )
 

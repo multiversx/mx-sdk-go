@@ -1,7 +1,10 @@
 package blockchain
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,30 +23,48 @@ import (
 	"github.com/multiversx/mx-sdk-go/data"
 )
 
+// CacheInterface defines the methods required for a basic cache.
+type CacheInterface interface {
+	// Get retrieves a value from the cache based on the provided key.
+	Get(key []byte) (value interface{}, ok bool)
+
+	// Put adds a value to the cache. Returns true if an eviction occurred.
+	Put(key []byte, value interface{}, sizeInBytes int) (evicted bool)
+
+	// IsInterfaceNil checks if the interface is nil.
+	IsInterfaceNil() bool
+}
+
 const (
 	withResultsQueryParam = "?withResults=true"
 )
 
+var ( // MaximumBlocksDelta is the maximum allowed delta between the final block and the current block
+	MaximumBlocksDelta uint64 = 500
+)
+
 // ArgsProxy is the DTO used in the multiversx proxy constructor
 type ArgsProxy struct {
-	ProxyURL            string
-	Client              sdkHttp.Client
-	SameScState         bool
-	ShouldBeSynced      bool
-	FinalityCheck       bool
-	AllowedDeltaToFinal int
-	CacheExpirationTime time.Duration
-	EntityType          sdkCore.RestAPIEntityType
+	ProxyURL               string
+	Client                 sdkHttp.Client
+	SameScState            bool
+	ShouldBeSynced         bool
+	FinalityCheck          bool
+	AllowedDeltaToFinal    int
+	CacheExpirationTime    time.Duration
+	EntityType             sdkCore.RestAPIEntityType
+	FilterQueryBlockCacher CacheInterface
 }
 
 // proxy implements basic functions for interacting with a multiversx Proxy
 type proxy struct {
 	*baseProxy
-	sameScState         bool
-	shouldBeSynced      bool
-	finalityCheck       bool
-	allowedDeltaToFinal int
-	finalityProvider    FinalityProvider
+	sameScState            bool
+	shouldBeSynced         bool
+	finalityCheck          bool
+	allowedDeltaToFinal    int
+	finalityProvider       FinalityProvider
+	filterQueryBlockCacher CacheInterface
 }
 
 // NewProxy initializes and returns a proxy object
@@ -75,12 +96,17 @@ func NewProxy(args ArgsProxy) (*proxy, error) {
 	}
 
 	ep := &proxy{
-		baseProxy:           baseProxyInstance,
-		sameScState:         args.SameScState,
-		shouldBeSynced:      args.ShouldBeSynced,
-		finalityCheck:       args.FinalityCheck,
-		allowedDeltaToFinal: args.AllowedDeltaToFinal,
-		finalityProvider:    finalityProvider,
+		baseProxy:              baseProxyInstance,
+		sameScState:            args.SameScState,
+		shouldBeSynced:         args.ShouldBeSynced,
+		finalityCheck:          args.FinalityCheck,
+		allowedDeltaToFinal:    args.AllowedDeltaToFinal,
+		finalityProvider:       finalityProvider,
+		filterQueryBlockCacher: nil, // Default to nil if not provided
+	}
+
+	if args.FilterQueryBlockCacher != nil {
+		ep.filterQueryBlockCacher = args.FilterQueryBlockCacher
 	}
 
 	return ep, nil
@@ -715,6 +741,203 @@ func (ep *proxy) IsDataTrieMigrated(ctx context.Context, address sdkCore.Address
 	}
 
 	return isMigrated, nil
+}
+
+// FilterLogs retrieves logs from the network and filters them based on the provided filter
+func (ep *proxy) FilterLogs(ctx context.Context, filter *sdkCore.FilterQuery) ([]*transaction.Events, error) {
+	var (
+		latestBlock    uint64
+		matchingEvents []*transaction.Events
+		fromBlock      uint64
+		toBlock        uint64
+	)
+
+	x, err := ep.GetNetworkStatus(ctx, filter.ShardID)
+	if err != nil {
+		return nil, err
+	}
+	latestBlock = x.Nonce
+
+	if filter.BlockHash != nil {
+		blockNum, err := ep.getBlockNumberByHash(ctx, filter.ShardID, filter.BlockHash)
+		if err != nil {
+			return nil, err
+		}
+		fromBlock, toBlock = blockNum, blockNum
+	} else {
+		_fromBlock, _toBlock, err := resolveBlockRange(filter, latestBlock)
+		if err != nil {
+			return nil, err
+		}
+		fromBlock, toBlock = _fromBlock, _toBlock
+	}
+
+	for blockNum := fromBlock; blockNum <= toBlock; blockNum++ {
+		blockLogs, err := ep.getLogsFromBlock(ctx, filter.ShardID, blockNum, filter)
+		if err != nil {
+			return nil, err
+		}
+		matchingEvents = append(matchingEvents, blockLogs...)
+	}
+
+	return matchingEvents, nil
+}
+
+func resolveBlockRange(filter *sdkCore.FilterQuery, latestBlock uint64) (uint64, uint64, error) {
+	var genesisBlock uint64 = 0
+
+	if filter.ToBlock.HasValue && filter.ToBlock.Value > latestBlock {
+		return 0, 0, errors.New("toBlock is greater than the latest block")
+	}
+
+	// Check if both fromBlock and toBlock are set
+	if filter.FromBlock.HasValue && filter.ToBlock.HasValue {
+		if filter.ToBlock.Value-filter.FromBlock.Value <= MaximumBlocksDelta {
+			return filter.FromBlock.Value, filter.ToBlock.Value, nil
+		}
+		return 0, 0, errors.New("invalid block range: too many blocks to process")
+	}
+
+	// Check if only fromBlock is set
+	if filter.FromBlock.HasValue {
+		toBlock := latestBlock // Set toBlock to latestBlock
+		if toBlock-filter.FromBlock.Value <= MaximumBlocksDelta {
+			return filter.FromBlock.Value, toBlock, nil
+		}
+		return 0, 0, errors.New("invalid block range: too many blocks to process")
+	}
+
+	// Check if only toBlock is set
+	if filter.ToBlock.HasValue {
+		fromBlock := genesisBlock // Set fromBlock to genesisBlock
+		if filter.ToBlock.Value-fromBlock <= MaximumBlocksDelta {
+			return fromBlock, filter.ToBlock.Value, nil
+		}
+		return 0, 0, errors.New("invalid block range: too many blocks to process")
+	}
+
+	return 0, 0, errors.New("no block range specified")
+}
+
+// getBlockNumberByHash retrieves the block number associated with the given block hash
+func (ep *proxy) getBlockNumberByHash(ctx context.Context, shardID uint32, blockHash *[32]byte) (uint64, error) {
+	blockHashStr := hex.EncodeToString(blockHash[:])
+
+	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetBlockByHash(shardID, blockHashStr))
+	if err != nil || code != http.StatusOK {
+		return 0, createHTTPStatusError(code, err)
+	}
+
+	var response data.BlockResponse
+	if err := json.Unmarshal(buff, &response); err != nil {
+		return 0, err
+	}
+
+	blockNonce := response.Data.Block.Nonce
+
+	// Cache the raw response bytes
+	if ep.filterQueryBlockCacher != nil && len(buff) > 0 {
+		cacheKey := make([]byte, 8)
+		binary.BigEndian.PutUint64(cacheKey, blockNonce)
+		ep.filterQueryBlockCacher.Put(cacheKey, buff, len(buff))
+	}
+
+	return blockNonce, nil
+}
+
+// getLogsFromBlock retrieves logs from a specific block and filters them
+func (ep *proxy) getLogsFromBlock(ctx context.Context, shardID uint32, blockNum uint64, filter *sdkCore.FilterQuery) ([]*transaction.Events, error) {
+	cacheKey := make([]byte, 8)
+	binary.BigEndian.PutUint64(cacheKey, blockNum)
+
+	if ep.filterQueryBlockCacher != nil {
+		cachedResponse, found := ep.filterQueryBlockCacher.Get(cacheKey)
+		if found {
+			cachedBuff, ok := cachedResponse.([]byte)
+			if ok && len(cachedBuff) > 0 {
+				var response data.BlockResponse
+				if err := json.Unmarshal(cachedBuff, &response); err == nil {
+					return extractMatchingEvents(response, filter), nil
+				}
+			}
+		}
+	}
+
+	// Fetch the logs from the network if not found in cache
+	buff, code, err := ep.GetHTTP(ctx, ep.endpointProvider.GetBlockByNonce(shardID, blockNum))
+	if err != nil || code != http.StatusOK {
+		return nil, createHTTPStatusError(code, err)
+	}
+
+	// Cache the raw response bytes
+	if ep.filterQueryBlockCacher != nil && len(buff) > 0 {
+		ep.filterQueryBlockCacher.Put(cacheKey, buff, len(buff))
+	}
+
+	var response data.BlockResponse
+	if err := json.Unmarshal(buff, &response); err != nil {
+		return nil, err
+	}
+
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	return extractMatchingEvents(response, filter), nil
+}
+
+func extractMatchingEvents(response data.BlockResponse, filter *sdkCore.FilterQuery) []*transaction.Events {
+	var matchingEvents []*transaction.Events
+	for _, miniblock := range response.Data.Block.MiniBlocks {
+		for _, tx := range miniblock.Transactions {
+			if tx.Logs == nil {
+				continue
+			}
+			for _, event := range tx.Logs.Events {
+				if matchesFilter(filter, event) {
+					matchingEvents = append(matchingEvents, event)
+				}
+			}
+		}
+	}
+	return matchingEvents
+}
+
+func matchesFilter(filter *sdkCore.FilterQuery, event *transaction.Events) bool {
+	// Check if the event's address matches any of the filter addresses (if set)
+	if len(filter.Addresses) > 0 && !contains(filter.Addresses, event.Address) {
+		return false
+	}
+
+	// Check if the event's topics match the filter topics
+	if len(filter.Topics) > 0 && !topicsMatch(filter.Topics, event.Topics) {
+		return false
+	}
+
+	return true
+}
+
+func topicsMatch(filterTopics [][]byte, eventTopics [][]byte) bool {
+	if len(filterTopics) > len(eventTopics) {
+		return false
+	}
+
+	for i, filterTopic := range filterTopics {
+		if !bytes.Equal(filterTopic[:], eventTopics[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func contains(addresses []string, address string) bool {
+	for _, a := range addresses {
+		if a == address {
+			return true
+		}
+	}
+	return false
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

@@ -2,7 +2,6 @@ package testsCommon
 
 import (
 	"context"
-
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/data/api"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
@@ -35,6 +34,7 @@ type ProxyStub struct {
 	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address sdkCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error)
 	GetValidatorsInfoByEpochCalled       func(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
 	GetGuardianDataCalled                func(ctx context.Context, address sdkCore.AddressHandler) (*api.GuardianData, error)
+	FilterLogsCalled                     func(ctx context.Context, filter *sdkCore.FilterQuery) ([]string, error)
 }
 
 // ExecuteVMQuery -
@@ -227,6 +227,15 @@ func (stub *ProxyStub) GetGuardianData(ctx context.Context, address sdkCore.Addr
 	}
 
 	return &api.GuardianData{}, nil
+}
+
+// FilterLogs -
+func (stub *ProxyStub) FilterLogs(ctx context.Context, filter *sdkCore.FilterQuery) ([]string, error) {
+	if stub.FilterLogsCalled != nil {
+		return stub.FilterLogsCalled(ctx, filter)
+	}
+
+	return nil, nil
 }
 
 // IsInterfaceNil -
