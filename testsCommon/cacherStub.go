@@ -1,6 +1,6 @@
 package testsCommon
 
-// NodesCoordinatorCacheStub -
+// CacherStub -
 type CacherStub struct {
 	PutCalled func(key []byte, value interface{}, sizeInBytes int) (evicted bool)
 	GetCalled func(key []byte) (value interface{}, ok bool)

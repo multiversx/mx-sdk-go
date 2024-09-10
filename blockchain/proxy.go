@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -827,7 +828,7 @@ func resolveBlockRange(filter *sdkCore.FilterQuery, latestBlock uint64) (uint64,
 
 // getBlockNumberByHash retrieves the block number associated with the given block hash
 func (ep *proxy) getBlockNumberByHash(ctx context.Context, shardID uint32, blockHash []byte) (uint64, error) {
-	blockHashStr := string(blockHash)
+	blockHashStr := hex.EncodeToString(blockHash)
 	buff, err := ep.GetBlockBytesByHash(ctx, shardID, blockHashStr)
 	if err != nil {
 		return 0, err

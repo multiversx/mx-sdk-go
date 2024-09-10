@@ -3,6 +3,7 @@ package blockchain
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1315,7 +1316,7 @@ func TestProxy_FilterLogs(t *testing.T) {
 		assert.Nil(t, res)
 	})
 
-	t.Run("restricts matches for specific addresses", func(t *testing.T) {
+	t.Run("should work with specific addresses", func(t *testing.T) {
 
 		validFilter := &sdkCore.FilterQuery{
 			FromBlock: core.OptionalUint64{Value: 21000005, HasValue: true},
@@ -1360,7 +1361,7 @@ func TestProxy_FilterLogs(t *testing.T) {
 		assert.Equal(t, len(res[3].Topics), 1)
 	})
 
-	t.Run("with topics", func(t *testing.T) {
+	t.Run("should work with topics", func(t *testing.T) {
 		validFilter := &sdkCore.FilterQuery{
 			BlockHash: nil,
 			FromBlock: core.OptionalUint64{Value: 21000000, HasValue: true},
@@ -1393,9 +1394,12 @@ func TestProxy_FilterLogs(t *testing.T) {
 		assert.Equal(t, len(res[0].Topics), 4)
 	})
 
-	t.Run("should work without caching", func(t *testing.T) {
+	t.Run("should work with specific block hash", func(t *testing.T) {
+		blockHashStr := "00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e"
+		blockHash, _ := hex.DecodeString(blockHashStr)
+
 		validFilter := &sdkCore.FilterQuery{
-			BlockHash: []byte("0xa7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e"),
+			BlockHash: blockHash,
 			FromBlock: core.OptionalUint64{Value: 21000000, HasValue: false},
 			ToBlock:   core.OptionalUint64{Value: 21000000, HasValue: false},
 			ShardID:   0,
@@ -1408,7 +1412,7 @@ func TestProxy_FilterLogs(t *testing.T) {
 		responseMap := map[string][]byte{
 			"https://test.org/node/status":             statusResponseBytes,
 			"https://test.org/block/by-nonce/21000000": blockResponseBytes,
-			"https://test.org/block/by-hash/0xa7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e": blockResponseBytes,
+			"https://test.org/block/by-hash/00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e": blockResponseBytes,
 		}
 
 		httpClient := createMockClientMultiResponse(responseMap)
@@ -1465,11 +1469,7 @@ func TestProxy_FilterLogs(t *testing.T) {
 				return true
 			},
 			GetCalled: func(key []byte) (interface{}, bool) {
-				if isPutCalled {
-					isGetCalled = true
-				} else {
-					isGetCalled = false
-				}
+				isGetCalled = isPutCalled
 				return nil, false
 			},
 		}
