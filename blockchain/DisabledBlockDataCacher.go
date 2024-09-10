@@ -4,11 +4,11 @@ package blockchain
 // It does nothing and always returns empty results.
 type DisabledBlockDataCache struct{}
 
-func (n *DisabledBlockDataCache) Get(key []byte) (interface{}, bool) {
+func (n *DisabledBlockDataCache) Get(_ []byte) (interface{}, bool) {
 	return nil, false
 }
 
-func (n *DisabledBlockDataCache) Put(key []byte, value interface{}, sizeInBytes int) bool {
+func (n *DisabledBlockDataCache) Put(_ []byte, _ interface{}, _ int) bool {
 	return false
 }
 
