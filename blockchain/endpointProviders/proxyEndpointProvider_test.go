@@ -31,6 +31,8 @@ func TestProxyEndpointProvider_Getters(t *testing.T) {
 	assert.Equal(t, "internal/2/raw/block/by-hash/hex", provider.GetRawBlockByHash(2, "hex"))
 	assert.Equal(t, "internal/2/raw/block/by-nonce/3", provider.GetRawBlockByNonce(2, 3))
 	assert.Equal(t, "internal/2/raw/miniblock/by-hash/hex/epoch/4", provider.GetRawMiniBlockByHash(2, "hex", 4))
+	assert.Equal(t, "block/2/by-nonce/5", provider.GetBlockByNonce(2, 5))
+	assert.Equal(t, "block/2/by-hash/hex", provider.GetBlockByHash(2, "hex"))
 	assert.Equal(t, sdkCore.Proxy, provider.GetRestAPIEntityType())
 	assert.False(t, provider.ShouldCheckShardIDForNodeStatus())
 }

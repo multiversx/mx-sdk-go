@@ -55,11 +55,6 @@ func (proxy *proxyEndpointProvider) GetRestAPIEntityType() core.RestAPIEntityTyp
 	return core.Proxy
 }
 
-// IsInterfaceNil returns true if there is no value under the interface
-func (proxy *proxyEndpointProvider) IsInterfaceNil() bool {
-	return proxy == nil
-}
-
 // GetBlockByNonce returns the block with the given nonce within the given shard
 func (proxy *proxyEndpointProvider) GetBlockByNonce(shardID uint32, nonce uint64) string {
 	return fmt.Sprintf(proxyBlockByNonce, shardID, nonce)
@@ -68,4 +63,9 @@ func (proxy *proxyEndpointProvider) GetBlockByNonce(shardID uint32, nonce uint64
 // GetBlockByHash returns the block with the given hash within the given shard
 func (proxy *proxyEndpointProvider) GetBlockByHash(shardID uint32, hash string) string {
 	return fmt.Sprintf(proxyBlockByHash, shardID, hash)
+}
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (proxy *proxyEndpointProvider) IsInterfaceNil() bool {
+	return proxy == nil
 }

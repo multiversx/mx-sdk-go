@@ -42,9 +42,9 @@ type EndpointProvider interface {
 	GetESDTTokenData(addressAsBech32 string, tokenIdentifier string) string
 	GetNFTTokenData(addressAsBech32 string, tokenIdentifier string, nonce uint64) string
 	IsDataTrieMigrated(addressAsBech32 string) string
-	IsInterfaceNil() bool
 	GetBlockByNonce(shardID uint32, nonce uint64) string
 	GetBlockByHash(shardID uint32, hash string) string
+	IsInterfaceNil() bool
 }
 
 // FinalityProvider is able to check the shard finalization status

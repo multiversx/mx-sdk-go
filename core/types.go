@@ -1,6 +1,8 @@
 package core
 
-import "github.com/multiversx/mx-chain-core-go/core"
+import (
+	"github.com/multiversx/mx-chain-core-go/core"
+)
 
 // RestAPIEntityType defines the entity that can resolve REST API requests
 type RestAPIEntityType string
@@ -13,7 +15,7 @@ const (
 )
 
 type FilterQuery struct {
-	BlockHash *[32]byte           // return logs only from block with this hash
+	BlockHash []byte              // return logs only from block with this hash
 	FromBlock core.OptionalUint64 // beginning of the queried range, no value set means genesis block
 	ToBlock   core.OptionalUint64 // end of the range, no value set means latest block
 	Addresses []string            // restricts matches to events created by specific contracts

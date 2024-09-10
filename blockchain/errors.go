@@ -48,7 +48,7 @@ var ErrNilRequest = errors.New("nil request")
 // ErrNilProxy signals that a nil proxy has been provided
 var ErrNilProxy = errors.New("nil proxy")
 
-// / ErrNotUint64Bytes signals that the provided bytes do not represent a valid uint64 number
+// ErrNotUint64Bytes signals that the provided bytes do not represent a valid uint64 number
 var ErrNotUint64Bytes = errors.New("provided bytes do not represent a valid uint64 number")
 
 // ErrInvalidBlockRange signals that the provided block range is invalid

@@ -55,11 +55,6 @@ func (node *nodeEndpointProvider) GetRestAPIEntityType() core.RestAPIEntityType 
 	return core.ObserverNode
 }
 
-// IsInterfaceNil returns true if there is no value under the interface
-func (node *nodeEndpointProvider) IsInterfaceNil() bool {
-	return node == nil
-}
-
 // GetBlockByNonce returns the block with the given nonce
 func (node *nodeEndpointProvider) GetBlockByNonce(_ uint32, nonce uint64) string {
 	return fmt.Sprintf(nodeBlockByNonceEndpoint, nonce)
@@ -68,4 +63,9 @@ func (node *nodeEndpointProvider) GetBlockByNonce(_ uint32, nonce uint64) string
 // GetBlockByHash returns the block with the given hash
 func (node *nodeEndpointProvider) GetBlockByHash(_ uint32, hash string) string {
 	return fmt.Sprintf(nodeGetBlockByHashEndpoint, hash)
+}
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (node *nodeEndpointProvider) IsInterfaceNil() bool {
+	return node == nil
 }
