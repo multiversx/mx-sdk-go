@@ -118,22 +118,16 @@ func createMockClientRespondingError(err error) *mockHTTPClient {
 
 func createMockArgsProxy(httpClient sdkHttp.Client) ArgsProxy {
 	return ArgsProxy{
-		ProxyURL:            testHttpURL,
-		Client:              httpClient,
-		SameScState:         false,
-		ShouldBeSynced:      false,
-		FinalityCheck:       false,
-		AllowedDeltaToFinal: 1,
-		CacheExpirationTime: time.Second,
-		EntityType:          sdkCore.ObserverNode,
+		ProxyURL:               testHttpURL,
+		Client:                 httpClient,
+		SameScState:            false,
+		ShouldBeSynced:         false,
+		FinalityCheck:          false,
+		AllowedDeltaToFinal:    1,
+		CacheExpirationTime:    time.Second,
+		EntityType:             sdkCore.ObserverNode,
+		FilterQueryBlockCacher: &DisabledBlockDataCache{},
 	}
-}
-
-func createMockArgsProxyWithCache(httpClient sdkHttp.Client, cacher BlockDataCache) ArgsProxy {
-	args := createMockArgsProxy(httpClient)
-	args.FilterQueryBlockCacher = cacher
-
-	return args
 }
 
 func handleRequestNetworkConfigAndStatus(
@@ -1473,7 +1467,8 @@ func TestProxy_FilterLogs(t *testing.T) {
 				return nil, false
 			},
 		}
-		args := createMockArgsProxyWithCache(httpClient, filterQueryBlockCacher)
+		args := createMockArgsProxy(httpClient)
+		args.FilterQueryBlockCacher = filterQueryBlockCacher // set mock cacher
 		ep, _ := NewProxy(args)
 
 		_, err := ep.FilterLogs(context.Background(), validFilter)

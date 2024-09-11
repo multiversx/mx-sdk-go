@@ -84,11 +84,6 @@ func NewProxy(args ArgsProxy) (*proxy, error) {
 		return nil, err
 	}
 
-	cacher := args.FilterQueryBlockCacher
-	if cacher == nil {
-		cacher = &DisabledBlockDataCache{}
-	}
-
 	ep := &proxy{
 		baseProxy:              baseProxyInstance,
 		sameScState:            args.SameScState,
@@ -96,7 +91,7 @@ func NewProxy(args ArgsProxy) (*proxy, error) {
 		finalityCheck:          args.FinalityCheck,
 		allowedDeltaToFinal:    args.AllowedDeltaToFinal,
 		finalityProvider:       finalityProvider,
-		filterQueryBlockCacher: cacher,
+		filterQueryBlockCacher: args.FilterQueryBlockCacher,
 	}
 
 	return ep, nil
@@ -108,6 +103,10 @@ func checkArgsProxy(args ArgsProxy) error {
 			return fmt.Errorf("%w, provided: %d, minimum: %d",
 				ErrInvalidAllowedDeltaToFinal, args.AllowedDeltaToFinal, sdkCore.MinAllowedDeltaToFinal)
 		}
+	}
+
+	if args.FilterQueryBlockCacher == nil {
+		return ErrNilFilterQueryBlockCacher
 	}
 
 	return nil
@@ -911,7 +910,7 @@ func extractMatchingEvents(response data.BlockResponse, filter *sdkCore.FilterQu
 
 func matchesFilter(filter *sdkCore.FilterQuery, event *transaction.Events) bool {
 	// Check if the event's address matches any of the filter addresses (if set)
-	if len(filter.Addresses) > 0 && !contains(filter.Addresses, event.Address) {
+	if !contains(filter.Addresses, event.Address) {
 		return false
 	}
 
@@ -924,6 +923,9 @@ func matchesFilter(filter *sdkCore.FilterQuery, event *transaction.Events) bool 
 }
 
 func contains(addresses []string, address string) bool {
+	if len(addresses) == 0 {
+		return true
+	}
 	for _, a := range addresses {
 		if a == address {
 			return true
