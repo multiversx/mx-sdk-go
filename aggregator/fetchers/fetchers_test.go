@@ -107,7 +107,14 @@ func Test_FunctionalTesting(t *testing.T) {
 	wg.Add(len(ImplementedFetchers))
 	for name := range ImplementedFetchers {
 		go func(fetcherName string) {
-			fetcher, _ := NewPriceFetcher(fetcherName, responseGetter, graphqlGetter, createMockMap(), EVMGasPriceFetcherConfig{})
+			args := ArgsPriceFetcher{
+				FetcherName:        fetcherName,
+				ResponseGetter:     responseGetter,
+				GraphqlGetter:      graphqlGetter,
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			ethTicker := "ETH"
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, fetchErr := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
@@ -135,30 +142,29 @@ func Test_FunctionalTestingForEVMGasPrice(t *testing.T) {
 	graphqlGetter, err := aggregator.NewGraphqlResponseGetter(authClient)
 	require.Nil(t, err)
 
-	fetcher, _ := NewPriceFetcher(
-		EVMGasPriceStation,
-		responseGetter,
-		graphqlGetter,
-		createMockMap(),
-		EVMGasPriceFetcherConfig{
+	// IMPORTANT: on the API URL value we should append &apikey=<APIKEY>
+	//            with api keys created on the bscscan.io & etherscan.io.
+	//            free plan should suffice for intended purpose
+
+	args := ArgsPriceFetcher{
+		FetcherName:        EVMGasPriceStation,
+		ResponseGetter:     responseGetter,
+		GraphqlGetter:      graphqlGetter,
+		XExchangeTokensMap: createMockMap(),
+		EVMGasConfig: EVMGasPriceFetcherConfig{
 			ApiURL:   "https://api.bscscan.com/api?module=gastracker&action=gasoracle",
 			Selector: "SafeGasPrice",
-		})
+		},
+	}
+	fetcher, _ := NewPriceFetcher(args)
 	fetcher.AddPair("BSC", "gas")
 	price, fetchErr := fetcher.FetchPrice(context.Background(), "BSC", "gas")
 	require.Nil(t, fetchErr)
 	fmt.Printf("gas price for %s and is: %v from %s\n", "BSC-gas", price, fetcher.Name())
 	require.True(t, price > 0)
 
-	fetcher, _ = NewPriceFetcher(
-		EVMGasPriceStation,
-		responseGetter,
-		graphqlGetter,
-		createMockMap(),
-		EVMGasPriceFetcherConfig{
-			ApiURL:   "https://api.etherscan.io/api?module=gastracker&action=gasoracle",
-			Selector: "SafeGasPrice",
-		})
+	args.EVMGasConfig.ApiURL = "https://api.etherscan.io/api?module=gastracker&action=gasoracle"
+	fetcher, _ = NewPriceFetcher(args)
 	fetcher.AddPair("ETH", "gas")
 	price, fetchErr = fetcher.FetchPrice(context.Background(), "ETH", "gas")
 	require.Nil(t, fetchErr)
@@ -172,22 +178,26 @@ func Test_FetchPriceErrors(t *testing.T) {
 	ethTicker := "ETH"
 	pair := ethTicker + quoteUSDFiat
 
+	expectedError := errors.New("expected error")
 	for f := range ImplementedFetchers {
 		fetcherName := f
 
 		t.Run("response getter errors should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			expectedError := errors.New("expected error")
 			returnPrice := ""
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, expectedError),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, expectedError),
-				}, createMockMap(), EVMGasPriceFetcherConfig{})
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
@@ -202,14 +212,18 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			returnPrice := ""
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap(), EVMGasPriceFetcherConfig{})
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
@@ -224,14 +238,18 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			returnPrice := "-1"
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap(), EVMGasPriceFetcherConfig{})
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
@@ -246,14 +264,18 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			returnPrice := "not a number"
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap(), EVMGasPriceFetcherConfig{})
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
@@ -273,12 +295,16 @@ func Test_FetchPriceErrors(t *testing.T) {
 			}
 
 			returnPrice := "4714.05000000"
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{},
-				&mock.GraphqlResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName:    fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{},
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap(), EVMGasPriceFetcherConfig{})
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			missingTicker := "missing ticker"
@@ -297,14 +323,18 @@ func Test_FetchPriceErrors(t *testing.T) {
 				return
 			}
 
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{},
-				&mock.GraphqlResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName:    fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{},
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 						return make([]byte, 0), nil
 					},
-				}, createMockMap(), EVMGasPriceFetcherConfig{})
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
@@ -319,14 +349,18 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			returnPrice := ""
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap(), EVMGasPriceFetcherConfig{})
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
@@ -341,14 +375,18 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			returnPrice := "4714.05000000"
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap(), EVMGasPriceFetcherConfig{})
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
@@ -366,13 +404,18 @@ func Test_FetchPriceErrors(t *testing.T) {
 			btcTicker := "BTC"
 			btcUsdPair := btcTicker + quoteUSDFiat
 			returnPrice := "4714.05000000"
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, btcUsdPair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap(), EVMGasPriceFetcherConfig{})
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(btcTicker, quoteUSDFiat)

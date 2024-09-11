@@ -12,75 +12,84 @@ type XExchangeTokensPair struct {
 	Quote string
 }
 
+// ArgsPriceFetcher represents the arguments for the NewPriceFetcher function
+type ArgsPriceFetcher struct {
+	FetcherName        string
+	ResponseGetter     aggregator.ResponseGetter
+	GraphqlGetter      aggregator.GraphqlGetter
+	XExchangeTokensMap map[string]XExchangeTokensPair
+	EVMGasConfig       EVMGasPriceFetcherConfig
+}
+
 // NewPriceFetcher returns a new price fetcher of the type provided
-func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, graphqlGetter aggregator.GraphqlGetter, xExchangeTokensMap map[string]XExchangeTokensPair, config EVMGasPriceFetcherConfig) (aggregator.PriceFetcher, error) {
-	if responseGetter == nil {
+func NewPriceFetcher(args ArgsPriceFetcher) (aggregator.PriceFetcher, error) {
+	if args.ResponseGetter == nil {
 		return nil, errNilResponseGetter
 	}
-	if graphqlGetter == nil {
+	if args.GraphqlGetter == nil {
 		return nil, errNilGraphqlGetter
 	}
-	if xExchangeTokensMap == nil && fetcherName == XExchangeName {
+	if args.XExchangeTokensMap == nil && args.FetcherName == XExchangeName {
 		return nil, errNilXExchangeTokensMap
 	}
 
-	return createFetcher(fetcherName, responseGetter, graphqlGetter, xExchangeTokensMap, config)
+	return createFetcher(args)
 }
 
-func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, graphqlGetter aggregator.GraphqlGetter, xExchangeTokensMap map[string]XExchangeTokensPair, config EVMGasPriceFetcherConfig) (aggregator.PriceFetcher, error) {
-	switch fetcherName {
+func createFetcher(args ArgsPriceFetcher) (aggregator.PriceFetcher, error) {
+	switch args.FetcherName {
 	case BinanceName:
 		return &binance{
-			ResponseGetter: responseGetter,
+			ResponseGetter: args.ResponseGetter,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case BitfinexName:
 		return &bitfinex{
-			ResponseGetter: responseGetter,
+			ResponseGetter: args.ResponseGetter,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case CryptocomName:
 		return &cryptocom{
-			ResponseGetter: responseGetter,
+			ResponseGetter: args.ResponseGetter,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case GeminiName:
 		return &gemini{
-			ResponseGetter: responseGetter,
+			ResponseGetter: args.ResponseGetter,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case HitbtcName:
 		return &hitbtc{
-			ResponseGetter: responseGetter,
+			ResponseGetter: args.ResponseGetter,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case HuobiName:
 		return &huobi{
-			ResponseGetter: responseGetter,
+			ResponseGetter: args.ResponseGetter,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case KrakenName:
 		return &kraken{
-			ResponseGetter: responseGetter,
+			ResponseGetter: args.ResponseGetter,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case OkxName:
 		return &okx{
-			ResponseGetter: responseGetter,
+			ResponseGetter: args.ResponseGetter,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
 	case XExchangeName:
 		return &xExchange{
-			GraphqlGetter:      graphqlGetter,
+			GraphqlGetter:      args.GraphqlGetter,
 			baseFetcher:        newBaseFetcher(),
-			xExchangeTokensMap: xExchangeTokensMap,
+			xExchangeTokensMap: args.XExchangeTokensMap,
 		}, nil
 	case EVMGasPriceStation:
 		return &evmGasPriceFetcher{
-			ResponseGetter: responseGetter,
-			config:         config,
+			ResponseGetter: args.ResponseGetter,
+			config:         args.EVMGasConfig,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
 	}
-	return nil, fmt.Errorf("%w, fetcherName %s", errInvalidFetcherName, fetcherName)
+	return nil, fmt.Errorf("%w, fetcherName %s", errInvalidFetcherName, args.FetcherName)
 }

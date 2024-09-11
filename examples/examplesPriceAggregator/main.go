@@ -182,7 +182,14 @@ func createPriceFetchers() ([]aggregator.PriceFetcher, error) {
 	}
 
 	for exchangeName := range exchanges {
-		priceFetcher, errFetch := fetchers.NewPriceFetcher(exchangeName, httpResponseGetter, graphqlResponseGetter, createXExchangeMap(), fetchers.EVMGasPriceFetcherConfig{})
+		args := fetchers.ArgsPriceFetcher{
+			FetcherName:        exchangeName,
+			ResponseGetter:     httpResponseGetter,
+			GraphqlGetter:      graphqlResponseGetter,
+			XExchangeTokensMap: createXExchangeMap(),
+			EVMGasConfig:       fetchers.EVMGasPriceFetcherConfig{},
+		}
+		priceFetcher, errFetch := fetchers.NewPriceFetcher(args)
 		if errFetch != nil {
 			return nil, errFetch
 		}
