@@ -3,11 +3,14 @@ package blockchain
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -71,6 +74,21 @@ func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 func createMockClientRespondingBytes(responseBytes []byte) *mockHTTPClient {
 	return &mockHTTPClient{
 		doCalled: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body:       io.NopCloser(bytes.NewReader(responseBytes)),
+				StatusCode: http.StatusOK,
+			}, nil
+		},
+	}
+}
+
+func createMockClientMultiResponse(responseMap map[string][]byte) *mockHTTPClient {
+	return &mockHTTPClient{
+		doCalled: func(req *http.Request) (*http.Response, error) {
+			responseBytes, exists := responseMap[req.URL.String()]
+			if !exists {
+				return nil, fmt.Errorf("no response for URL: %s", req.URL.String())
+			}
 			return &http.Response{
 				Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 				StatusCode: http.StatusOK,
@@ -177,6 +195,13 @@ func handleRequestNetworkConfigAndStatus(
 		Body:       io.NopCloser(bytes.NewReader(buff)),
 		StatusCode: http.StatusOK,
 	}, handled, nil
+}
+
+func loadJsonIntoBytes(tb testing.TB, path string) []byte {
+	buff, err := os.ReadFile(path)
+	require.Nil(tb, err)
+
+	return buff
 }
 
 func TestNewProxy(t *testing.T) {
@@ -1201,5 +1226,287 @@ func TestProxy_IsDataTrieMigrated(t *testing.T) {
 		isMigrated, err := ep.IsDataTrieMigrated(context.Background(), validAddress)
 		assert.False(t, isMigrated)
 		assert.Nil(t, err)
+	})
+}
+
+func TestProxy_FilterLogs(t *testing.T) {
+	t.Parallel()
+
+	httpDataBlock21000000 := loadJsonIntoBytes(t, "./testdata/block21000000data.json")
+	httpDataBlock21000001 := loadJsonIntoBytes(t, "./testdata/block21000001data.json")
+	httpDataBlock21000005 := loadJsonIntoBytes(t, "./testdata/block21000005data.json")
+	httpNodeStatus := loadJsonIntoBytes(t, "./testdata/node_status_data.json")
+
+	t.Run("invalid block range", func(t *testing.T) {
+		invalidFilter := &sdkCore.FilterQuery{
+			FromBlock: core.OptionalUint64{Value: 21000000, HasValue: true},
+			ToBlock:   core.OptionalUint64{Value: 21001000, HasValue: true},
+			ShardID:   0,
+			Topics:    nil,
+			BlockHash: nil,
+		}
+
+		statusResponseBytes := httpNodeStatus
+
+		responseMap := map[string][]byte{
+			"https://test.org/node/status": statusResponseBytes,
+		}
+
+		httpClient := createMockClientMultiResponse(responseMap)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		res, err := ep.FilterLogs(context.Background(), invalidFilter)
+		assert.Equal(t, ErrInvalidBlockRange, err)
+		assert.Nil(t, res)
+	})
+
+	t.Run("toBlock greater than last block", func(t *testing.T) {
+		invalidFilter := &sdkCore.FilterQuery{
+			FromBlock: core.OptionalUint64{Value: 21000000, HasValue: false},
+			ToBlock:   core.OptionalUint64{Value: 1000000000, HasValue: false},
+			ShardID:   0,
+			Topics:    nil,
+			BlockHash: nil,
+		}
+
+		statusResponseBytes := httpNodeStatus
+
+		responseMap := map[string][]byte{
+			"https://test.org/node/status": statusResponseBytes,
+		}
+
+		httpClient := createMockClientMultiResponse(responseMap)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		res, err := ep.FilterLogs(context.Background(), invalidFilter)
+		assert.Equal(t, ErrNoBlockRangeProvided, err)
+		assert.Nil(t, res)
+	})
+
+	t.Run("no block range provided", func(t *testing.T) {
+		invalidFilter := &sdkCore.FilterQuery{
+			FromBlock: core.OptionalUint64{Value: 0, HasValue: false},
+			ToBlock:   core.OptionalUint64{Value: 0, HasValue: false},
+			ShardID:   0,
+			Topics:    nil,
+			BlockHash: nil,
+		}
+
+		statusResponseBytes := httpNodeStatus
+
+		responseMap := map[string][]byte{
+			"https://test.org/node/status": statusResponseBytes,
+		}
+
+		httpClient := createMockClientMultiResponse(responseMap)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		res, err := ep.FilterLogs(context.Background(), invalidFilter)
+		assert.Equal(t, ErrNoBlockRangeProvided, err)
+		assert.Nil(t, res)
+	})
+
+	t.Run("should work with specific addresses", func(t *testing.T) {
+
+		validFilter := &sdkCore.FilterQuery{
+			FromBlock: core.OptionalUint64{Value: 21000005, HasValue: true},
+			ToBlock:   core.OptionalUint64{Value: 21000005, HasValue: true},
+			Addresses: []string{"erd1qqqqqqqqqqqqqpgq50dge6rrpcra4tp9hl57jl0893a4r2r72jpsk39rjj", "erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y"},
+			ShardID:   0,
+			Topics:    nil,
+			BlockHash: nil,
+		}
+
+		statusResponseBytes := httpNodeStatus
+		blockResponseBytes := httpDataBlock21000005
+
+		responseMap := map[string][]byte{
+			"https://test.org/node/status":             statusResponseBytes,
+			"https://test.org/block/by-nonce/21000005": blockResponseBytes,
+		}
+
+		httpClient := createMockClientMultiResponse(responseMap)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		res, err := ep.FilterLogs(context.Background(), validFilter)
+
+		assert.Nil(t, err)
+		assert.Equal(t, len(res), 4)
+
+		assert.Equal(t, res[0].Identifier, "MultiESDTNFTTransfer")
+		assert.Equal(t, res[0].Address, "erd1qqqqqqqqqqqqqpgq50dge6rrpcra4tp9hl57jl0893a4r2r72jpsk39rjj")
+		assert.Equal(t, len(res[0].Topics), 10)
+
+		assert.Equal(t, res[1].Identifier, "writeLog")
+		assert.Equal(t, res[1].Address, "erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y")
+		assert.Equal(t, len(res[1].Topics), 1)
+
+		assert.Equal(t, res[2].Identifier, "completedTxEvent")
+		assert.Equal(t, res[2].Address, "erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y")
+		assert.Equal(t, len(res[2].Topics), 1)
+
+		assert.Equal(t, res[3].Identifier, "completedTxEvent")
+		assert.Equal(t, res[3].Address, "erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y")
+		assert.Equal(t, len(res[3].Topics), 1)
+	})
+
+	t.Run("should work with topics", func(t *testing.T) {
+		validFilter := &sdkCore.FilterQuery{
+			BlockHash: nil,
+			FromBlock: core.OptionalUint64{Value: 21000000, HasValue: true},
+			ToBlock:   core.OptionalUint64{Value: 21000000, HasValue: true},
+			ShardID:   0,
+			Topics: [][]byte{
+				[]byte("HUTK-4fa4b2"),
+			},
+		}
+
+		statusResponseBytes := httpNodeStatus
+		blockResponseBytes := httpDataBlock21000000
+
+		responseMap := map[string][]byte{
+			"https://test.org/node/status":             statusResponseBytes,
+			"https://test.org/block/by-nonce/21000000": blockResponseBytes,
+			"https://test.org/block/by-hash/00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e": blockResponseBytes,
+		}
+
+		httpClient := createMockClientMultiResponse(responseMap)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		res, err := ep.FilterLogs(context.Background(), validFilter)
+
+		assert.Nil(t, err)
+		assert.Equal(t, len(res), 1)
+		assert.Equal(t, res[0].Identifier, "ESDTTransfer")
+		assert.Equal(t, res[0].Address, "erd1qqqqqqqqqqqqqpgqta0tv8d5pjzmwzshrtw62n4nww9kxtl278ssspxpxu")
+		assert.Equal(t, len(res[0].Topics), 4)
+	})
+
+	t.Run("should work with specific block hash", func(t *testing.T) {
+		blockHashStr := "00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e"
+		blockHash, _ := hex.DecodeString(blockHashStr)
+
+		validFilter := &sdkCore.FilterQuery{
+			BlockHash: blockHash,
+			FromBlock: core.OptionalUint64{Value: 21000000, HasValue: false},
+			ToBlock:   core.OptionalUint64{Value: 21000000, HasValue: false},
+			ShardID:   0,
+			Topics:    nil,
+		}
+
+		blockResponseBytes := httpDataBlock21000000
+		statusResponseBytes := httpNodeStatus
+
+		responseMap := map[string][]byte{
+			"https://test.org/node/status":             statusResponseBytes,
+			"https://test.org/block/by-nonce/21000000": blockResponseBytes,
+			"https://test.org/block/by-hash/00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e": blockResponseBytes,
+		}
+
+		httpClient := createMockClientMultiResponse(responseMap)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		res, err := ep.FilterLogs(context.Background(), validFilter)
+
+		assert.Nil(t, err)
+		assert.Equal(t, len(res), 4)
+
+		assert.Equal(t, res[0].Identifier, "ESDTTransfer")
+		assert.Equal(t, res[0].Address, "erd1qqqqqqqqqqqqqpgqta0tv8d5pjzmwzshrtw62n4nww9kxtl278ssspxpxu")
+		assert.Equal(t, len(res[0].Topics), 4)
+
+		assert.Equal(t, res[1].Identifier, "writeLog")
+		assert.Equal(t, res[1].Address, "erd1mmh2j5y8esv2tmmyeau3hr4xa2u2te3zc3j9wumn3v5vm8uvsczqnucj5l")
+		assert.Equal(t, len(res[1].Topics), 1)
+
+		assert.Equal(t, res[2].Identifier, "completedTxEvent")
+		assert.Equal(t, res[2].Address, "erd1mmh2j5y8esv2tmmyeau3hr4xa2u2te3zc3j9wumn3v5vm8uvsczqnucj5l")
+		assert.Equal(t, len(res[2].Topics), 1)
+
+		assert.Equal(t, res[3].Identifier, "completedTxEvent")
+		assert.Equal(t, res[3].Address, "erd1mmh2j5y8esv2tmmyeau3hr4xa2u2te3zc3j9wumn3v5vm8uvsczqnucj5l")
+		assert.Equal(t, len(res[3].Topics), 1)
+	})
+
+	t.Run("should work with caching", func(t *testing.T) {
+
+		validFilter := &sdkCore.FilterQuery{
+			FromBlock: core.OptionalUint64{Value: 21000001, HasValue: true},
+			ToBlock:   core.OptionalUint64{Value: 21000001, HasValue: true},
+			ShardID:   0,
+			Topics:    nil,
+			BlockHash: nil,
+		}
+
+		blockResponseBytes := httpDataBlock21000001
+		statusResponseBytes := httpNodeStatus
+
+		responseMap := map[string][]byte{
+			"https://test.org/node/status":             statusResponseBytes,
+			"https://test.org/block/by-nonce/21000001": blockResponseBytes,
+			"https://test.org/block/by-hash/00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e": blockResponseBytes,
+		}
+
+		httpClient := createMockClientMultiResponse(responseMap)
+		isPutCalled := false
+		isGetCalled := false
+		filterQueryBlockCacher := &testsCommon.CacherStub{
+			PutCalled: func(key []byte, val interface{}, sizeInBytes int) bool {
+				isPutCalled = true
+				return true
+			},
+			GetCalled: func(key []byte) (interface{}, bool) {
+				isGetCalled = isPutCalled
+				return nil, false
+			},
+		}
+		args := createMockArgsProxy(httpClient)
+		args.FilterQueryBlockCacher = filterQueryBlockCacher // set mock cacher
+		ep, _ := NewProxy(args)
+
+		_, err := ep.FilterLogs(context.Background(), validFilter)
+		assert.Nil(t, err)
+		assert.False(t, isGetCalled, "Get should not be called on the first request")
+		assert.True(t, isPutCalled, "Put should be called on the first request")
+
+		res2, err := ep.FilterLogs(context.Background(), validFilter)
+
+		assert.Nil(t, err)
+		assert.True(t, isGetCalled, "Get should be called on the second request")
+		assert.Equal(t, len(res2), 7)
+
+		assert.Equal(t, res2[0].Identifier, "ESDTTransfer")
+		assert.Equal(t, res2[0].Address, "erd15aq4rug5rxjnu88723f2y5fx2w9kzzw2rha89jzfpfhfy9huuxyq4zrm0t")
+		assert.Equal(t, len(res2[0].Topics), 4)
+
+		assert.Equal(t, res2[1].Identifier, "ESDTLocalBurn")
+		assert.Equal(t, res2[1].Address, "erd1qqqqqqqqqqqqqpgqstmgzmwfm5q3y3r0gkv0fp3j07chyv69h4vq7md7fd")
+		assert.Equal(t, len(res2[1].Topics), 3)
+
+		assert.Equal(t, res2[2].Identifier, "ESDTTransfer")
+		assert.Equal(t, res2[2].Address, "erd1qqqqqqqqqqqqqpgqstmgzmwfm5q3y3r0gkv0fp3j07chyv69h4vq7md7fd")
+		assert.Equal(t, len(res2[2].Topics), 4)
+
+		assert.Equal(t, res2[3].Identifier, "ESDTNFTTransfer")
+		assert.Equal(t, res2[3].Address, "erd1qqqqqqqqqqqqqpgqstmgzmwfm5q3y3r0gkv0fp3j07chyv69h4vq7md7fd")
+		assert.Equal(t, len(res2[3].Topics), 4)
+
+		assert.Equal(t, res2[4].Identifier, "buyOffer")
+		assert.Equal(t, res2[4].Address, "erd1qqqqqqqqqqqqqpgqstmgzmwfm5q3y3r0gkv0fp3j07chyv69h4vq7md7fd")
+		assert.Equal(t, len(res2[4].Topics), 8)
+
+		assert.Equal(t, res2[5].Identifier, "writeLog")
+		assert.Equal(t, res2[5].Address, "erd1qqqqqqqqqqqqqpgqstmgzmwfm5q3y3r0gkv0fp3j07chyv69h4vq7md7fd")
+		assert.Equal(t, len(res2[5].Topics), 1)
+
+		assert.Equal(t, res2[6].Identifier, "completedTxEvent")
+		assert.Equal(t, res2[6].Address, "erd1qqqqqqqqqqqqqpgqstmgzmwfm5q3y3r0gkv0fp3j07chyv69h4vq7md7fd")
+		assert.Equal(t, len(res2[6].Topics), 1)
 	})
 }

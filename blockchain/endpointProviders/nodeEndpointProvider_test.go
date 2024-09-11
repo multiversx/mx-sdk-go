@@ -29,6 +29,8 @@ func TestNodeEndpointProvider_Getters(t *testing.T) {
 	assert.Equal(t, "internal/raw/block/by-hash/hex", provider.GetRawBlockByHash(2, "hex"))
 	assert.Equal(t, "internal/raw/block/by-nonce/3", provider.GetRawBlockByNonce(2, 3))
 	assert.Equal(t, "internal/raw/miniblock/by-hash/hex/epoch/4", provider.GetRawMiniBlockByHash(2, "hex", 4))
+	assert.Equal(t, "block/by-nonce/5", provider.GetBlockByNonce(2, 5))
+	assert.Equal(t, "block/by-hash/hex", provider.GetBlockByHash(2, "hex"))
 	assert.Equal(t, core.ObserverNode, provider.GetRestAPIEntityType())
 	assert.True(t, provider.ShouldCheckShardIDForNodeStatus())
 }
