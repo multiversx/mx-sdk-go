@@ -118,15 +118,14 @@ func createMockClientRespondingError(err error) *mockHTTPClient {
 
 func createMockArgsProxy(httpClient sdkHttp.Client) ArgsProxy {
 	return ArgsProxy{
-		ProxyURL:               testHttpURL,
-		Client:                 httpClient,
-		SameScState:            false,
-		ShouldBeSynced:         false,
-		FinalityCheck:          false,
-		AllowedDeltaToFinal:    1,
-		CacheExpirationTime:    time.Second,
-		EntityType:             sdkCore.ObserverNode,
-		FilterQueryBlockCacher: &DisabledBlockDataCache{},
+		ProxyURL:            testHttpURL,
+		Client:              httpClient,
+		SameScState:         false,
+		ShouldBeSynced:      false,
+		FinalityCheck:       false,
+		AllowedDeltaToFinal: 1,
+		CacheExpirationTime: time.Second,
+		EntityType:          sdkCore.ObserverNode,
 	}
 }
 

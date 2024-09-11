@@ -84,6 +84,11 @@ func NewProxy(args ArgsProxy) (*proxy, error) {
 		return nil, err
 	}
 
+	cacher := args.FilterQueryBlockCacher
+	if cacher == nil {
+		cacher = &DisabledBlockDataCache{}
+	}
+
 	ep := &proxy{
 		baseProxy:              baseProxyInstance,
 		sameScState:            args.SameScState,
@@ -91,7 +96,7 @@ func NewProxy(args ArgsProxy) (*proxy, error) {
 		finalityCheck:          args.FinalityCheck,
 		allowedDeltaToFinal:    args.AllowedDeltaToFinal,
 		finalityProvider:       finalityProvider,
-		filterQueryBlockCacher: args.FilterQueryBlockCacher,
+		filterQueryBlockCacher: cacher,
 	}
 
 	return ep, nil
@@ -103,10 +108,6 @@ func checkArgsProxy(args ArgsProxy) error {
 			return fmt.Errorf("%w, provided: %d, minimum: %d",
 				ErrInvalidAllowedDeltaToFinal, args.AllowedDeltaToFinal, sdkCore.MinAllowedDeltaToFinal)
 		}
-	}
-
-	if args.FilterQueryBlockCacher == nil {
-		return ErrNilFilterQueryBlockCacher
 	}
 
 	return nil
