@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"context"
-
 	"github.com/multiversx/mx-chain-core-go/data/api"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-sdk-go/core"
@@ -17,6 +16,7 @@ type Proxy interface {
 	SendTransactions(ctx context.Context, txs []*transaction.FrontendTransaction) ([]string, error)
 	GetGuardianData(ctx context.Context, address core.AddressHandler) (*api.GuardianData, error)
 	ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
+	FilterLogs(ctx context.Context, filter *core.FilterQuery) ([]string, error)
 	IsInterfaceNil() bool
 }
 
@@ -55,11 +55,20 @@ type EndpointProvider interface {
 	GetESDTTokenData(addressAsBech32 string, tokenIdentifier string) string
 	GetNFTTokenData(addressAsBech32 string, tokenIdentifier string, nonce uint64) string
 	IsDataTrieMigrated(addressAsBech32 string) string
+	GetBlockByNonce(shardID uint32, nonce uint64) string
+	GetBlockByHash(shardID uint32, hash string) string
 	IsInterfaceNil() bool
 }
 
 // FinalityProvider is able to check the shard finalization status
 type FinalityProvider interface {
 	CheckShardFinalization(ctx context.Context, targetShardID uint32, maxNoncesDelta uint64) error
+	IsInterfaceNil() bool
+}
+
+// BlockDataCache defines the methods required for a basic cache.
+type BlockDataCache interface {
+	Get(key []byte) (value interface{}, ok bool)
+	Put(key []byte, value interface{}, sizeInBytes int) (evicted bool)
 	IsInterfaceNil() bool
 }
