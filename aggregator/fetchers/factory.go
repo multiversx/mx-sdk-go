@@ -13,7 +13,7 @@ type XExchangeTokensPair struct {
 }
 
 // NewPriceFetcher returns a new price fetcher of the type provided
-func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, graphqlGetter aggregator.GraphqlGetter, xExchangeTokensMap map[string]XExchangeTokensPair) (aggregator.PriceFetcher, error) {
+func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, graphqlGetter aggregator.GraphqlGetter, xExchangeTokensMap map[string]XExchangeTokensPair, config EVMGasPriceFetcherConfig) (aggregator.PriceFetcher, error) {
 	if responseGetter == nil {
 		return nil, errNilResponseGetter
 	}
@@ -24,10 +24,10 @@ func NewPriceFetcher(fetcherName string, responseGetter aggregator.ResponseGette
 		return nil, errNilXExchangeTokensMap
 	}
 
-	return createFetcher(fetcherName, responseGetter, graphqlGetter, xExchangeTokensMap)
+	return createFetcher(fetcherName, responseGetter, graphqlGetter, xExchangeTokensMap, config)
 }
 
-func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, graphqlGetter aggregator.GraphqlGetter, xExchangeTokensMap map[string]XExchangeTokensPair) (aggregator.PriceFetcher, error) {
+func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter, graphqlGetter aggregator.GraphqlGetter, xExchangeTokensMap map[string]XExchangeTokensPair, config EVMGasPriceFetcherConfig) (aggregator.PriceFetcher, error) {
 	switch fetcherName {
 	case BinanceName:
 		return &binance{
@@ -64,8 +64,8 @@ func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter,
 			ResponseGetter: responseGetter,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
-	case OkexName:
-		return &okex{
+	case OkxName:
+		return &okx{
 			ResponseGetter: responseGetter,
 			baseFetcher:    newBaseFetcher(),
 		}, nil
@@ -74,6 +74,12 @@ func createFetcher(fetcherName string, responseGetter aggregator.ResponseGetter,
 			GraphqlGetter:      graphqlGetter,
 			baseFetcher:        newBaseFetcher(),
 			xExchangeTokensMap: xExchangeTokensMap,
+		}, nil
+	case EVMGasPriceStation:
+		return &evmGasPriceFetcher{
+			ResponseGetter: responseGetter,
+			config:         config,
+			baseFetcher:    newBaseFetcher(),
 		}, nil
 	}
 	return nil, fmt.Errorf("%w, fetcherName %s", errInvalidFetcherName, fetcherName)
