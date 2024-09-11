@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -306,8 +307,8 @@ func TestSendDuplicateNonces(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	var errCount int
-	var sentCount int
+	errCount := atomic.Uint32{}
+	sentCount := atomic.Uint32{}
 
 	for i := 0; i < 2; i++ {
 		wg.Add(1)
@@ -315,18 +316,18 @@ func TestSendDuplicateNonces(t *testing.T) {
 			defer wg.Done()
 			hashes, sendErr := transactionHandler.SendTransactions(context.Background(), tx)
 			if sendErr != nil {
-				errCount++
+				errCount.Add(1)
 			}
 
 			if hashes[0] != "" {
-				sentCount++
+				sentCount.Add(1)
 			}
 		}()
 	}
 	wg.Wait()
 
-	require.Equal(t, 1, errCount)
-	require.Equal(t, 1, sentCount)
+	require.Equal(t, uint32(1), errCount.Load())
+	require.Equal(t, uint32(1), sentCount.Load())
 }
 
 func TestSendDuplicateNoncesBatch(t *testing.T) {
