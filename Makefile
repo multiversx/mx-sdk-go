@@ -1,5 +1,6 @@
 test:
 	@echo "  >  Running unit tests"
+	cd interactors/nonceHnadlerV3
 	go test -cover -race -coverprofile=coverage.txt -covermode=atomic -v ./...
 
 lint-install:
