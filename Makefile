@@ -1,6 +1,6 @@
 test:
 	@echo "  >  Running unit tests"
-	cd interactors/nonceHandlerV3 && go test -cover -race -coverprofile=coverage.txt -covermode=atomic -v ./...
+	go test -cover -race -coverprofile=coverage.txt -covermode=atomic -v ./...
 
 lint-install:
 ifeq (,$(wildcard test -f bin/golangci-lint))
