@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -306,8 +307,8 @@ func TestSendDuplicateNonces(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	var errCount int
-	var sentCount int
+	errCount := atomic.Uint32{}
+	sentCount := atomic.Uint32{}
 
 	for i := 0; i < 2; i++ {
 		wg.Add(1)
@@ -315,18 +316,18 @@ func TestSendDuplicateNonces(t *testing.T) {
 			defer wg.Done()
 			hashes, sendErr := transactionHandler.SendTransactions(context.Background(), tx)
 			if sendErr != nil {
-				errCount++
+				errCount.Add(1)
 			}
 
 			if hashes[0] != "" {
-				sentCount++
+				sentCount.Add(1)
 			}
 		}()
 	}
 	wg.Wait()
 
-	require.Equal(t, 1, errCount)
-	require.Equal(t, 1, sentCount)
+	require.Equal(t, uint32(1), errCount.Load())
+	require.Equal(t, uint32(1), sentCount.Load())
 }
 
 func TestSendDuplicateNoncesBatch(t *testing.T) {
@@ -337,6 +338,7 @@ func TestSendDuplicateNoncesBatch(t *testing.T) {
 	transactionHandler, err := NewNonceTransactionHandlerV3(createMockArgsNonceTransactionsHandlerV3(&getAccountCalled))
 	require.NoError(t, err, "failed to create transaction handler")
 
+	nonce := uint64(0)
 	txs := make([]*transaction.FrontendTransaction, 0)
 	for i := 0; i < 100; i++ {
 		tx := &transaction.FrontendTransaction{
@@ -345,7 +347,7 @@ func TestSendDuplicateNoncesBatch(t *testing.T) {
 			GasLimit: 50000,
 			ChainID:  "T",
 			Value:    "5000000000000000000",
-			Nonce:    0,
+			Nonce:    nonce,
 			GasPrice: 1000000000,
 			Version:  2,
 		}
@@ -353,9 +355,7 @@ func TestSendDuplicateNoncesBatch(t *testing.T) {
 	}
 
 	hashes, err := transactionHandler.SendTransactions(context.Background(), txs...)
-	for _, h := range hashes {
-		require.Equal(t, "", h, "a transaction has been sent")
-	}
+	require.Contains(t, hashes, strconv.FormatUint(nonce, 10), "no transaction has been sent")
 	require.Error(t, errors.New("transaction with nonce: 0 has already been scheduled to send while sending transaction for address erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht"), err)
 }
 
