@@ -21,7 +21,7 @@ func newBaseFetcher() baseFetcher {
 func (b *baseFetcher) normalizeQuoteName(quote string, fetcherName string) string {
 	if strings.Contains(quote, quoteUSDFiat) {
 		switch fetcherName {
-		case BinanceName, CryptocomName, HitbtcName, HuobiName, OkexName:
+		case BinanceName, CryptocomName, HitbtcName, HuobiName, OkxName:
 			return quoteUSDT
 		default:
 			return quoteUSDFiat

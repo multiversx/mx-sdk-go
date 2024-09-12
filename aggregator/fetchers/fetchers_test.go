@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -32,7 +33,7 @@ const networkAddress = "https://testnet-gateway.multiversx.com"
 func createMockMap() map[string]XExchangeTokensPair {
 	return map[string]XExchangeTokensPair{
 		"ETH-USD": {
-			Base:  "WEGLD-bd4d79", // for tests only until we have an ETH id
+			Base:  "WETH-b4ca29",
 			Quote: "USDC-c76f1f",
 		},
 		"EGLD-USD": {
@@ -91,6 +92,8 @@ func createAuthClient() (authentication.AuthClient, error) {
 func Test_FunctionalTesting(t *testing.T) {
 	t.Parallel()
 
+	t.Skip("this test should be run only when doing debugging work on the component")
+
 	responseGetter, err := aggregator.NewHttpResponseGetter()
 	require.Nil(t, err)
 
@@ -100,21 +103,73 @@ func Test_FunctionalTesting(t *testing.T) {
 	graphqlGetter, err := aggregator.NewGraphqlResponseGetter(authClient)
 	require.Nil(t, err)
 
-	for f := range ImplementedFetchers {
-		fetcherName := f
-		t.Run("Test_FunctionalTesting_"+fetcherName, func(t *testing.T) {
-			t.Skip("this test should be run only when doing debugging work on the component")
-
-			t.Parallel()
-			fetcher, _ := NewPriceFetcher(fetcherName, responseGetter, graphqlGetter, createMockMap())
+	wg := sync.WaitGroup{}
+	wg.Add(len(ImplementedFetchers))
+	for name := range ImplementedFetchers {
+		go func(fetcherName string) {
+			args := ArgsPriceFetcher{
+				FetcherName:        fetcherName,
+				ResponseGetter:     responseGetter,
+				GraphqlGetter:      graphqlGetter,
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			ethTicker := "ETH"
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, fetchErr := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
 			require.Nil(t, fetchErr)
 			fmt.Printf("price between %s and %s is: %v from %s\n", ethTicker, quoteUSDFiat, price, fetcherName)
 			require.True(t, price > 0)
-		})
+			wg.Done()
+		}(name)
 	}
+
+	wg.Wait()
+}
+
+func Test_FunctionalTestingForEVMGasPrice(t *testing.T) {
+	t.Parallel()
+
+	t.Skip("this test should be run only when doing debugging work on the component")
+
+	responseGetter, err := aggregator.NewHttpResponseGetter()
+	require.Nil(t, err)
+
+	authClient, err := createAuthClient()
+	require.Nil(t, err)
+
+	graphqlGetter, err := aggregator.NewGraphqlResponseGetter(authClient)
+	require.Nil(t, err)
+
+	// IMPORTANT: on the API URL value we should append &apikey=<APIKEY>
+	//            with api keys created on the bscscan.io & etherscan.io.
+	//            free plan should suffice for intended purpose
+
+	args := ArgsPriceFetcher{
+		FetcherName:        EVMGasPriceStation,
+		ResponseGetter:     responseGetter,
+		GraphqlGetter:      graphqlGetter,
+		XExchangeTokensMap: createMockMap(),
+		EVMGasConfig: EVMGasPriceFetcherConfig{
+			ApiURL:   "https://api.bscscan.com/api?module=gastracker&action=gasoracle",
+			Selector: "SafeGasPrice",
+		},
+	}
+	fetcher, _ := NewPriceFetcher(args)
+	fetcher.AddPair("BSC", "gas")
+	price, fetchErr := fetcher.FetchPrice(context.Background(), "BSC", "gas")
+	require.Nil(t, fetchErr)
+	fmt.Printf("gas price for %s and is: %v from %s\n", "BSC-gas", price, fetcher.Name())
+	require.True(t, price > 0)
+
+	args.EVMGasConfig.ApiURL = "https://api.etherscan.io/api?module=gastracker&action=gasoracle"
+	fetcher, _ = NewPriceFetcher(args)
+	fetcher.AddPair("ETH", "gas")
+	price, fetchErr = fetcher.FetchPrice(context.Background(), "ETH", "gas")
+	require.Nil(t, fetchErr)
+	fmt.Printf("gas price for %s and is: %v from %s\n", "ETH-gas", price, fetcher.Name())
+	require.True(t, price > 0)
 }
 
 func Test_FetchPriceErrors(t *testing.T) {
@@ -123,27 +178,31 @@ func Test_FetchPriceErrors(t *testing.T) {
 	ethTicker := "ETH"
 	pair := ethTicker + quoteUSDFiat
 
+	expectedError := errors.New("expected error")
 	for f := range ImplementedFetchers {
 		fetcherName := f
 
 		t.Run("response getter errors should error "+fetcherName, func(t *testing.T) {
 			t.Parallel()
 
-			expectedError := errors.New("expected error")
 			returnPrice := ""
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, expectedError),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, expectedError),
-				}, createMockMap())
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
-			if err == errShouldSkipTest {
+			if errors.Is(err, errShouldSkipTest) {
 				return
 			}
 			require.Equal(t, expectedError, err)
@@ -153,19 +212,23 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			returnPrice := ""
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap())
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
-			if err == errShouldSkipTest {
+			if errors.Is(err, errShouldSkipTest) {
 				return
 			}
 			require.Equal(t, errInvalidResponseData, err)
@@ -175,19 +238,23 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			returnPrice := "-1"
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap())
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
-			if err == errShouldSkipTest {
+			if errors.Is(err, errShouldSkipTest) {
 				return
 			}
 			require.Equal(t, errInvalidResponseData, err)
@@ -197,19 +264,23 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			returnPrice := "not a number"
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap())
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
-			if err == errShouldSkipTest {
+			if errors.Is(err, errShouldSkipTest) {
 				return
 			}
 			require.NotNil(t, err)
@@ -224,18 +295,22 @@ func Test_FetchPriceErrors(t *testing.T) {
 			}
 
 			returnPrice := "4714.05000000"
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{},
-				&mock.GraphqlResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName:    fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{},
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap())
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			missingTicker := "missing ticker"
 			fetcher.AddPair(missingTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), missingTicker, quoteUSDFiat)
-			if err == errShouldSkipTest {
+			if errors.Is(err, errShouldSkipTest) {
 				return
 			}
 			assert.Equal(t, errInvalidPair, err)
@@ -248,19 +323,23 @@ func Test_FetchPriceErrors(t *testing.T) {
 				return
 			}
 
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{},
-				&mock.GraphqlResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName:    fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{},
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: func(ctx context.Context, url string, query string, variables string) ([]byte, error) {
 						return make([]byte, 0), nil
 					},
-				}, createMockMap())
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
-			if err == errShouldSkipTest {
+			if errors.Is(err, errShouldSkipTest) {
 				return
 			}
 			assert.Equal(t, errInvalidGraphqlResponse, err)
@@ -270,18 +349,22 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			returnPrice := ""
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap())
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
-			if err == errShouldSkipTest {
+			if errors.Is(err, errShouldSkipTest) {
 				return
 			}
 			require.Equal(t, aggregator.ErrPairNotSupported, err)
@@ -292,19 +375,23 @@ func Test_FetchPriceErrors(t *testing.T) {
 			t.Parallel()
 
 			returnPrice := "4714.05000000"
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, pair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap())
-
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(ethTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), ethTicker, quoteUSDFiat)
-			if err == errShouldSkipTest {
+			if errors.Is(err, errShouldSkipTest) {
 				return
 			}
 			require.Nil(t, err)
@@ -317,18 +404,23 @@ func Test_FetchPriceErrors(t *testing.T) {
 			btcTicker := "BTC"
 			btcUsdPair := btcTicker + quoteUSDFiat
 			returnPrice := "4714.05000000"
-			fetcher, _ := NewPriceFetcher(fetcherName,
-				&mock.HttpResponseGetterStub{
+			args := ArgsPriceFetcher{
+				FetcherName: fetcherName,
+				ResponseGetter: &mock.HttpResponseGetterStub{
 					GetCalled: getFuncGetCalled(fetcherName, returnPrice, btcUsdPair, nil),
 				},
-				&mock.GraphqlResponseGetterStub{
+				GraphqlGetter: &mock.GraphqlResponseGetterStub{
 					GetCalled: getFuncQueryCalled(fetcherName, returnPrice, nil),
-				}, createMockMap())
+				},
+				XExchangeTokensMap: createMockMap(),
+				EVMGasConfig:       EVMGasPriceFetcherConfig{},
+			}
+			fetcher, _ := NewPriceFetcher(args)
 			assert.False(t, check.IfNil(fetcher))
 
 			fetcher.AddPair(btcTicker, quoteUSDFiat)
 			price, err := fetcher.FetchPrice(context.Background(), btcTicker, quoteUSDFiat)
-			if err == errShouldSkipTest {
+			if errors.Is(err, errShouldSkipTest) {
 				return
 			}
 			require.Nil(t, err)
@@ -418,10 +510,10 @@ func getFuncGetCalled(name, returnPrice, pair string, returnErr error) func(ctx 
 			}
 			return returnErr
 		}
-	case OkexName:
+	case OkxName:
 		return func(ctx context.Context, url string, response interface{}) error {
-			cast, _ := response.(*okexPriceRequest)
-			cast.Data = []okexTicker{{returnPrice}}
+			cast, _ := response.(*okxPriceRequest)
+			cast.Data = []okxTicker{{returnPrice}}
 			return returnErr
 		}
 	}
