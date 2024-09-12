@@ -19,6 +19,11 @@ type NodesCoordinatorStub struct {
 	IsEpochInConfigCalled                  func(epoch uint32) bool
 }
 
+func (ncm *NodesCoordinatorStub) GetShuffledOutToAuctionValidatorsPublicKeys(epoch uint32) (map[uint32][][]byte, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (ncm *NodesCoordinatorStub) GetAllShuffledOutValidatorsPublicKeys(epoch uint32) (map[uint32][][]byte, error) {
 	//TODO implement me
 	panic("implement me")
