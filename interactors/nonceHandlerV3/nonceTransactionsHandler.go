@@ -141,7 +141,7 @@ func (nth *nonceTransactionsHandlerV3) filterTransactionsBySenderAddress(transac
 
 // SendTransactions will store and send the provided transaction
 func (nth *nonceTransactionsHandlerV3) SendTransactions(ctx context.Context, txs ...*transaction.FrontendTransaction) ([]string, error) {
-	g, ctx := errgroup.WithContext(ctx)
+	group := errgroup.Group{}
 	sentHashes := make([]string, len(txs))
 	for i, tx := range txs {
 		if tx == nil {
@@ -164,7 +164,7 @@ func (nth *nonceTransactionsHandlerV3) SendTransactions(ctx context.Context, txs
 		}
 
 		idx := i
-		g.Go(func() error {
+		group.Go(func() error {
 			sentHash, errSend := anh.SendTransaction(ctx, &txCopy)
 			if errSend != nil {
 				return fmt.Errorf("%w while sending transaction for address %s", errSend, addrAsBech32)
@@ -175,7 +175,7 @@ func (nth *nonceTransactionsHandlerV3) SendTransactions(ctx context.Context, txs
 		})
 	}
 
-	err := g.Wait()
+	err := group.Wait()
 
 	return sentHashes, err
 }
