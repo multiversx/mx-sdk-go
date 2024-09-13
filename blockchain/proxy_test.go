@@ -1236,12 +1236,13 @@ func TestProxy_FilterLogs(t *testing.T) {
 	httpDataBlock21000001 := loadJsonIntoBytes(t, "./testdata/block21000001data.json")
 	httpDataBlock21000005 := loadJsonIntoBytes(t, "./testdata/block21000005data.json")
 	httpNodeStatus := loadJsonIntoBytes(t, "./testdata/node_status_data.json")
+	httpNetworkConfig := loadJsonIntoBytes(t, "./testdata/network_config_data.json")
 
 	t.Run("invalid block range", func(t *testing.T) {
 		invalidFilter := &sdkCore.FilterQuery{
 			FromBlock: core.OptionalUint64{Value: 21000000, HasValue: true},
 			ToBlock:   core.OptionalUint64{Value: 21001000, HasValue: true},
-			ShardID:   0,
+			ShardID:   core.OptionalUint32{Value: 0, HasValue: true},
 			Topics:    nil,
 			BlockHash: nil,
 		}
@@ -1265,7 +1266,7 @@ func TestProxy_FilterLogs(t *testing.T) {
 		invalidFilter := &sdkCore.FilterQuery{
 			FromBlock: core.OptionalUint64{Value: 21000000, HasValue: false},
 			ToBlock:   core.OptionalUint64{Value: 1000000000, HasValue: false},
-			ShardID:   0,
+			ShardID:   core.OptionalUint32{Value: 0, HasValue: true},
 			Topics:    nil,
 			BlockHash: nil,
 		}
@@ -1289,7 +1290,7 @@ func TestProxy_FilterLogs(t *testing.T) {
 		invalidFilter := &sdkCore.FilterQuery{
 			FromBlock: core.OptionalUint64{Value: 0, HasValue: false},
 			ToBlock:   core.OptionalUint64{Value: 0, HasValue: false},
-			ShardID:   0,
+			ShardID:   core.OptionalUint32{Value: 0, HasValue: true},
 			Topics:    nil,
 			BlockHash: nil,
 		}
@@ -1309,13 +1310,13 @@ func TestProxy_FilterLogs(t *testing.T) {
 		assert.Nil(t, res)
 	})
 
-	t.Run("should work with specific addresses", func(t *testing.T) {
+	t.Run("no address or shardID specified", func(t *testing.T) {
 
-		validFilter := &sdkCore.FilterQuery{
+		invalidFilter := &sdkCore.FilterQuery{
 			FromBlock: core.OptionalUint64{Value: 21000005, HasValue: true},
 			ToBlock:   core.OptionalUint64{Value: 21000005, HasValue: true},
-			Addresses: []string{"erd1qqqqqqqqqqqqqpgq50dge6rrpcra4tp9hl57jl0893a4r2r72jpsk39rjj", "erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y"},
-			ShardID:   0,
+			Addresses: nil,
+			ShardID:   core.OptionalUint32{Value: 0, HasValue: false},
 			Topics:    nil,
 			BlockHash: nil,
 		}
@@ -1324,8 +1325,96 @@ func TestProxy_FilterLogs(t *testing.T) {
 		blockResponseBytes := httpDataBlock21000005
 
 		responseMap := map[string][]byte{
-			"https://test.org/node/status":             statusResponseBytes,
-			"https://test.org/block/by-nonce/21000005": blockResponseBytes,
+			"https://test.org/node/status":                                        statusResponseBytes,
+			"https://test.org/block/by-nonce/21000005?withTxs=true&withLogs=true": blockResponseBytes,
+			"https://test.org/network/config":                                     httpNetworkConfig,
+		}
+
+		httpClient := createMockClientMultiResponse(responseMap)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		res, err := ep.FilterLogs(context.Background(), invalidFilter)
+		assert.Equal(t, ErrNoShardOrAddressesProvided, err)
+		assert.Nil(t, res)
+	})
+
+	t.Run("should fail for addresses from different shards", func(t *testing.T) {
+
+		invalidFilter := &sdkCore.FilterQuery{
+			FromBlock: core.OptionalUint64{Value: 21000005, HasValue: true},
+			ToBlock:   core.OptionalUint64{Value: 21000005, HasValue: true},
+			Addresses: []string{"erd1qqqqqqqqqqqqqpgq50dge6rrpcra4tp9hl57jl0893a4r2r72jpsk39rjj", "erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y"},
+			ShardID:   core.OptionalUint32{Value: 0, HasValue: false},
+			Topics:    nil,
+			BlockHash: nil,
+		}
+
+		statusResponseBytes := httpNodeStatus
+		blockResponseBytes := httpDataBlock21000005
+
+		responseMap := map[string][]byte{
+			"https://test.org/node/status":                                        statusResponseBytes,
+			"https://test.org/block/by-nonce/21000005?withTxs=true&withLogs=true": blockResponseBytes,
+			"https://test.org/network/config":                                     httpNetworkConfig,
+		}
+
+		httpClient := createMockClientMultiResponse(responseMap)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		res, err := ep.FilterLogs(context.Background(), invalidFilter)
+		assert.Equal(t, errors.New("addresses belong to different shards"), err)
+		assert.Nil(t, res)
+	})
+
+	t.Run("should fail if addresses computed shard id differ from provided shardID", func(t *testing.T) {
+
+		invalidFilter := &sdkCore.FilterQuery{
+			FromBlock: core.OptionalUint64{Value: 21000005, HasValue: true},
+			ToBlock:   core.OptionalUint64{Value: 21000005, HasValue: true},
+			Addresses: []string{"erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y"}, // address from shard 0
+			ShardID:   core.OptionalUint32{Value: 1, HasValue: true},
+			Topics:    nil,
+			BlockHash: nil,
+		}
+
+		statusResponseBytes := httpNodeStatus
+		blockResponseBytes := httpDataBlock21000005
+
+		responseMap := map[string][]byte{
+			"https://test.org/node/status":                                        statusResponseBytes,
+			"https://test.org/block/by-nonce/21000005?withTxs=true&withLogs=true": blockResponseBytes,
+			"https://test.org/network/config":                                     httpNetworkConfig,
+		}
+
+		httpClient := createMockClientMultiResponse(responseMap)
+		args := createMockArgsProxy(httpClient)
+		ep, _ := NewProxy(args)
+
+		res, err := ep.FilterLogs(context.Background(), invalidFilter)
+		assert.Equal(t, errors.New("shardID from addresses does not match the provided shardID"), err)
+		assert.Nil(t, res)
+	})
+
+	t.Run("should work with specific addresses", func(t *testing.T) {
+
+		validFilter := &sdkCore.FilterQuery{
+			FromBlock: core.OptionalUint64{Value: 21000005, HasValue: true},
+			ToBlock:   core.OptionalUint64{Value: 21000005, HasValue: true},
+			Addresses: []string{"erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y"},
+			ShardID:   core.OptionalUint32{Value: 0, HasValue: true},
+			Topics:    nil,
+			BlockHash: nil,
+		}
+
+		statusResponseBytes := httpNodeStatus
+		blockResponseBytes := httpDataBlock21000005
+
+		responseMap := map[string][]byte{
+			"https://test.org/node/status":                                        statusResponseBytes,
+			"https://test.org/block/by-nonce/21000005?withTxs=true&withLogs=true": blockResponseBytes,
+			"https://test.org/network/config":                                     httpNetworkConfig,
 		}
 
 		httpClient := createMockClientMultiResponse(responseMap)
@@ -1335,23 +1424,19 @@ func TestProxy_FilterLogs(t *testing.T) {
 		res, err := ep.FilterLogs(context.Background(), validFilter)
 
 		assert.Nil(t, err)
-		assert.Equal(t, len(res), 4)
+		assert.Equal(t, len(res), 3)
 
-		assert.Equal(t, res[0].Identifier, "MultiESDTNFTTransfer")
-		assert.Equal(t, res[0].Address, "erd1qqqqqqqqqqqqqpgq50dge6rrpcra4tp9hl57jl0893a4r2r72jpsk39rjj")
-		assert.Equal(t, len(res[0].Topics), 10)
+		assert.Equal(t, res[0].Identifier, "writeLog")
+		assert.Equal(t, res[0].Address, "erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y")
+		assert.Equal(t, len(res[0].Topics), 1)
 
-		assert.Equal(t, res[1].Identifier, "writeLog")
+		assert.Equal(t, res[1].Identifier, "completedTxEvent")
 		assert.Equal(t, res[1].Address, "erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y")
 		assert.Equal(t, len(res[1].Topics), 1)
 
 		assert.Equal(t, res[2].Identifier, "completedTxEvent")
 		assert.Equal(t, res[2].Address, "erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y")
 		assert.Equal(t, len(res[2].Topics), 1)
-
-		assert.Equal(t, res[3].Identifier, "completedTxEvent")
-		assert.Equal(t, res[3].Address, "erd1d7y4a8wtykxnxxjhywzk0q5tkey4g9z6rhalefw6syr779kh77yqd0fj5y")
-		assert.Equal(t, len(res[3].Topics), 1)
 	})
 
 	t.Run("should work with topics", func(t *testing.T) {
@@ -1359,7 +1444,7 @@ func TestProxy_FilterLogs(t *testing.T) {
 			BlockHash: nil,
 			FromBlock: core.OptionalUint64{Value: 21000000, HasValue: true},
 			ToBlock:   core.OptionalUint64{Value: 21000000, HasValue: true},
-			ShardID:   0,
+			ShardID:   core.OptionalUint32{Value: 0, HasValue: true},
 			Topics: [][]byte{
 				[]byte("HUTK-4fa4b2"),
 			},
@@ -1369,9 +1454,10 @@ func TestProxy_FilterLogs(t *testing.T) {
 		blockResponseBytes := httpDataBlock21000000
 
 		responseMap := map[string][]byte{
-			"https://test.org/node/status":             statusResponseBytes,
-			"https://test.org/block/by-nonce/21000000": blockResponseBytes,
-			"https://test.org/block/by-hash/00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e": blockResponseBytes,
+			"https://test.org/node/status":                                        statusResponseBytes,
+			"https://test.org/block/by-nonce/21000000?withTxs=true&withLogs=true": blockResponseBytes,
+			"https://test.org/block/by-hash/00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e?withTxs=true&withLogs=true": blockResponseBytes,
+			"https://test.org/network/config": httpNetworkConfig,
 		}
 
 		httpClient := createMockClientMultiResponse(responseMap)
@@ -1395,7 +1481,7 @@ func TestProxy_FilterLogs(t *testing.T) {
 			BlockHash: blockHash,
 			FromBlock: core.OptionalUint64{Value: 21000000, HasValue: false},
 			ToBlock:   core.OptionalUint64{Value: 21000000, HasValue: false},
-			ShardID:   0,
+			ShardID:   core.OptionalUint32{Value: 0, HasValue: true},
 			Topics:    nil,
 		}
 
@@ -1403,9 +1489,10 @@ func TestProxy_FilterLogs(t *testing.T) {
 		statusResponseBytes := httpNodeStatus
 
 		responseMap := map[string][]byte{
-			"https://test.org/node/status":             statusResponseBytes,
-			"https://test.org/block/by-nonce/21000000": blockResponseBytes,
-			"https://test.org/block/by-hash/00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e": blockResponseBytes,
+			"https://test.org/node/status":                                        statusResponseBytes,
+			"https://test.org/block/by-nonce/21000000?withTxs=true&withLogs=true": blockResponseBytes,
+			"https://test.org/block/by-hash/00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e?withTxs=true&withLogs=true": blockResponseBytes,
+			"https://test.org/network/config": httpNetworkConfig,
 		}
 
 		httpClient := createMockClientMultiResponse(responseMap)
@@ -1439,7 +1526,7 @@ func TestProxy_FilterLogs(t *testing.T) {
 		validFilter := &sdkCore.FilterQuery{
 			FromBlock: core.OptionalUint64{Value: 21000001, HasValue: true},
 			ToBlock:   core.OptionalUint64{Value: 21000001, HasValue: true},
-			ShardID:   0,
+			ShardID:   core.OptionalUint32{Value: 0, HasValue: true},
 			Topics:    nil,
 			BlockHash: nil,
 		}
@@ -1448,9 +1535,10 @@ func TestProxy_FilterLogs(t *testing.T) {
 		statusResponseBytes := httpNodeStatus
 
 		responseMap := map[string][]byte{
-			"https://test.org/node/status":             statusResponseBytes,
-			"https://test.org/block/by-nonce/21000001": blockResponseBytes,
-			"https://test.org/block/by-hash/00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e": blockResponseBytes,
+			"https://test.org/node/status":                                        statusResponseBytes,
+			"https://test.org/block/by-nonce/21000001?withTxs=true&withLogs=true": blockResponseBytes,
+			"https://test.org/block/by-hash/00f7d0e806c5ff3700236f78c67007c8000000000000000000409a07ff835d8e?withTxs=true&withLogs=true": blockResponseBytes,
+			"https://test.org/network/config": httpNetworkConfig,
 		}
 
 		httpClient := createMockClientMultiResponse(responseMap)

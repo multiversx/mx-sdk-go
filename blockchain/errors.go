@@ -57,6 +57,9 @@ var ErrInvalidBlockRange = errors.New("invalid block range: too many blocks to p
 // ErrNoBlockRangeProvided signals that no block range was provided
 var ErrNoBlockRangeProvided = errors.New("no block range specified")
 
+// ErrNoShardOrAddressesProvided signals that no shard ID or addresses were provided, therefore shard ID cannot be computed
+var ErrNoShardOrAddressesProvided = errors.New("cannot compute shardID")
+
 func createHTTPStatusError(httpStatusCode int, err error) error {
 	if err == nil {
 		err = ErrHTTPStatusCodeIsNotOK
