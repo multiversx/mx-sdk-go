@@ -1364,7 +1364,7 @@ func TestProxy_FilterLogs(t *testing.T) {
 		ep, _ := NewProxy(args)
 
 		res, err := ep.FilterLogs(context.Background(), invalidFilter)
-		assert.Equal(t, errors.New("addresses belong to different shards"), err)
+		assert.Equal(t, ErrAddressesFromDifferentShards, err)
 		assert.Nil(t, res)
 	})
 
@@ -1393,7 +1393,8 @@ func TestProxy_FilterLogs(t *testing.T) {
 		ep, _ := NewProxy(args)
 
 		res, err := ep.FilterLogs(context.Background(), invalidFilter)
-		assert.Equal(t, errors.New("shardID from addresses does not match the provided shardID"), err)
+		expectedErr := fmt.Errorf("%w, computed %d, provided %d", ErrShardIDMismatch, 0, 1)
+		assert.Equal(t, expectedErr, err)
 		assert.Nil(t, res)
 	})
 

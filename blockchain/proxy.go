@@ -734,8 +734,8 @@ func (ep *proxy) IsDataTrieMigrated(ctx context.Context, address sdkCore.Address
 	return isMigrated, nil
 }
 
-// GetBlockBytesByNonce retrieves bytes of a block with a specific nonce
-func (ep *proxy) GetBlockBytesByNonce(ctx context.Context, shardID uint32, nonce uint64) ([]byte, error) {
+// GetBlockBytesByNonce retrieves bytes of a block with its transactions and logs by nonce
+func (ep *proxy) getBlockBytesByNonceWithTxsAndLogs(ctx context.Context, shardID uint32, nonce uint64) ([]byte, error) {
 	endpoint := ep.endpointProvider.GetBlockByNonce(shardID, nonce)
 	endpoint += withTxsAndLogs
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
@@ -745,8 +745,8 @@ func (ep *proxy) GetBlockBytesByNonce(ctx context.Context, shardID uint32, nonce
 	return buff, nil
 }
 
-// GetBlockBytesByHash retrieves bytes of a block with a specific hash
-func (ep *proxy) GetBlockBytesByHash(ctx context.Context, shardID uint32, hash string) ([]byte, error) {
+// GetBlockBytesByHash retrieves bytes of a block with its transactions and logs by hash
+func (ep *proxy) getBlockBytesByHashWithTxsAndLogs(ctx context.Context, shardID uint32, hash string) ([]byte, error) {
 	endpoint := ep.endpointProvider.GetBlockByHash(shardID, hash)
 	endpoint += withTxsAndLogs
 	buff, code, err := ep.GetHTTP(ctx, endpoint)
@@ -787,33 +787,28 @@ func (ep *proxy) FilterLogs(ctx context.Context, filter *sdkCore.FilterQuery) ([
 }
 
 func (ep *proxy) computeShardId(ctx context.Context, filter *sdkCore.FilterQuery) (uint32, error) {
-	filterAddresses := filter.Addresses
-	shardId := filter.ShardID
-
-	if len(filterAddresses) != 0 && shardId.HasValue {
-		shardIdFromAddresses, err := ep.computeShardIdFromAddresses(ctx, filterAddresses)
+	if len(filter.Addresses) != 0 {
+		shardIdFromAddresses, err := ep.computeShardIdFromAddresses(ctx, filter.Addresses)
 		if err != nil {
 			return 0, err
 		}
-		if shardId.Value != shardIdFromAddresses {
-			return 0, errors.New("shardID from addresses does not match the provided shardID")
-		}
-		return shardId.Value, nil
-	}
 
-	if len(filterAddresses) != 0 {
-		shardIdFromAddresses, err := ep.computeShardIdFromAddresses(ctx, filterAddresses)
-		if err != nil {
-			return 0, err
+		if filter.ShardID.HasValue {
+			if filter.ShardID.Value != shardIdFromAddresses {
+				return 0, fmt.Errorf("%w, computed %d, provided %d", ErrShardIDMismatch, shardIdFromAddresses, filter.ShardID.Value)
+			}
+
+			return filter.ShardID.Value, nil
 		}
+
 		return shardIdFromAddresses, nil
 	}
 
-	if shardId.HasValue {
-		return shardId.Value, nil
+	if filter.ShardID.HasValue {
+		return filter.ShardID.Value, nil
 	}
 
-	return 0, errors.New("cannot compute shardID")
+	return 0, ErrNoShardOrAddressesProvided
 }
 
 func (ep *proxy) computeShardIdFromAddresses(ctx context.Context, addresses []string) (uint32, error) {
@@ -828,7 +823,7 @@ func (ep *proxy) computeShardIdFromAddresses(ctx context.Context, addresses []st
 			return 0, err
 		}
 		if addressShardId != shardId {
-			return 0, errors.New("addresses belong to different shards")
+			return 0, ErrAddressesFromDifferentShards
 		}
 	}
 
@@ -886,7 +881,7 @@ func resolveBlockRange(filter *sdkCore.FilterQuery, latestBlock uint64) (uint64,
 // getBlockNumberByHash retrieves the block number associated with the given block hash
 func (ep *proxy) getBlockNumberByHash(ctx context.Context, shardID uint32, blockHash []byte) (uint64, error) {
 	blockHashStr := hex.EncodeToString(blockHash)
-	buff, err := ep.GetBlockBytesByHash(ctx, shardID, blockHashStr)
+	buff, err := ep.getBlockBytesByHashWithTxsAndLogs(ctx, shardID, blockHashStr)
 	if err != nil {
 		return 0, err
 	}
@@ -938,7 +933,7 @@ func getBlockBytesByNonce(ctx context.Context, ep *proxy, shardID uint32, nonce 
 		}
 	}
 
-	buff, err := ep.GetBlockBytesByNonce(ctx, shardID, nonce)
+	buff, err := ep.getBlockBytesByNonceWithTxsAndLogs(ctx, shardID, nonce)
 	if err != nil {
 		return nil, err
 	}
