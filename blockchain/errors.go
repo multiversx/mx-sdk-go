@@ -39,6 +39,12 @@ var ErrInvalidEndpointProvider = errors.New("invalid endpoint provider")
 // ErrShardIDMismatch signals that a shard ID mismatch has occurred
 var ErrShardIDMismatch = errors.New("shard ID mismatch")
 
+// ErrNoShardOrAddressesProvided signals that no shard ID or addresses were provided, therefore shard ID cannot be computed
+var ErrNoShardOrAddressesProvided = errors.New("cannot compute shardID")
+
+// ErrAddressesFromDifferentShards signals that the provided addresses belong to different shards
+var ErrAddressesFromDifferentShards = errors.New("addresses belong to different shards")
+
 // ErrNilNetworkStatus signals that nil network status was received
 var ErrNilNetworkStatus = errors.New("nil network status")
 

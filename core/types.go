@@ -19,7 +19,7 @@ type FilterQuery struct {
 	FromBlock core.OptionalUint64 // beginning of the queried range, no value set means genesis block
 	ToBlock   core.OptionalUint64 // end of the range, no value set means latest block
 	Addresses []string            // restricts matches to events created by specific contracts
-	ShardID   uint32              // identifies the shard to query
+	ShardID   core.OptionalUint32 // identifies the shard to query
 
 	// The Topic list restricts matches to particular event topics. Each event has a list
 	// of topics. Topics matches a prefix of that list. An empty element slice matches any
