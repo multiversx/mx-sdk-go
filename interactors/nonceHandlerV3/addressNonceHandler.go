@@ -89,13 +89,10 @@ func (anh *addressNonceHandler) adaptNonceBasedOnResponse(response *workers.Tran
 	anh.mut.Lock()
 	defer anh.mut.Unlock()
 
-	// if the response did not contain any errors, increase the cached nonce.
-	if response.Error == nil {
-		anh.nonce++
-		return
+	// if the response did contain any errors, invalidate the cached nonce.
+	if response.Error != nil {
+		anh.nonce = -1
 	}
-	// we invalidate the cache if there was an error sending the transaction.
-	anh.nonce = -1
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
