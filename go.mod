@@ -6,11 +6,11 @@ require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/websocket v1.5.0
-	github.com/multiversx/mx-chain-core-go v1.2.24-0.20250109151319-81a62c045af8
+	github.com/multiversx/mx-chain-core-go v1.2.24
 	github.com/multiversx/mx-chain-crypto-go v1.2.12
-	github.com/multiversx/mx-chain-go v1.8.8-0.20250114125850-545d15eccea4
+	github.com/multiversx/mx-chain-go v1.8.8
 	github.com/multiversx/mx-chain-logger-go v1.0.15
-	github.com/multiversx/mx-chain-storage-go v1.0.19-0.20250109152325-cf81acfd19bd
+	github.com/multiversx/mx-chain-storage-go v1.0.19
 	github.com/multiversx/mx-chain-vm-common-go v1.5.16
 	github.com/pborman/uuid v1.2.1
 	github.com/stretchr/testify v1.8.4
