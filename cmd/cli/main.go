@@ -123,7 +123,7 @@ VERSION:
 )
 
 var homePath = os.Getenv("HOME")
-var pathGeneratedWallets = homePath + "/dev/testnet-local/sandbox/node/config/walletKey.pem"
+var pathGeneratedWallets = homePath + "/MultiversX/testnet/filegen/output/walletKey.pem"
 var suite = ed25519.NewEd25519()
 var keyGen = signing.NewKeyGenerator(suite)
 
