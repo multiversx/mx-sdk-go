@@ -114,7 +114,7 @@ VERSION:
 
 	relayerSigned = cli.BoolFlag{
 		Name:        "relayerSigned",
-		Usage:       "If set the relayer will also sign the transaction. This works only if also guardedTxBy is set",
+		Usage:       "If set the relayer will also sign the transaction. This works only if also relayedTxBy is set",
 		Destination: &argsConfig.relayerSigned,
 	}
 
