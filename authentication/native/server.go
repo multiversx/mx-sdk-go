@@ -10,7 +10,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	crypto "github.com/multiversx/mx-chain-crypto-go"
-	"github.com/multiversx/mx-chain-storage-go/types"
+	"github.com/multiversx/mx-chain-go/storage"
 	"github.com/multiversx/mx-sdk-go/authentication"
 	"github.com/multiversx/mx-sdk-go/builders"
 	"github.com/multiversx/mx-sdk-go/data"
@@ -28,7 +28,7 @@ type ArgsNativeAuthServer struct {
 	Signer            builders.Signer
 	PubKeyConverter   core.PubkeyConverter
 	KeyGenerator      crypto.KeyGenerator
-	TimestampsCacher  types.Cacher
+	TimestampsCacher  storage.Cacher
 }
 
 type authServer struct {
@@ -38,7 +38,7 @@ type authServer struct {
 	keyGenerator      crypto.KeyGenerator
 	pubKeyConverter   core.PubkeyConverter
 	getTimeHandler    func() time.Time
-	cacher            types.Cacher
+	cacher            storage.Cacher
 }
 
 // NewNativeAuthServer returns a native authentication server that verifies

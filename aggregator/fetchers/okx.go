@@ -8,32 +8,32 @@ import (
 )
 
 const (
-	okexPriceUrl = "https://www.okex.com/api/v5/market/ticker?instId=%s-%s"
+	okxPriceUrl = "https://www.okx.com/api/v5/market/ticker?instId=%s-%s"
 )
 
-type okexPriceRequest struct {
-	Data []okexTicker
+type okxPriceRequest struct {
+	Data []okxTicker
 }
 
-type okexTicker struct {
+type okxTicker struct {
 	Price string `json:"last"`
 }
 
-type okex struct {
+type okx struct {
 	aggregator.ResponseGetter
 	baseFetcher
 }
 
 // FetchPrice will fetch the price using the http client
-func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
+func (o *okx) FetchPrice(ctx context.Context, base string, quote string) (float64, error) {
 	if !o.hasPair(base, quote) {
 		return 0, aggregator.ErrPairNotSupported
 	}
 
-	quote = o.normalizeQuoteName(quote, OkexName)
+	quote = o.normalizeQuoteName(quote, OkxName)
 
-	var opr okexPriceRequest
-	err := o.ResponseGetter.Get(ctx, fmt.Sprintf(okexPriceUrl, base, quote), &opr)
+	var opr okxPriceRequest
+	err := o.ResponseGetter.Get(ctx, fmt.Sprintf(okxPriceUrl, base, quote), &opr)
 	if err != nil {
 		return 0, err
 	}
@@ -48,11 +48,11 @@ func (o *okex) FetchPrice(ctx context.Context, base string, quote string) (float
 }
 
 // Name returns the name
-func (o *okex) Name() string {
-	return OkexName
+func (o *okx) Name() string {
+	return OkxName
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (o *okex) IsInterfaceNil() bool {
+func (o *okx) IsInterfaceNil() bool {
 	return o == nil
 }

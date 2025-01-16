@@ -18,10 +18,12 @@ const (
 	HuobiName = "Huobi"
 	// KrakenName defines the Kraken exchange name
 	KrakenName = "Kraken"
-	// OkexName defines the Okex exchange name
-	OkexName = "Okex"
+	// OkxName defines the Okx exchange name
+	OkxName = "Okx"
 	// XExchangeName defines the XExchange name
 	XExchangeName = "XExchange"
+	// EVMGasPriceStation defines an EVM gas station that will push gas prices as a full token pair price
+	EVMGasPriceStation = "EVM gas price station"
 )
 
 // ImplementedFetchers is the map of all implemented exchange fetchers
@@ -33,6 +35,6 @@ var ImplementedFetchers = map[string]struct{}{
 	HitbtcName:    {},
 	HuobiName:     {},
 	KrakenName:    {},
-	OkexName:      {},
+	OkxName:       {},
 	XExchangeName: {},
 }

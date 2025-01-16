@@ -11,6 +11,8 @@ const (
 	proxyRawBlockByHash     = "internal/%d/raw/block/by-hash/%s"
 	proxyRawBlockByNonce    = "internal/%d/raw/block/by-nonce/%d"
 	proxyRawMiniBlockByHash = "internal/%d/raw/miniblock/by-hash/%s/epoch/%d"
+	proxyBlockByNonce       = "block/%d/by-nonce/%d"
+	proxyBlockByHash        = "block/%d/by-hash/%s"
 )
 
 // proxyEndpointProvider is suitable to work with a MultiversX Proxy
@@ -51,6 +53,16 @@ func (proxy *proxyEndpointProvider) GetRawMiniBlockByHash(shardID uint32, hexHas
 // GetRestAPIEntityType returns the proxy constant
 func (proxy *proxyEndpointProvider) GetRestAPIEntityType() core.RestAPIEntityType {
 	return core.Proxy
+}
+
+// GetBlockByNonce returns the block with the given nonce within the given shard
+func (proxy *proxyEndpointProvider) GetBlockByNonce(shardID uint32, nonce uint64) string {
+	return fmt.Sprintf(proxyBlockByNonce, shardID, nonce)
+}
+
+// GetBlockByHash returns the block with the given hash within the given shard
+func (proxy *proxyEndpointProvider) GetBlockByHash(shardID uint32, hash string) string {
+	return fmt.Sprintf(proxyBlockByHash, shardID, hash)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
