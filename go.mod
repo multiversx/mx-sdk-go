@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/multiversx/mx-chain-core-go v1.2.25-0.20250218161123-121084ae9840
 	github.com/multiversx/mx-chain-crypto-go v1.2.13-0.20250218161752-9482d9a22234
-	github.com/multiversx/mx-chain-go v1.8.12-0.20250220135236-6cd58db027b1
+	github.com/multiversx/mx-chain-go v1.8.12-0.20250220145411-2fdffff6c2c7
 	github.com/multiversx/mx-chain-logger-go v1.0.16-0.20250218161408-6a0c19d0da48
 	github.com/multiversx/mx-chain-vm-common-go v1.5.17-0.20250218162215-88938774627c
 	github.com/pborman/uuid v1.2.1
