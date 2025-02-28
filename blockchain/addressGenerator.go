@@ -56,6 +56,8 @@ func NewAddressGenerator(coordinator *shardCoordinator) (*addressGenerator, erro
 		GasSchedule:              &disabled.GasScheduleNotifier{},
 		Counter:                  &disabled.BlockChainHookCounter{},
 		MissingTrieNodesNotifier: &disabled.MissingTrieNodesNotifier{},
+		EpochStartTrigger:        &disabled.EpochStartTrigger{},
+		RoundHandler:             &disabled.RoundHandler{},
 	}
 	blockchainHook, err := hooks.NewBlockChainHookImpl(argsHook)
 	if err != nil {
