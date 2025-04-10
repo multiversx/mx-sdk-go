@@ -21,16 +21,6 @@ type NodesCoordinatorStub struct {
 	GetShuffledOutToAuctionValidatorsPublicKeysCalled func(epoch uint32) (map[uint32][][]byte, error)
 }
 
-func (ncm *NodesCoordinatorStub) GetShuffledOutToAuctionValidatorsPublicKeys(epoch uint32) (map[uint32][][]byte, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (ncm *NodesCoordinatorStub) GetAllShuffledOutValidatorsPublicKeys(epoch uint32) (map[uint32][][]byte, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (ncm *NodesCoordinatorStub) EpochStartPrepare(metaHdr data.HeaderHandler, body data.BodyHandler) {
 	//TODO implement me
 	panic("implement me")

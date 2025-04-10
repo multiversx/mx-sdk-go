@@ -20,11 +20,6 @@ func (sns *SimpleESDTNFTStorageHandler) GetESDTNFTTokenOnDestination(_ vmcommon.
 	return nil, false, nil
 }
 
-// SaveNFTMetaData returns nil
-func (sns *SimpleESDTNFTStorageHandler) SaveNFTMetaData(_ data.TransactionHandler) error {
-	return nil
-}
-
 // IsInterfaceNil returns true if there is no value under the interface
 func (sns *SimpleESDTNFTStorageHandler) IsInterfaceNil() bool {
 	return sns == nil
