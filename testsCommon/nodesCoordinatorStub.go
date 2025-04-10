@@ -1,6 +1,7 @@
 package testsCommon
 
 import (
+	"github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-go/sharding/nodesCoordinator"
 	"github.com/multiversx/mx-chain-go/state"
 )
@@ -18,6 +19,16 @@ type NodesCoordinatorStub struct {
 	GetAllShuffledOutValidatorsPublicKeysCalled       func(epoch uint32) (map[uint32][][]byte, error)
 	GetWaitingEpochsLeftForPublicKeyCalled            func(publicKey []byte) (uint32, error)
 	GetShuffledOutToAuctionValidatorsPublicKeysCalled func(epoch uint32) (map[uint32][][]byte, error)
+}
+
+func (ncm *NodesCoordinatorStub) EpochStartPrepare(metaHdr data.HeaderHandler, body data.BodyHandler) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (ncm *NodesCoordinatorStub) NodesCoordinatorToRegistry(epoch uint32) nodesCoordinator.NodesCoordinatorRegistryHandler {
+	//TODO implement me
+	panic("implement me")
 }
 
 // GetChance -
