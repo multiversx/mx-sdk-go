@@ -3,7 +3,6 @@ package nonceHandlerV2
 import (
 	"context"
 	"crypto/rand"
-	"errors"
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
@@ -14,10 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var testAddressAsBech32String = "erd1zptg3eu7uw0qvzhnu009lwxupcn6ntjxptj5gaxt8curhxjqr9tsqpsnht"
-var testAddress, _ = data.NewAddressFromBech32String(testAddressAsBech32String)
-var expectedErr = errors.New("expected error")
 
 func TestAddressNonceHandler_NewAddressNonceHandlerWithPrivateAccess(t *testing.T) {
 	t.Parallel()

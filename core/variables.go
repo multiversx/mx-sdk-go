@@ -6,4 +6,4 @@ import (
 )
 
 // AddressPublicKeyConverter represents the default address public key converter
-var AddressPublicKeyConverter, _ = pubkeyConverter.NewBech32PubkeyConverter(AddressBytesLen, core.DefaultAddressPrefix)
+var AddressPublicKeyConverter, _ = pubkeyConverter.NewBech32PubkeyConverter(AddressBytesLen, core.OneAddressPrefix)

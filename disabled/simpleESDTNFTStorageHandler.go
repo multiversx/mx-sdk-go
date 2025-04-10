@@ -20,8 +20,8 @@ func (sns *SimpleESDTNFTStorageHandler) GetESDTNFTTokenOnDestination(_ vmcommon.
 	return nil, false, nil
 }
 
-// SaveNFTMetaDataToSystemAccount returns nil
-func (sns *SimpleESDTNFTStorageHandler) SaveNFTMetaDataToSystemAccount(_ data.TransactionHandler) error {
+// SaveNFTMetaData returns nil
+func (sns *SimpleESDTNFTStorageHandler) SaveNFTMetaData(_ data.TransactionHandler) error {
 	return nil
 }
 
