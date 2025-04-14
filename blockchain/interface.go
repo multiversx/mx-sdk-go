@@ -16,7 +16,7 @@ type Proxy interface {
 	SendTransactions(ctx context.Context, txs []*transaction.FrontendTransaction) ([]string, error)
 	GetGuardianData(ctx context.Context, address core.AddressHandler) (*api.GuardianData, error)
 	ExecuteVMQuery(ctx context.Context, vmRequest *data.VmValueRequest) (*data.VmValuesResponseData, error)
-	FilterLogs(ctx context.Context, filter *core.FilterQuery) ([]string, error)
+	FilterLogs(ctx context.Context, filter *core.FilterQuery) ([]*transaction.Events, error)
 	IsInterfaceNil() bool
 }
 
