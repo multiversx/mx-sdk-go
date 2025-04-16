@@ -35,7 +35,7 @@ type ProxyStub struct {
 	GetDefaultTransactionArgumentsCalled func(ctx context.Context, address sdkCore.AddressHandler, networkConfigs *data.NetworkConfig) (transaction.FrontendTransaction, string, error)
 	GetValidatorsInfoByEpochCalled       func(ctx context.Context, epoch uint32) ([]*state.ShardValidatorInfo, error)
 	GetGuardianDataCalled                func(ctx context.Context, address sdkCore.AddressHandler) (*api.GuardianData, error)
-	FilterLogsCalled                     func(ctx context.Context, filter *sdkCore.FilterQuery) ([]string, error)
+	FilterLogsCalled                     func(ctx context.Context, filter *sdkCore.FilterQuery) ([]*transaction.Events, error)
 }
 
 // ExecuteVMQuery -
@@ -231,7 +231,7 @@ func (stub *ProxyStub) GetGuardianData(ctx context.Context, address sdkCore.Addr
 }
 
 // FilterLogs -
-func (stub *ProxyStub) FilterLogs(ctx context.Context, filter *sdkCore.FilterQuery) ([]string, error) {
+func (stub *ProxyStub) FilterLogs(ctx context.Context, filter *sdkCore.FilterQuery) ([]*transaction.Events, error) {
 	if stub.FilterLogsCalled != nil {
 		return stub.FilterLogsCalled(ctx, filter)
 	}
