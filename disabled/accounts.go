@@ -138,6 +138,16 @@ func (a *Accounts) GetAccountFromBytes(_ []byte, _ []byte) (vmcommon.AccountHand
 	return nil, nil
 }
 
+// SaveAliasAddress returns nil
+func (a *Accounts) SaveAliasAddress(_ *vmcommon.AliasSaveRequest) error {
+	return nil
+}
+
+// RequestAddress returns nil address response and nil error
+func (a *Accounts) RequestAddress(_ *vmcommon.AddressRequest) (*vmcommon.AddressResponse, error) {
+	return nil, nil
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (a *Accounts) IsInterfaceNil() bool {
 	return a == nil

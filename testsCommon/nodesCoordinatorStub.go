@@ -1,6 +1,7 @@
 package testsCommon
 
 import (
+	"github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-go/sharding/nodesCoordinator"
 	"github.com/multiversx/mx-chain-go/state"
 	"github.com/multiversx/mx-chain-go/testscommon/shardingMocks"
@@ -29,6 +30,16 @@ func (ncm *NodesCoordinatorStub) ConsensusGroupSizeForShardAndEpoch(u uint32, u2
 
 func (ncm *NodesCoordinatorStub) GetCachedEpochs() map[uint32]struct{} {
 	// TODO implement me
+	panic("implement me")
+}
+
+func (ncm *NodesCoordinatorStub) EpochStartPrepare(metaHdr data.HeaderHandler, body data.BodyHandler) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (ncm *NodesCoordinatorStub) NodesCoordinatorToRegistry(epoch uint32) nodesCoordinator.NodesCoordinatorRegistryHandler {
+	//TODO implement me
 	panic("implement me")
 }
 
