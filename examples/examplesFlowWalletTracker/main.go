@@ -140,7 +140,7 @@ func runApp() error {
 
 	log.Info("setup complete, please send tokens to the following addresses:\n\t" + strings.Join(tap.AllTrackableAddresses(), "\n\t"))
 
-	chStop := make(chan os.Signal)
+	chStop := make(chan os.Signal, 1)
 	signal.Notify(chStop, os.Interrupt)
 	<-chStop
 

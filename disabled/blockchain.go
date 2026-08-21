@@ -70,6 +70,49 @@ func (b *Blockchain) SetCurrentBlockHeaderAndRootHash(_ data.HeaderHandler, _ []
 	return nil
 }
 
+// GetCurrentBlockHeaderAndHash returns nil
+func (b *Blockchain) GetCurrentBlockHeaderAndHash() (data.HeaderHandler, []byte) {
+	return nil, nil
+}
+
+// GetLastExecutedBlockInfo returns nil
+func (b *Blockchain) GetLastExecutedBlockInfo() (uint64, []byte, []byte) {
+	return 0, nil, nil
+}
+
+// GetLastExecutedBlockHeader returns nil
+func (b *Blockchain) GetLastExecutedBlockHeader() data.HeaderHandler {
+	return nil
+}
+
+// SetLastExecutedBlockHeaderAndRootHash does nothing
+func (b *Blockchain) SetLastExecutedBlockHeaderAndRootHash(
+	header data.HeaderHandler,
+	headerHash []byte,
+	rootHash []byte,
+) {
+}
+
+// GetLastExecutionResult returns nil
+func (b *Blockchain) GetLastExecutionResult() data.BaseExecutionResultHandler {
+	return nil
+}
+
+// SetCurrentBlockHeaderAndHash returns nil
+func (b *Blockchain) SetCurrentBlockHeaderAndHash(
+	headerHash []byte,
+	header data.HeaderHandler,
+) error {
+	return nil
+}
+
+// SetLastExecutionInfo does nothing
+func (b *Blockchain) SetLastExecutionInfo(
+	header data.HeaderHandler,
+	result data.BaseExecutionResultHandler,
+) {
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (b *Blockchain) IsInterfaceNil() bool {
 	return b == nil
