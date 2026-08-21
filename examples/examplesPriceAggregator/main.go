@@ -131,7 +131,7 @@ func runApp() error {
 		return err
 	}
 
-	chStop := make(chan os.Signal)
+	chStop := make(chan os.Signal, 1)
 	signal.Notify(chStop, os.Interrupt)
 	<-chStop
 

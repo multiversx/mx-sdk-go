@@ -89,6 +89,21 @@ func (dp *DataPool) Proofs() dataRetriever.ProofsPool {
 	return nil
 }
 
+// ExecutedMiniBlocks returns nil
+func (dp *DataPool) ExecutedMiniBlocks() storage.Cacher {
+	return nil
+}
+
+// PostProcessTransactions returns nil
+func (dp *DataPool) PostProcessTransactions() storage.Cacher {
+	return nil
+}
+
+// DirectSentTransactions returns nil
+func (dp *DataPool) DirectSentTransactions() storage.Cacher {
+	return nil
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (dp *DataPool) IsInterfaceNil() bool {
 	return dp == nil

@@ -31,6 +31,11 @@ func (eeh *EnableEpochsHandler) GetActivationEpoch(_ core.EnableEpochFlag) uint3
 	return 0
 }
 
+// GetAllEnableEpochs returns an empty map
+func (eeh *EnableEpochsHandler) GetAllEnableEpochs() map[string]uint32 {
+	return make(map[string]uint32)
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (eeh *EnableEpochsHandler) IsInterfaceNil() bool {
 	return eeh == nil
