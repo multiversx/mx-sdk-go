@@ -45,7 +45,7 @@ func (fetcher *evmGasPriceFetcher) FetchPrice(ctx context.Context, base string, 
 	}
 
 	response := &gasStationResponse{}
-	err := fetcher.ResponseGetter.Get(ctx, fmt.Sprintf(fetcher.config.ApiURL), response)
+	err := fetcher.ResponseGetter.Get(ctx, fetcher.config.ApiURL, response)
 	if err != nil {
 		return 0, err
 	}

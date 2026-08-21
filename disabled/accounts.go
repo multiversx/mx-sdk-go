@@ -111,12 +111,21 @@ func (a *Accounts) RecreateTrie(_ common.RootHashHolder) error {
 	return nil
 }
 
+// RecreateTrieIfNeeded -
+func (a *Accounts) RecreateTrieIfNeeded(_ common.RootHashHolder) error {
+	return nil
+}
+
 // PruneTrie does nothing
 func (a *Accounts) PruneTrie(_ []byte, _ state.TriePruningIdentifier, _ state.PruningHandler) {
 }
 
 // CancelPrune does nothing
 func (a *Accounts) CancelPrune(_ []byte, _ state.TriePruningIdentifier) {
+}
+
+// ResetPruning -
+func (a *Accounts) ResetPruning() {
 }
 
 // SetStateCheckpoint does nothing
@@ -136,6 +145,15 @@ func (a *Accounts) GetNumCheckpoints() uint32 {
 // GetAccountFromBytes returns a nil account and nil error
 func (a *Accounts) GetAccountFromBytes(_ []byte, _ []byte) (vmcommon.AccountHandler, error) {
 	return nil, nil
+}
+
+// GetEvictionWaitingListSize returns 0 for the disabled accounts adapter
+func (a *Accounts) GetEvictionWaitingListSize() int {
+	return 0
+}
+
+// SetTxHashForLatestStateAccesses -
+func (a *Accounts) SetTxHashForLatestStateAccesses(_ []byte) {
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
